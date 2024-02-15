@@ -10,42 +10,35 @@
     padding: 0;
     height: 100%;
     font-family: Arial, sans-serif;
-  }
-  .fullscreen-image {
-    background-image: url('giraffe.jpg');
-    background-size: cover;
-    background-position: center;
-    height: 100%;
-    width: 100%;
-    position: fixed;
+    display: flex;
+    align-items: center; /* Center slogan vertically */
+    justify-content: center; /* Center slogan horizontally */
+    background: url('https://sneezinggiraffe.co.uk/giraffe.jpg'); /* Set the background image */
+    background-size: cover; /* Cover the entire page */
+    background-position: center; /* Center the background image */
+    color: white; /* Initial text color; blend mode will adjust this based on background */
   }
   .slogan {
-    position: absolute;
-    bottom: 10%; /* Adjust based on preference */
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fff;
-    text-align: center;
-    font-size: 1.5em; /* Adjust based on preference */
-    padding: 1em;
-    background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
-    border-radius: 10px;
-    width: 80%; /* Adjust based on preference */
-    max-width: 600px; /* Ensures readability on larger screens */
-    box-sizing: border-box;
+    font-size: 3em; /* Increased text size */
+    font-style: italic; /* Make text italic */
+    text-align: justify; /* Justified text alignment */
+    line-height: 1.5; /* Adjust line spacing for better readability */
+    max-width: 90%; /* Limit width to ensure padding on sides */
+    mix-blend-mode: difference; /* Use difference blend mode for high contrast */
+    position: relative; /* Needed to position the text properly over the gradient */
+    color: #ffffff; /* Start with white text to ensure contrast */
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.5); /* Add drop shadow for depth */
   }
   @media (max-width: 600px) {
     .slogan {
-      font-size: 1em; /* Smaller text for mobile devices */
-      padding: 0.5em;
+      font-size: 1.5em; /* Adjust font size for mobile devices */
     }
   }
 </style>
 </head>
 <body>
-<div class="fullscreen-image"></div>
 <div class="slogan">
-  <strong>Sneezing Giraffe:</strong> Leveraging Holistic Paradigms for Global Disruption. At the intersection of innovation and integration, we're cultivating a seamless synergy of ineffable excellence. <strong>Sneezing Giraffe:</strong> Empowering empty expressions.
+  Leveraging Holistic Paradigms for Global Disruption. At the intersection of innovation and integration, we're cultivating a seamless synergy of ineffable excellence.<br><br><strong>Sneezing Giraffe:</strong> Empowering empty expressions.
 </div>
 </body>
 </html>
