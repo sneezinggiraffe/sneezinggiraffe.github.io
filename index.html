@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Giraffe</title>
+<title>Sneezing Giraffe</title>
 <style>
   body, html {
     margin: 0;
     padding: 0;
     height: 100%;
+    font-family: Arial, sans-serif;
   }
   .fullscreen-image {
     background-image: url('giraffe.jpg');
@@ -18,9 +19,33 @@
     width: 100%;
     position: fixed;
   }
+  .slogan {
+    position: absolute;
+    bottom: 10%; /* Adjust based on preference */
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    text-align: center;
+    font-size: 1.5em; /* Adjust based on preference */
+    padding: 1em;
+    background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
+    border-radius: 10px;
+    width: 80%; /* Adjust based on preference */
+    max-width: 600px; /* Ensures readability on larger screens */
+    box-sizing: border-box;
+  }
+  @media (max-width: 600px) {
+    .slogan {
+      font-size: 1em; /* Smaller text for mobile devices */
+      padding: 0.5em;
+    }
+  }
 </style>
 </head>
 <body>
 <div class="fullscreen-image"></div>
+<div class="slogan">
+  <strong>Sneezing Giraffe:</strong> Leveraging Holistic Paradigms for Global Disruption. At the intersection of innovation and integration, we're cultivating a seamless synergy of ineffable excellence. <strong>Sneezing Giraffe:</strong> Empowering empty expressions.
+</div>
 </body>
 </html>
