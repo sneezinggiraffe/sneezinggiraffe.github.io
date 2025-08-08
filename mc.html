@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minecraft 3D Skin Editor</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #0f172a;
+      --ui: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --btn: #1f2937;
+      --btn2: #334155;
+      --blue: #60a5fa;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 5px;
+      height: calc(100dvh - 0px);
+      padding: 8px 8px 0px 8px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--panel);
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+    }
+
+    .btn {
+      background: var(--btn);
+      border: 1px solid #1f2937;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--btn2);
+    }
+
+    .btn.active {
+      outline: 2px solid var(--blue);
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .kicker {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"] {
+      width: 42px;
+      height: 34px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      padding: 0;
+    }
+
+    input[type="range"] {
+      width: 80px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 1fr 230px;
+      gap: 5px;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      min-height: 0;
+    }
+
+    #glwrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    #gl,
+    #glwrap {
+      touch-action: none;
+    }
+
+    #gl {
+      width: 100%;
+      height: 100%;
+      display: block;
+      min-height: 360px;
+    }
+
+    .hud {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      background: #0008;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+
+    .side {
+      padding: 5px;
+      display: grid;
+      gap: 5px;
+      grid-auto-rows: min-content;
+    }
+
+    .card {
+      background: #0e162d;
+      border: 1px solid #223252;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .pill {
+      background: #0b132a;
+      border: 1px dashed #22325a;
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .file {
+      display: none;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #b9c1d1;
+    }
+
+    /* Mobile-only auxiliary containers */
+    #pre,
+    #post {
+      display: none;
+    }
+
+    /* Front/Back markers over GL */
+    .marker {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 12px;
+      background: #000a;
+      border: 1px solid #334155;
+      color: #fff;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      user-select: none;
+    }
+
+    .marker.front { background: #14532d; border-color: #16a34a; }
+    .marker.back { background: #3f1d34; border-color: #be185d; }
+
+    @media (max-width: 900px) {
+      .stage {
+        grid-template-columns: 1fr;
+      }
+      /* Hide the original sidebar; use #pre and #post instead */
+      aside.side { display: none; }
+      #pre { display: grid; grid-template-columns: 1fr 3fr; gap: 5px; }
+      #post { display: grid; gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Top toolbar -->
+    <div class="toolbar">
+      <div class="row" id="tools">
+        <button class="btn active" data-tool="pencil" title="Draw (D)">✏️ Draw</button>
+        <button class="btn" data-tool="eraser" title="Erase (E)">🧽 Erase</button>
+        <button class="btn" data-tool="fill" title="Fill (F)">🪣 Fill</button>
+        <button class="btn" data-tool="picker" title="Pick (I)">🎯 Pick</button>
+      </div>
+      <div class="row">
+        <span class="kicker">Colour</span><input type="color" id="color" value="#ff0000">
+        <span class="kicker">Brush</span><input type="range" id="brush" min="1" max="10" step="1" value="1"><span id="brushVal" class="kicker">1 px</span>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="undo">↩️ Undo</button>
+      <button class="btn" id="redo">↪️ Redo</button>
+      <button class="btn" id="open">📂 Open</button>
+      <input id="file" class="file" type="file" accept="image/png">
+      <button class="btn" id="save">💾 Save</button>
+    </div>
+
+    <!-- Mobile-only top cards placeholder -->
+    <div id="pre" class="side"></div>
+
+    <!-- Middle area: 3D + side -->
+    <div class="stage">
+      <section class="panel" id="glwrap">
+        <canvas id="gl" aria-label="3D character canvas" role="img"></canvas>
+        <div class="hud">Drag background to rotate • Scroll to zoom • Click body to paint</div>
+        <div id="markF" class="marker front" aria-hidden="true">F</div>
+        <div id="markB" class="marker back" aria-hidden="true">B</div>
+      </section>
+      <aside class="panel side">
+        <div class="card" id="cardEditor">
+          <b>Minecraft 3D Skin Editor</b>
+          <div class="hint">No sign-up. Free. No Adverts.</div>
+        </div>
+        <div class="card" id="cardSwatches">
+          <b>Quick colours</b>
+          <div id="swatches" class="row" style="flex-wrap:wrap"></div>
+        </div>
+        <div class="card" id="cardSettings">
+          <b>Settings</b>
+          <div class="hint">Model: Steve (4px arms). Uses standard 64×64 (1.8+). Overlay layers not shown (coming soon).</div>
+        </div>
+        <div class="pill hint" id="cardTip">Tip: Works offline. Add to Home Screen on mobile for a mini‑app.</div>
+      </aside>
+    </div>
+
+    <!-- Mobile-only bottom cards placeholder -->
+    <div id="post" class="side"></div>
+  </div>
+
+  <script>
+    // ====== Texture (64×64) stored in 2D canvas ======
+    const skin = document.createElement('canvas');
+    skin.width = skin.height = 64;
+
+    const sctx = skin.getContext('2d', { willReadFrequently: true });
+    sctx.clearRect(0, 0, 64, 64); // start empty
+
+    // Undo / Redo
+    const undoStack = [];
+    const redoStack = [];
+    const SNAP_LIMIT = 80;
+
+    function snapshot() {
+      if (undoStack.length >= SNAP_LIMIT) undoStack.shift();
+      undoStack.push(sctx.getImageData(0, 0, 64, 64));
+      redoStack.length = 0;
+      texNeedsUpload = true;
+    }
+
+    function restore(from, to) {
+      if (!from.length) return;
+      const img = from.pop();
+      to.push(sctx.getImageData(0, 0, 64, 64));
+      sctx.putImageData(img, 0, 0);
+      texNeedsUpload = true;
+    }
+
+    // Painting helpers
+    const colorEl = document.getElementById('color');
+    const brushEl = document.getElementById('brush');
+    const brushVal = document.getElementById('brushVal');
+
+    brushEl.addEventListener('input', () => {
+      brushVal.textContent = brushEl.value + ' px';
+    });
+
+    function hexToRgba(hex, a) {
+      const v = hex.replace('#', '');
+      return [
+        parseInt(v.slice(0, 2), 16),
+        parseInt(v.slice(2, 4), 16),
+        parseInt(v.slice(4, 6), 16),
+        Math.round(a * 255)
+      ];
+    }
+
+    function setPixel(x, y, rgba) {
+      if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
+      const img = sctx.createImageData(1, 1);
+      img.data.set(rgba);
+      sctx.putImageData(img, x, y);
+    }
+
+    function getPixel(x, y) {
+      const d = sctx.getImageData(x, y, 1, 1).data;
+      return [d[0], d[1], d[2], d[3]];
+    }
+
+    function rgbaEq(a, b) {
+      return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+    }
+
+    function uvToPixel(u, v) {
+      // clamp directly; GL upload uses UNPACK_FLIP_Y_WEBGL so no extra flip needed
+      u = Math.min(1 - 1 / 64, Math.max(0, u));
+      v = Math.min(1 - 1 / 64, Math.max(0, v));
+      return [Math.floor(u * 64), Math.floor(v * 64)];
+    }
+
+    function paintAt(px, py) {
+      const col = tool === 'eraser' ? [0, 0, 0, 0] : hexToRgba(colorEl.value, 1);
+      const size = +brushEl.value;
+      const half = Math.floor(size / 2);
+      for (let y = py - half; y < py - half + size; y++) {
+        for (let x = px - half; x < px - half + size; x++) {
+          setPixel(x, y, col);
+        }
+      }
+      texNeedsUpload = true;
+    }
+
+    function floodFill(px, py) {
+      const target = getPixel(px, py);
+      const repl = tool === 'eraser' ? [0, 0, 0, 0] : hexToRgba(colorEl.value, 1);
+      if (rgbaEq(target, repl)) return;
+
+      const img = sctx.getImageData(0, 0, 64, 64);
+      const data = img.data;
+
+      const match = (x, y) => {
+        const i = (y * 64 + x) * 4;
+        return (
+          data[i] === target[0] &&
+          data[i + 1] === target[1] &&
+          data[i + 2] === target[2] &&
+          data[i + 3] === target[3]
+        );
+      };
+
+      const put = (x, y) => {
+        const i = (y * 64 + x) * 4;
+        data[i] = repl[0];
+        data[i + 1] = repl[1];
+        data[i + 2] = repl[2];
+        data[i + 3] = repl[3];
+      };
+
+      const stack = [[px, py]];
+
+      while (stack.length) {
+        const [x, y] = stack.pop();
+        if (x < 0 || y < 0 || x >= 64 || y >= 64) continue;
+        if (!match(x, y)) continue;
+        put(x, y);
+        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      }
+
+      sctx.putImageData(img, 0, 0);
+      texNeedsUpload = true;
+    }
+
+    // ====== UI wires ======
+    let tool = 'pencil';
+    const tools = document.getElementById('tools');
+
+    tools.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-tool]');
+      if (!b) return;
+      tool = b.dataset.tool;
+      [...tools.children].forEach((x) => x.classList.toggle('active', x === b));
+    });
+
+    document.getElementById('undo').onclick = () => restore(undoStack, redoStack);
+    document.getElementById('redo').onclick = () => restore(redoStack, undoStack);
+
+    const fileIn = document.getElementById('file');
+    document.getElementById('open').onclick = () => fileIn.click();
+
+    fileIn.onchange = () => {
+      const f = fileIn.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          snapshot();
+          sctx.clearRect(0, 0, 64, 64);
+          if (img.width === 64 && (img.height === 64 || img.height === 32)) {
+            sctx.drawImage(img, 0, 0);
+            if (img.height === 32) {
+              // Legacy 64×32: mirror-copy right arm/leg into left arm/leg slots
+              const mirrorCopy = (sx, sy, w, h, dx, dy) => {
+                sctx.save();
+                sctx.translate(dx + w, 0);
+                sctx.scale(-1, 1);
+                sctx.drawImage(skin, sx, sy, w, h, 0, dy, w, h);
+                sctx.restore();
+              };
+
+              // Right arm -> Left arm (mirror horizontally)
+              mirrorCopy(44, 16, 4, 4, 36, 48); // top
+              mirrorCopy(48, 16, 4, 4, 40, 48); // bottom
+              mirrorCopy(40, 20, 4, 12, 32, 52); // right
+              mirrorCopy(44, 20, 4, 12, 36, 52); // front
+              mirrorCopy(48, 20, 4, 12, 40, 52); // left
+              mirrorCopy(52, 20, 4, 12, 44, 52); // back
+
+              // Right leg -> Left leg (mirror horizontally)
+              mirrorCopy(4, 16, 4, 4, 20, 48); // top
+              mirrorCopy(8, 16, 4, 4, 24, 48); // bottom
+              mirrorCopy(0, 20, 4, 12, 16, 52); // right
+              mirrorCopy(4, 20, 4, 12, 20, 52); // front
+              mirrorCopy(8, 20, 4, 12, 24, 52); // left
+              mirrorCopy(12, 20, 4, 12, 28, 52); // back
+            }
+          } else {
+            sctx.drawImage(img, 0, 0, 64, 64);
+          }
+          texNeedsUpload = true;
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(f);
+      fileIn.value = '';
+    };
+
+    document.getElementById('save').onclick = () => {
+      const a = document.createElement('a');
+      a.download = 'skin.png';
+      a.href = skin.toDataURL('image/png');
+      a.click();
+    };
+
+    // Swatches
+    const SW = [
+      '#000000',
+      '#4b5563',
+      '#9ca3af',
+      '#ffffff',
+      '#ff0000',
+      '#ffef00',
+      '#00ff00',
+      '#00ffff',
+      '#0000ff',
+      '#8b00ff',
+      '#ff00ff',
+      '#8B4513',
+      '#D2691E',
+      '#F4A460',
+      '#C0C0C0',
+      '#FFDAB9',
+      '#F0E68C',
+      '#2E8B57'
+    ];
+
+    const swEl = document.getElementById('swatches');
+    SW.forEach((h) => {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.style.background = h;
+      b.style.borderColor = '#0008';
+      b.textContent = '';
+      b.style.width = '28px';
+      b.style.height = '28px';
+      b.onclick = () => (colorEl.value = h);
+      swEl.appendChild(b);
+    });
+
+    // ====== WebGL minimal renderer ======
+    const glc = document.getElementById('gl');
+    const gl = glc.getContext('webgl', { antialias: true, alpha: false });
+    if (!gl) {
+      alert('WebGL not supported');
+    }
+
+    function fitGL() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, glc.clientWidth * dpr);
+      const h = Math.max(1, glc.clientHeight * dpr);
+      if (glc.width !== w || glc.height !== h) {
+        glc.width = w;
+        glc.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
+
+    window.addEventListener('resize', fitGL);
+    fitGL();
+
+    // Shaders: show neutral colour when tex alpha==0 so model is visible before painting
+    const VSH = `attribute vec3 a_pos;attribute vec2 a_uv;uniform mat4 u_mvp;varying vec2 v_uv;void main(){v_uv=a_uv;gl_Position=u_mvp*vec4(a_pos,1.0);} `;
+    const FSH = `precision mediump float;varying vec2 v_uv;uniform sampler2D u_tex;void main(){vec4 c=texture2D(u_tex,v_uv); if(c.a==0.0){ c=vec4(0.75,0.75,0.78,1.0);} gl_FragColor=c;} `;
+
+    function makeShader(src, type) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(s));
+      }
+      return s;
+    }
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, makeShader(VSH, gl.VERTEX_SHADER));
+    gl.attachShader(prog, makeShader(FSH, gl.FRAGMENT_SHADER));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    const locPos = gl.getAttribLocation(prog, 'a_pos');
+    const locUV = gl.getAttribLocation(prog, 'a_uv');
+    const locMVP = gl.getUniformLocation(prog, 'u_mvp');
+    const locTex = gl.getUniformLocation(prog, 'u_tex');
+    gl.uniform1i(locTex, 0);
+
+    // Texture from canvas
+    const tex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+    function uploadTex() {
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, skin);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+
+    let texNeedsUpload = true;
+
+    // Geometry buffers
+    const posBuf = gl.createBuffer();
+    const uvBuf = gl.createBuffer();
+    const idxBuf = gl.createBuffer();
+
+    let positions = [];
+    let uvs = [];
+    let indices = [];
+    const triPos = [];
+    const triUV = [];
+
+    function addFace(a, b, c, d, rect) {
+      const base = positions.length / 3;
+      positions.push(...a, ...b, ...c, ...a, ...c, ...d);
+      const [x1, y1, x2, y2] = rect;
+      const u1 = x1 / 64,
+        v1 = y1 / 64,
+        u2 = x2 / 64,
+        v2 = y2 / 64;
+      uvs.push(u1, v1, u2, v1, u2, v2, u1, v1, u2, v2, u1, v2);
+      indices.push(base, base + 1, base + 2, base + 3, base + 4, base + 5);
+      triPos.push([a, b, c], [a, c, d]);
+      triUV.push(
+        [
+          [u1, v1],
+          [u2, v1],
+          [u2, v2]
+        ],
+        [
+          [u1, v1],
+          [u2, v2],
+          [u1, v2]
+        ]
+      );
+    }
+
+    function addBox(minx, miny, minz, maxx, maxy, maxz, R) {
+      addFace([minx, maxy, maxz], [maxx, maxy, maxz], [maxx, miny, maxz], [minx, miny, maxz], R.front);
+      addFace([maxx, maxy, minz], [minx, maxy, minz], [minx, miny, minz], [maxx, miny, minz], R.back);
+      addFace([maxx, maxy, maxz], [maxx, maxy, minz], [maxx, miny, minz], [maxx, miny, maxz], R.right);
+      addFace([minx, maxy, minz], [minx, maxy, maxz], [minx, miny, maxz], [minx, miny, minz], R.left);
+      addFace([minx, maxy, minz], [maxx, maxy, minz], [maxx, maxy, maxz], [minx, maxy, maxz], R.top);
+      addFace([minx, miny, maxz], [maxx, miny, maxz], [maxx, miny, minz], [minx, miny, minz], R.bottom);
+    }
+
+    const Rct = (x1, y1, x2, y2) => [x1, y1, x2, y2];
+    const RECT = {
+      head: {
+        top: Rct(8, 0, 16, 8),
+        bottom: Rct(16, 0, 24, 8),
+        right: Rct(16, 8, 24, 16),
+        front: Rct(8, 8, 16, 16),
+        left: Rct(0, 8, 8, 16),
+        back: Rct(24, 8, 32, 16)
+      },
+      body: {
+        top: Rct(20, 16, 28, 20),
+        bottom: Rct(28, 16, 36, 20),
+        right: Rct(16, 20, 20, 32),
+        front: Rct(20, 20, 28, 32),
+        left: Rct(28, 20, 32, 32),
+        back: Rct(32, 20, 40, 32)
+      },
+      rarm: {
+        top: Rct(44, 16, 48, 20),
+        bottom: Rct(48, 16, 52, 20),
+        right: Rct(40, 20, 44, 32),
+        front: Rct(44, 20, 48, 32),
+        left: Rct(48, 20, 52, 32),
+        back: Rct(52, 20, 56, 32)
+      },
+      rleg: {
+        top: Rct(4, 16, 8, 20),
+        bottom: Rct(8, 16, 12, 20),
+        right: Rct(0, 20, 4, 32),
+        front: Rct(4, 20, 8, 32),
+        left: Rct(8, 20, 12, 32),
+        back: Rct(12, 20, 16, 32)
+      },
+      larm: {
+        top: Rct(36, 48, 40, 52),
+        bottom: Rct(40, 48, 44, 52),
+        right: Rct(32, 52, 36, 64),
+        front: Rct(36, 52, 40, 64),
+        left: Rct(40, 52, 44, 64),
+        back: Rct(44, 52, 48, 64)
+      },
+      lleg: {
+        top: Rct(20, 48, 24, 52),
+        bottom: Rct(24, 48, 28, 52),
+        right: Rct(16, 52, 20, 64),
+        front: Rct(20, 52, 24, 64),
+        left: Rct(24, 52, 28, 64),
+        back: Rct(28, 52, 32, 64)
+      }
+    };
+
+    function buildModel() {
+      positions = [];
+      uvs = [];
+      indices.length = 0;
+      triPos.length = 0;
+      triUV.length = 0;
+
+      addBox(-4, 24, -4, 4, 32, 4, RECT.head);
+      addBox(-4, 12, -2, 4, 24, 2, RECT.body);
+      addBox(-8, 12, -2, -4, 24, 2, RECT.rarm);
+      addBox(4, 12, -2, 8, 24, 2, RECT.larm);
+      addBox(-4, 0, -2, 0, 12, 2, RECT.rleg);
+      addBox(0, 0, -2, 4, 12, 2, RECT.lleg);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(locPos);
+      gl.vertexAttribPointer(locPos, 3, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(locUV);
+      gl.vertexAttribPointer(locUV, 2, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    }
+
+    buildModel();
+
+    // ===== Matrices (column‑major) =====
+    function mat4() {
+      return new Float32Array(16);
+    }
+
+    function mul(out, a, b) {
+      const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+      const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+      const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+      const a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+      let b0, b1, b2, b3;
+
+      b0 = b[0]; b1 = b[1]; b2 = b[2]; b3 = b[3];
+      out[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      out[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      out[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      out[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+      out[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      out[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      out[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      out[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+      out[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      out[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      out[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      out[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+      out[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+      out[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+      out[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+      out[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+      return out;
+    }
+
+    function perspective(out, fovy, aspect, near, far) {
+      const f = 1 / Math.tan(fovy / 2);
+      out[0] = f / aspect;
+      out[1] = 0;
+      out[2] = 0;
+      out[3] = 0;
+      out[4] = 0;
+      out[5] = f;
+      out[6] = 0;
+      out[7] = 0;
+      out[8] = 0;
+      out[9] = 0;
+      out[11] = -1;
+      out[12] = 0;
+      out[13] = 0;
+      out[15] = 0;
+
+      if (far != null && far !== Infinity) {
+        out[10] = (far + near) / (near - far);
+        out[14] = (2 * far * near) / (near - far);
+      } else {
+        out[10] = -1;
+        out[14] = -2 * near;
+      }
+
+      return out;
+    }
+
+    function lookAt(out, eye, center, up) {
+      const zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+      let rl = 1 / Math.hypot(zx, zy, zz);
+      const zxN = zx * rl, zyN = zy * rl, zzN = zz * rl;
+
+      let xx = up[1] * zzN - up[2] * zyN,
+        xy = up[2] * zxN - up[0] * zzN,
+        xz = up[0] * zyN - up[1] * zxN;
+
+      rl = 1 / Math.hypot(xx, xy, xz);
+      xx *= rl; xy *= rl; xz *= rl;
+
+      const yx = zyN * xz - zzN * xy,
+        yy = zzN * xx - zxN * xz,
+        yz = zxN * xy - zyN * xx;
+
+      out[0] = xx; out[1] = yx; out[2] = zxN; out[3] = 0;
+      out[4] = xy; out[5] = yy; out[6] = zyN; out[7] = 0;
+      out[8] = xz; out[9] = yz; out[10] = zzN; out[11] = 0;
+      out[12] = -(xx * eye[0] + xy * eye[1] + xz * eye[2]);
+      out[13] = -(yx * eye[0] + yy * eye[1] + yz * eye[2]);
+      out[14] = -(zxN * eye[0] + zyN * eye[1] + zzN * eye[2]);
+      out[15] = 1;
+
+      return out;
+    }
+
+    // Camera
+    let yaw = 3.7; // default face toward camera
+    let pitch = -0.20;
+    let dist = 42;
+    const target = [0, 18, 0];
+
+    function camDir() {
+      const cy = Math.cos(pitch), sy = Math.sin(pitch);
+      return [Math.sin(yaw) * cy, sy, Math.cos(yaw) * cy];
+    }
+
+    function camPos() {
+      const d = camDir();
+      return [target[0] - d[0] * dist, target[1] - d[1] * dist, target[2] - d[2] * dist];
+    }
+
+    // Screen ray
+    function rayFromScreen(mx, my) {
+      const nx = (mx / glc.width) * 2 - 1;
+      const ny = 1 - (my / glc.height) * 2;
+      const dir = camDir();
+      const up = [0, 1, 0];
+
+      let rx = dir[1] * up[2] - dir[2] * up[1];
+      let ry = dir[2] * up[0] - dir[0] * up[2];
+      let rz = dir[0] * up[1] - dir[1] * up[0];
+      let rl = 1 / Math.hypot(rx, ry, rz);
+      rx *= rl; ry *= rl; rz *= rl;
+
+      const ux = ry * dir[2] - rz * dir[1];
+      const uy = rz * dir[0] - rx * dir[2];
+      const uz = rx * dir[1] - ry * dir[0];
+
+      const fov = Math.PI / 4;
+      const aspect = glc.width / glc.height;
+      const h = Math.tan(fov / 2);
+      const w = h * aspect;
+
+      let dx = dir[0] + nx * w * rx + ny * h * ux;
+      let dy = dir[1] + nx * w * ry + ny * h * uy;
+      let dz = dir[2] + nx * w * rz + ny * h * uz;
+
+      const dl = 1 / Math.hypot(dx, dy, dz);
+      dx *= dl; dy *= dl; dz *= dl;
+
+      return { origin: camPos(), dir: [dx, dy, dz] };
+    }
+
+    // Ray-triangle
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const cross = (a, b) => [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0]
+    ];
+
+    function rayTri(orig, dir, v0, v1, v2) {
+      const EPS = 1e-6;
+      const e1 = sub(v1, v0), e2 = sub(v2, v0);
+      const h = cross(dir, e2);
+      const a = dot(e1, h);
+      if (a > -EPS && a < EPS) return null;
+      const f = 1 / a;
+      const s = sub(orig, v0);
+      const u = f * dot(s, h);
+      if (u < 0 || u > 1) return null;
+      const q = cross(s, e1);
+      const v = f * dot(dir, q);
+      if (v < 0 || u + v > 1) return null;
+      const t = f * dot(e2, q);
+      if (t > EPS) return { t, u, v };
+      return null;
+    }
+
+    function raycast(mx, my) {
+      const { origin, dir } = rayFromScreen(mx, my);
+      let bestT = 1e9;
+      let bestUV = null;
+
+      for (let i = 0; i < triPos.length; i++) {
+        const [a, b, c] = triPos[i];
+        const hit = rayTri(origin, dir, a, b, c);
+        if (hit && hit.t < bestT) {
+          bestT = hit.t;
+          const w0 = 1 - hit.u - hit.v;
+          const w1 = hit.u;
+          const w2 = hit.v;
+          const [uv0, uv1, uv2] = triUV[i];
+          const u = uv0[0] * w0 + uv1[0] * w1 + uv2[0] * w2;
+          const v = uv0[1] * w0 + uv1[1] * w1 + uv2[1] * w2;
+          bestUV = [u, v];
+        }
+      }
+
+      return bestUV ? { uv: bestUV, t: bestT } : null;
+    }
+
+    // Interaction
+    let rotating = false;
+    let painting = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function onDown(e) {
+      const p = e.touches ? e.touches[0] : e;
+      const rect = glc.getBoundingClientRect();
+      const x = (p.clientX - rect.left) * (glc.width / rect.width);
+      const y = (p.clientY - rect.top) * (glc.height / rect.height);
+      e.preventDefault();
+
+      const hit = raycast(x, y);
+      if (hit) {
+        if (tool === 'picker') {
+          const [px, py] = uvToPixel(hit.uv[0], hit.uv[1]);
+          const [r, g, b, a] = getPixel(px, py);
+          colorEl.value =
+            '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+          return;
+        }
+
+        snapshot();
+        if (tool === 'fill') {
+          const [px, py] = uvToPixel(hit.uv[0], hit.uv[1]);
+          floodFill(px, py);
+          return;
+        }
+
+        painting = true;
+        paintFromUV(hit.uv);
+      } else {
+        rotating = true;
+        lastX = x;
+        lastY = y;
+      }
+    }
+
+    function onMove(e) {
+      // Only intercept when actively interacting with the 3D view
+      if (!painting && !rotating) return;
+
+      const p = e.touches ? e.touches[0] : e;
+      const rect = glc.getBoundingClientRect();
+      const x = (p.clientX - rect.left) * (glc.width / rect.width);
+      const y = (p.clientY - rect.top) * (glc.height / rect.height);
+      e.preventDefault();
+
+      if (painting) {
+        const hit = raycast(x, y);
+        if (hit) paintFromUV(hit.uv);
+      } else if (rotating) {
+        const dx = x - lastX;
+        const dy = y - lastY;
+        lastX = x;
+        lastY = y;
+        yaw -= dx / 300;
+        pitch -= dy / 300;
+        pitch = Math.max(-1.2, Math.min(1.2, pitch));
+      }
+    }
+
+    function onUp() {
+      rotating = false;
+      painting = false;
+    }
+
+    glc.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+
+    glc.addEventListener('touchstart', onDown, { passive: false });
+    glc.addEventListener('touchmove', onMove, { passive: false });
+    glc.addEventListener('touchend', onUp);
+
+    glc.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        dist *= 1 + Math.sign(e.deltaY) * 0.1;
+        dist = Math.max(20, Math.min(90, dist));
+      },
+      { passive: false }
+    );
+
+    function paintFromUV(uv) {
+      const [px, py] = uvToPixel(uv[0], uv[1]);
+      paintAt(px, py);
+    }
+
+    // Render loop
+    function render() {
+      fitGL();
+      if (texNeedsUpload) {
+        uploadTex();
+        texNeedsUpload = false;
+      }
+
+      const proj = perspective(mat4(), Math.PI / 4, glc.width / glc.height, 0.1, 500);
+      const eye = camPos();
+      const view = lookAt(mat4(), eye, target, [0, 1, 0]);
+      const mvp = mul(mat4(), proj, view);
+      gl.uniformMatrix4fv(locMVP, false, mvp);
+
+      gl.enable(gl.DEPTH_TEST);
+      gl.clearColor(0.03, 0.06, 0.13, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+      // Update front/back markers
+      updateMarkers(mvp);
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+
+    // First snapshot so Undo works after first stroke
+    snapshot();
+
+    // Auto-load default Steve skin on startup
+    (function loadDefaultSkin() {
+      const img = new Image();
+      img.onload = () => {
+        snapshot();
+        sctx.clearRect(0, 0, 64, 64);
+        if (img.width === 64 && (img.height === 64 || img.height === 32)) {
+          sctx.drawImage(img, 0, 0);
+        } else {
+          sctx.drawImage(img, 0, 0, 64, 64);
+        }
+        texNeedsUpload = true;
+      };
+      img.onerror = () => {};
+      img.src = 'skin-steve.png';
+    })();
+
+    // ===== Responsive card placement =====
+    const pre = document.getElementById('pre');
+    const post = document.getElementById('post');
+    const asideEl = document.querySelector('aside.side');
+    const cardEditor = document.getElementById('cardEditor');
+    const cardSwatches = document.getElementById('cardSwatches');
+    const cardSettings = document.getElementById('cardSettings');
+    const cardTip = document.getElementById('cardTip');
+
+    function arrangeCards() {
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+      if (isMobile) {
+        pre.appendChild(cardEditor);
+        pre.appendChild(cardSwatches);
+        post.appendChild(cardSettings);
+        post.appendChild(cardTip);
+      } else {
+        asideEl.appendChild(cardEditor);
+        asideEl.appendChild(cardSwatches);
+        asideEl.appendChild(cardSettings);
+        asideEl.appendChild(cardTip);
+      }
+    }
+
+    window.addEventListener('resize', arrangeCards);
+    arrangeCards();
+
+    // ===== Front/Back marker projection =====
+    const markF = document.getElementById('markF');
+    const markB = document.getElementById('markB');
+
+    function isFaceCenterBlank(rect) {
+      const x1 = rect[0], y1 = rect[1], x2 = rect[2], y2 = rect[3];
+      const cx = Math.floor((x1 + x2) / 2);
+      const cy = Math.floor((y1 + y2) / 2);
+      const size = 3;
+      const half = 1;
+      const img = sctx.getImageData(cx - half, cy - half, size, size).data;
+      let sum = 0;
+      for (let i = 3; i < img.length; i += 4) sum += img[i];
+      const avg = sum / (size * size);
+      return avg < 8; // treat as blank if near fully transparent
+    }
+
+    function projectToCSS(pos, mvp) {
+      // Column-major mat * vec4
+      const x = pos[0], y = pos[1], z = pos[2];
+      const m = mvp;
+      const cx = m[0] * x + m[4] * y + m[8] * z + m[12];
+      const cy = m[1] * x + m[5] * y + m[9] * z + m[13];
+      const cw = m[3] * x + m[7] * y + m[11] * z + m[15];
+      if (cw === 0) return null;
+      const ndcX = cx / cw;
+      const ndcY = cy / cw;
+      const w = glc.clientWidth;
+      const h = glc.clientHeight;
+      const sx = (ndcX * 0.5 + 0.5) * w;
+      const sy = (1 - (ndcY * 0.5 + 0.5)) * h;
+      return [sx, sy, cw];
+    }
+
+    function updateMarkers(mvp) {
+      // Use head center front/back
+      const front = [0, 28, 4.01];
+      const back = [0, 28, -4.01];
+      const pf = projectToCSS(front, mvp);
+      const pb = projectToCSS(back, mvp);
+
+      // Determine which face is toward the camera
+      const d = camDir();
+      const frontFacing = d[2] < 0;
+
+      // Only show if the corresponding face center is blank
+      const frontBlank = isFaceCenterBlank(RECT.head.front);
+      const backBlank = isFaceCenterBlank(RECT.head.back);
+
+      const offsetSide = (p) => {
+        if (!p) return null;
+        const cx = glc.clientWidth * 0.5;
+        const sign = Math.sign(p[0] - cx) || 1;
+        const off = 18;
+        return [p[0] + sign * off, p[1]];
+      };
+
+      // Front marker
+      if (frontFacing && frontBlank && pf) {
+        const qf = offsetSide(pf);
+        if (qf) {
+          markF.style.left = qf[0] + 'px';
+          markF.style.top = qf[1] + 'px';
+          markF.style.display = '';
+        } else {
+          markF.style.display = 'none';
+        }
+        markB.style.display = 'none';
+        return;
+      }
+
+      // Back marker
+      if (!frontFacing && backBlank && pb) {
+        const qb = offsetSide(pb);
+        if (qb) {
+          markB.style.left = qb[0] + 'px';
+          markB.style.top = qb[1] + 'px';
+          markB.style.display = '';
+        } else {
+          markB.style.display = 'none';
+        }
+        markF.style.display = 'none';
+        return;
+      }
+
+      // Otherwise, hide both
+      markF.style.display = 'none';
+      markB.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
