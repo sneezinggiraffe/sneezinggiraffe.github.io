@@ -189,7 +189,6 @@
     }
 
     /* Mobile-only auxiliary containers */
-    #pre,
     #post {
       display: none;
     }
@@ -221,28 +220,22 @@
       .stage {
         grid-template-columns: 1fr;
       }
-      /* Hide the original sidebar; use #pre and #post instead */
+      /* Hide the original sidebar; use #post instead */
       aside.side { display: none; }
-      #pre { display: grid; grid-template-columns: 1fr 3fr; gap: 5px; }
       #post { display: grid; gap: 5px; }
-
-      /* Compact the title card on small screens */
-      #cardEditor { padding: 6px 8px; }
-      #cardEditor b { font-size: 14px; }
-      #cardEditor .hint { display: none; }
     }
     #swatches { justify-content: center; }
   </style>
 </head>
 
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=g-hbnldj6h00"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HBNLDJ6H00"></script>
 <script>
-  window.datalayer = window.datalayer || [];
-  function gtag(){datalayer.push(arguments);}
-  gtag('js', new date());
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
 
-  gtag('config', 'g-hbnldj6h00');
+gtag('config', 'G-HBNLDJ6H00');
 </script>
 
 <body>
@@ -269,9 +262,6 @@
       </div>
     </div>
 
-    <!-- Mobile-only top cards placeholder -->
-    <div id="pre" class="side"></div>
-
     <!-- Middle area: 3D + side -->
     <div class="stage">
       <section class="panel" id="glwrap">
@@ -281,10 +271,6 @@
         <div id="markB" class="marker back" aria-hidden="true">B</div>
       </section>
       <aside class="panel side">
-        <div class="card" id="cardEditor">
-          <b>Minecraft 3D Skin Editor</b>
-          <div class="hint">No sign-up. Free. No Adverts.</div>
-        </div>
         <div class="card" id="cardSwatches">
           <b>Quick colours</b>
           <div id="swatches" class="row" style="flex-wrap:wrap"></div>
@@ -1126,10 +1112,8 @@
     })();
 
     // ===== Responsive card placement =====
-    const pre = document.getElementById('pre');
     const post = document.getElementById('post');
     const asideEl = document.querySelector('aside.side');
-    const cardEditor = document.getElementById('cardEditor');
     const cardSwatches = document.getElementById('cardSwatches');
     const cardSettings = document.getElementById('cardSettings');
     const cardTip = document.getElementById('cardTip');
@@ -1137,12 +1121,10 @@
     function arrangeCards() {
       const isMobile = window.matchMedia('(max-width: 800px)').matches;
       if (isMobile) {
-        pre.appendChild(cardEditor);
         post.appendChild(cardSwatches);
         post.appendChild(cardSettings);
         post.appendChild(cardTip);
       } else {
-        asideEl.appendChild(cardEditor);
         asideEl.appendChild(cardSwatches);
         asideEl.appendChild(cardSettings);
         asideEl.appendChild(cardTip);
