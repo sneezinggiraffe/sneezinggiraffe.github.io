@@ -215,7 +215,9 @@
     .marker.front { background: #14532d; border-color: #16a34a; }
     .marker.back { background: #3f1d34; border-color: #be185d; }
 
-    @media (max-width: 900px) {
+    @media (max-width: 800px) {
+      .app { grid-template-rows: auto auto 1fr auto; }  /* ensure stage is the grow row */
+
       .stage {
         grid-template-columns: 1fr;
       }
@@ -223,9 +225,26 @@
       aside.side { display: none; }
       #pre { display: grid; grid-template-columns: 1fr 3fr; gap: 5px; }
       #post { display: grid; gap: 5px; }
+
+      /* Compact the title card on small screens */
+      #cardEditor { padding: 6px 8px; }
+      #cardEditor b { font-size: 14px; }
+      #cardEditor .hint { display: none; }
     }
+    #swatches { justify-content: center; }
   </style>
 </head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=g-hbnldj6h00"></script>
+<script>
+  window.datalayer = window.datalayer || [];
+  function gtag(){datalayer.push(arguments);}
+  gtag('js', new date());
+
+  gtag('config', 'g-hbnldj6h00');
+</script>
+
 <body>
   <div class="app">
     <!-- Top toolbar -->
@@ -234,18 +253,20 @@
         <button class="btn active" data-tool="pencil" title="Draw (D)">✏️ Draw</button>
         <button class="btn" data-tool="eraser" title="Erase (E)">🧽 Erase</button>
         <button class="btn" data-tool="fill" title="Fill (F)">🪣 Fill</button>
-        <button class="btn" data-tool="picker" title="Pick (I)">🎯 Pick</button>
       </div>
-      <div class="row">
+      <div class="row" id="colorBox">
         <span class="kicker">Colour</span><input type="color" id="color" value="#ff0000">
+        <button class="btn" id="pipette" title="Pick colour (I)">🎯</button>
         <span class="kicker">Brush</span><input type="range" id="brush" min="1" max="10" step="1" value="1"><span id="brushVal" class="kicker">1 px</span>
       </div>
       <div class="spacer"></div>
-      <button class="btn" id="undo">↩️ Undo</button>
-      <button class="btn" id="redo">↪️ Redo</button>
-      <button class="btn" id="open">📂 Open</button>
-      <input id="file" class="file" type="file" accept="image/png">
-      <button class="btn" id="save">💾 Save</button>
+      <div class="row" id="actions">
+        <button class="btn" id="undo">↩️ Undo</button>
+        <button class="btn" id="redo">↪️ Redo</button>
+        <button class="btn" id="open">📂 Open</button>
+        <input id="file" class="file" type="file" accept="image/png">
+        <button class="btn" id="save">💾 Save</button>
+      </div>
     </div>
 
     <!-- Mobile-only top cards placeholder -->
@@ -312,6 +333,38 @@
       sctx.putImageData(img, 0, 0);
       texNeedsUpload = true;
     }
+
+    const LS_KEY = 'mc-skin-v1';
+    let dirty = false;
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(LS_KEY, skin.toDataURL('image/png'));
+      } catch (e) {}
+    }
+
+    function loadFromDataURL(url) {
+      const img = new Image();
+      img.onload = () => {
+        snapshot();
+        sctx.clearRect(0, 0, 64, 64);
+        if (img.width === 64 && (img.height === 64 || img.height === 32)) {
+          sctx.drawImage(img, 0, 0);
+        } else {
+          sctx.drawImage(img, 0, 0, 64, 64);
+        }
+        texNeedsUpload = true;
+        dirty = false;
+      };
+      img.src = url;
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
 
     // Painting helpers
     const colorEl = document.getElementById('color');
@@ -410,16 +463,34 @@
     // ====== UI wires ======
     let tool = 'pencil';
     const tools = document.getElementById('tools');
+    const pipette = document.getElementById('pipette');
+    let pickerMode = false;
 
     tools.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-tool]');
       if (!b) return;
       tool = b.dataset.tool;
       [...tools.children].forEach((x) => x.classList.toggle('active', x === b));
+      pickerMode = false;
+      pipette.classList.remove('active');
     });
 
-    document.getElementById('undo').onclick = () => restore(undoStack, redoStack);
-    document.getElementById('redo').onclick = () => restore(redoStack, undoStack);
+    pipette.addEventListener('click', () => {
+      pickerMode = !pickerMode;
+      pipette.classList.toggle('active', pickerMode);
+      tool = pickerMode ? 'picker' : ([...tools.children].find(x => x.classList.contains('active'))?.dataset.tool || 'pencil');
+    });
+
+    document.getElementById('undo').onclick = () => {
+      restore(undoStack, redoStack);
+      dirty = true;
+      saveLocal();
+    };
+    document.getElementById('redo').onclick = () => {
+      restore(redoStack, undoStack);
+      dirty = true;
+      saveLocal();
+    };
 
     const fileIn = document.getElementById('file');
     document.getElementById('open').onclick = () => fileIn.click();
@@ -465,6 +536,8 @@
             sctx.drawImage(img, 0, 0, 64, 64);
           }
           texNeedsUpload = true;
+          dirty = false;
+          saveLocal();
         };
         img.src = r.result;
       };
@@ -477,6 +550,7 @@
       a.download = 'skin.png';
       a.href = skin.toDataURL('image/png');
       a.click();
+      dirty = false;
     };
 
 
@@ -917,8 +991,7 @@
         if (tool === 'picker') {
           const [px, py] = uvToPixel(hit.uv[0], hit.uv[1]);
           const [r, g, b, a] = getPixel(px, py);
-          colorEl.value =
-            '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+          colorEl.value = '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
           return;
         }
 
@@ -926,10 +999,13 @@
         if (tool === 'fill') {
           const [px, py] = uvToPixel(hit.uv[0], hit.uv[1]);
           floodFill(px, py);
+          dirty = true;
+          saveLocal();
           return;
         }
 
         painting = true;
+        dirty = true;
         paintFromUV(hit.uv);
       } else {
         rotating = true;
@@ -964,7 +1040,12 @@
 
     function onUp() {
       rotating = false;
-      painting = false;
+      if (painting) {
+        painting = false;
+        saveLocal();
+      } else {
+        painting = false;
+      }
     }
 
     glc.addEventListener('mousedown', onDown);
@@ -1021,6 +1102,12 @@
 
     // Auto-load default Steve skin on startup
     (function loadDefaultSkin() {
+      const cached = localStorage.getItem(LS_KEY);
+      if (cached) {
+        loadFromDataURL(cached);
+        return;
+      }
+
       const img = new Image();
       img.onload = () => {
         snapshot();
@@ -1031,6 +1118,8 @@
           sctx.drawImage(img, 0, 0, 64, 64);
         }
         texNeedsUpload = true;
+        dirty = false;
+        saveLocal();
       };
       img.onerror = () => {};
       img.src = 'skin-steve.png';
@@ -1046,10 +1135,10 @@
     const cardTip = document.getElementById('cardTip');
 
     function arrangeCards() {
-      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+      const isMobile = window.matchMedia('(max-width: 800px)').matches;
       if (isMobile) {
         pre.appendChild(cardEditor);
-        pre.appendChild(cardSwatches);
+        post.appendChild(cardSwatches);
         post.appendChild(cardSettings);
         post.appendChild(cardTip);
       } else {
