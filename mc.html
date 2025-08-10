@@ -3,8 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Minecraft 3D Skin Editor</title>
+  <title>Free Minecraft Skin Editor (3D) — Online Skin Creator</title>
   <link rel="icon" href="images/mc-favicon.svg" type="image/svg+xml" sizes="any">
+  <meta name="description" content="Free Minecraft skin editor and creator (3D) in your browser. No ads. Edit Steve/Alex skins, paint, erase, undo/redo, 3D preview, download PNG.">
+  <link rel="canonical" href="https://sneezinggiraffe.co.uk/mc.html">
+  <meta name="robots" content="index,follow">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Minecraft 3D Skin Editor">
+  <meta property="og:url" content="https://sneezinggiraffe.co.uk/mc.html">
+  <meta property="og:title" content="Free Minecraft Skin Editor (3D) — Online Skin Creator">
+  <meta property="og:description" content="Free, ad-free Minecraft skin editor with 3D preview. Edit Steve/Alex skins and download PNG.">
+  <meta property="og:image" content="https://sneezinggiraffe.co.uk/images/mc-og.png">
+  <meta property="og:image:secure_url" content="https://sneezinggiraffe.co.uk/images/mc-og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Minecraft 3D Skin Editor">
+  <meta property="og:locale" content="en_GB">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Free Minecraft Skin Editor (3D) — Online Skin Creator">
+  <meta name="twitter:description" content="Free, ad-free Minecraft skin editor with 3D preview. Edit Steve/Alex skins and download PNG.">
+  <meta name="twitter:image" content="https://sneezinggiraffe.co.uk/images/mc-og.png">
+  <meta name="twitter:image:alt" content="Minecraft 3D Skin Editor">
+  <meta name="theme-color" content="#0b1020">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Sneezing Giraffe",
+    "url": "https://sneezinggiraffe.co.uk/",
+    "logo": "https://sneezinggiraffe.co.uk/images/site-favicon.svg",
+    "sameAs": ["https://www.linkedin.com/in/moogman/"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Minecraft Skin Editor (3D)",
+    "alternateName": "Minecraft Skin Creator",
+    "url": "https://sneezinggiraffe.co.uk/mc.html",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Web",
+    "description": "Free, ad-free Minecraft skin editor and creator with 3D preview. Edit Steve/Alex skins and download as PNG.",
+    "image": "https://sneezinggiraffe.co.uk/images/mc-og.png",
+    "screenshot": "https://sneezinggiraffe.co.uk/images/mc-og.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@type": "Organization", "name": "Sneezing Giraffe", "url": "https://sneezinggiraffe.co.uk/" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Is this Minecraft skin editor free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, it is 100% free and ad-free." } },
+      { "@type": "Question", "name": "Does it work on mobile?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Use drag to rotate and pinch/scroll to zoom." } },
+      { "@type": "Question", "name": "How do I download my skin?", "acceptedAnswer": { "@type": "Answer", "text": "Click Save to download a PNG, then upload it to your Minecraft account." } }
+    ]
+  }
+  </script>
   <style>
     :root {
       --bg: #0b1020;
@@ -247,6 +307,16 @@
     .menu .btn:hover { background: var(--btn2); }
     .menu[hidden] { display: none; }
 
+    .visually-hidden {
+      position: absolute;
+      clip: rect(1px,1px,1px,1px);
+      clip-path: inset(50%);
+      height: 1px;
+      width: 1px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
     @media (max-width: 800px) {
       .app { grid-template-rows: auto 1fr auto; }  /* ensure stage is the grow row */
 
@@ -283,6 +353,7 @@ gtag('config', 'G-HBNLDJ6H00');
 </script>
 
 <body>
+  <h1 class="visually-hidden">Free Minecraft Skin Editor (3D) — Online Skin Creator</h1>
   <div class="app">
     <!-- Top toolbar -->
     <div class="toolbar">
@@ -341,6 +412,12 @@ gtag('config', 'G-HBNLDJ6H00');
     <!-- Mobile-only bottom cards placeholder -->
     <div id="post" class="side"></div>
   </div>
+
+  <section class="panel" id="about-skin-editor" style="padding:10px">
+    <h2 style="margin-top:0">About this Minecraft Skin Editor</h2>
+    <p>This free Minecraft skin editor and creator runs in your browser with a live 3D preview. Edit Steve or Alex skins, paint and erase with adjustable brushes, undo/redo changes, and download a PNG ready for Java or Bedrock.</p>
+    <p>It’s ad‑free and works on desktop and mobile. Learn more on the <a href="/">Sneezing Giraffe</a> homepage.</p>
+  </section>
 
   <script>
     // ====== Texture (64×64) stored in 2D canvas ======
