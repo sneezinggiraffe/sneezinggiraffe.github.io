@@ -80,6 +80,14 @@
       background: #3d5067;
     }
 
+    /* Donate row defaults: stack on larger screens */
+    #cardTip {
+      display: block;
+      text-align: center;
+    }
+    #cardTip > div:last-child { margin-top: 8px !important; }
+    #cardTip a.btn { white-space: nowrap; }
+
     .btn.active {
       outline: 2px solid var(--blue);
     }
@@ -214,8 +222,33 @@
     .marker.front { background: #14532d; border-color: #16a34a; }
     .marker.back { background: #3f1d34; border-color: #be185d; }
 
+    /* Dropdown for Open */
+    .dropdown { position: relative; display: inline-block; }
+    .menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: var(--panel);
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+      padding: 4px;
+      z-index: 1000;
+      min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .menu .btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      padding: 8px 10px;
+    }
+    .menu .btn:hover { background: var(--btn2); }
+    .menu[hidden] { display: none; }
+
     @media (max-width: 800px) {
-      .app { grid-template-rows: auto auto 1fr auto; }  /* ensure stage is the grow row */
+      .app { grid-template-rows: auto 1fr auto; }  /* ensure stage is the grow row */
 
       .stage {
         grid-template-columns: 1fr;
@@ -223,7 +256,19 @@
       /* Hide the original sidebar; use #post instead */
       aside.side { display: none; }
       #post { display: grid; gap: 5px; }
+
+      /* Side-by-side donate on small screens */
+      #cardTip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 8px;
+        text-align: left;
+      }
+      #cardTip > div { margin-top: 0 !important; }
+      #cardTip > div:last-child { justify-self: end; }
     }
+
     #swatches { justify-content: center; }
   </style>
 </head>
@@ -234,7 +279,6 @@
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-
 gtag('config', 'G-HBNLDJ6H00');
 </script>
 
@@ -245,7 +289,6 @@ gtag('config', 'G-HBNLDJ6H00');
       <div class="row" id="tools">
         <button class="btn active" data-tool="pencil" title="Draw (D)">✏️ Draw</button>
         <button class="btn" data-tool="eraser" title="Erase (E)">🧽 Erase</button>
-        <button class="btn" data-tool="fill" title="Fill (F)">🪣 Fill</button>
       </div>
       <div class="row" id="colorBox">
         <span class="kicker">Colour</span><input type="color" id="color" value="#ff0000">
@@ -256,7 +299,14 @@ gtag('config', 'G-HBNLDJ6H00');
       <div class="row" id="actions">
         <button class="btn" id="undo">↩️ Undo</button>
         <button class="btn" id="redo">↪️ Redo</button>
-        <button class="btn" id="open">📂 Open</button>
+        <div class="dropdown" id="openWrap">
+          <button class="btn" id="open">📂 Open ▾</button>
+          <div class="menu" id="openMenu" hidden>
+            <button class="btn" id="openFileBtn">Open file…</button>
+            <button class="btn" id="openSteveBtn">Steve</button>
+            <button class="btn" id="openAlexBtn">Alex</button>
+          </div>
+        </div>
         <input id="file" class="file" type="file" accept="image/png">
         <button class="btn" id="save">💾 Save</button>
       </div>
@@ -266,7 +316,7 @@ gtag('config', 'G-HBNLDJ6H00');
     <div class="stage">
       <section class="panel" id="glwrap">
         <canvas id="gl" aria-label="3D character canvas" role="img"></canvas>
-        <div class="hud">Drag background to rotate • Scroll to zoom • Click body to paint</div>
+        <div class="hud">Drag to rotate • Pinch or scroll to zoom • Tap body to paint</div>
         <div id="markF" class="marker front" aria-hidden="true">F</div>
         <div id="markB" class="marker back" aria-hidden="true">B</div>
       </section>
@@ -277,11 +327,11 @@ gtag('config', 'G-HBNLDJ6H00');
         </div>
         <div class="card" id="cardSettings">
           <b>Settings</b>
-          <div class="hint">Model: Steve (4px arms). Uses standard 64×64 (1.8+). Overlay layers not shown (coming soon).</div>
+          <div class="hint">Model: Steve (4px arms). Uses standard 64×64 (1.8+).</div>
         </div>
         <div class="pill" id="cardTip">
           <div class="hint">This app is completely ad-free and free! Please consider donating to help keep it running</div>
-          <div style="margin-top:8px">
+          <div>
             <a href="https://pay.sumup.com/b2c/Q3KE3VI6" class="btn" target="_blank" rel="noopener">❤️ Donate</a>
           </div>
         </div>
@@ -345,6 +395,18 @@ gtag('config', 'G-HBNLDJ6H00');
       img.src = url;
     }
 
+    function loadFromURL(src) {
+      fetch(src)
+        .then(r => r.blob())
+        .then(blob => new Promise(res => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result);
+          fr.readAsDataURL(blob);
+        }))
+        .then(dataURL => loadFromDataURL(dataURL))
+        .catch(() => {});
+    }
+
     window.addEventListener('beforeunload', (e) => {
       if (dirty) {
         e.preventDefault();
@@ -406,46 +468,6 @@ gtag('config', 'G-HBNLDJ6H00');
       texNeedsUpload = true;
     }
 
-    function floodFill(px, py) {
-      const target = getPixel(px, py);
-      const repl = tool === 'eraser' ? [0, 0, 0, 0] : hexToRgba(colorEl.value, 1);
-      if (rgbaEq(target, repl)) return;
-
-      const img = sctx.getImageData(0, 0, 64, 64);
-      const data = img.data;
-
-      const match = (x, y) => {
-        const i = (y * 64 + x) * 4;
-        return (
-          data[i] === target[0] &&
-          data[i + 1] === target[1] &&
-          data[i + 2] === target[2] &&
-          data[i + 3] === target[3]
-        );
-      };
-
-      const put = (x, y) => {
-        const i = (y * 64 + x) * 4;
-        data[i] = repl[0];
-        data[i + 1] = repl[1];
-        data[i + 2] = repl[2];
-        data[i + 3] = repl[3];
-      };
-
-      const stack = [[px, py]];
-
-      while (stack.length) {
-        const [x, y] = stack.pop();
-        if (x < 0 || y < 0 || x >= 64 || y >= 64) continue;
-        if (!match(x, y)) continue;
-        put(x, y);
-        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-      }
-
-      sctx.putImageData(img, 0, 0);
-      texNeedsUpload = true;
-    }
-
     // ====== UI wires ======
     let tool = 'pencil';
     const tools = document.getElementById('tools');
@@ -479,7 +501,34 @@ gtag('config', 'G-HBNLDJ6H00');
     };
 
     const fileIn = document.getElementById('file');
-    document.getElementById('open').onclick = () => fileIn.click();
+
+    const openBtn = document.getElementById('open');
+    const openMenu = document.getElementById('openMenu');
+    const openWrap = document.getElementById('openWrap');
+
+    openBtn.addEventListener('click', (e) => {
+      openMenu.hidden = !openMenu.hidden;
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', () => {
+      openMenu.hidden = true;
+    });
+
+    document.getElementById('openFileBtn').addEventListener('click', () => {
+      openMenu.hidden = true;
+      fileIn.click();
+    });
+
+    document.getElementById('openSteveBtn').addEventListener('click', () => {
+      openMenu.hidden = true;
+      loadFromURL('skin-steve.png');
+    });
+
+    document.getElementById('openAlexBtn').addEventListener('click', () => {
+      openMenu.hidden = true;
+      loadFromURL('skin-alex.png');
+    });
 
     fileIn.onchange = () => {
       const f = fileIn.files[0];
@@ -867,6 +916,9 @@ gtag('config', 'G-HBNLDJ6H00');
     let dist = 42;
     const target = [0, 18, 0];
 
+    let pinching = false;
+    let pinchLast = 0;
+
     function camDir() {
       const cy = Math.cos(pitch), sy = Math.sin(pitch);
       return [Math.sin(yaw) * cy, sy, Math.cos(yaw) * cy];
@@ -966,6 +1018,17 @@ gtag('config', 'G-HBNLDJ6H00');
     let lastY = 0;
 
     function onDown(e) {
+      // Two-finger pinch start
+      if (e.touches && e.touches.length === 2) {
+        const t0 = e.touches[0], t1 = e.touches[1];
+        pinchLast = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+        pinching = true;
+        painting = false;
+        rotating = false;
+        e.preventDefault();
+        return;
+      }
+
       const p = e.touches ? e.touches[0] : e;
       const rect = glc.getBoundingClientRect();
       const x = (p.clientX - rect.left) * (glc.width / rect.width);
@@ -980,16 +1043,7 @@ gtag('config', 'G-HBNLDJ6H00');
           colorEl.value = '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
           return;
         }
-
         snapshot();
-        if (tool === 'fill') {
-          const [px, py] = uvToPixel(hit.uv[0], hit.uv[1]);
-          floodFill(px, py);
-          dirty = true;
-          saveLocal();
-          return;
-        }
-
         painting = true;
         dirty = true;
         paintFromUV(hit.uv);
@@ -1001,6 +1055,27 @@ gtag('config', 'G-HBNLDJ6H00');
     }
 
     function onMove(e) {
+      // Handle pinch if two touches present (even if started mid-gesture)
+      if (e.touches && e.touches.length === 2) {
+        const t0 = e.touches[0], t1 = e.touches[1];
+        const d = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+        if (!pinching) {
+          pinching = true;
+          painting = false;
+          rotating = false;
+          pinchLast = d;
+        } else {
+          const scale = d / pinchLast;
+          if (scale && isFinite(scale) && scale > 0) {
+            dist *= 1 / scale; // pinch out => zoom in
+            dist = Math.max(20, Math.min(90, dist));
+            pinchLast = d;
+          }
+        }
+        e.preventDefault();
+        return;
+      }
+
       // Only intercept when actively interacting with the 3D view
       if (!painting && !rotating) return;
 
@@ -1026,6 +1101,7 @@ gtag('config', 'G-HBNLDJ6H00');
 
     function onUp() {
       rotating = false;
+      pinching = false;
       if (painting) {
         painting = false;
         saveLocal();
