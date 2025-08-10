@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Minecraft 3D Skin Editor</title>
+  <link rel="icon" href="images/mc-favicon.svg" type="image/svg+xml" sizes="any">
   <style>
     :root {
       --bg: #0b1020;
@@ -61,10 +62,22 @@
       font-weight: 700;
       cursor: pointer;
       user-select: none;
+      text-decoration: none;
+      display: inline-block;
     }
 
     .btn:hover {
       background: var(--btn2);
+    }
+
+    /* Make donate button in Tip section a touch more prominent */
+    #cardTip .btn {
+      background: var(--btn2);
+      border-color: #2a3a4d;
+    }
+
+    #cardTip .btn:hover {
+      background: #3d5067;
     }
 
     .btn.active {
@@ -259,7 +272,12 @@
           <b>Settings</b>
           <div class="hint">Model: Steve (4px arms). Uses standard 64×64 (1.8+). Overlay layers not shown (coming soon).</div>
         </div>
-        <div class="pill hint" id="cardTip">Tip: Works offline. Add to Home Screen on mobile for a mini‑app.</div>
+        <div class="pill" id="cardTip">
+          <div class="hint">This app is completely ad-free and free! Please consider donating to help keep it running</div>
+          <div style="margin-top:8px">
+            <a href="https://pay.sumup.com/b2c/Q3KE3VI6" class="btn" target="_blank" rel="noopener">❤️ Donate</a>
+          </div>
+        </div>
       </aside>
     </div>
 
@@ -460,6 +478,7 @@
       a.href = skin.toDataURL('image/png');
       a.click();
     };
+
 
     // Swatches
     const SW = [

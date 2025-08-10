@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="skinShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e9c39f"/>
+      <stop offset="100%" stop-color="#d6b18d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Minecraft-like face tile -->
+  <rect x="6" y="8" width="52" height="48" rx="6" fill="#0b1020" opacity="0.25"/>
+  <rect x="8" y="10" width="48" height="44" rx="4" fill="url(#skinShade)"/>
+  <rect x="8" y="10" width="48" height="14" rx="4" fill="#5e4418"/>
+
+  <!-- Eyes -->
+  <rect x="20" y="30" width="8" height="8" fill="#1e293b"/>
+  <rect x="36" y="30" width="8" height="8" fill="#1e293b"/>
+
+  <!-- Mouth -->
+  <rect x="26" y="44" width="12" height="4" fill="#7f5539"/>
+
+  <!-- Pencil overlay (editor cue) -->
+  <g transform="translate(0,0)">
+    <!-- Body -->
+    <polygon points="10,56 14,60 40,34 36,30" fill="#fbbf24"/>
+    <!-- Ferrule -->
+    <polygon points="10,56 12,58 26,44 24,42" fill="#9ca3af"/>
+    <!-- Eraser -->
+    <polygon points="8,58 12,62 14,60 10,56" fill="#f87171"/>
+    <!-- Tip (wood) -->
+    <polygon points="36,30 40,34 46,28 42,26" fill="#d4a373"/>
+    <!-- Tip (graphite) -->
+    <polygon points="44,24 46,28 42,26" fill="#111827"/>
+  </g>
+</svg>
+
+
