@@ -1118,6 +1118,9 @@ gtag('config', 'G-HBNLDJ6H00');
           const [px, py] = uvToPixel(hit.uv[0], hit.uv[1]);
           const [r, g, b, a] = getPixel(px, py);
           colorEl.value = '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+          pickerMode = false;
+          pipette.classList.remove('active');
+          tool = ([...tools.children].find(x => x.classList.contains('active'))?.dataset.tool || 'pencil');
           return;
         }
         snapshot();
