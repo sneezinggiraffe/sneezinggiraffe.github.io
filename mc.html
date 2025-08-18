@@ -374,12 +374,14 @@ gtag('config', 'G-HBNLDJ6H00');
           <button class="btn" id="open">📂 Open ▾</button>
           <div class="menu" id="openMenu" hidden>
             <button class="btn" id="openFileBtn">Open file…</button>
+            <button class="btn" id="openEmptyBtn">Empty</button>
             <button class="btn" id="openSteveBtn">Steve</button>
             <button class="btn" id="openAlexBtn">Alex</button>
           </div>
         </div>
         <input id="file" class="file" type="file" accept="image/png">
         <button class="btn" id="save">💾 Save</button>
+        <button class="btn" id="fsBtn" title="Toggle fullscreen">⛶</button>
       </div>
     </div>
 
@@ -607,6 +609,15 @@ gtag('config', 'G-HBNLDJ6H00');
       loadFromURL('skin-alex.png');
     });
 
+    document.getElementById('openEmptyBtn').addEventListener('click', () => {
+      openMenu.hidden = true;
+      snapshot();
+      sctx.clearRect(0, 0, 64, 64);
+      texNeedsUpload = true;
+      dirty = false;
+      saveLocal();
+    });
+
     fileIn.onchange = () => {
       const f = fileIn.files[0];
       if (!f) return;
@@ -665,6 +676,31 @@ gtag('config', 'G-HBNLDJ6H00');
       dirty = false;
     };
 
+
+    // Fullscreen toggle (Chrome/mac + Android)
+    const fsBtn = document.getElementById('fsBtn');
+    const fsTarget = document.querySelector('.app');
+
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    function requestFS(el) {
+      const opts = { navigationUI: 'hide' };
+      if (el.requestFullscreen) return el.requestFullscreen(opts).catch(() => {});
+      if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+    }
+
+    function exitFS() {
+      if (document.exitFullscreen) return document.exitFullscreen().catch(() => {});
+      if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    }
+
+    fsBtn.addEventListener('click', () => {
+      if (isFullscreen()) exitFS(); else requestFS(fsTarget);
+    });
+    document.addEventListener('fullscreenchange', () => setTimeout(fitGL, 50));
+    document.addEventListener('webkitfullscreenchange', () => setTimeout(fitGL, 50));
 
     // Swatches
     const SW = [
