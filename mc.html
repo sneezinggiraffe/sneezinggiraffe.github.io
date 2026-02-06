@@ -3,16 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Free Minecraft Skin Editor (3D) — Online Skin Creator</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HBNLDJ6H00"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-HBNLDJ6H00');
+  </script>
+  <title>Free Minecraft Skin Editor (3D) - Online Skin Creator</title>
   <link rel="icon" href="images/mc-favicon.svg" type="image/svg+xml" sizes="any">
-  <meta name="description" content="Free Minecraft skin editor and creator (3D) in your browser. No ads. Edit Steve/Alex skins, paint, erase, undo/redo, 3D preview, download PNG.">
+  <meta name="description" content="100% free and ad-free Minecraft skin editor in your browser with 3D preview. Edit Steve and Alex skins, undo/redo, and download standard PNG files.">
   <link rel="canonical" href="https://sneezinggiraffe.co.uk/mc.html">
   <meta name="robots" content="index,follow">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Minecraft 3D Skin Editor">
   <meta property="og:url" content="https://sneezinggiraffe.co.uk/mc.html">
-  <meta property="og:title" content="Free Minecraft Skin Editor (3D) — Online Skin Creator">
+  <meta property="og:title" content="Free Minecraft Skin Editor (3D) - Online Skin Creator">
   <meta property="og:description" content="Free, ad-free Minecraft skin editor with 3D preview. Edit Steve/Alex skins and download PNG.">
   <meta property="og:image" content="https://sneezinggiraffe.co.uk/images/mc-og.png">
   <meta property="og:image:secure_url" content="https://sneezinggiraffe.co.uk/images/mc-og.png">
@@ -22,7 +30,7 @@
   <meta property="og:locale" content="en_GB">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Free Minecraft Skin Editor (3D) — Online Skin Creator">
+  <meta name="twitter:title" content="Free Minecraft Skin Editor (3D) - Online Skin Creator">
   <meta name="twitter:description" content="Free, ad-free Minecraft skin editor with 3D preview. Edit Steve/Alex skins and download PNG.">
   <meta name="twitter:image" content="https://sneezinggiraffe.co.uk/images/mc-og.png">
   <meta name="twitter:image:alt" content="Minecraft 3D Skin Editor">
@@ -61,7 +69,10 @@
     "mainEntity": [
       { "@type": "Question", "name": "Is this Minecraft skin editor free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, it is 100% free and ad-free." } },
       { "@type": "Question", "name": "Does it work on mobile?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Use drag to rotate and pinch/scroll to zoom." } },
-      { "@type": "Question", "name": "How do I download my skin?", "acceptedAnswer": { "@type": "Answer", "text": "Click Save to download a PNG, then upload it to your Minecraft account." } }
+      { "@type": "Question", "name": "How do I download my skin?", "acceptedAnswer": { "@type": "Answer", "text": "Click Save to download a PNG, then upload it to your Minecraft account." } },
+      { "@type": "Question", "name": "Does this Minecraft skin editor have ads?", "acceptedAnswer": { "@type": "Answer", "text": "No. This skin editor is completely ad-free and always will be." } },
+      { "@type": "Question", "name": "What skin format does this editor use?", "acceptedAnswer": { "@type": "Answer", "text": "It uses the standard 64x64 PNG format compatible with Minecraft Java Edition 1.8+ and Bedrock Edition." } },
+      { "@type": "Question", "name": "Do I need to install anything?", "acceptedAnswer": { "@type": "Answer", "text": "No. It runs entirely in your browser with no downloads, sign-ups, or plugins required." } }
     ]
   }
   </script>
@@ -147,6 +158,25 @@
     }
     #cardTip > div:last-child { margin-top: 8px !important; }
     #cardTip a.btn { white-space: nowrap; }
+
+    #cardFaq {
+      text-align: left;
+    }
+    #cardFaq details {
+      text-align: left;
+    }
+    #cardFaq summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+    #cardFaq .faq-item {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #b9c1d1;
+    }
+    #cardFaq .faq-item b {
+      color: var(--text);
+    }
 
     .btn.active {
       outline: 2px solid var(--blue);
@@ -343,17 +373,11 @@
   </style>
 </head>
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HBNLDJ6H00"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-HBNLDJ6H00');
-</script>
-
 <body>
-  <h1 class="visually-hidden">Free Minecraft Skin Editor (3D) — Online Skin Creator</h1>
+  <h1 class="visually-hidden">Free Minecraft Skin Editor (3D) - Online Skin Creator</h1>
+  <noscript>
+    <p style="padding:2rem;color:#e5e7eb;text-align:center">This free Minecraft skin editor requires JavaScript to run. Please enable JavaScript in your browser to create and edit Minecraft skins in 3D.</p>
+  </noscript>
   <div class="app">
     <!-- Top toolbar -->
     <div class="toolbar">
@@ -402,6 +426,17 @@ gtag('config', 'G-HBNLDJ6H00');
           <b>Settings</b>
           <div class="hint">Model: Steve (4px arms). Uses standard 64×64 (1.8+).</div>
         </div>
+        <div class="card" id="cardFaq">
+          <details>
+            <summary>FAQ</summary>
+            <div class="faq-item"><b>Is this Minecraft skin editor free?</b><br>Yes, it is 100% free and ad-free.</div>
+            <div class="faq-item"><b>Does it work on mobile?</b><br>Yes. Use drag to rotate and pinch/scroll to zoom.</div>
+            <div class="faq-item"><b>How do I download my skin?</b><br>Click Save to download a PNG, then upload it to your Minecraft account.</div>
+            <div class="faq-item"><b>Does this Minecraft skin editor have ads?</b><br>No. This skin editor is completely ad-free and always will be.</div>
+            <div class="faq-item"><b>What skin format does this editor use?</b><br>It uses the standard 64x64 PNG format compatible with Minecraft Java Edition 1.8+ and Bedrock Edition.</div>
+            <div class="faq-item"><b>Do I need to install anything?</b><br>No. It runs entirely in your browser with no downloads, sign-ups, or plugins required.</div>
+          </details>
+        </div>
         <div class="pill" id="cardTip">
           <div class="hint">This app is completely ad-free and free! Please consider donating to help keep it running</div>
           <div>
@@ -415,11 +450,17 @@ gtag('config', 'G-HBNLDJ6H00');
     <div id="post" class="side"></div>
   </div>
 
-  <section class="panel" id="about-skin-editor" style="padding:10px">
-    <h2 style="margin-top:0">About this Minecraft Skin Editor</h2>
-    <p>This free Minecraft skin editor and creator runs in your browser with a live 3D preview. Edit Steve or Alex skins, paint and erase with adjustable brushes, undo/redo changes, and download a PNG ready for Java or Bedrock.</p>
-    <p>It’s ad‑free and works on desktop and mobile. Learn more on the <a href="/">Sneezing Giraffe</a> homepage.</p>
-  </section>
+  <footer style="max-width:720px;margin:1.5rem auto;padding:0 1rem;color:var(--muted);font-size:.85rem;line-height:1.5">
+    <h2 style="font-size:1rem;color:var(--text);margin:0 0 .5rem">Free Minecraft Skin Editor - No Ads</h2>
+    <p>Create custom Minecraft skins directly in your browser with this free, ad-free 3D skin editor and skin maker. Paint on a fully rotatable 3D model, pick colours, adjust brush size, and download your finished skin as a standard 64x64 PNG ready to upload to your Minecraft account. Works on desktop and mobile - no sign-up or installation required.</p>
+    <ul style="padding-left:1.2rem;margin:.5rem 0">
+      <li>3D preview with drag-to-rotate and pinch-to-zoom</li>
+      <li>Draw, erase, and colour-pick tools</li>
+      <li>Open Steve or Alex templates, or start from a blank skin</li>
+      <li>Undo/redo support</li>
+      <li>Save as PNG - compatible with Minecraft Java and Bedrock (1.8+)</li>
+    </ul>
+  </footer>
 
   <script>
     // ====== Texture (64×64) stored in 2D canvas ======
@@ -472,6 +513,10 @@ gtag('config', 'G-HBNLDJ6H00');
         dirty = false;
       };
       img.src = url;
+    }
+
+    function isImageDataURL(value) {
+      return typeof value === 'string' && value.startsWith('data:image/');
     }
 
     function loadFromURL(src) {
@@ -668,13 +713,98 @@ gtag('config', 'G-HBNLDJ6H00');
       fileIn.value = '';
     };
 
-    document.getElementById('save').onclick = () => {
-      const a = document.createElement('a');
-      a.download = 'skin.png';
-      a.href = skin.toDataURL('image/png');
-      a.click();
-      dirty = false;
-    };
+    async function canvasToBlob(canvas) {
+      return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    async function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = String(r.result || '');
+          resolve(s.split(',')[1] || '');
+        };
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+    }
+
+    function isCapacitorNative() {
+      const C = window.Capacitor;
+      if (!C) return false;
+      if (typeof C.isNativePlatform === 'function') return !!C.isNativePlatform();
+      if (typeof C.getPlatform === 'function') return C.getPlatform() !== 'web';
+      if (C.platform) return C.platform !== 'web';
+      return false;
+    }
+
+    async function saveSkin() {
+      const blob = await canvasToBlob(skin);
+
+      // 1) Modern browsers: native Save As dialog
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: 'skin.png',
+            types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          dirty = false;
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') {
+            return;
+          }
+          // fall through to other strategies
+        }
+      }
+
+      // 2) Capacitor native app: write via Filesystem
+      const C = window.Capacitor;
+      const Filesystem = C && (C.Filesystem || (C.Plugins && C.Plugins.Filesystem));
+      if (isCapacitorNative() && Filesystem) {
+        try {
+          const name = (prompt('File name', 'skin.png') || 'skin.png').replace(/[\/\\]/g, '');
+          const base64 = await blobToBase64(blob);
+          if (Filesystem.requestPermissions) {
+            try { await Filesystem.requestPermissions(); } catch (e) {}
+          }
+          await Filesystem.writeFile({
+            path: name,
+            data: base64,
+            directory: 'DOCUMENTS',
+            recursive: true
+          });
+          alert('Saved to Documents as ' + name);
+          dirty = false;
+          return;
+        } catch (e) {
+          // fall through to anchor download
+        }
+      }
+
+      // 3) Fallback: Blob URL + anchor download
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'skin.png';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+          a.remove();
+        }, 0);
+        dirty = false;
+        return;
+      } catch (e) {}
+
+      alert('Save failed. Please try again or update the app.');
+    }
+
+    document.getElementById('save').onclick = () => { saveSkin(); };
 
 
     // Fullscreen toggle (Chrome/mac + Android)
@@ -745,6 +875,7 @@ gtag('config', 'G-HBNLDJ6H00');
     }
 
     function fitGL() {
+      if (!gl) return;
       const dpr = window.devicePixelRatio || 1;
       const w = Math.max(1, glc.clientWidth * dpr);
       const h = Math.max(1, glc.clientHeight * dpr);
@@ -763,6 +894,7 @@ gtag('config', 'G-HBNLDJ6H00');
     const FSH = `precision mediump float;varying vec2 v_uv;uniform sampler2D u_tex;void main(){vec4 c=texture2D(u_tex,v_uv); if(c.a==0.0){ c=vec4(0.75,0.75,0.78,1.0);} gl_FragColor=c;} `;
 
     function makeShader(src, type) {
+      if (!gl) return null;
       const s = gl.createShader(type);
       gl.shaderSource(s, src);
       gl.compileShader(s);
@@ -772,25 +904,38 @@ gtag('config', 'G-HBNLDJ6H00');
       return s;
     }
 
-    const prog = gl.createProgram();
-    gl.attachShader(prog, makeShader(VSH, gl.VERTEX_SHADER));
-    gl.attachShader(prog, makeShader(FSH, gl.FRAGMENT_SHADER));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
+    const prog = gl ? gl.createProgram() : null;
+    let locPos = -1;
+    let locUV = -1;
+    let locMVP = null;
+    let locTex = null;
+    if (gl && prog) {
+      const vsh = makeShader(VSH, gl.VERTEX_SHADER);
+      const fsh = makeShader(FSH, gl.FRAGMENT_SHADER);
+      if (vsh && fsh) {
+        gl.attachShader(prog, vsh);
+        gl.attachShader(prog, fsh);
+        gl.linkProgram(prog);
+        gl.useProgram(prog);
+      }
 
-    const locPos = gl.getAttribLocation(prog, 'a_pos');
-    const locUV = gl.getAttribLocation(prog, 'a_uv');
-    const locMVP = gl.getUniformLocation(prog, 'u_mvp');
-    const locTex = gl.getUniformLocation(prog, 'u_tex');
-    gl.uniform1i(locTex, 0);
+      locPos = gl.getAttribLocation(prog, 'a_pos');
+      locUV = gl.getAttribLocation(prog, 'a_uv');
+      locMVP = gl.getUniformLocation(prog, 'u_mvp');
+      locTex = gl.getUniformLocation(prog, 'u_tex');
+      gl.uniform1i(locTex, 0);
+    }
 
     // Texture from canvas
-    const tex = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    const tex = gl ? gl.createTexture() : null;
+    if (gl && tex) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    }
 
     function uploadTex() {
+      if (!gl || !tex) return;
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, skin);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -802,9 +947,9 @@ gtag('config', 'G-HBNLDJ6H00');
     let texNeedsUpload = true;
 
     // Geometry buffers
-    const posBuf = gl.createBuffer();
-    const uvBuf = gl.createBuffer();
-    const idxBuf = gl.createBuffer();
+    const posBuf = gl ? gl.createBuffer() : null;
+    const uvBuf = gl ? gl.createBuffer() : null;
+    const idxBuf = gl ? gl.createBuffer() : null;
 
     let positions = [];
     let uvs = [];
@@ -911,6 +1056,8 @@ gtag('config', 'G-HBNLDJ6H00');
       addBox(4, 12, -2, 8, 24, 2, RECT.larm);
       addBox(-4, 0, -2, 0, 12, 2, RECT.rleg);
       addBox(0, 0, -2, 4, 12, 2, RECT.lleg);
+
+      if (!gl || !posBuf || !uvBuf || !idxBuf) return;
 
       gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
@@ -1251,6 +1398,7 @@ gtag('config', 'G-HBNLDJ6H00');
 
     // Render loop
     function render() {
+      if (!gl || !prog || locMVP === null) return;
       fitGL();
       if (texNeedsUpload) {
         uploadTex();
@@ -1273,7 +1421,9 @@ gtag('config', 'G-HBNLDJ6H00');
       requestAnimationFrame(render);
     }
 
-    requestAnimationFrame(render);
+    if (gl) {
+      requestAnimationFrame(render);
+    }
 
     // First snapshot so Undo works after first stroke
     snapshot();
@@ -1281,26 +1431,14 @@ gtag('config', 'G-HBNLDJ6H00');
     // Auto-load default Steve skin on startup
     (function loadDefaultSkin() {
       const cached = localStorage.getItem(LS_KEY);
-      if (cached) {
+      if (isImageDataURL(cached)) {
         loadFromDataURL(cached);
         return;
       }
-
-      const img = new Image();
-      img.onload = () => {
-        snapshot();
-        sctx.clearRect(0, 0, 64, 64);
-        if (img.width === 64 && (img.height === 64 || img.height === 32)) {
-          sctx.drawImage(img, 0, 0);
-        } else {
-          sctx.drawImage(img, 0, 0, 64, 64);
-        }
-        texNeedsUpload = true;
-        dirty = false;
-        saveLocal();
-      };
-      img.onerror = () => {};
-      img.src = 'skin-steve.png';
+      if (cached) {
+        localStorage.removeItem(LS_KEY);
+      }
+      loadFromURL('skin-steve.png');
     })();
 
     // ===== Responsive card placement =====
@@ -1308,6 +1446,7 @@ gtag('config', 'G-HBNLDJ6H00');
     const asideEl = document.querySelector('aside.side');
     const cardSwatches = document.getElementById('cardSwatches');
     const cardSettings = document.getElementById('cardSettings');
+    const cardFaq = document.getElementById('cardFaq');
     const cardTip = document.getElementById('cardTip');
 
     function arrangeCards() {
@@ -1315,10 +1454,12 @@ gtag('config', 'G-HBNLDJ6H00');
       if (isMobile) {
         post.appendChild(cardSwatches);
         post.appendChild(cardSettings);
+        post.appendChild(cardFaq);
         post.appendChild(cardTip);
       } else {
         asideEl.appendChild(cardSwatches);
         asideEl.appendChild(cardSettings);
+        asideEl.appendChild(cardFaq);
         asideEl.appendChild(cardTip);
       }
     }
