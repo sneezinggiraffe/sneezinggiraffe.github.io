@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>One More Task</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1e293b;--bg4:#334155;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --accent:#06b6d4;--accent2:#0891b2;--green:#10b981;--red:#ef4444;
+  --yellow:#f59e0b;--purple:#8b5cf6;--pink:#ec4899;
+  --cash:#22c55e;--token:#06b6d4;--rep:#f59e0b;--debt:#ef4444;
+  --radius:8px;--shadow:0 2px 8px rgba(0,0,0,.4);
+}
+html{font-size:14px}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+button{cursor:pointer;font-family:inherit;border:none;border-radius:var(--radius);font-size:.85rem;transition:all .15s}
+button:disabled{opacity:.4;cursor:not-allowed}
+
+/* Top resource bar */
+#top-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--bg4);padding:6px 16px;display:none;align-items:center;gap:16px;flex-wrap:wrap;font-size:.82rem}
+#top-bar.visible{display:flex}
+.res{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.res .label{color:var(--text3);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
+.res .val{font-weight:700;font-variant-numeric:tabular-nums}
+.res-cash .val{color:var(--cash)}.res-tokens .val{color:var(--token)}.res-rep .val{color:var(--rep)}.res-debt .val{color:var(--debt)}
+.res-compute .val{color:var(--purple)}.res-stress .val{color:var(--pink)}
+#income-rate{color:var(--green);font-weight:600}
+#expense-rate{color:var(--red);font-weight:600}
+#phase-label{background:var(--accent);color:#000;padding:2px 8px;border-radius:12px;font-weight:700;font-size:.72rem}
+#btn-settings{margin-left:auto}
+
+/* Two-pane game layout */
+#game-container{display:flex;gap:16px;padding:16px;max-width:1200px;margin:50px auto 0;height:calc(100vh - 50px);overflow:hidden}
+
+#work-stream{flex:1 1 100%;min-width:0;min-height:0;transition:flex-basis .4s ease;overflow:hidden;position:relative}
+#control-panel{flex:0 0 0%;overflow-y:auto;min-height:0;transition:all .4s ease;display:none;min-width:0}
+
+#game-container.cp-visible #work-stream{flex:1 1 55%}
+#game-container.cp-visible #control-panel{flex:0 1 45%;display:block}
+#game-container.cp-late #work-stream{flex:0 1 40%}
+#game-container.cp-late #control-panel{flex:1 1 60%}
+
+/* Task card compression when control panel visible */
+#game-container.cp-late #work-stream .task-type{display:none}
+#game-container.cp-late #work-stream .task-card{padding:10px}
+
+/* Early task section (stages 0-2) */
+#early-task-section{text-align:center;padding:80px 20px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh}
+#early-task-display{margin-bottom:20px;width:100%;max-width:400px;min-height:70px}
+#early-task-icon-name{font-size:1.3rem;font-weight:700;margin-bottom:12px}
+#btn-do-task{padding:20px 50px;font-size:1.3rem;background:var(--accent);color:#000;border-radius:12px;font-weight:700;transition:transform .1s,background .15s}
+#btn-do-task:hover{background:var(--accent2)}
+#btn-do-task:active{transform:scale(.95)}
+
+/* Fade out at bottom of work stream */
+#work-stream::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:10}
+
+/* Task queue section */
+#task-queue-section{display:none}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card h3{font-size:.95rem;margin-bottom:8px;color:var(--accent)}
+.card-row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Task cards */
+.task-card{position:relative;overflow:hidden;cursor:default}
+.task-card .task-type{font-size:.7rem;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;margin-bottom:4px}
+.task-card .task-name{font-weight:600;font-size:.9rem;margin-bottom:6px}
+.task-card .task-meta{display:flex;gap:12px;font-size:.75rem;color:var(--text2);margin-bottom:8px;flex-wrap:wrap}
+.task-card .task-meta span{display:flex;align-items:center;gap:3px}
+.task-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.task-bar-fill{height:100%;background:var(--accent);transition:width .1s;border-radius:3px}
+.task-actions{display:flex;gap:6px;flex-wrap:wrap}
+.task-expiry{position:absolute;top:8px;right:10px;font-size:.68rem;color:var(--red);font-weight:600}
+.btn{padding:6px 14px;font-weight:600;font-size:.8rem}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover:not(:disabled){background:var(--accent2)}
+.btn-green{background:var(--green);color:#000}.btn-green:hover:not(:disabled){filter:brightness(1.1)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover:not(:disabled){filter:brightness(1.1)}
+.btn-yellow{background:var(--yellow);color:#000}.btn-yellow:hover:not(:disabled){filter:brightness(1.1)}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover:not(:disabled){filter:brightness(1.1)}
+.btn-outline{background:none;border:1px solid var(--bg4);color:var(--text2)}.btn-outline:hover:not(:disabled){border-color:var(--text3);color:var(--text)}
+.btn-sm{padding:4px 10px;font-size:.72rem}
+
+/* Agent cards */
+.agent-card{display:flex;gap:10px;align-items:flex-start;padding:10px!important}
+.agent-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:var(--bg3)}
+.agent-info{flex:1;min-width:0}
+.agent-info .name{font-weight:700;font-size:.88rem}
+.agent-info .role{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.agent-stats{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.agent-stat{font-size:.72rem;color:var(--text2);background:var(--bg3);padding:2px 6px;border-radius:4px}
+.agent-status{font-size:.72rem;padding:4px 10px;border-radius:var(--radius);white-space:nowrap}
+.status-idle{background:#1e3a2e;color:var(--green)}
+.status-working{background:#1a2e3e;color:var(--accent)}
+.status-error{background:#3e1a1a;color:var(--red)}
+
+/* Upgrade cards */
+.upgrade-card{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.upgrade-info{flex:1;min-width:0}
+.upgrade-info .name{font-weight:700;font-size:.88rem}
+.upgrade-info .desc{font-size:.75rem;color:var(--text2);margin-top:2px}
+.upgrade-cost{font-size:.78rem;color:var(--text3);white-space:nowrap}
+
+/* Incident cards */
+.incident-card{border-left:3px solid var(--red)}
+.incident-card.warning{border-left-color:var(--yellow)}
+.incident-card .sev{font-size:.7rem;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.incident-card .sev.critical{color:var(--red)}.incident-card .sev.warning{color:var(--yellow)}
+
+/* Schedules */
+.schedule-card{display:flex;justify-content:space-between;align-items:center}
+.schedule-info{flex:1}
+.schedule-info .name{font-weight:600;font-size:.88rem}
+.schedule-info .desc{font-size:.75rem;color:var(--text2)}
+
+/* Log */
+.log-area{max-height:150px;overflow-y:auto;font-size:.75rem;line-height:1.5}
+.log-area .log-entry{padding:2px 0;border-bottom:1px solid var(--bg3);color:var(--text2)}
+.log-area .log-entry.good{color:var(--green)}
+.log-area .log-entry.bad{color:var(--red)}
+.log-area .log-entry.warn{color:var(--yellow)}
+.log-area .log-entry.info{color:var(--accent)}
+
+/* Prestige */
+.prestige-box{text-align:center;padding:30px;border:2px solid var(--purple);border-radius:12px;background:linear-gradient(135deg,var(--bg2),var(--bg3))}
+.prestige-box h2{color:var(--purple);margin-bottom:10px;font-size:1.4rem}
+.prestige-box .req{color:var(--text2);font-size:.85rem;margin-bottom:16px}
+
+/* Control panel sections */
+.cp-section{margin-bottom:16px;animation:fadeSlideIn .3s ease}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Section headers */
+.section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-hdr h2{font-size:1.1rem;font-weight:700}
+.section-hdr .sub{color:var(--text3);font-size:.78rem}
+
+/* Tooltip */
+.tip{position:relative}
+.tip:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:4px 8px;border-radius:4px;font-size:.7rem;white-space:nowrap;z-index:200}
+
+/* Misc */
+.mt{margin-top:12px}.mb{margin-bottom:12px}
+.text-muted{color:var(--text3)}
+.text-sm{font-size:.78rem}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.clickable{cursor:pointer;user-select:none}
+.clickable:active{transform:scale(.97)}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:.68rem;font-weight:600}
+.badge-green{background:#1e3a2e;color:var(--green)}.badge-red{background:#3e1a1a;color:var(--red)}
+.badge-yellow{background:#3e3a1a;color:var(--yellow)}.badge-purple{background:#2e1a3e;color:var(--purple)}
+
+/* Grid layouts */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Popups (shared styles) */
+.popup-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+.popup-overlay.show{display:flex}
+.popup-overlay .popup{background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;padding:24px;max-width:420px;width:90%;text-align:center}
+.popup-overlay h3{color:var(--accent);margin-bottom:10px}
+.popup-overlay .popup-msg{color:var(--text2);font-size:.9rem;line-height:1.5;margin-bottom:16px}
+.popup-overlay .earnings{font-size:1.3rem;font-weight:700;color:var(--cash);margin:10px 0}
+#settings-popup .popup{max-width:360px}
+#settings-popup .settings-actions{display:flex;flex-direction:column;gap:8px}
+#settings-popup .settings-action{width:100%;padding:8px 12px}
+
+/* Intro / tutorial overlay */
+#intro-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:2000;display:flex;align-items:center;justify-content:center}
+#intro-overlay.hidden{display:none}
+#intro-overlay .intro-box{background:var(--bg2);border:1px solid var(--accent);border-radius:12px;padding:30px;max-width:500px;width:90%;text-align:center}
+#intro-overlay h2{color:var(--accent);margin-bottom:12px;font-size:1.4rem}
+#intro-overlay p{color:var(--text2);margin-bottom:16px;line-height:1.5;font-size:.9rem}
+
+/* Click ripple */
+.click-reward{position:fixed;pointer-events:none;font-weight:700;font-size:.9rem;color:var(--cash);z-index:300;animation:floatUp .8s ease-out forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* Pulse animation for incidents */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 1.5s infinite}
+
+/* Mobile responsive */
+@media(max-width:768px){
+  #top-bar{font-size:.72rem;gap:8px;padding:4px 10px}
+  #game-container{flex-direction:column;padding:10px;margin-top:44px;height:auto;overflow:auto}
+  #work-stream,#game-container.cp-visible #work-stream,#game-container.cp-late #work-stream{flex:none!important;width:100%;overflow:visible;min-height:auto}
+  #work-stream::after{display:none}
+  #control-panel,#game-container.cp-visible #control-panel,#game-container.cp-late #control-panel{flex:none!important;width:100%;max-height:none;position:static}
+  #early-task-section{padding:40px 10px;min-height:40vh}
+  #btn-do-task{padding:16px 36px;font-size:1.1rem}
+  .grid-2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Resource Bar -->
+<div id="top-bar">
+  <span id="phase-label">Phase 1</span>
+  <span class="res res-cash" id="res-cash-wrap" style="display:none"><span class="label">Cash</span><span class="val" id="res-cash">$0</span></span>
+  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label">Tokens</span><span class="val" id="res-tokens">0</span></span>
+  <span class="res res-compute" id="res-compute-wrap" style="display:none"><span class="label">Compute</span><span class="val" id="res-compute">0/0</span></span>
+  <span class="res res-rep" id="res-rep-wrap" style="display:none"><span class="label">Rep</span><span class="val" id="res-rep">0</span></span>
+  <span class="res res-debt" id="res-debt-wrap" style="display:none"><span class="label">Debt</span><span class="val" id="res-debt">0</span></span>
+  <span class="res res-stress" id="res-stress-wrap" style="display:none"><span class="label">Stress</span><span class="val" id="res-stress">0%</span></span>
+  <span class="res" id="res-expense-wrap" style="display:none"><span class="label" id="expense-tier-label">Expenses</span><span class="val" style="color:var(--red)" id="expense-rate">-$0/s</span></span>
+  <span id="income-rate" style="display:none">+$0/s</span>
+  <button class="btn btn-outline btn-sm" id="btn-settings">Settings</button>
+</div>
+
+<!-- Two-Pane Game Layout -->
+<div id="game-container">
+
+  <!-- Left Pane: Work Stream -->
+  <div id="work-stream">
+
+    <!-- Early game: centered Do Task button (stages 0-2) -->
+    <div id="early-task-section">
+      <div id="early-task-display" style="visibility:hidden">
+        <div id="early-task-icon-name"></div>
+        <div class="task-bar" style="max-width:400px;margin:0 auto 12px">
+          <div class="task-bar-fill" id="early-task-bar" style="width:0%"></div>
+        </div>
+        <div id="early-task-reward" class="text-sm"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-do-task">Do Task</button>
+    </div>
+
+    <!-- Task queue (stage 2+) -->
+    <div id="task-queue-section">
+      <div class="section-hdr">
+        <h2>Tasks Complete: <span id="tasks-complete-count">0</span></h2>
+        <span class="sub" id="task-count"></span>
+      </div>
+      <div id="task-list"></div>
+      <div id="no-tasks" class="text-muted text-sm" style="text-align:center;padding:30px;display:none">No tasks available. New tasks arrive periodically.</div>
+    </div>
+
+  </div>
+
+  <!-- Right Pane: Control Panel -->
+  <div id="control-panel">
+
+    <!-- Upgrades -->
+    <div id="section-upgrades" class="cp-section" style="display:none">
+      <div class="card">
+        <h3>Upgrades</h3>
+        <div id="upgrade-list"></div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div id="section-agents" class="cp-section" style="display:none">
+      <div class="card">
+        <div class="section-hdr" style="margin-bottom:8px">
+          <h3 style="margin-bottom:0">Agents</h3>
+          <span class="sub" id="agent-slots"></span>
+        </div>
+        <div id="agent-hire-section"></div>
+        <div id="agent-list"></div>
+      </div>
+    </div>
+
+    <!-- Incidents -->
+    <div id="section-incidents" class="cp-section" style="display:none">
+      <div class="card">
+        <div class="section-hdr" style="margin-bottom:8px">
+          <h3 style="margin-bottom:0" id="incidents-header">Incidents</h3>
+          <span class="sub" id="incident-count"></span>
+        </div>
+        <div id="incident-list"></div>
+        <div id="no-incidents" class="text-muted text-sm" style="text-align:center;padding:20px">All clear. No active incidents.</div>
+      </div>
+    </div>
+
+    <!-- Automation -->
+    <div id="section-automation" class="cp-section" style="display:none">
+      <div class="card">
+        <h3>Automation &amp; Schedules</h3>
+        <div id="schedule-list"></div>
+        <div class="mt">
+          <button class="btn btn-primary btn-sm" id="btn-add-schedule" disabled>+ Add Daily Job</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard / Stats -->
+    <div id="section-stats" class="cp-section" style="display:none">
+      <div class="card">
+        <h3>Dashboard</h3>
+        <div id="dash-stats" class="text-sm"></div>
+        <div id="dash-agents-summary" class="mt"></div>
+      </div>
+    </div>
+
+    <!-- Prestige / Retire -->
+    <div id="section-prestige" class="cp-section" style="display:none">
+      <div id="prestige-content"></div>
+    </div>
+
+    <!-- Log -->
+    <div id="section-log" class="cp-section" style="display:none">
+      <div class="card">
+        <div class="section-hdr" style="margin-bottom:8px">
+          <h3 style="margin-bottom:0">Event Log</h3>
+          <button class="btn btn-outline btn-sm" id="btn-clear-log">Clear</button>
+        </div>
+        <div id="log-panel" class="log-area"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Milestone / Story Popup -->
+<div id="milestone-popup" class="popup-overlay">
+  <div class="popup">
+    <h3 id="milestone-popup-title"></h3>
+    <p class="popup-msg" id="milestone-popup-msg"></p>
+    <button class="btn btn-primary" id="btn-dismiss-popup" style="padding:8px 24px">Continue</button>
+  </div>
+</div>
+
+<!-- Offline Earnings Popup -->
+<div id="offline-popup" class="popup-overlay">
+  <div class="popup">
+    <h3>Welcome Back!</h3>
+    <p class="popup-msg">While you were away, your work kept running.</p>
+    <div class="earnings" id="offline-earnings">+$0</div>
+    <p class="text-sm text-muted" id="offline-details"></p>
+    <button class="btn btn-primary mt" id="btn-dismiss-offline">Collect</button>
+  </div>
+</div>
+
+<!-- Settings Popup -->
+<div id="settings-popup" class="popup-overlay">
+  <div class="popup">
+    <h3>Settings</h3>
+    <p class="popup-msg" id="settings-msg">Manage settings.</p>
+    <div id="settings-main-actions" class="settings-actions">
+      <button class="btn btn-outline settings-action" id="btn-settings-music">Music: On</button>
+      <button class="btn btn-red settings-action" id="btn-settings-reset">Reset Game</button>
+      <button class="btn btn-outline settings-action" id="btn-settings-close">Close</button>
+    </div>
+    <div id="settings-confirm-actions" class="settings-actions" style="display:none">
+      <button class="btn btn-green settings-action" id="btn-settings-confirm-yes">Yes</button>
+      <button class="btn btn-outline settings-action" id="btn-settings-confirm-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Intro Overlay -->
+<div id="intro-overlay" class="hidden">
+  <div class="intro-box">
+    <h2>One More Task</h2>
+    <p>You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
+    <p style="font-size:.8rem;color:var(--text3)">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</p>
+    <button class="btn btn-primary" id="btn-start-game" style="padding:10px 30px;font-size:1rem">Find Work</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
