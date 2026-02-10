@@ -55,6 +55,7 @@
     { id: "manager", name: "Manager", icon: "\uD83D\uDC54", color: "#f97316", specialty: [], statBias: { speed: 0.7, quality: 1.0, reliability: 1.2 } },
     { id: "devops", name: "DevOps", icon: "\uD83D\uDD27", color: "#64748b", specialty: ["code", "integration", "webapp"], statBias: { speed: 0.9, quality: 1.0, reliability: 1.3 } },
     { id: "sales", name: "Sales", icon: "\uD83D\uDCE3", color: "#22c55e", specialty: ["email", "social", "copy"], statBias: { speed: 1.1, quality: 0.8, reliability: 1.0 } },
+    { id: "token_mgr", name: "Token Mgr", icon: "\uD83E\uDE99", color: "#0ea5e9", specialty: [], statBias: { speed: 1.0, quality: 1.0, reliability: 1.0 } },
   ];
 
   const TRAITS = [
@@ -110,20 +111,23 @@
     { id: "agent_slot_5", name: "Agent Slot Expansion (5)", desc: "Allow up to 5 agents.", cost: 400, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
     { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 500, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
     // Phase 5 -> 6
+    { id: "macro_keyboard", name: "Macro Keyboard", desc: "Programmable hotkeys. 3x click power.", cost: 600, currency: "cash", phase: 5, effect: { clickPower: 3 }, oneTime: true },
     { id: "web_browse", name: "Web Search Tool", desc: "Agents can browse the web. +15% quality on research.", cost: 400, currency: "cash", phase: 5, effect: { toolBonus: 0.15 }, oneTime: true },
     { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +20% speed on code tasks.", cost: 500, currency: "cash", phase: 5, effect: { codeSpeedMult: 1.2 }, oneTime: true },
     { id: "scheduling", name: "Job Scheduler", desc: "Set agents to run on schedules. Unlock Phase 6.", cost: 700, currency: "cash", phase: 5, unlockPhase: 6, oneTime: true },
     // Phase 6 -> 7
+    { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 50% faster.", cost: 800, currency: "cash", phase: 6, effect: { agentSpeedMult: 1.5 }, oneTime: true },
     { id: "compute_1", name: "Compute Tier 1", desc: "Unlock 3 compute slots for parallel jobs.", cost: 500, currency: "cash", phase: 6, effect: { compute: 3 }, oneTime: true },
     { id: "compute_2", name: "Compute Tier 2", desc: "Upgrade to 6 compute slots.", cost: 1200, currency: "cash", phase: 6, effect: { compute: 6 }, oneTime: true },
     { id: "management", name: "Agent Management Console", desc: "Unlock manager dashboard. Phase 7.", cost: 1000, currency: "cash", phase: 6, unlockPhase: 7, oneTime: true },
     // Phase 7 -> 8
-    { id: "manager_agent", name: "Manager Agent Unlock", desc: "Hire manager agents that route and retry.", cost: 1500, currency: "cash", phase: 7, effect: { managerUnlock: true }, oneTime: true },
-    { id: "agent_slot_8", name: "Agent Slot Expansion (8)", desc: "Allow up to 8 agents.", cost: 2000, currency: "cash", phase: 7, effect: { agentSlots: 8 }, oneTime: true },
+    { id: "manager_agent", name: "Manager Agent Unlock", desc: "Hire manager agents that route and retry. +1 agent slot.", cost: 1500, currency: "cash", phase: 7, effect: { managerUnlock: true, agentSlots: 6 }, oneTime: true },
+    { id: "smart_routing", name: "Smart Routing", desc: "Manager assigns agents to any task when no specialty match. No idle time.", cost: 1200, currency: "cash", phase: 7, effect: { smartRouting: true }, oneTime: true },
+    { id: "agent_slot_7", name: "Agent Slot Expansion (8)", desc: "Allow up to 8 agents.", cost: 2000, currency: "cash", phase: 7, effect: { agentSlots: 7 }, oneTime: true },
     { id: "code_agents", name: "Code-Writer Agents", desc: "Agents can write scripts and automations. Phase 8.", cost: 2500, currency: "cash", phase: 7, unlockPhase: 8, oneTime: true },
     // Phase 8 -> 9
     { id: "testing", name: "Automated Testing", desc: "Reduces technical debt growth by 30%.", cost: 2000, currency: "cash", phase: 8, effect: { debtReduction: 0.3 }, oneTime: true },
-    { id: "code_review", name: "Code Review Bot", desc: "Improves code agent quality by 25%.", cost: 3000, currency: "cash", phase: 8, effect: { codeQualityMult: 1.25 }, oneTime: true },
+    { id: "code_review", name: "Code Review Bot", desc: "Improves code agent quality by 25%.", cost: 2000, currency: "cash", phase: 8, effect: { codeQualityMult: 1.25 }, oneTime: true },
     { id: "deploy", name: "Deployment Platform", desc: "Deploy services for passive income. Phase 9.", cost: 5000, currency: "cash", phase: 8, unlockPhase: 9, oneTime: true },
     // Phase 9 -> 10
     { id: "server_1", name: "Server Tier 1", desc: "Deploy up to 2 services.", cost: 3000, currency: "cash", phase: 9, effect: { serviceSlots: 2 }, oneTime: true },
@@ -139,7 +143,7 @@
     { id: "retire_unlock", name: "Golden Parachute", desc: "The Retire button appears. Phase 12.", cost: 100000, currency: "cash", phase: 11, unlockPhase: 12, oneTime: true },
     // Repeatable
     { id: "token_pack_2", name: "Token Bulk Pack", desc: "Get 500 tokens.", cost: 300, currency: "cash", phase: 3, effect: { giveTokens: 500 }, oneTime: false },
-    { id: "pay_debt", name: "Pay Down Tech Debt", desc: "Reduce technical debt by 15.", cost: 200, currency: "cash", phase: 8, effect: { reduceDebt: 15 }, oneTime: false },
+    { id: "pay_debt", name: "Pay Down Tech Debt", desc: "Reduce agent failure rate by 15.", cost: 200, currency: "cash", phase: 8, effect: { reduceDebt: 15 }, oneTime: false },
   ];
 
   // Expenses tiers
@@ -197,12 +201,15 @@
       tokenEfficiency: 1,
       toolBonus: 0,
       codeSpeedMult: 1,
+      agentSpeedMult: 1,
       codeQualityMult: 1,
       debtReduction: 0,
       driftReduction: 0,
       agentSlots: 2,
       serviceSlots: 0,
       managerUnlock: false,
+      smartRouting: false,
+      lastTokenBuy: 0,
       swarmMode: false,
       aiCeo: false,
       tasks: [],
@@ -616,6 +623,10 @@
   }
 
   function hireAgent(roleId) {
+    if (G.agents.some(function (a) { return a.roleId === roleId; })) {
+      log("Already have that agent type!", "bad");
+      return;
+    }
     const activeAgents = G.agents.length;
     if (activeAgents >= G.agentSlots) {
       log("No agent slots available!", "bad");
@@ -672,7 +683,7 @@
       if (G.phase >= 3) G.tokens -= tokenBurn;
 
       // Work done per second
-      let workRate = agent.speed * AGENT_WORK_MULT * dtSec;
+      let workRate = agent.speed * AGENT_WORK_MULT * G.agentSpeedMult * dtSec;
       const isSpecialty = agent.specialty.includes(task.typeId);
       if (isSpecialty) workRate *= 1.4;
       if (G.toolBonus > 0 && ["research", "report"].includes(task.typeId)) workRate *= 1 + G.toolBonus;
@@ -707,6 +718,43 @@
           agent.errorTime = null;
         }
       }
+    }
+  }
+
+  // ---------- MANAGER AUTO-ASSIGN ----------
+  function tickManager() {
+    var hasManager = G.agents.some(function (a) { return a.roleId === "manager" && a.status === "idle"; });
+    if (!hasManager) return;
+    for (var i = 0; i < G.agents.length; i++) {
+      var agent = G.agents[i];
+      if (agent.roleId === "manager" || agent.roleId === "token_mgr") continue;
+      if (agent.status !== "idle") continue;
+      var task = findMatchingTask(agent);
+      if (!task && G.smartRouting) {
+        var avail = G.tasks.filter(function (t) { return t.status === "available"; });
+        task = avail[0] || null;
+      }
+      if (task) assignAgentToTask(task.id, agent.id);
+    }
+  }
+
+  // ---------- TOKEN MANAGER AUTO-BUY ----------
+  function tickTokenManager() {
+    var hasTokenMgr = G.agents.some(function (a) { return a.roleId === "token_mgr" && a.status === "idle"; });
+    if (!hasTokenMgr) return;
+    if (G.tokens > 100) return;
+    if (Date.now() - G.lastTokenBuy < 2000) return;
+    // Buy bulk pack if affordable, otherwise starter pack
+    if (G.cash >= 300) {
+      G.cash -= 300;
+      G.tokens += 500;
+      G.lastTokenBuy = Date.now();
+      log("Token Manager auto-purchased 500 tokens.", "info");
+    } else if (G.cash >= 110) {
+      G.cash -= 110;
+      G.tokens += 200;
+      G.lastTokenBuy = Date.now();
+      log("Token Manager auto-purchased 200 tokens.", "info");
     }
   }
 
@@ -906,7 +954,7 @@
       if (agent.status === "working") {
         const task = G.tasks.find((t) => t.id === agent.currentTask);
         if (task) {
-          const timeToComplete = (task.workRequired - task.workDone) / (agent.speed * AGENT_WORK_MULT);
+          const timeToComplete = (task.workRequired - task.workDone) / (agent.speed * AGENT_WORK_MULT * G.agentSpeedMult);
           if (timeToComplete > 0) rate += task.pay / timeToComplete;
         }
       }
@@ -950,10 +998,12 @@
       if (upg.effect.compute) G.computeMax = Math.max(G.computeMax, upg.effect.compute);
       if (upg.effect.toolBonus) G.toolBonus += upg.effect.toolBonus;
       if (upg.effect.codeSpeedMult) G.codeSpeedMult *= upg.effect.codeSpeedMult;
+      if (upg.effect.agentSpeedMult) G.agentSpeedMult *= upg.effect.agentSpeedMult;
       if (upg.effect.codeQualityMult) G.codeQualityMult *= upg.effect.codeQualityMult;
       if (upg.effect.debtReduction) G.debtReduction = Math.min(0.9, G.debtReduction + upg.effect.debtReduction);
       if (upg.effect.driftReduction) G.driftReduction = Math.min(0.9, G.driftReduction + upg.effect.driftReduction);
       if (upg.effect.managerUnlock) G.managerUnlock = true;
+      if (upg.effect.smartRouting) G.smartRouting = true;
       if (upg.effect.swarmMode) G.swarmMode = true;
       if (upg.effect.aiCeo) G.aiCeo = true;
       if (upg.effect.serviceSlots) G.serviceSlots = Math.max(G.serviceSlots, upg.effect.serviceSlots);
@@ -1338,6 +1388,8 @@
 
     tickTaskSpawn();
     tickAgents(dtSec);
+    tickManager();
+    tickTokenManager();
     tickIncidents(dtSec);
     tickSchedules();
     tickServices(dtSec);
@@ -1568,6 +1620,7 @@
       if (r.id === "manager" && !G.managerUnlock) return false;
       if (r.id === "devops" && G.phase < 8) return false;
       if (r.id === "sales" && G.phase < 7) return false;
+      if (r.id === "token_mgr" && G.phase < 5) return false;
       return true;
     });
 
@@ -1575,22 +1628,33 @@
       var btns = "";
       for (var i = 0; i < availRoles.length; i++) {
         var r = availRoles[i];
-        btns += "<button class='btn btn-outline btn-sm' onclick=\"GAME.hire('" + r.id + "')\" " + (G.cash < hireCost ? "disabled" : "") + ">" + r.icon + " " + r.name + "</button>";
+        var owned = G.agents.some(function (a) { return a.roleId === r.id; });
+        btns += "<button class='btn btn-outline btn-sm' onclick=\"GAME.hire('" + r.id + "')\" " + (owned || G.cash < hireCost ? "disabled" : "") + ">" + r.icon + " " + r.name + "</button>";
       }
       $("#agent-hire-section").innerHTML = "<div class='mb' style='display:flex;gap:6px;align-items:center;flex-wrap:wrap'><strong>Hire</strong><span class='text-muted' style='font-size:.8rem'>(" + fmtCash(hireCost) + ")</span>" + btns + "</div>";
     } else {
       $("#agent-hire-section").innerHTML = "<div class='text-muted text-sm mb'>All agent slots full. Upgrade to add more.</div>";
     }
 
-    // Agent list
+    // Agent list -- assignable first, then error, idle, working last
+    var utilityRoles = ["manager", "token_mgr"];
+    var sorted = G.agents.slice().sort(function (a, b) {
+      function rank(ag) {
+        if (ag.status === "idle" && utilityRoles.indexOf(ag.roleId) === -1 && findMatchingTask(ag)) return 0; // assignable
+        if (ag.status === "error") return 1;
+        if (ag.status === "idle" && utilityRoles.indexOf(ag.roleId) === -1) return 2;
+        return 3; // working or utility
+      }
+      return rank(a) - rank(b);
+    });
     var html = "";
-    for (var j = 0; j < G.agents.length; j++) {
-      var a = G.agents[j];
+    for (var j = 0; j < sorted.length; j++) {
+      var a = sorted[j];
       var task = a.currentTask ? G.tasks.find(function (t) { return t.id === a.currentTask; }) : null;
       html += "<div class='card agent-card'>" +
         "<div class='agent-icon' style='background:" + a.color + "30;color:" + a.color + "'>" + a.icon + "</div>" +
         "<div class='agent-info'>" +
-        "<div class='name'>" + a.name + (task ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>" + task.name + " (" + Math.floor(task.workDone / task.workRequired * 100) + "%)</span>" : "") + "</div>" +
+        "<div class='name'>" + a.name + (task ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>" + task.name + " (" + Math.floor(task.workDone / task.workRequired * 100) + "%)</span>" : a.roleId === "manager" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>Managing</span>" : a.roleId === "token_mgr" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--token);margin-left:8px'>Monitoring tokens</span>" : "") + "</div>" +
         "<div class='role'>" + a.roleName + " -- <span style='color:var(--text3)'>" + a.traitName + "</span></div>" +
         "<div class='agent-stats'>" +
         "<span class='agent-stat'>SPD " + a.speed.toFixed(2) + "</span>" +
@@ -1602,8 +1666,12 @@
         "<div style='display:flex;flex-direction:column;gap:8px;align-items:flex-end'>" +
         (a.tokenStarved
           ? "<span class='agent-status status-error'>No tokens</span>"
-          : a.status === "idle" && findMatchingTask(a)
+          : a.status === "idle" && utilityRoles.indexOf(a.roleId) === -1 && findMatchingTask(a)
           ? "<button class='btn btn-green btn-sm' onclick=\"GAME.autoAssign('" + a.id + "')\">Assign</button>"
+          : a.roleId === "manager" && a.status === "idle"
+          ? "<span class='agent-status status-working'>Managing</span>"
+          : a.roleId === "token_mgr" && a.status === "idle"
+          ? "<span class='agent-status status-working'>Active</span>"
           : "<span class='agent-status " + (a.status === "idle" ? "status-idle" : a.status === "working" ? "status-working" : "status-error") + "'>" + a.status[0].toUpperCase() + a.status.slice(1) + "</span>") +
         "<button class='btn btn-outline btn-sm' onclick=\"GAME.fire('" + a.id + "')\">Shutdown</button>" +
         "</div>" +
