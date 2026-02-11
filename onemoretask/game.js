@@ -25,8 +25,8 @@
   const MAX_TASKS = 12;
   const AGENT_WORK_MULT = 25; // base multiplier for agent work speed
   const MAX_LOG = 200;
-  const AGENT_BASE_HIRE_COST = 150;
-  const AGENT_HIRE_COST_MULT = 1.5;
+  const AGENT_BASE_HIRE_COST = 250;
+  const AGENT_HIRE_COST_MULT = 1.8;
   const SOUNDTRACKS = [
     { minTasks: 8, path: "soundtrack-loop.mp3" },
   ];
@@ -135,23 +135,23 @@
     { id: "token_pack_1", name: "Token Pack (200)", desc: "Get 200 tokens.", cost: 110, currency: "cash", phase: 3, effect: { giveTokens: 200 }, oneTime: false },
     { id: "token_optimizer", name: "Token Optimizer", desc: "Smarter caching cuts AI assist cost to 4 tok/click.", cost: 150, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.8 }, oneTime: true},
     { id: "guardrails", name: "Output Guardrails", desc: "Validation layer catches hallucinations. AI failure rate -30%.", cost: 165, currency: "cash", phase: 3, effect: { aiFailMult: 0.7 }, oneTime: true },
-    { id: "token_compressor", name: "Prompt Compression", desc: "Prompt compacting cuts AI assist cost to 3 tok/click.", cost: 220, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 340 },
-    { id: "premium_support", name: "Premium Support", desc: "Priority response times. Clients are thrilled.", cost: 113, currency: "cash", phase: 3, effect: { giveRep: 1 }, oneTime: true, reqTasks: 342 },
+    { id: "token_compressor", name: "Prompt Compression", desc: "Prompt compacting cuts AI assist cost to 3 tok/click.", cost: 180, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 300 },
+    { id: "premium_support", name: "Premium Support", desc: "Priority response times. Clients are thrilled.", cost: 113, currency: "cash", phase: 3, effect: { giveRep: 1 }, oneTime: true, reqTasks: 335 },
     { id: "token_distiller", name: "Model Distillation", desc: "Smaller model handles routine work. AI assist cost drops to 2 tok/click.", cost: 291, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.67 }, oneTime: true, reqTasks: 350 },
     { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 400, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 351 },
-    { id: "marketing_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 2.0, giveRep: 400 }, oneTime: true, reqTasks: 353 },
+    { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 2.0, giveRep: 1000 }, oneTime: true, reqTasks: 353 },
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 25% more valuable.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 353 },
-    { id: "multi_bot", name: "Multi-Bot License", desc: "Unlock agent hiring. Phase 4 begins.", cost: 1000, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 360 },
+    { id: "multi_bot", name: "Multi-Bot License", desc: "Unlock agent hiring. Phase 4 begins.", cost: 2200, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 380 },
 
     // Phase 4 -> 5
-    { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 120, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "agent_slot_3", name: "Agent Slot Expansion (3)", desc: "Allow up to 3 agents.", cost: 290, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true },
-    { id: "task_templates", name: "Task Templates", desc: "Pre-written briefs. Tasks require 15% less work.", cost: 313, currency: "cash", phase: 4, effect: { workReduction: 0.15 }, oneTime: true },
-    { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 20% more.", cost: 315, currency: "cash", phase: 4, effect: { payMult: 1.2 }, oneTime: true },
-    { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 400, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true },
-    { id: "agent_slot_5", name: "Agent Slot Expansion (5)", desc: "Allow up to 5 agents.", cost: 900, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
-    { id: "agent_slot_5", name: "Sponsored Ads", desc: "Pay for adverts on search engines and social media.", cost: 2500, currency: "cash", phase: 4, effect: { payMult: 10.0, giveRep: 5000 }, oneTime: true },
-    { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 3000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
+    { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
+    { id: "agent_slot_3", name: "Agent Slot Expansion (3)", desc: "Allow up to 3 agents.", cost: 2200, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true },
+    { id: "task_templates", name: "Task Templates", desc: "Pre-written briefs. Tasks require 15% less work.", cost: 2400, currency: "cash", phase: 4, effect: { workReduction: 0.15 }, oneTime: true },
+    { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 40% more.", cost: 2800, currency: "cash", phase: 4, effect: { payMult: 1.4 }, oneTime: true },
+    { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 3200, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true },
+    { id: "agent_slot_5", name: "Agent Slot Expansion (5)", desc: "Allow up to 5 agents.", cost: 6500, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
+    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Launch paid ads and referral loops. Adds passive cashflow and boosts agent-generated revenue.", cost: 8100, currency: "cash", phase: 4, effect: { payMult: 1.35, giveRep: 220 }, oneTime: true },
+    { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 12000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
 
     // Phase 5 -> 6
     { id: "macro_keyboard", name: "Macro Keyboard", desc: "Programmable hotkeys. 3x click power.", cost: 600, currency: "cash", phase: 5, effect: { clickPower: 3 }, oneTime: true },
@@ -575,17 +575,22 @@
     log("Assigned " + agent.name + " to \"" + task.name + "\".", "info");
   }
 
+  function getTaskCashPayout(task, method, agent) {
+    var taskMult = 1;
+    if (method === "agent" && agent) taskMult = agent.quality;
+    return task.pay * taskMult * G.payMult;
+  }
+
   function completeTask(task, method) {
     task.status = "done";
     task.workDone = task.workRequired;
 
-    let payMult = 1;
     let repMult = 1;
+    let agent = null;
 
     if (method === "agent") {
-      const agent = G.agents.find((a) => a.id === task.assignedAgent);
+      agent = G.agents.find((a) => a.id === task.assignedAgent);
       if (agent) {
-        payMult = agent.quality;
         repMult = agent.quality;
         agent.status = "idle";
         agent.tokenStarved = false;
@@ -594,7 +599,7 @@
       }
     }
 
-    const pay = task.pay * payMult * G.payMult;
+    const pay = getTaskCashPayout(task, method, agent);
     const rep = Math.ceil(task.repReward * repMult);
     G.cash += pay;
     G.reputation += rep;
@@ -664,7 +669,7 @@
       log("No agent slots available!", "bad");
       return;
     }
-    const cost = Math.ceil(AGENT_BASE_HIRE_COST * Math.pow(AGENT_HIRE_COST_MULT, activeAgents));
+    const cost = getAgentHireCost(activeAgents);
     if (G.cash < cost) {
       log("Not enough cash to hire (need " + fmtCash(cost) + ").", "bad");
       return;
@@ -687,7 +692,7 @@
       }
     }
     // Sell for 30% of next hire cost
-    const refund = Math.ceil(AGENT_BASE_HIRE_COST * Math.pow(AGENT_HIRE_COST_MULT, G.agents.length - 1) * 0.3);
+    const refund = Math.ceil(getAgentHireCost(G.agents.length - 1) * 0.3);
     G.cash += refund;
     G.agents.splice(idx, 1);
     log("Fired " + agent.name + ". Recovered " + fmtCash(refund) + ".", "warn");
@@ -777,13 +782,17 @@
     if (G.tokens > 100) return;
     if (Date.now() - G.lastTokenBuy < 2000) return;
     // Buy bulk pack if affordable, otherwise starter pack
-    if (G.cash >= 300) {
-      G.cash -= 300;
+    var bulkPack = UPGRADES.find(function (u) { return u.id === "token_pack_2"; });
+    var starterPack = UPGRADES.find(function (u) { return u.id === "token_pack_1"; });
+    var bulkCost = bulkPack ? getUpgradeCost(bulkPack) : 300;
+    var starterCost = starterPack ? getUpgradeCost(starterPack) : 110;
+    if (G.cash >= bulkCost) {
+      G.cash -= bulkCost;
       G.tokens += 500;
       G.lastTokenBuy = Date.now();
       log("Token Manager auto-purchased 500 tokens.", "info");
-    } else if (G.cash >= 110) {
-      G.cash -= 110;
+    } else if (G.cash >= starterCost) {
+      G.cash -= starterCost;
       G.tokens += 200;
       G.lastTokenBuy = Date.now();
       log("Token Manager auto-purchased 200 tokens.", "info");
@@ -874,7 +883,7 @@
     const idleAgents = G.agents.filter((a) => a.status === "idle");
     if (idleAgents.length === 0) { log("No idle agents for schedule!", "bad"); return; }
 
-    const cost = 100 + G.schedules.length * 150;
+    const cost = getScheduleCost();
     if (G.cash < cost) { log("Need " + fmtCash(cost) + " to add schedule.", "bad"); return; }
     G.cash -= cost;
 
@@ -919,18 +928,20 @@
     }
   }
 
-  // ---------- SERVICES (Phase 9+) ----------
+  // ---------- PASSIVE INCOME ----------
   function tickServices(dtSec) {
-    if (G.phase < 9) return;
-    let totalServiceIncome = 0;
-    for (const svc of G.services) {
-      if (!svc.active) continue;
-      const uptime = Math.max(0.5, 1 - G.techDebt * 0.005 - G.incidents.filter((i) => !i.resolved).length * 0.05);
-      const income = svc.incomeRate * uptime * dtSec;
-      totalServiceIncome += income;
+    let totalPassiveIncome = 0;
+    totalPassiveIncome += (getAgentRevenueRate() + getMarketingRevenueRate()) * dtSec;
+    if (G.phase >= 9) {
+      for (const svc of G.services) {
+        if (!svc.active) continue;
+        const uptime = Math.max(0.5, 1 - G.techDebt * 0.005 - G.incidents.filter((i) => !i.resolved).length * 0.05);
+        const income = svc.incomeRate * uptime * dtSec;
+        totalPassiveIncome += income;
+      }
     }
-    G.cash += totalServiceIncome;
-    if (totalServiceIncome > 0) G.totalCashEarned += totalServiceIncome;
+    G.cash += totalPassiveIncome;
+    if (totalPassiveIncome > 0) G.totalCashEarned += totalPassiveIncome;
   }
 
   // ---------- EXPENSES ----------
@@ -974,6 +985,41 @@
     }
   }
 
+  function getLateCostMultiplier() {
+    if (G.phase < 5) return 1;
+    var mult = 1 + (G.phase - 4) * 0.12;
+    if (G.purchasedUpgrades.includes("growth_marketing")) mult += 0.1;
+    return mult;
+  }
+
+  function getUpgradeCost(upg) {
+    if (!upg || upg.currency !== "cash") return upg ? upg.cost : 0;
+    if (upg.phase < 4) return upg.cost;
+    return Math.ceil(upg.cost * getLateCostMultiplier());
+  }
+
+  function getAgentHireCost(agentCount) {
+    var baseCost = AGENT_BASE_HIRE_COST * Math.pow(AGENT_HIRE_COST_MULT, agentCount);
+    return Math.ceil(baseCost * getLateCostMultiplier());
+  }
+
+  function getScheduleCost() {
+    var baseCost = 100 + G.schedules.length * 150;
+    return Math.ceil(baseCost * getLateCostMultiplier());
+  }
+
+  function getAgentRevenueRate() {
+    if (G.phase < 4) return 0;
+    var perAgent = 1.4 + G.phase * 0.4;
+    if (G.purchasedUpgrades.includes("growth_marketing")) perAgent *= 1.65;
+    return G.agents.length * perAgent;
+  }
+
+  function getMarketingRevenueRate() {
+    if (!G.purchasedUpgrades.includes("growth_marketing")) return 0;
+    return 4 + G.phase * 1.5;
+  }
+
   // ---------- INCOME RATE ESTIMATION ----------
   function getIncomeRate() {
     let rate = 0;
@@ -983,7 +1029,7 @@
         const task = G.tasks.find((t) => t.id === agent.currentTask);
         if (task) {
           const timeToComplete = (task.workRequired - task.workDone) / (agent.speed * AGENT_WORK_MULT * G.agentSpeedMult);
-          if (timeToComplete > 0) rate += task.pay / timeToComplete;
+          if (timeToComplete > 0) rate += getTaskCashPayout(task, "agent", agent) / timeToComplete;
         }
       }
     }
@@ -991,6 +1037,9 @@
     for (const svc of G.services) {
       if (svc.active) rate += svc.incomeRate;
     }
+    // Passive growth income (Phase 4+)
+    rate += getAgentRevenueRate();
+    rate += getMarketingRevenueRate();
     return rate;
   }
 
@@ -1006,9 +1055,10 @@
       return;
     }
 
+    var upgradeCost = getUpgradeCost(upg);
     if (upg.currency === "cash") {
-      if (G.cash < upg.cost) { log("Not enough cash!", "bad"); return; }
-      G.cash -= upg.cost;
+      if (G.cash < upgradeCost) { log("Not enough cash!", "bad"); return; }
+      G.cash -= upgradeCost;
     } else if (upg.currency === "tokens") {
       if (G.tokens < upg.cost) { log("Not enough tokens!", "bad"); return; }
       G.tokens -= upg.cost;
@@ -1050,7 +1100,8 @@
       log("PHASE " + G.phase + " UNLOCKED!", "info");
 
       // Phase 3: grant starter tokens
-      if (G.phase === 3) G.tokens += 500;
+      const starter_tokens = 200;
+      if (G.phase === 3) G.tokens += starter_tokens;
 
       // Show phase upgrade popup with lifestyle info
       var newTier = null;
@@ -1059,7 +1110,7 @@
       }
       var title = upg.name;
       var msg = upg.desc;
-      if (G.phase === 3) msg += "\n\nYou start with 500 tokens. AI Assist and agents will burn tokens over time. Buy token packs from the upgrade shop to keep up, or you will stall out.";
+      if (G.phase === 3) msg += "\n\nYou start with " + starter_tokens + " tokens. AI Assist and agents will burn tokens over time. Buy token packs from the upgrade shop to keep up, or you will stall out.";
       if (newTier && G.expensesRevealed) msg += "\n\nLifestyle upgraded to: " + newTier.name + ". Expenses are now " + fmtCash(newTier.rate) + "/s.";
       showPopup(title, msg);
 
@@ -1155,6 +1206,7 @@
     const cappedSec = Math.min(elapsedSec, 3600 * 8); // Max 8 hours
 
     let income = 0;
+    income += (getAgentRevenueRate() + getMarketingRevenueRate()) * cappedSec * 0.5;
     // Services
     for (const svc of G.services) {
       if (svc.active) income += svc.incomeRate * cappedSec * 0.5; // 50% offline efficiency
@@ -1525,8 +1577,9 @@
       display.style.visibility = "visible";
       $("#early-task-icon-name").textContent = activeTask.icon + " " + activeTask.name;
       var pct = Math.floor((activeTask.workDone / activeTask.workRequired) * 100);
+      var displayedPay = getTaskCashPayout(activeTask, "manual", null);
       $("#early-task-bar").style.width = pct + "%";
-      $("#early-task-reward").innerHTML = "<span style='color:var(--cash)'>" + fmtCash(activeTask.pay) + "</span> reward &bull; " + pct + "% done";
+      $("#early-task-reward").innerHTML = "<span style='color:var(--cash)'>" + fmtCash(displayedPay) + "</span> reward &bull; " + pct + "% done";
     } else {
       display.style.visibility = "hidden";
     }
@@ -1562,7 +1615,8 @@
         var aiBtn = "<button class='btn btn-purple btn-sm'" + aiDisabled + aiDimStyle + " onclick=\"GAME.aiAssist('" + t.id + "', event)\">AI Assist" + aiCost + "</button>";
 
         if (G.uiRevealed.tokens) {
-          if (G.tokens === 0 && G.cash < 300) {
+          // If less than 5 tokens left and cash <$300, then flip to show click button
+          if (G.tokens <= 5 && G.cash < 300) {
             actions += clickBtn;
           } else {
             actions += aiBtn;
@@ -1577,6 +1631,7 @@
       if (t.status === "agent" && agent) {
         actions = "<span class='agent-status status-working'>" + agent.name + " Working...</span>";
       }
+      var displayedPay = getTaskCashPayout(t, t.status === "agent" ? "agent" : "manual", agent);
 
       // Task expiry countdown
       var expiryHtml = "";
@@ -1595,7 +1650,7 @@
 
       // Pay is always visible; other details gated behind task count
       var metaHtml = "<div class='task-meta'>" +
-        "<span>Pay: <strong style='color:var(--cash)'>" + fmtCash(t.pay) + "</strong></span>";
+        "<span>Pay: <strong style='color:var(--cash)'>" + fmtCash(displayedPay) + "</strong></span>";
       if (G.totalTasksDone >= 20) {
         metaHtml +=
           "<span>Rep: <strong style='color:var(--rep)'>+" + t.repReward + "</strong></span>" +
@@ -1649,7 +1704,8 @@
     // One-time upgrades (capped)
     for (var i = 0; i < visible.length; i++) {
       var u = visible[i];
-      var canAfford = u.currency === "cash" ? G.cash >= u.cost : G.tokens >= u.cost;
+      var cost = getUpgradeCost(u);
+      var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       var meetsRep = !u.reqRep || G.reputation >= u.reqRep;
       html += "<div class='card upgrade-card'>" +
         "<div class='upgrade-info'>" +
@@ -1657,7 +1713,7 @@
         "<div class='desc'>" + u.desc + (u.reqRep ? " <span style='color:var(--rep)'>(Requires " + u.reqRep + " rep)</span>" : "") + "</div>" +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
-        "<span class='upgrade-cost'>" + (u.currency === "cash" ? fmtCash(u.cost) : u.cost + " tok") + "</span>" +
+        "<span class='upgrade-cost'>" + (u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +
         "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford || !meetsRep ? "disabled" : "") + ">Buy</button>" +
         "</div>" +
         "</div>";
@@ -1665,10 +1721,11 @@
     // Repeatables (always shown, compact row)
     for (var i = 0; i < repeatables.length; i++) {
       var u = repeatables[i];
-      var canAfford = u.currency === "cash" ? G.cash >= u.cost : G.tokens >= u.cost;
+      var cost = getUpgradeCost(u);
+      var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       html += "<div style='display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);margin-right:6px;margin-bottom:6px'>" +
         "<span class='text-sm'>" + u.name + "</span>" +
-        "<span class='upgrade-cost text-sm'>" + (u.currency === "cash" ? fmtCash(u.cost) : u.cost + " tok") + "</span>" +
+        "<span class='upgrade-cost text-sm'>" + (u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +
         "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>Buy</button>" +
         "</div>";
     }
@@ -1689,7 +1746,7 @@
     $("#agent-slots").textContent = G.agents.length + "/" + G.agentSlots + " slots";
 
     // Hire info
-    var hireCost = Math.ceil(AGENT_BASE_HIRE_COST * Math.pow(AGENT_HIRE_COST_MULT, G.agents.length));
+    var hireCost = getAgentHireCost(G.agents.length);
     var availRoles = AGENT_ROLES.filter(function (r) {
       if (r.id === "manager" && !G.managerUnlock) return false;
       if (r.id === "devops" && G.phase < 8) return false;
@@ -2107,7 +2164,7 @@
         4: { tasks: 109, cash: 5, ph: 1 },  // -> Discover Free-Tier AI / phase 2 (task 110)
         5: { tasks: 189, cash: 209, ph: 1 },  // -> Discover Free-Tier AI, just before / phase 2
         6: { tasks: 308, cash: 498, ph: 2 }, // -> Pro AI Subscription / phase 3
-        7: { tasks: 443, cash: 990, tokens: 200, ph: 3 }, // -> Multi-Bot License / phase 4
+        7: { tasks: 450, cash: 1950, tokens: 200, ph: 3 }, // -> Multi-Bot License / phase 4
         8: { tasks: 701, cash: 1300, tokens: 436, ph: 4 },   // Phase 5: Tool use sdk. task complete, cash 1.3k, token 436
         //9: { tasks: 10000, cash: 5000, ph: 5 }, // -> Job Scheduler / phase 6
       };
