@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="One More Task favicon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#030712"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b2f4f"/>
+      <stop offset="100%" stop-color="#0b3b5a"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)"/>
+  <rect x="4.5" y="4.5" width="55" height="55" rx="11.5" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <rect x="18" y="18" width="28" height="28" rx="6" fill="url(#chip)" stroke="#38bdf8" stroke-width="2"/>
+
+  <rect x="24" y="13.5" width="3" height="4.5" rx="1" fill="#7dd3fc"/>
+  <rect x="30.5" y="13.5" width="3" height="4.5" rx="1" fill="#7dd3fc"/>
+  <rect x="37" y="13.5" width="3" height="4.5" rx="1" fill="#7dd3fc"/>
+  <rect x="24" y="46" width="3" height="4.5" rx="1" fill="#7dd3fc"/>
+  <rect x="30.5" y="46" width="3" height="4.5" rx="1" fill="#7dd3fc"/>
+  <rect x="37" y="46" width="3" height="4.5" rx="1" fill="#7dd3fc"/>
+  <rect x="13.5" y="24" width="4.5" height="3" rx="1" fill="#7dd3fc"/>
+  <rect x="13.5" y="30.5" width="4.5" height="3" rx="1" fill="#7dd3fc"/>
+  <rect x="13.5" y="37" width="4.5" height="3" rx="1" fill="#7dd3fc"/>
+  <rect x="46" y="24" width="4.5" height="3" rx="1" fill="#7dd3fc"/>
+  <rect x="46" y="30.5" width="4.5" height="3" rx="1" fill="#7dd3fc"/>
+  <rect x="46" y="37" width="4.5" height="3" rx="1" fill="#7dd3fc"/>
+
+  <path d="M24.5 34.5l4.5 4.4 10.5-10.7" fill="none" stroke="#e0f2fe" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="14" r="3.8" fill="#ef4444"/>
+</svg>

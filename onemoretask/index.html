@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>One More Task</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
@@ -30,6 +31,18 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .res-compute .val{color:var(--purple)}.res-stress .val{color:var(--pink)}
 .res-warning{background:rgba(239,68,68,0.15);border-radius:6px;padding:2px 6px;animation:res-pulse 2s ease-in-out infinite}
 @keyframes res-pulse{0%,100%{background:rgba(239,68,68,0.08)}50%{background:rgba(239,68,68,0.25)}}
+#res-tokens-wrap.res-warning{
+  border:1px solid rgba(239,68,68,0.75);
+  background:rgba(239,68,68,0.3);
+  box-shadow:0 0 0 1px rgba(239,68,68,0.35),0 0 14px rgba(239,68,68,0.45);
+  animation:token-pulse .75s ease-in-out infinite;
+}
+#res-tokens-wrap.res-warning .label,
+#res-tokens-wrap.res-warning .val{color:#fee2e2}
+@keyframes token-pulse{
+  0%,100%{background:rgba(239,68,68,0.2);box-shadow:0 0 0 1px rgba(239,68,68,0.25),0 0 10px rgba(239,68,68,0.35)}
+  50%{background:rgba(239,68,68,0.62);box-shadow:0 0 0 1px rgba(239,68,68,0.55),0 0 22px rgba(239,68,68,0.72)}
+}
 #income-rate{color:var(--green);font-weight:600}
 #expense-rate{color:var(--red);font-weight:600}
 #phase-label{background:var(--accent);color:#000;padding:2px 8px;border-radius:12px;font-weight:700;font-size:.72rem}
@@ -71,8 +84,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
 /* Task cards */
 .task-card{position:relative;overflow:hidden;cursor:default}
 .task-card .task-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.task-card.has-expiry .task-header{padding-right:42px}
 .task-card .task-name{font-weight:600;font-size:.9rem}
-.task-card .task-client{font-size:.72rem;color:var(--text3);font-style:italic;white-space:nowrap}
+.task-card .task-client{font-size:.72rem;color:var(--text3);font-style:italic;white-space:nowrap;max-width:48%;overflow:hidden;text-overflow:ellipsis}
 .task-card .task-meta{display:flex;gap:12px;font-size:.75rem;color:var(--text2);margin-bottom:8px;flex-wrap:wrap}
 .task-card .task-meta span{display:flex;align-items:center;gap:3px}
 .task-bottom{display:flex;align-items:center;gap:10px}
@@ -314,7 +328,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <div class="card">
         <div class="section-hdr" style="margin-bottom:8px">
           <h3 style="margin-bottom:0">Event Log</h3>
-          <button class="btn btn-outline btn-sm" id="btn-clear-log">Clear</button>
         </div>
         <div id="log-panel" class="log-area"></div>
       </div>
