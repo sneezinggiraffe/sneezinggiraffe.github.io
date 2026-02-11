@@ -25,8 +25,8 @@
   const MAX_TASKS = 12;
   const AGENT_WORK_MULT = 25; // base multiplier for agent work speed
   const MAX_LOG = 200;
-  const AGENT_BASE_HIRE_COST = 100;
-  const AGENT_HIRE_COST_MULT = 1.8;
+  const AGENT_BASE_HIRE_COST = 150;
+  const AGENT_HIRE_COST_MULT = 1.5;
   const SOUNDTRACKS = [
     { minTasks: 8, path: "soundtrack-loop.mp3" },
   ];
@@ -52,16 +52,20 @@
     "Greg", "Linda", "Dave", "Brenda", "Mike", "Janet", "Susan", "Doug",
     "Cheryl", "Steve", "Tammy", "Karen", "Bob", "Terry", "Raj", "Diane",
     "Phil", "Monica", "Hank", "Yolanda", "Craig", "Debra", "Norm", "Patty",
+    "Aisha", "Marcus", "Priya", "Javier", "Leah", "Omar", "Naomi", "Trevor",
   ];
   const CLIENT_TAGS = [
     "(following up)", "(did you see my last email?)", "(ASAP please)", "(3rd request)",
     "(per my last email)", "(circling back)", "(need this by EOD)", "(just checking in)",
     "(URGENT)", "(overdue)", "(re: last Tuesday)", "(please advise)",
+    "(quick favor)", "(final reminder)", "(blocked without this)", "(client waiting)",
+    "(need this approved)", "(status update?)",
   ];
   const CLIENT_PLAIN = [
     "URGENT - Client #4092", "Unknown Sender", "Vendor Relations", "Reply-All Victim",
     "Client Escalation Desk", "PRIORITY - External Audit", "Accounts Receivable",
-    "angry-customer@gmail.com", "no-reply@important-client.com",
+    "angry-customer@gmail.com", "no-reply@important-client.com", "FWD: Escalation Thread",
+    "RE: Missing Deliverable", "Billing Dispute Queue", "Executive Assistant Inbox",
   ];
   function pickClient() {
     const r = Math.random();
@@ -122,7 +126,7 @@
     { id: "free_ai", name: "Discover Free-Tier AI", desc: "Unlock AI Assist on tasks. Faster but risks hallucination failures.", cost: 210, currency: "cash", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 120 },
 
     // Phase 2 -> 3
-    { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 140, currency: "cash", phase: 2, effect: { aiFailMult: 0.8 }, oneTime: true },
+    { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 120, currency: "cash", phase: 2, effect: { aiFailMult: 0.8 }, oneTime: true },
     { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 170, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 120 },
     { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign! Tasks are more frequent and pay 60% more.", cost: 200, currency: "cash", phase: 2, effect: { payMult: 1.6, giveRep: 80 }, oneTime: true, reqTasks: 230 },
     { id: "pro_model", name: "Pro AI Subscription", desc: "Unlock Pro model: better quality, costs tokens. Unlocks Phase 3.", cost: 500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 260 },
@@ -146,7 +150,8 @@
     { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 20% more.", cost: 315, currency: "cash", phase: 4, effect: { payMult: 1.2 }, oneTime: true },
     { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 400, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true },
     { id: "agent_slot_5", name: "Agent Slot Expansion (5)", desc: "Allow up to 5 agents.", cost: 900, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
-    { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 1000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
+    { id: "agent_slot_5", name: "Sponsored Ads", desc: "Pay for adverts on search engines and social media.", cost: 2500, currency: "cash", phase: 4, effect: { payMult: 10.0, giveRep: 5000 }, oneTime: true },
+    { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 3000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
 
     // Phase 5 -> 6
     { id: "macro_keyboard", name: "Macro Keyboard", desc: "Programmable hotkeys. 3x click power.", cost: 600, currency: "cash", phase: 5, effect: { clickPower: 3 }, oneTime: true },
@@ -937,7 +942,7 @@
       if (G.phase >= tier.phase) rate = tier.rate;
     }
     // Agent upkeep
-    rate += G.agents.length * (0.1 + G.phase * 0.05);
+    rate += G.agents.length * (0.8 + G.phase * 0.2);
     // Schedule overhead
     rate += G.schedules.length * 0.2;
     // Service costs
@@ -1553,7 +1558,7 @@
         var aiTokenCost = G.phase >= 3 ? Math.ceil(3 * (1 + G.phase * 0.2) * G.tokenEfficiency) : 0;
         var aiCost = aiTokenCost > 0 ? " (" + aiTokenCost + " tok)" : "";
         var aiDisabled = aiTokenCost > 0 && G.tokens < aiTokenCost ? " disabled" : "";
-        var aiDimStyle = G.uiRevealed.agents ? " style='background:#5a3ab0'" : "";
+        var aiDimStyle = G.agentSlots >= 3 ? " style='background:#513782'" : G.uiRevealed.agents ? " style='background:#5a3ab0'" : "";
         var aiBtn = "<button class='btn btn-purple btn-sm'" + aiDisabled + aiDimStyle + " onclick=\"GAME.aiAssist('" + t.id + "', event)\">AI Assist" + aiCost + "</button>";
 
         if (G.uiRevealed.tokens) {
@@ -1782,13 +1787,15 @@
       var age = Math.floor((Date.now() - inc.createdAt) / 1000);
       html += "<div class='card incident-card " + (inc.sev === "warning" ? "warning" : "") + "'>" +
         "<div class='sev " + inc.sev + "'>" + inc.sev + "</div>" +
-        "<div style='font-weight:600;margin-bottom:4px'>" + inc.name + "</div>" +
-        "<div class='text-sm text-muted mb'>" + inc.desc + "</div>" +
-        "<div class='text-sm mb'>" +
-        (inc.repCost ? "<span style='color:var(--rep)'>-" + inc.repCost + " rep</span> " : "") +
-        (inc.cashCost ? "<span style='color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span> " : "") +
-        "<span class='text-muted'>" + age + "s ago</span>" +
+        "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px'>" +
+        "<div style='font-weight:600;min-width:0'>" + inc.name + "</div>" +
+        "<div style='display:flex;align-items:center;gap:8px;white-space:nowrap'>" +
+        "<span style='font-size:.78rem;color:var(--rep)'>-" + inc.repCost + " rep/s</span>" +
+        "<span style='font-size:.78rem;color:var(--text3)'>" + age + "s</span>" +
         "</div>" +
+        "</div>" +
+        "<div class='text-sm text-muted mb'>" + inc.desc + "</div>" +
+        (inc.cashCost ? "<div class='text-sm mb'><span style='color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span></div>" : "") +
         "<div style='display:flex;gap:6px'>" +
         "<button class='btn btn-primary btn-sm' onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">Fix Manually (+stress)</button>" +
         "<button class='btn btn-yellow btn-sm'" + (G.cash < (inc.cashCost || 20) * 2 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','cash')\">Pay to Fix (" + fmtCash((inc.cashCost || 20) * 2) + ")</button>" +
