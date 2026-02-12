@@ -28,7 +28,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .res .label{color:var(--text3);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
 .res .val{font-weight:700;font-variant-numeric:tabular-nums}
 .res-cash .val{color:var(--cash)}.res-tokens .val{color:var(--token)}.res-rep .val{color:var(--rep)}.res-debt .val{color:var(--debt)}
-.res-compute .val{color:var(--purple)}.res-stress .val{color:var(--pink)}
+.res-stress .val{color:var(--pink)}
 .res-warning{background:rgba(239,68,68,0.15);border-radius:6px;padding:2px 6px;animation:res-pulse 2s ease-in-out infinite}
 @keyframes res-pulse{0%,100%{background:rgba(239,68,68,0.08)}50%{background:rgba(239,68,68,0.25)}}
 #res-tokens-wrap.res-warning{
@@ -129,11 +129,21 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .incident-card .sev{font-size:.7rem;text-transform:uppercase;font-weight:700;margin-bottom:4px}
 .incident-card .sev.critical{color:var(--red)}.incident-card .sev.warning{color:var(--yellow)}
 
-/* Schedules */
-.schedule-card{display:flex;justify-content:space-between;align-items:center}
-.schedule-info{flex:1}
-.schedule-info .name{font-weight:600;font-size:.88rem}
-.schedule-info .desc{font-size:.75rem;color:var(--text2)}
+/* Cluster cards */
+.cluster-card{border:1px solid var(--bg4);border-radius:var(--radius);padding:10px;margin-bottom:10px;background:var(--bg2)}
+.cluster-card .cluster-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cluster-card .cluster-name{font-weight:700;font-size:.9rem;color:var(--accent)}
+.cluster-card .cluster-status{font-size:.72rem;color:var(--green)}
+.cluster-slots-row{display:flex;gap:4px;margin-bottom:6px}
+.cluster-slot{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;cursor:pointer;transition:all .15s}
+.cluster-slot.filled{border:2px solid var(--accent);background:var(--bg3)}
+.cluster-slot.empty{border:2px dashed var(--bg4);background:transparent;color:var(--text3)}
+.cluster-slot.empty:hover{border-color:var(--accent);color:var(--accent)}
+.cluster-slot.util-slot{width:auto;padding:2px 8px;font-size:.68rem;border-radius:12px}
+.cluster-slot.util-slot.filled{background:var(--bg3);border-color:var(--green);color:var(--green)}
+.cluster-slot.util-slot.empty{border-color:var(--bg4);color:var(--text3)}
+.cluster-stats{font-size:.72rem;color:var(--text2);display:flex;gap:10px}
+.cluster-ceo-badge{font-size:.68rem;background:var(--purple);color:#fff;padding:1px 6px;border-radius:8px;font-weight:600}
 
 /* Log */
 .log-area{max-height:150px;overflow-y:auto;font-size:.75rem;line-height:1.5}
@@ -224,7 +234,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <span id="phase-label">Phase 1</span>
   <span class="res res-cash" id="res-cash-wrap" style="display:none"><span class="label">Cash</span><span class="val" id="res-cash">$0</span></span>
   <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label">Tokens</span><span class="val" id="res-tokens">0</span></span>
-  <span class="res res-compute" id="res-compute-wrap" style="display:none"><span class="label">Compute</span><span class="val" id="res-compute">0/0</span></span>
   <span class="res res-rep" id="res-rep-wrap" style="display:none"><span class="label">Rep</span><span class="val" id="res-rep">0</span></span>
   <span class="res res-debt" id="res-debt-wrap" style="display:none"><span class="label">Debt</span><span class="val" id="res-debt">0</span></span>
   <span class="res res-stress" id="res-stress-wrap" style="display:none"><span class="label">Stress</span><span class="val" id="res-stress">0%</span></span>
@@ -286,6 +295,17 @@ button:disabled{opacity:.4;cursor:not-allowed}
       </div>
     </div>
 
+    <!-- Clusters -->
+    <div id="section-clusters" class="cp-section" style="display:none">
+      <div class="card">
+        <div class="section-hdr" style="margin-bottom:8px">
+          <h3 style="margin-bottom:0">Clusters</h3>
+          <span class="sub" id="cluster-count"></span>
+        </div>
+        <div id="cluster-list"></div>
+      </div>
+    </div>
+
     <!-- Incidents -->
     <div id="section-incidents" class="cp-section" style="display:none">
       <div class="card">
@@ -295,17 +315,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
         </div>
         <div id="incident-list"></div>
         <div id="no-incidents" class="text-muted text-sm" style="text-align:center;padding:20px">All clear. No active incidents.</div>
-      </div>
-    </div>
-
-    <!-- Automation -->
-    <div id="section-automation" class="cp-section" style="display:none">
-      <div class="card">
-        <h3>Automation &amp; Schedules</h3>
-        <div id="schedule-list"></div>
-        <div class="mt">
-          <button class="btn btn-primary btn-sm" id="btn-add-schedule" disabled>+ Add Daily Job</button>
-        </div>
       </div>
     </div>
 
