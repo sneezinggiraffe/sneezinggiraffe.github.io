@@ -46,12 +46,37 @@
   const MAX_LOG = 200;
   const AGENT_BASE_HIRE_COST = 250;
   const AGENT_HIRE_COST_MULT = 1.8;
+  const MANUAL_WORK_SECONDS_PER_CLICK = 0.15;
+  const MANUAL_STRESS_PER_SEC = 2;
+  const AI_WORK_MULT_PHASE2 = 1.25;
+  const AI_WORK_MULT_PHASE3 = 1.8;
+  const AI_FAIL_BASE_PHASE2_PER_SEC = 0.018;
+  const AI_FAIL_BASE_PHASE3_PER_SEC = 0.009;
+  const AI_FAIL_REWORK_FRACTION = 0.15;
+  const TOPUP_COST_TOKEN = 1;
+  const MANAGER_TOPUP_COST_TOKEN = 100;
+  const MANAGER_TOKEN_TANK_MAX = 100;
+  const TOPUP_LOAD_UNITS = 1;
+  const AI_WORKER_TOKEN_TANK_MAX = 10;
+  const AI_WORKER_TOKEN_TANK_DRAIN_PER_SEC = 1.2;
+  const AGENT_TOKEN_TANK_DRAIN_PER_SEC = 2.5;
+  const STALL_LOG_COOLDOWN_MS = 3000;
+  const EARLY_TASK_WORK_MULT = 0.5;
+  const AI_TUTORIAL_SECONDS = 20;
   const SOUNDTRACKS = [
     { minTasks: 8, path: "soundtrack-loop.mp3" },
   ];
+  const DRUM_LAYERS = [
+    { minPhase: 4, path: "precursor_kick.mp3" },
+    { minPhase: 6, path: "dnb_deep_loop.mp3" },
+  ];
   const MUSIC_TARGET_VOLUME = 0.25;
+  const DRUM_TARGET_VOLUME = 0.18;
   const MUSIC_FADE_IN_MS = 6000;
   const MUSIC_FADE_STEP_MS = 50;
+  const DRUM_FADE_IN_MS = 10000;
+  const DRUM_CROSSFADE_MS = 10000;
+  const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 11;
   const MAJOR_PHASE_POPUPS = [3, 5, 6, 8, 9, 10, 11];
   const CLUSTER_NAME_ORDER = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"];
@@ -134,24 +159,24 @@
   const UPGRADES = [
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
-    { id: "post_it_notes", name: "Post-It Notes", desc: "+50% click power. Simple but effective.", cost: 43, currency: "cash", phase: 1, effect: { clickPower: 1.5 }, oneTime: true, reqTasks: 22 },
+    { id: "post_it_notes", name: "Post-It Notes", desc: "+50% click power. Simple but effective.", cost: 43, currency: "cash", phase: 1, effect: { clickPower: 1.5 }, oneTime: true, reqTasks: 10 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 24 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 26 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 30 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 29 },
     { id: "gtd_workflow", name: "GTD Workflow", desc: "You read 'Getting Things Done'. 2x click power.", cost: 61, currency: "cash", phase: 1, effect: { clickPower: 2 }, oneTime: true, reqTasks: 50 },
-    { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 101, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 52 },
+    { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 79, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 52 },
 
     // Phase 1 -> 2
-    { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 92 },
-    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "+50% click power.", cost: 99, currency: "cash", phase: 1, effect: { clickPower: 1.5 }, oneTime: true, reqTasks: 95 },
-    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Unlock AI Assist on tasks. Faster but risks hallucination failures.", cost: 210, currency: "cash", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 120 },
+    { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 60 },
+    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "+50% click power.", cost: 99, currency: "cash", phase: 1, effect: { clickPower: 1.5 }, oneTime: true, reqTasks: 65 },
+    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Unlock AI Assist on tasks. Faster but risks hallucination failures.", cost: 210, currency: "cash", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 70 },
 
     // Phase 2 -> 3
     { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 120, currency: "cash", phase: 2, effect: { aiFailMult: 0.8 }, oneTime: true },
-    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 170, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 120 },
-    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign! Tasks are more frequent and pay 60% more.", cost: 200, currency: "cash", phase: 2, effect: { payMult: 1.6, giveRep: 80 }, oneTime: true, reqTasks: 230 },
-    { id: "pro_model", name: "Pro AI Subscription", desc: "Unlock Pro model: better quality, costs tokens. Unlocks Phase 3.", cost: 500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 260 },
+    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 170, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 90 },
+    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign! Tasks are more frequent and pay 60% more.", cost: 200, currency: "cash", phase: 2, effect: { payMult: 1.6, giveRep: 80 }, oneTime: true, reqTasks: 110 },
+    { id: "pro_model", name: "Pro AI Subscription", desc: "Unlock Pro model: better quality, costs tokens. Unlocks Phase 3.", cost: 500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 130 },
 
     // Phase 3 -> 4
     { id: "token_pack_1", name: "Token Pack (200)", desc: "Get 200 tokens.", cost: 110, currency: "cash", phase: 3, effect: { giveTokens: 200 }, oneTime: false },
@@ -163,7 +188,7 @@
     { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 400, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 351 },
     { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 2.0, giveRep: 1000 }, oneTime: true, reqTasks: 353 },
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 25% more valuable.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 353 },
-    { id: "multi_bot", name: "Multi-Bot License", desc: "Unlock agent hiring. Phase 4 begins.", cost: 2200, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 380 },
+    { id: "multi_bot", name: "Multi-Bot License", desc: "Unlock agent hiring. Phase 4 begins.", cost: 2200, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 210 },
 
     // Phase 4 -> 5
     { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
@@ -240,13 +265,13 @@
     { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], popup: { title: "Incoming...", msg: "More gigs are coming in. Your inbox is filling up." }, spawnOnTrigger: 2 },
     { id: "rep_unlock", reqTasks: 10, reveals: ["rep"] },
     { id: "stress_unlock", reqTasks: 12, reveals: ["stress"], popup: { title: "Pressure Building", msg: "The work keeps coming. You are starting to feel the pressure." } },
-    { id: "upgrades_unlock", reqTasks: 20, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true }, popup: { title: "Tools of the Trade", msg: "Maybe some better tools would help you keep up..." } },
+    { id: "upgrades_unlock", reqTasks: 15, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true }, popup: { title: "Tools of the Trade", msg: "Maybe some better tools would help you keep up..." } },
     { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true }, popup: { title: "Reality Check", msg: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash." } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
-    { id: "ai_hint", reqTasks: 110, popup: { title: "There Must Be a Better Way", msg: "You are getting faster, but the work never stops. Maybe there is a smarter way..." } },
+    { id: "ai_hint", reqTasks: 35, popup: { title: "There Must Be a Better Way", msg: "You are getting faster, but the work never stops. Maybe there is a smarter way..." } },
     // Phase-based
     { id: "tokens_unlock", reqPhase: 3, reveals: ["tokens"] },
-    { id: "agents_unlock", reqPhase: 4, reveals: ["agents"], popup: { title: "Delegation", msg: "You can now hire AI agents to work tasks for you. Each agent has stats, traits, and specialties." } },
+    { id: "agents_unlock", reqPhase: 2, reveals: ["agents"], popup: { title: "AI Worker", msg: "Your first AI worker is available. Top it up to keep it running tasks for you." } },
     { id: "dashboard_unlock", reqPhase: 8, reveals: ["dashboard"] },
     { id: "clusters_unlock", reqPhase: 9, reveals: ["clusters"] },
     { id: "debt_unlock", reqPhase: 9, reveals: ["debt"] },
@@ -315,11 +340,19 @@
       expensesRevealed: false,
       incidentsExplained: false,
       aiAssistCount: 0,
+      aiRunSeconds: 0,
+      aiWorkerTokenTank: 0,
+      aiWorkerCurrentTaskId: null,
+      aiWorkerTasksCompleted: 0,
+      aiWorkerLastStallAt: 0,
+      aiWorkerShutdown: false,
+      managerTokenTank: 0,
+      managerLastStallAt: 0,
       taskExpiryEnabled: false,
       payMult: 1,
       workReduction: 0,
       taskDetails: false,
-      musicEnabled: true,
+      musicMode: "layered", // off | on | layered
       uiRevealed: {
         topBar: false,
         cash: false,
@@ -359,6 +392,14 @@
       for (const k of Object.keys(def)) {
         if (data[k] !== undefined) G[k] = data[k];
       }
+      if (data.musicMode !== undefined) {
+        G.musicMode = data.musicMode;
+      } else if (data.musicEnabled !== undefined) {
+        G.musicMode = data.musicEnabled ? "on" : "off";
+      }
+      if (data.aiAutopilotEnabled !== undefined) {
+        G.aiAutopilotEnabled = data.aiAutopilotEnabled;
+      }
       // Apply prestige bonuses
       G.clickPower = Math.max(G.clickPower, 1 + G.prestigeBonusClick);
       // Migrate old saves without onboarding fields
@@ -370,6 +411,12 @@
   }
 
   function migrateSave() {
+    if (G.musicMode === undefined) {
+      if (G.musicEnabled === false) G.musicMode = "off";
+      else G.musicMode = "layered";
+    }
+    if (["off", "on", "layered"].indexOf(G.musicMode) === -1) G.musicMode = "layered";
+    G.musicEnabled = undefined;
     if (G.devopsIncidentMult === undefined) G.devopsIncidentMult = 1;
     if (G.agentAutoAssign === undefined) {
       G.agentAutoAssign = Array.isArray(G.purchasedUpgrades) && G.purchasedUpgrades.includes("scheduling");
@@ -377,12 +424,40 @@
     if (G.managerAssignMult === undefined) G.managerAssignMult = 1;
     if (G.lastManagerAssignAt === undefined) G.lastManagerAssignAt = 0;
     if (G.lastAgentAutoAssignAt === undefined) G.lastAgentAutoAssignAt = 0;
+    if (G.aiRunSeconds === undefined) G.aiRunSeconds = 0;
+    if (G.aiWorkerTokenTank === undefined) G.aiWorkerTokenTank = 0;
+    if (G.aiWorkerCurrentTaskId === undefined) G.aiWorkerCurrentTaskId = null;
+    if (G.aiWorkerTasksCompleted === undefined) G.aiWorkerTasksCompleted = 0;
+    if (G.aiWorkerLastStallAt === undefined) G.aiWorkerLastStallAt = 0;
+    if (G.aiWorkerShutdown === undefined) G.aiWorkerShutdown = false;
+    if (G.managerTokenTank === undefined) G.managerTokenTank = 0;
+    if (G.managerLastStallAt === undefined) G.managerLastStallAt = 0;
+    G.managerTokenTank = clamp(G.managerTokenTank, 0, MANAGER_TOKEN_TANK_MAX);
+    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank, 0, AI_WORKER_TOKEN_TANK_MAX);
+    if (G.aiAutopilotEnabled === true) {
+      G.aiAutopilotEnabled = false;
+      G.aiWorkerTokenTank = 0;
+      G.aiWorkerCurrentTaskId = null;
+    }
     for (var ai = 0; ai < G.agents.length; ai++) {
       if (G.agents[ai].autoAssign === undefined) G.agents[ai].autoAssign = false;
+      if (G.agents[ai].tokenTank === undefined) G.agents[ai].tokenTank = 0;
     }
     for (var ii = 0; ii < G.incidents.length; ii++) {
       if (G.incidents[ii].fixProgress === undefined) G.incidents[ii].fixProgress = 0;
     }
+    var hasCurrentAiTask = false;
+    for (var ti = 0; ti < G.tasks.length; ti++) {
+      var task = G.tasks[ti];
+      if (["available", "active", "ai", "agent", "done"].indexOf(task.status) === -1) {
+        task.status = "available";
+      } else if (task.status === "ai" && task.id !== G.aiWorkerCurrentTaskId) {
+        task.status = "available";
+      } else if (task.status === "ai" && task.id === G.aiWorkerCurrentTaskId) {
+        hasCurrentAiTask = true;
+      }
+    }
+    if (!hasCurrentAiTask) G.aiWorkerCurrentTaskId = null;
 
     // Migrate aiCeo boolean to ceoMode string
     if (G.aiCeo !== undefined) {
@@ -432,7 +507,8 @@
     const type = pick(types);
     const tier = Math.max(1, G.phase - type.phase + 1);
     const mult = 1 + (tier - 1) * 0.5 + G.prestigeCount * 0.1;
-    const fatigueMult = 1 + G.totalTasksDone * 0.002; // slow fatigue
+    const fatigueTasks = Math.max(0, G.totalTasksDone - 20);
+    const fatigueMult = 1 + fatigueTasks * 0.002; // keep early completion speed through task 20
     return {
       id: uid(),
       typeId: type.id,
@@ -446,7 +522,7 @@
       tokenCost: G.phase >= 3 ? Math.ceil(type.baseWork * 0.3 * mult) : 0,
       failChance: 0,
       assignedAgent: null,
-      status: "available", // available, active, agent, done
+      status: "available", // available, active, ai, agent, done
       createdAt: Date.now(),
     };
   }
@@ -461,7 +537,7 @@
       name: type.name,
       icon: type.icon,
       client: pickClient(),
-      workRequired: type.baseWork,
+      workRequired: Math.max(1, Math.ceil(type.baseWork * EARLY_TASK_WORK_MULT)),
       workDone: 0,
       pay: type.basePay,
       repReward: type.baseRep,
@@ -509,6 +585,12 @@
       task = generateEarlyTask();
       G.tasks.push(task);
       G.activeTaskId = task.id;
+      $("#early-task-display").style.visibility = "visible";
+      $("#early-task-icon-name").textContent = task.icon + " " + task.name;
+      $("#early-task-bar").style.width = "0%";
+      $("#early-task-reward").innerHTML = "<span style='color:var(--cash)'>" + fmtCash(getTaskCashPayout(task, "manual", null)) + "</span> reward &bull; 0% done";
+      $("#btn-do-task").textContent = "Working...";
+      $("#btn-do-task").style.cursor = "wait";
     }
     clickTask(task.id, evt);
   }
@@ -516,19 +598,234 @@
   // ---------- CLICKING / TASK WORK ----------
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
-    if (!task || task.status === "done") return;
+    if (!task || task.status !== "available") return;
+
     task.status = "active";
     G.activeTaskId = taskId;
     G.totalClicks++;
-    G.stress = clamp(G.stress + 0.3, 0, 100);
+    showClickReward(G.clickPower, evt);
+  }
 
-    let power = G.clickPower;
-    task.workDone = Math.min(task.workRequired, task.workDone + power);
+  function tickManualWork(dtSec) {
+    var activeTasks = G.tasks.filter(function (t) { return t.status === "active"; });
+    if (activeTasks.length === 0) return;
+
+    var workPerSec = G.clickPower / MANUAL_WORK_SECONDS_PER_CLICK;
+    for (var i = 0; i < activeTasks.length; i++) {
+      var task = activeTasks[i];
+      task.workDone = Math.min(task.workRequired, task.workDone + workPerSec * dtSec);
+      if (task.workDone >= task.workRequired) {
+        completeTask(task, "manual");
+      }
+    }
+    G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * activeTasks.length, 0, 100);
+  }
+
+  function getCurrentAiWorkerTask() {
+    if (G.aiWorkerShutdown) return null;
+    if (!G.aiWorkerCurrentTaskId) return null;
+    var task = G.tasks.find(function (t) { return t.id === G.aiWorkerCurrentTaskId; }) || null;
+    if (!task || task.status === "done") {
+      G.aiWorkerCurrentTaskId = null;
+      return null;
+    }
+    if (task.status !== "ai") task.status = "ai";
+    return task;
+  }
+
+  function pickNextAiTask() {
+    var available = G.tasks.filter(function (t) { return t.status === "available"; });
+    if (available.length === 0) return null;
+    available.sort(function (a, b) {
+      if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+    return available[0];
+  }
+
+  function createAiWorkerIncident(task) {
+    var tmpl = INCIDENT_TEMPLATES.find(function (t) { return t.id === "hallucination" && t.phase <= G.phase; });
+    if (!tmpl) {
+      var available = INCIDENT_TEMPLATES.filter(function (t) { return t.phase <= G.phase; });
+      if (available.length === 0) return;
+      tmpl = available[0];
+    }
+    var incident = {
+      id: uid(),
+      templateId: tmpl.id,
+      name: tmpl.name,
+      desc: tmpl.desc + (task ? " (AI worker on \"" + task.name + "\")" : ""),
+      sev: tmpl.sev,
+      repCost: tmpl.repCost || 0,
+      cashCost: tmpl.cashCost || 0,
+      tokenCost: tmpl.tokenCost || 0,
+      fixProgress: 0,
+      createdAt: Date.now(),
+      resolved: false,
+    };
+    G.incidents.push(incident);
+    G.totalIncidents++;
+    if (incident.repCost > 0) G.reputation = Math.max(0, G.reputation - Math.ceil(incident.repCost / 2));
+    if (incident.cashCost > 0) G.cash = Math.max(0, G.cash - incident.cashCost / 2);
+    if (!G.uiRevealed.incidents) G.uiRevealed.incidents = true;
+    log("INCIDENT: " + incident.name + "!", "bad");
+  }
+
+  function topUpAiWorker() {
+    if (G.phase < 2) {
+      log("AI worker is not unlocked yet.", "bad");
+      return;
+    }
+    if (G.aiWorkerShutdown) {
+      log("AI worker is shut down.", "bad");
+      return;
+    }
+    if (G.phase >= 3 && G.tokens < TOPUP_COST_TOKEN) {
+      if (Date.now() - G.aiWorkerLastStallAt >= STALL_LOG_COOLDOWN_MS) {
+        log("AI worker top-up failed: out of tokens.", "warn");
+        G.aiWorkerLastStallAt = Date.now();
+      }
+      return;
+    }
+    if (G.phase >= 3) {
+      G.tokens -= TOPUP_COST_TOKEN;
+    }
+    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank + TOPUP_LOAD_UNITS, 0, AI_WORKER_TOKEN_TANK_MAX);
+    log("AI worker topped up.", "info");
+    save();
+  }
+
+  function shutdownAiWorker() {
+    if (G.phase < 4) {
+      log("AI worker shutdown unlocks in multi-bot mode.", "bad");
+      return;
+    }
+    if (G.aiWorkerShutdown) return;
+    for (var ti = 0; ti < G.tasks.length; ti++) {
+      if (G.tasks[ti].status === "ai") G.tasks[ti].status = "available";
+    }
+    G.aiWorkerCurrentTaskId = null;
+    G.aiWorkerTokenTank = 0;
+    G.aiWorkerShutdown = true;
+    log("AI worker shut down. Slot freed for other agents.", "warn");
+    save();
+  }
+
+  function topUpAgent(agentId) {
+    var agent = G.agents.find(function (a) { return a.id === agentId; });
+    if (!agent) return;
+    if (UTILITY_ROLES.indexOf(agent.roleId) >= 0) return;
+    var managerOnline = G.phase >= 6 && G.agents.some(function (a) { return a.roleId === "manager"; });
+    if (managerOnline) {
+      log("Manager is online. Top up the manager instead.", "warn");
+      return;
+    }
+    if (G.phase >= 3 && G.tokens < TOPUP_COST_TOKEN) {
+      log("Not enough tokens to top up " + agent.name + ".", "bad");
+      return;
+    }
+    if (G.phase >= 3) {
+      G.tokens -= TOPUP_COST_TOKEN;
+    }
+    agent.tokenTank = (agent.tokenTank || 0) + TOPUP_LOAD_UNITS;
+    agent.tokenStarved = false;
+  }
+
+  function topUpManager() {
+    if (G.phase < 6) {
+      log("Manager top-up unlocks in Phase 6.", "bad");
+      return;
+    }
+    var manager = G.agents.find(function (a) { return a.roleId === "manager"; });
+    if (!manager) {
+      log("Hire a manager first.", "bad");
+      return;
+    }
+    if ((G.managerTokenTank || 0) >= MANAGER_TOKEN_TANK_MAX) return;
+    if (G.phase >= 3 && G.tokens < MANAGER_TOPUP_COST_TOKEN) {
+      if (Date.now() - G.managerLastStallAt >= STALL_LOG_COOLDOWN_MS) {
+        log("Manager top-up failed: need 100 tokens.", "warn");
+        G.managerLastStallAt = Date.now();
+      }
+      return;
+    }
+    if (G.phase >= 3) {
+      G.tokens -= MANAGER_TOPUP_COST_TOKEN;
+    }
+    var before = G.managerTokenTank || 0;
+    G.managerTokenTank = clamp(before + MANAGER_TOPUP_COST_TOKEN, 0, MANAGER_TOKEN_TANK_MAX);
+    var delta = Math.floor(G.managerTokenTank - before);
+    if (delta > 0) log("Manager topped up (+" + delta + ").", "info");
+  }
+
+  function toggleAiAutopilot() {
+    log("AI autopilot was replaced by Top-up controls in the Agents pane.", "warn");
+  }
+
+  function tickAiWorker(dtSec) {
+    if (G.phase < 2 || G.aiWorkerShutdown) {
+      G.aiWorkerCurrentTaskId = null;
+      for (var pi = 0; pi < G.tasks.length; pi++) {
+        if (G.tasks[pi].status === "ai") G.tasks[pi].status = "available";
+      }
+      return;
+    }
+    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank, 0, AI_WORKER_TOKEN_TANK_MAX);
+    if (G.aiWorkerTokenTank <= 0) {
+      for (var ti = 0; ti < G.tasks.length; ti++) {
+        if (G.tasks[ti].status === "ai") G.tasks[ti].status = "available";
+      }
+      G.aiWorkerCurrentTaskId = null;
+      return;
+    }
+
+    var task = getCurrentAiWorkerTask();
+    if (!task) {
+      task = pickNextAiTask();
+      if (!task) return;
+      task.status = "ai";
+      G.aiWorkerCurrentTaskId = task.id;
+    }
+
+    var effectiveDt = dtSec;
+    var drain = AI_WORKER_TOKEN_TANK_DRAIN_PER_SEC * dtSec;
+    if (G.aiWorkerTokenTank < drain) {
+      effectiveDt = drain > 0 ? dtSec * (G.aiWorkerTokenTank / drain) : 0;
+      G.aiWorkerTokenTank = 0;
+    } else {
+      G.aiWorkerTokenTank -= drain;
+    }
+
+    if (effectiveDt <= 0) return;
+
+    G.aiRunSeconds += effectiveDt;
+    if (!G.incidentsExplained && G.aiRunSeconds >= AI_TUTORIAL_SECONDS) {
+      triggerTutorialIncident();
+    }
+
+    var failBasePerSec = G.phase >= 3 ? AI_FAIL_BASE_PHASE3_PER_SEC : AI_FAIL_BASE_PHASE2_PER_SEC;
+    var failPerSec = failBasePerSec * G.aiFailMult * (1 + G.techDebt * 0.005);
+    failPerSec = clamp(failPerSec, 0, 0.95);
+    var failChance = 1 - Math.pow(1 - failPerSec, effectiveDt);
+    if (Math.random() < failChance) {
+      var rework = Math.ceil(task.workRequired * AI_FAIL_REWORK_FRACTION);
+      task.workDone = Math.max(0, task.workDone - rework);
+      task.status = "available";
+      G.aiWorkerCurrentTaskId = null;
+      createAiWorkerIncident(task);
+      return;
+    }
+
+    var manualWorkPerSec = G.clickPower / MANUAL_WORK_SECONDS_PER_CLICK;
+    var aiWorkMult = G.phase >= 3 ? AI_WORK_MULT_PHASE3 : AI_WORK_MULT_PHASE2;
+    var aiWorkPerSec = manualWorkPerSec * aiWorkMult * G.aiPowerMult;
+    task.workDone = Math.min(task.workRequired, task.workDone + aiWorkPerSec * effectiveDt);
 
     if (task.workDone >= task.workRequired) {
-      completeTask(task, "manual");
+      G.aiWorkerTasksCompleted++;
+      G.aiWorkerCurrentTaskId = null;
+      completeTask(task, "ai_assist");
     }
-    showClickReward(power, evt);
   }
 
   function aiAssistTask(taskId, evt) {
@@ -542,9 +839,6 @@
       return;
     }
     if (tokenCost > 0) G.tokens -= tokenCost;
-
-    task.status = "active";
-    G.activeTaskId = taskId;
 
     let power = Math.ceil(G.clickPower * 2.5 * G.aiPowerMult);
     const failRoll = Math.random();
@@ -566,12 +860,6 @@
 
     if (task.workDone >= task.workRequired) {
       completeTask(task, "ai_assist");
-    }
-
-    // Track AI assist count for scripted first incident
-    G.aiAssistCount++;
-    if (G.aiAssistCount === 25 && !G.incidentsExplained) {
-      triggerTutorialIncident();
     }
 
     showClickReward(power, evt);
@@ -615,10 +903,7 @@
   }
 
   function autoAssignAgent(agentId) {
-    var agent = G.agents.find(function (a) { return a.id === agentId; });
-    if (!agent || agent.status !== "idle") return;
-    var task = findMatchingTask(agent);
-    if (task) assignAgentToTask(task.id, agentId);
+    topUpAgent(agentId);
   }
 
   function toggleAgentAuto(agentId) {
@@ -634,6 +919,7 @@
     const task = G.tasks.find((t) => t.id === taskId);
     const agent = G.agents.find((a) => a.id === agentId);
     if (!task || !agent || agent.status !== "idle") return;
+    if (UTILITY_ROLES.indexOf(agent.roleId) === -1 && G.phase >= 2 && (agent.tokenTank || 0) <= 0) return;
     task.status = "agent";
     task.assignedAgent = agentId;
     agent.status = "working";
@@ -710,6 +996,7 @@
       quality: baseQuality,
       reliability: baseReliability,
       tokenCost: rand(0.8, 1.2),
+      tokenTank: 0,
       status: "idle", // idle, working, error
       autoAssign: false,
       currentTask: null,
@@ -728,6 +1015,21 @@
 
   var UTILITY_ROLES = ["manager", "token_mgr", "devops"];
 
+  function getSharedAgentPoolSize() {
+    if (G.phase < 4) return G.aiWorkerShutdown ? 0 : 1;
+    return G.agentSlots + 1;
+  }
+
+  function getSharedAgentPoolUsed() {
+    var aiWorkerUsed = (!G.aiWorkerShutdown && G.phase >= 2) ? 1 : 0;
+    return G.agents.length + aiWorkerUsed;
+  }
+
+  function getHireAgentCapacity() {
+    if (G.phase < 4) return 0;
+    return G.aiWorkerShutdown ? G.agentSlots + 1 : G.agentSlots;
+  }
+
   function hireAgent(roleId) {
     // Utility roles are always singletons; worker roles allow duplicates in Phase 9+
     var isUtility = UTILITY_ROLES.indexOf(roleId) >= 0;
@@ -738,7 +1040,7 @@
       }
     }
     const activeAgents = G.agents.length;
-    if (activeAgents >= G.agentSlots) {
+    if (activeAgents >= getHireAgentCapacity()) {
       log("No agent slots available!", "bad");
       return;
     }
@@ -807,12 +1109,26 @@
     const refund = Math.ceil(getAgentHireCost(G.agents.length - 1) * 0.3);
     G.cash += refund;
     G.agents.splice(idx, 1);
+    if (agent.roleId === "manager") {
+      G.managerTokenTank = 0;
+    }
     log("Fired " + agent.name + ". Recovered " + fmtCash(refund) + ".", "warn");
   }
 
   // ---------- AGENT TICK ----------
   function tickAgents(dtSec) {
     for (const agent of G.agents) {
+      if (UTILITY_ROLES.indexOf(agent.roleId) >= 0) continue;
+
+      if (agent.status === "idle" && (agent.tokenTank || 0) > 0) {
+        var nextTask = findMatchingTask(agent);
+        if (!nextTask) {
+          var availIdle = G.tasks.filter(function (t) { return t.status === "available"; });
+          nextTask = availIdle[0] || null;
+        }
+        if (nextTask) assignAgentToTask(nextTask.id, agent.id);
+      }
+
       if (agent.status !== "working") continue;
       const task = G.tasks.find((t) => t.id === agent.currentTask);
       if (!task) {
@@ -821,18 +1137,36 @@
         continue;
       }
 
-      // Token cost per second
-      const tokenBurn = agent.tokenCost * 0.5 * dtSec;
-      if (G.tokens < tokenBurn && G.phase >= 3) {
+      if ((agent.tokenTank || 0) <= 0) {
+        task.status = "available";
+        task.assignedAgent = null;
+        agent.status = "idle";
+        agent.currentTask = null;
         if (!agent.tokenStarved) log(agent.name + " stalled: out of tokens.", "warn");
         agent.tokenStarved = true;
         continue;
       }
+
+      var effectiveDt = dtSec;
+      var tokenDrain = AGENT_TOKEN_TANK_DRAIN_PER_SEC * dtSec;
+      if (agent.tokenTank < tokenDrain) {
+        effectiveDt = tokenDrain > 0 ? dtSec * (agent.tokenTank / tokenDrain) : 0;
+        agent.tokenTank = 0;
+      } else {
+        agent.tokenTank -= tokenDrain;
+      }
+      if (effectiveDt <= 0) {
+        task.status = "available";
+        task.assignedAgent = null;
+        agent.status = "idle";
+        agent.currentTask = null;
+        agent.tokenStarved = true;
+        continue;
+      }
       agent.tokenStarved = false;
-      if (G.phase >= 3) G.tokens -= tokenBurn;
 
       // Work done per second
-      let workRate = agent.speed * AGENT_WORK_MULT * G.agentSpeedMult * dtSec;
+      let workRate = agent.speed * AGENT_WORK_MULT * G.agentSpeedMult * effectiveDt;
       const isSpecialty = agent.specialty.includes(task.typeId);
       if (isSpecialty) workRate *= 1.4;
       if (G.toolBonus > 0 && ["research", "report"].includes(task.typeId)) workRate *= 1 + G.toolBonus;
@@ -877,12 +1211,35 @@
     if (now - G.lastManagerAssignAt < 500) return;
     G.lastManagerAssignAt = now;
 
+    if (G.phase >= 6 && G.managerTokenTank <= 0) {
+      if (now - G.managerLastStallAt >= STALL_LOG_COOLDOWN_MS) {
+        log("Manager stalled: top up manager tokens.", "warn");
+        G.managerLastStallAt = now;
+      }
+      return;
+    }
+
     var assignmentBudget = getManagerAssignmentBudget();
+    if (G.phase >= 6) {
+      for (var ri = 0; ri < G.agents.length; ri++) {
+        if (assignmentBudget <= 0) break;
+        if (G.managerTokenTank <= 0) break;
+        var refillAgent = G.agents[ri];
+        if (UTILITY_ROLES.indexOf(refillAgent.roleId) >= 0) continue;
+        if ((refillAgent.tokenTank || 0) >= TOPUP_LOAD_UNITS) continue;
+        refillAgent.tokenTank = (refillAgent.tokenTank || 0) + TOPUP_LOAD_UNITS;
+        refillAgent.tokenStarved = false;
+        G.managerTokenTank -= TOPUP_LOAD_UNITS;
+        assignmentBudget--;
+      }
+    }
+
     for (var i = 0; i < G.agents.length; i++) {
       if (assignmentBudget <= 0) break;
       var agent = G.agents[i];
       if (agent.roleId === "manager" || agent.roleId === "token_mgr" || agent.roleId === "devops") continue;
       if (agent.status !== "idle") continue;
+      if ((agent.tokenTank || 0) <= 0) continue;
       var task = findMatchingTask(agent);
       if (!task && G.smartRouting) {
         var avail = G.tasks.filter(function (t) { return t.status === "available"; });
@@ -1410,7 +1767,7 @@
 
     // Scale mode: auto-hire when slots available and cash is healthy
     if (G.ceoMode === "scale") {
-      var emptySlots = G.agentSlots - G.agents.length;
+      var emptySlots = getHireAgentCapacity() - G.agents.length;
       if (emptySlots > 0) {
         var hireCost = getAgentHireCost(G.agents.length);
         var cashThreshold = hireCost * 3;
@@ -1474,10 +1831,16 @@
   // ---------- POPUP SYSTEM ----------
   let popupQueue = [];
   let musicPlayer = null;
+  let drumPlayer = null;
+  let outgoingDrumPlayer = null;
   let musicUnlocked = false;
   let activeSoundtrackPath = null;
+  let activeDrumLayerPath = null;
   let musicFadeInterval = null;
+  let drumFadeInterval = null;
+  let drumCrossfadeInterval = null;
   let hasDoneInitialMusicFadeIn = false;
+  let smoothedIncomeRate = 0;
 
   function showPopup(title, msg) {
     popupQueue.push({ title: title, msg: msg });
@@ -1501,8 +1864,17 @@
     }
   }
 
+  function getCurrentMusicMode() {
+    if (G.musicMode === "off" || G.musicMode === "on" || G.musicMode === "layered") {
+      return G.musicMode;
+    }
+    return "layered";
+  }
+
   function updateMusicToggleLabel() {
-    $("#btn-settings-music").textContent = "Music: " + (G.musicEnabled ? "On" : "Off");
+    var mode = getCurrentMusicMode();
+    var label = mode === "layered" ? "Layered" : mode === "off" ? "Off" : "On";
+    $("#btn-settings-music").textContent = "Music: " + label;
   }
 
   function clearMusicFadeTimerIfAny() {
@@ -1510,6 +1882,51 @@
       clearInterval(musicFadeInterval);
       musicFadeInterval = null;
     }
+  }
+
+  function clearDrumFadeTimerIfAny() {
+    if (drumFadeInterval) {
+      clearInterval(drumFadeInterval);
+      drumFadeInterval = null;
+    }
+  }
+
+  function clearDrumCrossfadeTimerIfAny() {
+    if (drumCrossfadeInterval) {
+      clearInterval(drumCrossfadeInterval);
+      drumCrossfadeInterval = null;
+    }
+  }
+
+  function stopAndResetAudio(player, volume) {
+    if (!player) return;
+    player.pause();
+    player.currentTime = 0;
+    player.volume = volume;
+  }
+
+  function playAudioIfUnlocked(player, label) {
+    if (!musicUnlocked || !player) return;
+    const playPromise = player.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(function (err) {
+        if (!err) return;
+        if (err.name === "NotAllowedError" || err.name === "AbortError") return;
+        console.error("Unable to play " + label + ".", err);
+      });
+    }
+  }
+
+  function createDrumPlayer(path) {
+    var player = new Audio();
+    player.loop = true;
+    player.preload = "auto";
+    player.volume = 0;
+    if (path) {
+      player.src = path;
+      player.load();
+    }
+    return player;
   }
 
   function getCurrentSoundtrackPath() {
@@ -1523,29 +1940,37 @@
     return selectedPath;
   }
 
-  function syncMusicPlayback() {
-    if (!musicPlayer) return;
-    var nextSoundtrackPath = getCurrentSoundtrackPath();
+  function getCurrentDrumLayerPath() {
+    var selectedPath = null;
+    for (var i = 0; i < DRUM_LAYERS.length; i++) {
+      var layer = DRUM_LAYERS[i];
+      if (G.phase >= layer.minPhase) {
+        selectedPath = layer.path;
+      }
+    }
+    return selectedPath;
+  }
 
-    if (!G.musicEnabled || !nextSoundtrackPath) {
+  function ensureSoundtrackSource(nextSoundtrackPath) {
+    if (activeSoundtrackPath === nextSoundtrackPath) return;
+    clearMusicFadeTimerIfAny();
+    musicPlayer.pause();
+    musicPlayer.src = nextSoundtrackPath;
+    musicPlayer.currentTime = 0;
+    musicPlayer.load();
+    musicPlayer.volume = MUSIC_TARGET_VOLUME;
+    activeSoundtrackPath = nextSoundtrackPath;
+  }
+
+  function syncBaseSoundtrack(nextSoundtrackPath) {
+    if (!nextSoundtrackPath) {
       clearMusicFadeTimerIfAny();
-      musicPlayer.pause();
-      musicPlayer.currentTime = 0;
-      musicPlayer.volume = MUSIC_TARGET_VOLUME;
+      stopAndResetAudio(musicPlayer, MUSIC_TARGET_VOLUME);
       activeSoundtrackPath = null;
       return;
     }
 
-    if (activeSoundtrackPath !== nextSoundtrackPath) {
-      clearMusicFadeTimerIfAny();
-      musicPlayer.pause();
-      musicPlayer.src = nextSoundtrackPath;
-      musicPlayer.currentTime = 0;
-      musicPlayer.load();
-      musicPlayer.volume = MUSIC_TARGET_VOLUME;
-      activeSoundtrackPath = nextSoundtrackPath;
-    }
-
+    ensureSoundtrackSource(nextSoundtrackPath);
     if (!musicUnlocked) return;
 
     const shouldFadeIn = !hasDoneInitialMusicFadeIn;
@@ -1554,16 +1979,7 @@
     } else {
       musicPlayer.volume = MUSIC_TARGET_VOLUME;
     }
-
-    const playPromise = musicPlayer.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(function (err) {
-        if (!err) return;
-        if (err.name === "NotAllowedError" || err.name === "AbortError") return;
-        console.error("Unable to play soundtrack.", err);
-      });
-    }
-
+    playAudioIfUnlocked(musicPlayer, "soundtrack");
     if (!shouldFadeIn) return;
 
     clearMusicFadeTimerIfAny();
@@ -1581,33 +1997,165 @@
     }, MUSIC_FADE_STEP_MS);
   }
 
+  function stopDrumPlayback() {
+    clearDrumFadeTimerIfAny();
+    clearDrumCrossfadeTimerIfAny();
+    stopAndResetAudio(drumPlayer, 0);
+    if (outgoingDrumPlayer) {
+      stopAndResetAudio(outgoingDrumPlayer, 0);
+      outgoingDrumPlayer = null;
+    }
+    activeDrumLayerPath = null;
+  }
+
+  function fadeInDrumPlayer() {
+    if (!drumPlayer) return;
+    clearDrumFadeTimerIfAny();
+    drumPlayer.volume = 0;
+    playAudioIfUnlocked(drumPlayer, "drum layer");
+    if (!musicUnlocked) return;
+    var elapsed = 0;
+    drumFadeInterval = setInterval(function () {
+      elapsed += DRUM_FADE_STEP_MS;
+      var progress = elapsed / DRUM_FADE_IN_MS;
+      if (progress >= 1) {
+        drumPlayer.volume = DRUM_TARGET_VOLUME;
+        clearDrumFadeTimerIfAny();
+        return;
+      }
+      drumPlayer.volume = DRUM_TARGET_VOLUME * progress;
+    }, DRUM_FADE_STEP_MS);
+  }
+
+  function crossfadeDrumPlayer(nextDrumPath) {
+    clearDrumFadeTimerIfAny();
+    clearDrumCrossfadeTimerIfAny();
+
+    outgoingDrumPlayer = drumPlayer;
+    var nextDrumPlayer = createDrumPlayer(nextDrumPath);
+    drumPlayer = nextDrumPlayer;
+    activeDrumLayerPath = nextDrumPath;
+
+    if (!musicUnlocked) {
+      if (outgoingDrumPlayer) {
+        stopAndResetAudio(outgoingDrumPlayer, 0);
+        outgoingDrumPlayer = null;
+      }
+      return;
+    }
+
+    playAudioIfUnlocked(drumPlayer, "drum layer");
+    var outgoingStartVolume = outgoingDrumPlayer && outgoingDrumPlayer.volume > 0 ? outgoingDrumPlayer.volume : DRUM_TARGET_VOLUME;
+    var elapsed = 0;
+    drumCrossfadeInterval = setInterval(function () {
+      elapsed += DRUM_FADE_STEP_MS;
+      var progress = elapsed / DRUM_CROSSFADE_MS;
+      if (progress >= 1) {
+        drumPlayer.volume = DRUM_TARGET_VOLUME;
+        if (outgoingDrumPlayer) {
+          stopAndResetAudio(outgoingDrumPlayer, 0);
+          outgoingDrumPlayer = null;
+        }
+        clearDrumCrossfadeTimerIfAny();
+        return;
+      }
+      drumPlayer.volume = DRUM_TARGET_VOLUME * progress;
+      if (outgoingDrumPlayer) {
+        outgoingDrumPlayer.volume = outgoingStartVolume * (1 - progress);
+      }
+    }, DRUM_FADE_STEP_MS);
+  }
+
+  function syncDrumLayerPlayback(nextDrumPath) {
+    if (!nextDrumPath) {
+      stopDrumPlayback();
+      return;
+    }
+
+    if (!drumPlayer) {
+      drumPlayer = createDrumPlayer(nextDrumPath);
+      activeDrumLayerPath = nextDrumPath;
+      fadeInDrumPlayer();
+      return;
+    }
+
+    if (activeDrumLayerPath !== nextDrumPath) {
+      if (activeDrumLayerPath === null) {
+        stopAndResetAudio(drumPlayer, 0);
+        drumPlayer.src = nextDrumPath;
+        drumPlayer.currentTime = 0;
+        drumPlayer.load();
+        activeDrumLayerPath = nextDrumPath;
+        fadeInDrumPlayer();
+        return;
+      }
+      crossfadeDrumPlayer(nextDrumPath);
+      return;
+    }
+
+    playAudioIfUnlocked(drumPlayer, "drum layer");
+    if (!drumCrossfadeInterval && !drumFadeInterval && drumPlayer.volume < DRUM_TARGET_VOLUME) {
+      var remaining = DRUM_TARGET_VOLUME - drumPlayer.volume;
+      drumPlayer.volume += Math.min(remaining, 0.02);
+    }
+  }
+
+  function syncMusicPlayback() {
+    if (!musicPlayer) return;
+    var mode = getCurrentMusicMode();
+    var nextSoundtrackPath = getCurrentSoundtrackPath();
+    var nextDrumLayerPath = getCurrentDrumLayerPath();
+
+    if (mode === "off") {
+      clearMusicFadeTimerIfAny();
+      stopAndResetAudio(musicPlayer, MUSIC_TARGET_VOLUME);
+      activeSoundtrackPath = null;
+      stopDrumPlayback();
+      return;
+    }
+
+    syncBaseSoundtrack(nextSoundtrackPath);
+    if (!nextSoundtrackPath || mode !== "layered") {
+      stopDrumPlayback();
+      return;
+    }
+    syncDrumLayerPlayback(nextDrumLayerPath);
+  }
+
   function unlockMusicPlayback() {
     musicUnlocked = true;
     syncMusicPlayback();
   }
 
   function setupMusic() {
-    if (musicPlayer) {
+    if (musicPlayer && drumPlayer) {
       updateMusicToggleLabel();
       syncMusicPlayback();
       return;
     }
 
-    musicPlayer = new Audio();
-    musicPlayer.loop = true;
-    musicPlayer.preload = "auto";
-    musicPlayer.volume = MUSIC_TARGET_VOLUME;
-
-    document.addEventListener("pointerdown", unlockMusicPlayback, { once: true });
-    document.addEventListener("keydown", unlockMusicPlayback, { once: true });
-    document.addEventListener("click", unlockMusicPlayback, { once: true });
+    if (!musicPlayer) {
+      musicPlayer = new Audio();
+      musicPlayer.loop = true;
+      musicPlayer.preload = "auto";
+      musicPlayer.volume = MUSIC_TARGET_VOLUME;
+      document.addEventListener("pointerdown", unlockMusicPlayback, { once: true });
+      document.addEventListener("keydown", unlockMusicPlayback, { once: true });
+      document.addEventListener("click", unlockMusicPlayback, { once: true });
+    }
+    if (!drumPlayer) {
+      drumPlayer = createDrumPlayer(null);
+    }
 
     updateMusicToggleLabel();
     syncMusicPlayback();
   }
 
   function toggleMusicSetting() {
-    G.musicEnabled = !G.musicEnabled;
+    var mode = getCurrentMusicMode();
+    if (mode === "off") G.musicMode = "on";
+    else if (mode === "on") G.musicMode = "layered";
+    else G.musicMode = "off";
     updateMusicToggleLabel();
     syncMusicPlayback();
     save();
@@ -1657,9 +2205,11 @@
     G.totalPlaytime += dtMs;
 
     tickTaskSpawn();
+    tickManualWork(dtSec);
+    tickAiWorker(dtSec);
+    tickManager();
     tickAgents(dtSec);
     tickAgentAutoAssign();
-    tickManager();
     tickTokenManager();
     tickIncidents(dtSec);
     tickDevopsIncidentResponse(dtSec);
@@ -1671,7 +2221,7 @@
 
     // Remove stale tasks (expiry gated)
     G.tasks = G.tasks.filter((t) => {
-      if (t.status === "active" || t.status === "agent" || t.status === "done") return true;
+      if (t.status === "active" || t.status === "ai" || t.status === "agent" || t.status === "done") return true;
       if (!G.taskExpiryEnabled) return true;
       var expired = Date.now() - t.createdAt >= 30000;
       return !expired;
@@ -1693,15 +2243,16 @@
     } else {
       topBar.classList.remove("visible");
       return;
-    }
+	    }
 
-    // Update values
-    $("#res-cash").textContent = fmtCash(G.cash);
-    $("#res-tokens").textContent = fmt(G.tokens);
-    $("#res-rep").textContent = fmt(G.reputation);
-    $("#res-debt").textContent = fmt(G.techDebt);
-    $("#res-stress").textContent = Math.round(G.stress) + "%";
-    $("#phase-label").textContent = "Phase " + G.phase;
+	    // Update values
+	    var cashDigits = G.cash < 100 && G.cash % 1 !== 0 ? 2 : 0;
+	    $("#res-cash").textContent = "$" + G.cash.toLocaleString("en-US", { minimumFractionDigits: cashDigits, maximumFractionDigits: cashDigits });
+	    $("#res-tokens").textContent = fmt(G.tokens);
+	    $("#res-rep").textContent = fmt(G.reputation);
+	    $("#res-debt").textContent = fmt(G.techDebt);
+	    $("#res-stress").textContent = Math.round(G.stress) + "%";
+	    $("#phase-label").textContent = "Phase " + G.phase;
 
     // Progressive reveal of resource counters
     $("#res-cash-wrap").style.display = G.uiRevealed.cash ? "" : "none";
@@ -1711,15 +2262,18 @@
     $("#res-stress-wrap").style.display = G.uiRevealed.stress ? "" : "none";
 
     // Warning pulse
-    $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < 90);
+    $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < MANAGER_TOPUP_COST_TOKEN);
     $("#res-stress-wrap").classList.toggle("res-warning", G.stress > 80);
 
     // Income and expense rates
     var income = getIncomeRate();
+    if (smoothedIncomeRate === 0) smoothedIncomeRate = income;
+    smoothedIncomeRate += (income - smoothedIncomeRate) * 0.2;
+    if (Math.abs(smoothedIncomeRate - income) < 0.01) smoothedIncomeRate = income;
     var expense = getExpenseRate();
     var incomeEl = $("#income-rate");
     incomeEl.style.display = G.uiRevealed.income ? "" : "none";
-    incomeEl.textContent = "+" + fmtCash(income) + "/s";
+    incomeEl.textContent = "+" + fmtCash(smoothedIncomeRate) + "/s";
     var expenseWrap = $("#res-expense-wrap");
     expenseWrap.style.display = G.uiRevealed.expenses ? "" : "none";
     $("#expense-rate").textContent = "-" + fmtCash(expense) + "/s";
@@ -1751,6 +2305,7 @@
 
   function renderEarlyTask() {
     var display = $("#early-task-display");
+    var btn = $("#btn-do-task");
     var activeTask = G.tasks.find((t) => t.status === "active");
     if (activeTask) {
       display.style.visibility = "visible";
@@ -1759,9 +2314,32 @@
       var displayedPay = getTaskCashPayout(activeTask, "manual", null);
       $("#early-task-bar").style.width = pct + "%";
       $("#early-task-reward").innerHTML = "<span style='color:var(--cash)'>" + fmtCash(displayedPay) + "</span> reward &bull; " + pct + "% done";
+      btn.textContent = "Working...";
+      btn.style.cursor = "wait";
     } else {
       display.style.visibility = "hidden";
+      $("#early-task-bar").style.width = "0%";
+      $("#early-task-reward").textContent = "";
+      btn.textContent = "Do Task";
+      btn.style.cursor = "pointer";
     }
+  }
+
+  function getWorkTaskButtonClass() {
+    if (G.phase >= 4) return "btn btn-work-phase4 btn-sm task-action-btn";
+    if (G.phase >= 3) return "btn btn-work-phase3 btn-sm task-action-btn";
+    if (G.phase >= 2) return "btn btn-work-phase2 btn-sm task-action-btn";
+    return "btn btn-primary btn-sm task-action-btn";
+  }
+
+  function getAiWorkerDisplayName() {
+    return G.phase >= 3 ? "AI Worker Pro" : "AI Worker";
+  }
+
+  function getAgentTaskLabel(agentName) {
+    if (!agentName) return "Agent";
+    if (agentName.length <= 10) return agentName;
+    return agentName.slice(0, 10) + "...";
   }
 
   function renderTaskQueue() {
@@ -1785,30 +2363,19 @@
       var agent = t.assignedAgent ? G.agents.find(function (a) { return a.id === t.assignedAgent; }) : null;
 
       var actions = "";
-      if (t.status === "available" || t.status === "active") {
-        var clickBtn = "<button class='btn btn-primary btn-sm' onclick=\"GAME.clickTask('" + t.id + "', event)\">Click (+" + G.clickPower + ")</button>";
-        var aiTokenCost = G.phase >= 3 ? Math.ceil(3 * (1 + G.phase * 0.2) * G.tokenEfficiency) : 0;
-        var aiCost = aiTokenCost > 0 ? " (" + aiTokenCost + " tok)" : "";
-        var aiDisabled = aiTokenCost > 0 && G.tokens < aiTokenCost ? " disabled" : "";
-        var aiDimStyle = G.agentSlots >= 3 ? " style='background:#513782'" : G.uiRevealed.agents ? " style='background:#5a3ab0'" : "";
-        var aiBtn = "<button class='btn btn-purple btn-sm'" + aiDisabled + aiDimStyle + " onclick=\"GAME.aiAssist('" + t.id + "', event)\">AI Assist" + aiCost + "</button>";
-
-        if (G.uiRevealed.tokens) {
-          // If less than 5 tokens left and cash <$300, then flip to show click button
-          if (G.tokens <= 5 && G.cash < 300) {
-            actions += clickBtn;
-          } else {
-            actions += aiBtn;
-          }
-        } else {
-          actions += clickBtn;
-          if (G.phase >= 2) {
-            actions += aiBtn;
-          }
-        }
+      if (t.status === "available") {
+        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onpointerdown=\"GAME.clickTask('" + t.id + "', event)\">Work</button>";
+        actions += clickBtn;
+      }
+      if (t.status === "active") {
+        actions = "<button class='" + getWorkTaskButtonClass() + "' disabled style='cursor:wait'>Working...</button>";
+      }
+      if (t.status === "ai") {
+        actions = "<button class='btn btn-purple btn-sm task-action-btn' disabled style='cursor:wait'>" + getAiWorkerDisplayName() + " (" + pct + "%)</button>";
       }
       if (t.status === "agent" && agent) {
-        actions = "<span class='agent-status status-working'>" + agent.name + " Working...</span>";
+        var agentWorkBtnClass = G.phase >= 4 ? "btn btn-purple btn-sm task-action-btn" : getWorkTaskButtonClass();
+        actions = "<button class='" + agentWorkBtnClass + "' disabled style='cursor:wait' title='" + agent.name + "'>" + getAgentTaskLabel(agent.name) + " (" + pct + "%)</button>";
       }
       var displayedPay = getTaskCashPayout(t, t.status === "agent" ? "agent" : "manual", agent);
 
@@ -1915,14 +2482,69 @@
     // Expenses now shown in top bar
   }
 
+  function renderAgentStatusButton(statusText, isActive) {
+    var statusClass = isActive ? "btn btn-primary btn-sm agent-status-btn" : "btn btn-outline btn-sm agent-status-btn";
+    return "<button class='" + statusClass + "' disabled>" + statusText + "</button>";
+  }
+
+  function renderAiWorkerCard() {
+    if (G.phase < 2 || G.aiWorkerShutdown) return "";
+    var aiTask = getCurrentAiWorkerTask();
+    var aiTokenLoaded = Math.floor(Math.max(0, G.aiWorkerTokenTank || 0));
+    var aiTokenPct = clamp(Math.floor((aiTokenLoaded / AI_WORKER_TOKEN_TANK_MAX) * 100), 0, 100);
+    var aiCanTopUp = G.phase < 3 || G.tokens >= TOPUP_COST_TOKEN;
+    var aiCostLabel = G.phase < 3 ? " (free)" : " (-1 tok)";
+    var aiPct = aiTask ? Math.floor((aiTask.workDone / aiTask.workRequired) * 100) : 0;
+    var statusText = aiTokenLoaded <= 0 ? "No tokens" : "Working (" + aiPct + "%)";
+    var statusHtml = renderAgentStatusButton(statusText, aiTokenLoaded > 0);
+    var shutdownBtn = G.phase >= 4 ? "<button class='btn btn-outline btn-sm' onclick=\"GAME.shutdownAiWorker()\">Shutdown</button>" : "";
+
+    return "<div class='card agent-card'>" +
+      "<div class='agent-icon' style='background:#7c3aed30;color:#a78bfa'>\uD83E\uDD16</div>" +
+      "<div class='agent-info'>" +
+      "<div class='name'>" + getAiWorkerDisplayName() + "</div>" +
+      "<div class='role'>Single worker queue</div>" +
+      "<div class='agent-meter-row'>" +
+      "<div class='task-bar'>" +
+      "<div class='task-bar-fill' style='width:" + aiTokenPct + "%;background:var(--purple)'></div>" +
+      "</div>" +
+      "<span class='agent-stat'>Tasks: " + (G.aiWorkerTasksCompleted || 0) + "</span>" +
+      "</div>" +
+      "</div>" +
+      "<div class='agent-action-col'>" +
+      "<button class='btn btn-purple btn-sm' onclick=\"GAME.topUpAiWorker()\" " + (!aiCanTopUp ? "disabled" : "") + ">Top-up" + aiCostLabel + "</button>" +
+      statusHtml +
+      shutdownBtn +
+      "</div>" +
+      "</div>";
+  }
+
   function renderAgentSection() {
     var section = $("#section-agents");
     if (!G.uiRevealed.agents || G.uiRevealed.clusters) { section.style.display = "none"; return; }
     section.style.display = "";
 
-    if (G.phase < 4) return;
+    if (G.phase < 2) {
+      $("#agent-slots").textContent = "";
+      $("#agent-hire-section").innerHTML = "";
+      $("#agent-list").innerHTML = "";
+      return;
+    }
 
-    $("#agent-slots").textContent = G.agents.length + "/" + G.agentSlots + " slots";
+    if (G.phase < 4) {
+      if (!G.aiWorkerShutdown) {
+        $("#agent-slots").textContent = "Solo AI";
+        $("#agent-hire-section").innerHTML = "<div class='text-sm text-muted' style='margin-bottom:8px'>Top up your AI worker to keep it running.</div>";
+        $("#agent-list").innerHTML = renderAiWorkerCard();
+      } else {
+        $("#agent-slots").textContent = "0/1 slots";
+        $("#agent-hire-section").innerHTML = "<div class='text-sm text-muted' style='margin-bottom:8px'>AI worker is shut down.</div>";
+        $("#agent-list").innerHTML = "";
+      }
+      return;
+    }
+
+    $("#agent-slots").textContent = getSharedAgentPoolUsed() + "/" + getSharedAgentPoolSize() + " slots";
 
     // Hire info
     var hireCost = getAgentHireCost(G.agents.length);
@@ -1935,6 +2557,7 @@
     });
     var phase9ClusterMode = G.phase >= 9 && G.uiRevealed.clusters;
     var managerAgent = G.agents.find(function (a) { return a.roleId === "manager"; }) || null;
+    var managerOnline = G.phase >= 6 && !!managerAgent;
     var managerBudget = getManagerAssignmentBudget();
     var managerSummary = "";
     if (G.phase >= 6) {
@@ -1965,6 +2588,7 @@
     // Agent list -- assignable first, then error, idle, working last
     var sorted = G.agents.slice().sort(function (a, b) {
       function rank(ag) {
+        if (G.phase >= 6 && ag.roleId === "manager") return -1; // manager always leads in phase 6+
         if (ag.status === "idle" && UTILITY_ROLES.indexOf(ag.roleId) === -1 && findMatchingTask(ag)) return 0; // assignable
         if (ag.status === "error") return 1;
         if (ag.status === "idle" && UTILITY_ROLES.indexOf(ag.roleId) === -1) return 2;
@@ -1976,43 +2600,14 @@
       ? sorted.filter(function (a) { return UTILITY_ROLES.indexOf(a.roleId) >= 0; })
       : sorted;
 
-    var html = "";
-    for (var j = 0; j < displayAgents.length; j++) {
-      var a = displayAgents[j];
-      var task = a.currentTask ? G.tasks.find(function (t) { return t.id === a.currentTask; }) : null;
-      html += "<div class='card agent-card'>" +
-        "<div class='agent-icon' style='background:" + a.color + "30;color:" + a.color + "'>" + a.icon + "</div>" +
-        "<div class='agent-info'>" +
-        "<div class='name'>" + a.name + (task ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>" + task.name + " (" + Math.floor(task.workDone / task.workRequired * 100) + "%)</span>" : a.roleId === "manager" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>Managing</span>" : a.roleId === "token_mgr" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--token);margin-left:8px'>Monitoring tokens</span>" : a.roleId === "devops" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--green);margin-left:8px'>Incident response</span>" : a.autoAssign ? " <span style='font-weight:400;font-size:.72rem;color:var(--green);margin-left:8px'>Auto Assign ON</span>" : "") + "</div>" +
-        "<div class='role'>" + a.roleName + " -- <span style='color:var(--text3)'>" + a.traitName + "</span></div>" +
-        "<div class='agent-stats'>" +
-        "<span class='agent-stat'>SPD " + a.speed.toFixed(2) + "</span>" +
-        "<span class='agent-stat'>QUA " + a.quality.toFixed(2) + "</span>" +
-        "<span class='agent-stat'>REL " + a.reliability.toFixed(2) + "</span>" +
-        "<span class='agent-stat'>Tasks: " + (a.tasksCompleted || 0) + "</span>" +
-        (G.phase >= 9 && UTILITY_ROLES.indexOf(a.roleId) === -1 ? (function () { var acl = getAgentCluster(a.id); return acl ? "<span class='agent-stat' style='color:var(--accent)'>" + acl.name + "</span>" : "<span class='agent-stat' style='color:var(--text3)'>Unassigned</span>"; })() : "") +
-        "</div>" +
-        "</div>" +
-        "<div style='display:flex;flex-direction:column;gap:8px;align-items:flex-end'>" +
-        (a.tokenStarved
-          ? "<span class='agent-status status-error'>No tokens</span>"
-          : a.status === "idle" && UTILITY_ROLES.indexOf(a.roleId) === -1 && findMatchingTask(a)
-          ? "<div style='display:flex;gap:6px'><button class='btn btn-green btn-sm' onclick=\"GAME.autoAssign('" + a.id + "')\">Assign</button>" + (G.agentAutoAssign ? "<button class='btn btn-outline btn-sm' onclick=\"GAME.toggleAgentAuto('" + a.id + "')\">" + (a.autoAssign ? "Auto ON" : "Auto OFF") + "</button>" : "") + "</div>"
-          : a.roleId === "manager" && a.status === "idle"
-          ? "<span class='agent-status status-working'>Managing</span>"
-          : a.roleId === "token_mgr" && a.status === "idle"
-          ? "<span class='agent-status status-working'>Active</span>"
-          : a.roleId === "devops" && a.status === "idle"
-          ? "<span class='agent-status status-working'>Incident Response</span>"
-          : G.agentAutoAssign && UTILITY_ROLES.indexOf(a.roleId) === -1
-          ? "<button class='btn btn-outline btn-sm' onclick=\"GAME.toggleAgentAuto('" + a.id + "')\">" + (a.autoAssign ? "Auto ON" : "Auto OFF") + "</button>"
-          : "<span class='agent-status " + (a.status === "idle" ? "status-idle" : a.status === "working" ? "status-working" : "status-error") + "'>" + a.status[0].toUpperCase() + a.status.slice(1) + "</span>") +
-        "<button class='btn btn-outline btn-sm' onclick=\"GAME.fire('" + a.id + "')\">Shutdown</button>" +
-        "</div>" +
-        "</div>";
+    var aiCardHtml = renderAiWorkerCard();
+    var aiAtBottom = false;
+    if (aiCardHtml) {
+      aiAtBottom = (G.aiWorkerTokenTank || 0) > 0 || !!getCurrentAiWorkerTask();
     }
-    // Empty slot placeholders with hire buttons
-    var emptySlots = phase9ClusterMode ? 0 : (G.agentSlots - G.agents.length);
+    var emptySlots = phase9ClusterMode ? 0 : (getHireAgentCapacity() - G.agents.length);
+    if (emptySlots < 0) emptySlots = 0;
+    var hireSlotsHtml = "";
     for (var s = 0; s < emptySlots; s++) {
       var btns = "";
       for (var ri = 0; ri < availRoles.length; ri++) {
@@ -2023,11 +2618,99 @@
         var blocked = (isUtil || G.phase < 9) ? owned : false;
         btns += "<button class='btn btn-green btn-sm' onclick=\"GAME.hire('" + r.id + "')\" " + (blocked || G.cash < hireCost ? "disabled" : "") + ">" + r.icon + " " + r.name + "</button>";
       }
-      html += "<div class='card agent-card' style='border-style:dashed;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;min-height:62px'>" +
+      hireSlotsHtml += "<div class='card agent-card' style='border-style:dashed;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;min-height:62px'>" +
         "<span class='text-muted' style='font-size:.75rem'>Hire (" + fmtCash(hireCost) + ")</span>" +
         btns +
         "</div>";
     }
+    var html = "";
+    var managerFirst = G.phase >= 6 && displayAgents.length > 0 && displayAgents[0].roleId === "manager";
+    var firstManagerCard = "";
+    var otherCards = "";
+    for (var j = 0; j < displayAgents.length; j++) {
+      var a = displayAgents[j];
+      var task = a.currentTask ? G.tasks.find(function (t) { return t.id === a.currentTask; }) : null;
+      var tokenTank = Math.max(0, a.tokenTank || 0);
+      var tokenPct = clamp(Math.floor((tokenTank / TOPUP_LOAD_UNITS) * 100), 0, 100);
+      var meterColor = "var(--accent)";
+      if (a.roleId === "manager") {
+        tokenPct = clamp(Math.floor(((G.managerTokenTank || 0) / MANAGER_TOKEN_TANK_MAX) * 100), 0, 100);
+        meterColor = "var(--green)";
+      } else if (a.roleId === "token_mgr") {
+        tokenPct = a.status === "error" ? 0 : 100;
+        meterColor = "var(--token)";
+      } else if (a.roleId === "devops") {
+        tokenPct = a.status === "error" ? 0 : 100;
+        meterColor = "var(--green)";
+      }
+
+      var actionButtons = "";
+      var stateText = a.status[0].toUpperCase() + a.status.slice(1);
+      var stateActive = a.status !== "error";
+
+      if (a.roleId === "manager") {
+        actionButtons = "<div style='display:flex;gap:6px'><button class='btn btn-purple btn-sm' onclick=\"GAME.topUpManager()\" " + (G.tokens < MANAGER_TOPUP_COST_TOKEN || (G.managerTokenTank || 0) >= MANAGER_TOKEN_TANK_MAX ? "disabled" : "") + ">Top-up 100</button></div>";
+        stateText = (G.managerTokenTank || 0) > 0 ? "Managing" : "No tokens";
+        stateActive = (G.managerTokenTank || 0) > 0;
+      } else if (a.roleId === "token_mgr" && a.status === "idle") {
+        stateText = "Active";
+      } else if (a.roleId === "devops" && a.status === "idle") {
+        stateText = "Incident Response";
+      } else if (UTILITY_ROLES.indexOf(a.roleId) === -1 && managerOnline) {
+        stateText = "Managed";
+      } else if (UTILITY_ROLES.indexOf(a.roleId) === -1) {
+        actionButtons = "<div style='display:flex;gap:6px'><button class='btn btn-purple btn-sm' onclick=\"GAME.topUpAgent('" + a.id + "')\" " + (G.phase >= 3 && G.tokens < TOPUP_COST_TOKEN ? "disabled" : "") + ">Top-up (-1 tok)</button>" + (G.agentAutoAssign ? "<button class='btn btn-outline btn-sm' onclick=\"GAME.toggleAgentAuto('" + a.id + "')\">" + (a.autoAssign ? "Auto ON" : "Auto OFF") + "</button>" : "") + "</div>";
+        if (a.status === "error") {
+          stateText = "Error";
+          stateActive = false;
+        } else if (a.tokenStarved) {
+          stateText = "No tokens";
+          stateActive = false;
+        } else if (a.status === "working") {
+          stateText = "Working";
+          stateActive = true;
+        } else {
+          stateText = "Idle";
+          stateActive = true;
+        }
+      }
+
+      var cardHtml = "<div class='card agent-card'>" +
+        "<div class='agent-icon' style='background:" + a.color + "30;color:" + a.color + "'>" + a.icon + "</div>" +
+        "<div class='agent-info'>" +
+        "<div class='name'>" + a.name + (task ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>" + task.name + " (" + Math.floor(task.workDone / task.workRequired * 100) + "%)</span>" : a.roleId === "manager" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>Managing</span>" : a.roleId === "token_mgr" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--token);margin-left:8px'>Monitoring tokens</span>" : a.roleId === "devops" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--green);margin-left:8px'>Incident response</span>" : a.autoAssign ? " <span style='font-weight:400;font-size:.72rem;color:var(--green);margin-left:8px'>Auto Assign ON</span>" : "") + "</div>" +
+        "<div class='role'>" + a.roleName + " -- <span style='color:var(--text3)'>" + a.traitName + "</span></div>" +
+        "<div class='agent-stats'>" +
+        "<span class='agent-stat'>SPD " + a.speed.toFixed(2) + "</span>" +
+        "<span class='agent-stat'>QUA " + a.quality.toFixed(2) + "</span>" +
+        "<span class='agent-stat'>REL " + a.reliability.toFixed(2) + "</span>" +
+        (G.phase >= 9 && UTILITY_ROLES.indexOf(a.roleId) === -1 ? (function () { var acl = getAgentCluster(a.id); return acl ? "<span class='agent-stat' style='color:var(--accent)'>" + acl.name + "</span>" : "<span class='agent-stat' style='color:var(--text3)'>Unassigned</span>"; })() : "") +
+        "</div>" +
+        "<div class='agent-meter-row'>" +
+        "<div class='task-bar'><div class='task-bar-fill' style='width:" + tokenPct + "%;background:" + meterColor + "'></div></div>" +
+        "<span class='agent-stat'>Tasks: " + (a.tasksCompleted || 0) + "</span>" +
+        "</div>" +
+        "</div>" +
+        "<div class='agent-action-col'>" +
+        actionButtons +
+        renderAgentStatusButton(stateText, stateActive) +
+        "<button class='btn btn-outline btn-sm' onclick=\"GAME.fire('" + a.id + "')\">Shutdown</button>" +
+        "</div>" +
+        "</div>";
+      if (managerFirst && j === 0) firstManagerCard = cardHtml;
+      else otherCards += cardHtml;
+    }
+    if (managerFirst) {
+      html += firstManagerCard;
+      html += hireSlotsHtml;
+      if (aiCardHtml && !aiAtBottom) html += aiCardHtml;
+      html += otherCards;
+    } else {
+      html += hireSlotsHtml;
+      if (aiCardHtml && !aiAtBottom) html += aiCardHtml;
+      html += otherCards;
+    }
+    if (aiCardHtml && aiAtBottom) html += aiCardHtml;
     $("#agent-list").innerHTML = html;
   }
 
@@ -2105,12 +2788,17 @@
     // Manager Console + utility hire buttons (moved from agent section)
     var managerAgent = G.agents.find(function (a) { return a.roleId === "manager"; }) || null;
     var managerBudget = getManagerAssignmentBudget();
+    var clusterManagerTopupBtn = "";
+    if (managerAgent) {
+      clusterManagerTopupBtn = "<button class='btn btn-purple btn-sm' onclick=\"GAME.topUpManager()\" " + (G.tokens < MANAGER_TOPUP_COST_TOKEN || (G.managerTokenTank || 0) >= MANAGER_TOKEN_TANK_MAX ? "disabled" : "") + ">Top-up 100</button>";
+    }
     var html = "<div class='card' style='margin-bottom:10px'>" +
       "<div class='flex-between mb'><strong>Manager Console</strong><span class='text-sm text-muted'>" + (managerAgent ? "Online" : "Offline") + "</span></div>" +
       "<div class='text-sm' style='display:flex;gap:10px;flex-wrap:wrap'>" +
       "<span>Auto-Assign: " + (managerAgent ? "Active" : "Need Manager hire") + "</span>" +
       "<span>Throughput: " + managerBudget + " assignment/tick</span>" +
       "<span>Smart Routing: " + (G.smartRouting ? "On" : "Off") + "</span>" +
+      clusterManagerTopupBtn +
       "</div>" +
       "</div>";
 
@@ -2276,29 +2964,31 @@
     }
     $("#no-incidents").style.display = "none";
 
-    var html = "";
-    for (var i = 0; i < active.length; i++) {
-      var inc = active[i];
-      var age = Math.floor((Date.now() - inc.createdAt) / 1000);
-      html += "<div class='card incident-card " + (inc.sev === "warning" ? "warning" : "") + "'>" +
-        "<div class='sev " + inc.sev + "'>" + inc.sev + "</div>" +
-        "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px'>" +
-        "<div style='font-weight:600;min-width:0'>" + inc.name + "</div>" +
-        "<div style='display:flex;align-items:center;gap:8px;white-space:nowrap'>" +
-        "<span style='font-size:.78rem;color:var(--rep)'>-" + inc.repCost + " rep/s</span>" +
-        "<span style='font-size:.78rem;color:var(--text3)'>" + age + "s</span>" +
-        "</div>" +
-        "</div>" +
-        "<div class='text-sm text-muted mb'>" + inc.desc + "</div>" +
-        (idleDevops > 0 ? "<div class='text-sm mb' style='color:var(--green)'>DevOps responding (" + (inc.fixProgress || 0).toFixed(0) + "%)</div>" : "") +
-        ((inc.fixProgress || 0) > 0 ? "<div class='task-bar mb'><div class='task-bar-fill' style='width:" + Math.min(100, inc.fixProgress).toFixed(0) + "%;background:var(--green)'></div></div>" : "") +
-        (inc.cashCost ? "<div class='text-sm mb'><span style='color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span></div>" : "") +
-        "<div style='display:flex;gap:6px'>" +
-        "<button class='btn btn-primary btn-sm' onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">Fix Manually (+stress)</button>" +
-        "<button class='btn btn-yellow btn-sm'" + (G.cash < (inc.cashCost || 20) * 2 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','cash')\">Pay to Fix (" + fmtCash((inc.cashCost || 20) * 2) + ")</button>" +
-        "</div>" +
-        "</div>";
-    }
+	    var html = "";
+	    for (var i = 0; i < active.length; i++) {
+	      var inc = active[i];
+	      var age = Math.floor((Date.now() - inc.createdAt) / 1000);
+	      var repPart = inc.repCost > 0 ? "<span style='font-size:.78rem;color:var(--rep)'>-" + inc.repCost + " rep/s</span>" : "";
+	      var cashPart = inc.cashCost > 0 ? "<span style='font-size:.78rem;color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span>" : "";
+	      html += "<div class='card incident-card " + (inc.sev === "warning" ? "warning" : "") + "'>" +
+	        "<div class='sev " + inc.sev + "'>" + inc.sev + "</div>" +
+	        "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px'>" +
+	        "<div style='font-weight:600;min-width:0'>" + inc.name + "</div>" +
+	        "<div style='display:flex;align-items:center;gap:8px;white-space:nowrap'>" +
+	        repPart +
+	        cashPart +
+	        "<span style='font-size:.78rem;color:var(--text3)'>" + age + "s</span>" +
+	        "</div>" +
+	        "</div>" +
+	        "<div class='text-sm text-muted mb'>" + inc.desc + "</div>" +
+	        (idleDevops > 0 ? "<div class='text-sm mb' style='color:var(--green)'>DevOps responding (" + (inc.fixProgress || 0).toFixed(0) + "%)</div>" : "") +
+	        ((inc.fixProgress || 0) > 0 ? "<div class='task-bar mb'><div class='task-bar-fill' style='width:" + Math.min(100, inc.fixProgress).toFixed(0) + "%;background:var(--green)'></div></div>" : "") +
+	        "<div style='display:flex;gap:6px'>" +
+	        "<button class='btn btn-primary btn-sm' onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">Fix Manually (+stress)</button>" +
+	        "<button class='btn btn-yellow btn-sm'" + (G.cash < (inc.cashCost || 20) * 2 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','cash')\">Pay to Fix (" + fmtCash((inc.cashCost || 20) * 2) + ")</button>" +
+	        "</div>" +
+	        "</div>";
+	    }
     $("#incident-list").innerHTML = html;
   }
 
@@ -2533,8 +3223,13 @@
   window.GAME = {
     clickTask: function (id, evt) { clickTask(id, evt); },
     aiAssist: function (id, evt) { aiAssistTask(id, evt); },
+    toggleAiAutopilot: toggleAiAutopilot,
+    topUpAiWorker: topUpAiWorker,
+    shutdownAiWorker: shutdownAiWorker,
+    topUpAgent: topUpAgent,
+    topUpManager: topUpManager,
     assignAgent: assignAgentToTask,
-    autoAssign: autoAssignAgent,
+    autoAssign: function (id) { topUpAgent(id); },
     hire: hireAgent,
     fire: fireAgent,
     buy: purchaseUpgrade,
@@ -2560,6 +3255,7 @@
     // Cheats - jump to specific game stages for testing
     cheat: function (stage) {
       var stages = {
+        "0.5": { tasks: 0, cash: 0, ph: 1 }, // Initial state after start
         1: { tasks: 11, cash: 53, ph: 1 },  // -> Pressure Building (task 12)
         2: { tasks: 19, cash: 78, ph: 1 },  // -> Tools of the Trade (task 20)
         3: { tasks: 89, cash: 90, ph: 1 },  // -> Reality Check / expenses (task 90)
@@ -2574,7 +3270,7 @@
         12: { tasks: 1100, cash: 120000, tokens: 1200, ph: 9 }, // Phase 9: second cluster can be purchased
       };
       var s = stages[stage];
-      if (!s) { console.log("Stages: 1-12"); return; }
+      if (!s) { console.log("Stages: 0.5, 1-12"); return; }
       G = defaultState();
       G.gameStarted = true;
       G.totalTasksDone = s.tasks;
@@ -2617,18 +3313,29 @@
   };
 
   // Console shortcuts
-  window.chPh1 = function () { GAME.cheat(1); };
-  window.chPh2 = function () { GAME.cheat(2); };
-  window.chPh3 = function () { GAME.cheat(3); };
-  window.chPh4 = function () { GAME.cheat(4); };
-  window.chPh5 = function () { GAME.cheat(5); };
-  window.chPh6 = function () { GAME.cheat(6); };
-  window.chPh7 = function () { GAME.cheat(7); };
-  window.chPh8 = function () { GAME.cheat(8); };
-  window.chPh9 = function () { GAME.cheat(9); };
-  window.chPh10 = function () { GAME.cheat(10); };
-  window.chPh11 = function () { GAME.cheat(11); };
-  window.chPh12 = function () { GAME.cheat(12); };
+  var cheatShortcuts = [
+    { suffix: "0_5", stage: 0.5 },
+    { suffix: "1", stage: 1 },
+    { suffix: "2", stage: 2 },
+    { suffix: "3", stage: 3 },
+    { suffix: "4", stage: 4 },
+    { suffix: "5", stage: 5 },
+    { suffix: "6", stage: 6 },
+    { suffix: "7", stage: 7 },
+    { suffix: "8", stage: 8 },
+    { suffix: "9", stage: 9 },
+    { suffix: "10", stage: 10 },
+    { suffix: "11", stage: 11 },
+    { suffix: "12", stage: 12 },
+  ];
+  for (var shortcutIndex = 0; shortcutIndex < cheatShortcuts.length; shortcutIndex++) {
+    var shortcut = cheatShortcuts[shortcutIndex];
+    var shortName = "chPh" + shortcut.suffix;
+    window[shortName] = (function (stageNum) {
+      return function () { GAME.cheat(stageNum); };
+    })(shortcut.stage);
+    window["chPhase" + shortcut.suffix] = window[shortName];
+  }
 
   // Start
   init();

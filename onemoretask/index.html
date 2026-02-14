@@ -90,18 +90,22 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .task-card .task-meta{display:flex;gap:12px;font-size:.75rem;color:var(--text2);margin-bottom:8px;flex-wrap:wrap}
 .task-card .task-meta span{display:flex;align-items:center;gap:3px}
 .task-bottom{display:flex;align-items:center;gap:10px}
-.task-actions{display:flex;gap:6px;flex-shrink:0}
+.task-actions{display:flex;gap:6px;flex-shrink:0;width:132px}
 .task-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;flex:1}
 .task-bar-fill{height:100%;background:var(--accent);transition:width .1s;border-radius:3px}
 .task-expiry{position:absolute;top:8px;right:10px;font-size:.68rem;color:var(--red);font-weight:600}
 .btn{padding:6px 14px;font-weight:600;font-size:.8rem}
 .btn-primary{background:var(--accent);color:#000}.btn-primary:hover:not(:disabled){background:var(--accent2)}
+.btn-work-phase2{background:#0e7490;color:#000}.btn-work-phase2:hover:not(:disabled){filter:brightness(1.08)}
+.btn-work-phase3{background:#0c6b85;color:#000}.btn-work-phase3:hover:not(:disabled){filter:brightness(1.08)}
+.btn-work-phase4{background:#0a6178;color:#000}.btn-work-phase4:hover:not(:disabled){filter:brightness(1.08)}
 .btn-green{background:var(--green);color:#000}.btn-green:hover:not(:disabled){filter:brightness(1.1)}
 .btn-red{background:var(--red);color:#fff}.btn-red:hover:not(:disabled){filter:brightness(1.1)}
 .btn-yellow{background:var(--yellow);color:#000}.btn-yellow:hover:not(:disabled){filter:brightness(1.1)}
 .btn-purple{background:var(--purple);color:#fff}.btn-purple:hover:not(:disabled){filter:brightness(1.1)}
 .btn-outline{background:none;border:1px solid var(--bg4);color:var(--text2)}.btn-outline:hover:not(:disabled){border-color:var(--text3);color:var(--text)}
 .btn-sm{padding:4px 10px;font-size:.72rem}
+.task-action-btn{width:132px;min-width:132px;text-align:center}
 
 /* Agent cards */
 .agent-card{display:flex;gap:10px;align-items:flex-start;padding:10px!important}
@@ -110,8 +114,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .agent-info .name{font-weight:700;font-size:.88rem}
 .agent-info .role{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
 .agent-stats{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.agent-meter-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.agent-meter-row .task-bar{width:220px;max-width:100%;margin:0;flex:1;min-width:120px}
 .agent-stat{font-size:.72rem;color:var(--text2);background:var(--bg3);padding:2px 6px;border-radius:4px}
 .agent-status{font-size:.72rem;padding:4px 10px;border-radius:var(--radius);white-space:nowrap}
+.agent-action-col{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.agent-status-btn{width:124px;cursor:default}
 .status-idle{background:#1e3a2e;color:var(--green)}
 .status-working{background:#1a2e3e;color:var(--accent)}
 .status-error{background:#3e1a1a;color:var(--red)}
