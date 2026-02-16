@@ -58,24 +58,26 @@
   const MANAGER_TOKEN_TANK_MAX = 100;
   const TOPUP_LOAD_UNITS = 1;
   const AI_WORKER_TOKEN_TANK_MAX = 10;
+  const AI_WORKER_TOPUP_FRACTION = 0.34;
   const AI_WORKER_TOKEN_TANK_DRAIN_PER_SEC = 1.2;
   const AGENT_TOKEN_TANK_DRAIN_PER_SEC = 2.5;
   const STALL_LOG_COOLDOWN_MS = 3000;
+  const TASK_EXPIRY_MS = 30000;
   const EARLY_TASK_WORK_MULT = 0.5;
   const AI_TUTORIAL_SECONDS = 20;
   const SOUNDTRACKS = [
-    { minTasks: 8, path: "soundtrack-loop.mp3" },
+    { minTasks: 12, path: "soundtrack-loop.mp3" },
   ];
   const DRUM_LAYERS = [
     { minPhase: 4, path: "precursor_kick.mp3" },
-    { minPhase: 6, path: "dnb_deep_loop.mp3" },
+    { minPhase: 8, path: "dnb_deep_loop.mp3" },
   ];
   const MUSIC_TARGET_VOLUME = 0.25;
   const DRUM_TARGET_VOLUME = 0.18;
   const MUSIC_FADE_IN_MS = 6000;
   const MUSIC_FADE_STEP_MS = 50;
   const DRUM_FADE_IN_MS = 10000;
-  const DRUM_CROSSFADE_MS = 10000;
+  const DRUM_CROSSFADE_MS = 1800;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 11;
   const MAJOR_PHASE_POPUPS = [3, 5, 6, 8, 9, 10, 11];
@@ -174,29 +176,30 @@
 
     // Phase 2 -> 3
     { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 120, currency: "cash", phase: 2, effect: { aiFailMult: 0.8 }, oneTime: true },
-    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 170, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 90 },
-    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign! Tasks are more frequent and pay 60% more.", cost: 200, currency: "cash", phase: 2, effect: { payMult: 1.6, giveRep: 80 }, oneTime: true, reqTasks: 110 },
-    { id: "pro_model", name: "Pro AI Subscription", desc: "Unlock Pro model: better quality, costs tokens. Unlocks Phase 3.", cost: 500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 130 },
+    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 160, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 90 },
+    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 200, currency: "cash", phase: 2, effect: { payMult: 1.6, giveRep: 80, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 110 },
+    { id: "pro_model", name: "Pro AI Subscription", desc: "Unlock Pro model: better quality, costs tokens. Unlocks Phase 3.", cost: 700, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 130 },
 
     // Phase 3 -> 4
     { id: "token_pack_1", name: "Token Pack (200)", desc: "Get 200 tokens.", cost: 110, currency: "cash", phase: 3, effect: { giveTokens: 200 }, oneTime: false },
-    { id: "token_optimizer", name: "Token Optimizer", desc: "Smarter caching cuts AI assist cost to 4 tok/click.", cost: 150, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.8 }, oneTime: true},
-    { id: "guardrails", name: "Output Guardrails", desc: "Validation layer catches hallucinations. AI failure rate -30%.", cost: 165, currency: "cash", phase: 3, effect: { aiFailMult: 0.7 }, oneTime: true },
-    { id: "token_compressor", name: "Prompt Compression", desc: "Prompt compacting cuts AI assist cost to 3 tok/click.", cost: 180, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 300 },
-    { id: "premium_support", name: "Premium Support", desc: "Priority response times. Clients are thrilled.", cost: 113, currency: "cash", phase: 3, effect: { giveRep: 1 }, oneTime: true, reqTasks: 335 },
-    { id: "token_distiller", name: "Model Distillation", desc: "Smaller model handles routine work. AI assist cost drops to 2 tok/click.", cost: 291, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.67 }, oneTime: true, reqTasks: 350 },
-    { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 400, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 351 },
-    { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 2.0, giveRep: 1000 }, oneTime: true, reqTasks: 353 },
-    { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 25% more valuable.", cost: 500, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 353 },
-    { id: "multi_bot", name: "Multi-Bot License", desc: "Unlock agent hiring. Phase 4 begins.", cost: 2200, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 210 },
+    { id: "token_optimizer", name: "Token Optimizer", desc: "Smarter caching reduces AI assist token usage by 20%.", cost: 500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.8 }, oneTime: true},
+    { id: "guardrails", name: "Output Guardrails", desc: "Validation layer catches hallucinations. AI failure rate -30%.", cost: 700, currency: "cash", phase: 3, effect: { aiFailMult: 0.7 }, oneTime: true },
+    { id: "token_compressor", name: "Prompt Compression", desc: "Prompt compacting reduces AI assist token usage by 25%.", cost: 680, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 300 },
+    { id: "premium_support", name: "Premium Support", desc: "Priority response times. Clients are thrilled.", cost: 313, currency: "cash", phase: 3, effect: { giveRep: 1 }, oneTime: true, reqTasks: 335 },
+    { id: "token_distiller", name: "Model Distillation", desc: "Smaller model handles routine work. AI assist token usage drops by 33%.", cost: 691, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.67 }, oneTime: true, reqTasks: 350 },
+    { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 500, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 351 },
+    { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 800, currency: "cash", phase: 3, effect: { payMult: 2.0, giveRep: 1000 }, oneTime: true, reqTasks: 353 },
+    { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 25% more valuable.", cost: 900, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 353 },
+    { id: "multi_bot", name: "Multi-Bot License", desc: "Unlock agent hiring. Phase 4 begins.", cost: 5500, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 380 },
 
     // Phase 4 -> 5
     { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "agent_slot_3", name: "Agent Slot Expansion (3)", desc: "Allow up to 3 agents.", cost: 2200, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true },
+    { id: "agent_slot_3", name: "Agent Slot Expansion (4)", desc: "Allow up to 4 agents.", cost: 2200, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true },
+    { id: "inbound_pipeline", name: "Inbound Pipeline", desc: "Run an early growth push. Tasks arrive 30% faster.", cost: 1800, currency: "cash", phase: 4, effect: { taskSpawnMult: 1.3 }, oneTime: true },
     { id: "task_templates", name: "Task Templates", desc: "Pre-written briefs. Tasks require 15% less work.", cost: 2400, currency: "cash", phase: 4, effect: { workReduction: 0.15 }, oneTime: true },
     { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 40% more.", cost: 2500, currency: "cash", phase: 4, effect: { payMult: 1.4 }, oneTime: true },
     { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 4000, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true },
-    { id: "agent_slot_5", name: "Agent Slot Expansion (5)", desc: "Allow up to 5 agents.", cost: 6500, currency: "cash", phase: 4, effect: { agentSlots: 5, giveRep: 2000 }, oneTime: true },
+    { id: "agent_slot_5", name: "Agent Slot Expansion (6)", desc: "Allow up to 6 agents.", cost: 6500, currency: "cash", phase: 4, effect: { agentSlots: 5, giveRep: 2000 }, oneTime: true },
     { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 12000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
 
     // Phase 5 (operations pressure)
@@ -349,6 +352,7 @@
       managerTokenTank: 0,
       managerLastStallAt: 0,
       taskExpiryEnabled: false,
+      taskSpawnMult: 1,
       payMult: 1,
       workReduction: 0,
       taskDetails: false,
@@ -387,106 +391,10 @@
     try {
       const raw = localStorage.getItem("ai_empire_save");
       if (!raw) return false;
-      const data = JSON.parse(raw);
-      const def = defaultState();
-      for (const k of Object.keys(def)) {
-        if (data[k] !== undefined) G[k] = data[k];
-      }
-      if (data.musicMode !== undefined) {
-        G.musicMode = data.musicMode;
-      } else if (data.musicEnabled !== undefined) {
-        G.musicMode = data.musicEnabled ? "on" : "off";
-      }
-      if (data.aiAutopilotEnabled !== undefined) {
-        G.aiAutopilotEnabled = data.aiAutopilotEnabled;
-      }
-      // Apply prestige bonuses
-      G.clickPower = Math.max(G.clickPower, 1 + G.prestigeBonusClick);
-      // Migrate old saves without onboarding fields
-      migrateSave();
+      G = JSON.parse(raw);
       return true;
     } catch (e) {
       return false;
-    }
-  }
-
-  function migrateSave() {
-    if (G.musicMode === undefined) {
-      if (G.musicEnabled === false) G.musicMode = "off";
-      else G.musicMode = "layered";
-    }
-    if (["off", "on", "layered"].indexOf(G.musicMode) === -1) G.musicMode = "layered";
-    G.musicEnabled = undefined;
-    if (G.devopsIncidentMult === undefined) G.devopsIncidentMult = 1;
-    if (G.agentAutoAssign === undefined) {
-      G.agentAutoAssign = Array.isArray(G.purchasedUpgrades) && G.purchasedUpgrades.includes("scheduling");
-    }
-    if (G.managerAssignMult === undefined) G.managerAssignMult = 1;
-    if (G.lastManagerAssignAt === undefined) G.lastManagerAssignAt = 0;
-    if (G.lastAgentAutoAssignAt === undefined) G.lastAgentAutoAssignAt = 0;
-    if (G.aiRunSeconds === undefined) G.aiRunSeconds = 0;
-    if (G.aiWorkerTokenTank === undefined) G.aiWorkerTokenTank = 0;
-    if (G.aiWorkerCurrentTaskId === undefined) G.aiWorkerCurrentTaskId = null;
-    if (G.aiWorkerTasksCompleted === undefined) G.aiWorkerTasksCompleted = 0;
-    if (G.aiWorkerLastStallAt === undefined) G.aiWorkerLastStallAt = 0;
-    if (G.aiWorkerShutdown === undefined) G.aiWorkerShutdown = false;
-    if (G.managerTokenTank === undefined) G.managerTokenTank = 0;
-    if (G.managerLastStallAt === undefined) G.managerLastStallAt = 0;
-    G.managerTokenTank = clamp(G.managerTokenTank, 0, MANAGER_TOKEN_TANK_MAX);
-    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank, 0, AI_WORKER_TOKEN_TANK_MAX);
-    if (G.aiAutopilotEnabled === true) {
-      G.aiAutopilotEnabled = false;
-      G.aiWorkerTokenTank = 0;
-      G.aiWorkerCurrentTaskId = null;
-    }
-    for (var ai = 0; ai < G.agents.length; ai++) {
-      if (G.agents[ai].autoAssign === undefined) G.agents[ai].autoAssign = false;
-      if (G.agents[ai].tokenTank === undefined) G.agents[ai].tokenTank = 0;
-    }
-    for (var ii = 0; ii < G.incidents.length; ii++) {
-      if (G.incidents[ii].fixProgress === undefined) G.incidents[ii].fixProgress = 0;
-    }
-    var hasCurrentAiTask = false;
-    for (var ti = 0; ti < G.tasks.length; ti++) {
-      var task = G.tasks[ti];
-      if (["available", "active", "ai", "agent", "done"].indexOf(task.status) === -1) {
-        task.status = "available";
-      } else if (task.status === "ai" && task.id !== G.aiWorkerCurrentTaskId) {
-        task.status = "available";
-      } else if (task.status === "ai" && task.id === G.aiWorkerCurrentTaskId) {
-        hasCurrentAiTask = true;
-      }
-    }
-    if (!hasCurrentAiTask) G.aiWorkerCurrentTaskId = null;
-
-    // Migrate aiCeo boolean to ceoMode string
-    if (G.aiCeo !== undefined) {
-      if (G.aiCeo && G.ceoMode === "off") G.ceoMode = "manage";
-      delete G.aiCeo;
-    }
-    if (G.ceoMode === undefined) G.ceoMode = "off";
-    if (G.clusters === undefined) G.clusters = [];
-    if (G.swarmMode !== undefined) delete G.swarmMode;
-    // Ensure uiRevealed.clusters exists
-    if (G.uiRevealed && G.uiRevealed.clusters === undefined) G.uiRevealed.clusters = false;
-
-    // Detect old save without uiRevealed (pre-onboarding)
-    if (!G.uiRevealed || G.uiRevealed.topBar === undefined) {
-      const def = defaultState();
-      G.milestonesReached = [];
-      G.uiRevealed = { ...def.uiRevealed };
-      if (G.aiAssistCount === undefined) G.aiAssistCount = 0;
-      if (G.taskExpiryEnabled === undefined) G.taskExpiryEnabled = true;
-      if (G.payMult === undefined) G.payMult = 1;
-      if (G.workReduction === undefined) G.workReduction = 0;
-      if (G.taskDetails === undefined) G.taskDetails = false;
-
-      // Fast-forward by re-running milestone checks (applies reveals + flags)
-      checkMilestones();
-
-      // Edge cases not covered by milestones
-      if (G.phase >= 2) G.incidentsExplained = true;
-      if (G.incidents.length > 0 || G.totalIncidents > 0) G.uiRevealed.incidents = true;
     }
   }
 
@@ -559,16 +467,21 @@
   }
 
   function getSpawnInterval() {
+    var base;
     if (G.prestigeCount > 0) {
-      return Math.max(300, TASK_SPAWN_BASE - G.phase * 500 - G.reputation * 5);
+      base = Math.max(300, TASK_SPAWN_BASE - G.phase * 500 - G.reputation * 5);
+    } else {
+      if (!G.uiRevealed.taskQueue) return Infinity; // No auto-spawn before task queue
+      if (G.totalTasksDone < 10) base = 2000;
+      else if (G.totalTasksDone < 15) base = 1600;
+      else if (G.totalTasksDone < 20) base = 1100;
+      else if (G.totalTasksDone < 50) base = 1000;
+      else if (G.totalTasksDone < 200) base = 500;
+      else base = Math.max(300, TASK_SPAWN_BASE - G.phase * 550 - G.reputation * 5);
     }
-    if (!G.uiRevealed.taskQueue) return Infinity; // No auto-spawn before task queue
-    if (G.totalTasksDone < 10) return 2000;
-    if (G.totalTasksDone < 15) return 1600;
-    if (G.totalTasksDone < 20) return 1100;
-    if (G.totalTasksDone < 50) return 1000;
-    if (G.totalTasksDone < 200) return 500;
-    return Math.max(300, TASK_SPAWN_BASE - G.phase * 550 - G.reputation * 5);
+
+    var spawnMult = Math.max(0.1, G.taskSpawnMult || 1);
+    return Math.max(120, base / spawnMult);
   }
 
   function spawnTask() {
@@ -680,6 +593,8 @@
       log("AI worker is shut down.", "bad");
       return;
     }
+    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank, 0, AI_WORKER_TOKEN_TANK_MAX);
+    if (G.aiWorkerTokenTank >= AI_WORKER_TOKEN_TANK_MAX) return;
     if (G.phase >= 3 && G.tokens < TOPUP_COST_TOKEN) {
       if (Date.now() - G.aiWorkerLastStallAt >= STALL_LOG_COOLDOWN_MS) {
         log("AI worker top-up failed: out of tokens.", "warn");
@@ -690,7 +605,8 @@
     if (G.phase >= 3) {
       G.tokens -= TOPUP_COST_TOKEN;
     }
-    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank + TOPUP_LOAD_UNITS, 0, AI_WORKER_TOKEN_TANK_MAX);
+    var topUpAmount = AI_WORKER_TOKEN_TANK_MAX * AI_WORKER_TOPUP_FRACTION;
+    G.aiWorkerTokenTank = clamp(G.aiWorkerTokenTank + topUpAmount, 0, AI_WORKER_TOKEN_TANK_MAX);
     log("AI worker topped up.", "info");
     save();
   }
@@ -1400,7 +1316,6 @@
     var workBudget = responders.length * dtSec * 11 * G.devopsIncidentMult;
     for (var i = 0; i < active.length && workBudget > 0; i++) {
       var inc = active[i];
-      if (inc.fixProgress === undefined) inc.fixProgress = 0;
       var remaining = Math.max(0, 100 - inc.fixProgress);
       var spend = Math.min(remaining, workBudget);
       inc.fixProgress += spend;
@@ -1473,9 +1388,9 @@
   }
 
   function getLateCostMultiplier() {
-    if (G.phase < 5) return 1;
-    var mult = 1 + (G.phase - 4) * 0.12;
-    if (G.purchasedUpgrades.includes("growth_marketing")) mult += 0.1;
+    if (G.phase < 4) return 1;
+    var mult = 1 + (G.phase - 3) * 0.18;
+    if (G.purchasedUpgrades.includes("growth_marketing")) mult += 0.15;
     return mult;
   }
 
@@ -1581,6 +1496,7 @@
       if (upg.effect.workReduction) G.workReduction = Math.min(0.5, G.workReduction + upg.effect.workReduction);
       if (upg.effect.taskDetails) G.taskDetails = true;
       if (upg.effect.tokenEfficiency) G.tokenEfficiency *= upg.effect.tokenEfficiency;
+      if (upg.effect.taskSpawnMult) G.taskSpawnMult *= upg.effect.taskSpawnMult;
       if (upg.effect.giveRep) G.reputation += upg.effect.giveRep;
     }
 
@@ -1919,8 +1835,8 @@
 
   function createDrumPlayer(path) {
     var player = new Audio();
-    player.loop = true;
     player.preload = "auto";
+    player.loop = true;
     player.volume = 0;
     if (path) {
       player.src = path;
@@ -2136,8 +2052,8 @@
 
     if (!musicPlayer) {
       musicPlayer = new Audio();
-      musicPlayer.loop = true;
       musicPlayer.preload = "auto";
+      musicPlayer.loop = true;
       musicPlayer.volume = MUSIC_TARGET_VOLUME;
       document.addEventListener("pointerdown", unlockMusicPlayback, { once: true });
       document.addEventListener("keydown", unlockMusicPlayback, { once: true });
@@ -2195,6 +2111,41 @@
     location.reload();
   }
 
+  function updateRotateOverlay() {
+    var overlay = $("#rotate-overlay");
+    if (!overlay) return;
+    var dismissed = sessionStorage.getItem("rotate_dismissed") === "1";
+    var isMobile = window.innerWidth <= 768;
+    var isPortrait = window.innerHeight > window.innerWidth;
+    overlay.classList.toggle("show", !dismissed && isMobile && isPortrait);
+  }
+
+  function clearExpiredTaskState(task) {
+    if (task.status === "agent" && task.assignedAgent) {
+      var assigned = G.agents.find(function (a) { return a.id === task.assignedAgent; }) || null;
+      if (assigned && assigned.currentTask === task.id) {
+        assigned.status = "idle";
+        assigned.currentTask = null;
+      }
+    }
+    if (task.status === "ai" && G.aiWorkerCurrentTaskId === task.id) {
+      G.aiWorkerCurrentTaskId = null;
+    }
+    if (task.status === "active" && G.activeTaskId === task.id) {
+      G.activeTaskId = null;
+    }
+  }
+
+  function pruneTasks(now) {
+    G.tasks = G.tasks.filter(function (task) {
+      if (task.status === "done") return false;
+      if (!G.taskExpiryEnabled) return true;
+      if (now - task.createdAt < TASK_EXPIRY_MS) return true;
+      clearExpiredTaskState(task);
+      return false;
+    });
+  }
+
   // ---------- MAIN GAME TICK ----------
   function tick() {
     if (!G.gameStarted) return;
@@ -2219,13 +2170,7 @@
     tickStress(dtSec);
     tickAiCeo();
 
-    // Remove stale tasks (expiry gated)
-    G.tasks = G.tasks.filter((t) => {
-      if (t.status === "active" || t.status === "ai" || t.status === "agent" || t.status === "done") return true;
-      if (!G.taskExpiryEnabled) return true;
-      var expired = Date.now() - t.createdAt >= 30000;
-      return !expired;
-    });
+    pruneTasks(now);
 
     // Check phase-based milestones periodically
     checkMilestones();
@@ -2381,8 +2326,8 @@
 
       // Task expiry countdown
       var expiryHtml = "";
-      if (G.taskExpiryEnabled && t.status === "available") {
-        var timeLeft = Math.max(0, 30 - (Date.now() - t.createdAt) / 1000);
+      if (G.taskExpiryEnabled) {
+        var timeLeft = Math.max(0, TASK_EXPIRY_MS / 1000 - (Date.now() - t.createdAt) / 1000);
         if (timeLeft < 15) {
           expiryHtml = "<div class='task-expiry'>" + Math.ceil(timeLeft) + "s</div>";
         }
@@ -2490,14 +2435,16 @@
   function renderAiWorkerCard() {
     if (G.phase < 2 || G.aiWorkerShutdown) return "";
     var aiTask = getCurrentAiWorkerTask();
-    var aiTokenLoaded = Math.floor(Math.max(0, G.aiWorkerTokenTank || 0));
+    var aiTokenTank = Math.max(0, G.aiWorkerTokenTank || 0);
+    var aiTokenLoaded = Math.floor(aiTokenTank);
     var aiTokenPct = clamp(Math.floor((aiTokenLoaded / AI_WORKER_TOKEN_TANK_MAX) * 100), 0, 100);
-    var aiCanTopUp = G.phase < 3 || G.tokens >= TOPUP_COST_TOKEN;
+    var aiCanTopUp = aiTokenTank < AI_WORKER_TOKEN_TANK_MAX && (G.phase < 3 || G.tokens >= TOPUP_COST_TOKEN);
     var aiCostLabel = G.phase < 3 ? " (free)" : " (-1 tok)";
     var aiPct = aiTask ? Math.floor((aiTask.workDone / aiTask.workRequired) * 100) : 0;
     var statusText = aiTokenLoaded <= 0 ? "No tokens" : "Working (" + aiPct + "%)";
     var statusHtml = renderAgentStatusButton(statusText, aiTokenLoaded > 0);
-    var shutdownBtn = G.phase >= 4 ? "<button class='btn btn-outline btn-sm' onclick=\"GAME.shutdownAiWorker()\">Shutdown</button>" : "";
+    var shutdownBtn = G.phase >= 4 ? "<button class='btn btn-outline btn-sm agent-delete-btn' title='Shutdown' onclick=\"GAME.shutdownAiWorker()\">X</button>" : "";
+    var statusRow = "<div class='agent-status-row'>" + statusHtml + shutdownBtn + "</div>";
 
     return "<div class='card agent-card'>" +
       "<div class='agent-icon' style='background:#7c3aed30;color:#a78bfa'>\uD83E\uDD16</div>" +
@@ -2513,8 +2460,7 @@
       "</div>" +
       "<div class='agent-action-col'>" +
       "<button class='btn btn-purple btn-sm' onclick=\"GAME.topUpAiWorker()\" " + (!aiCanTopUp ? "disabled" : "") + ">Top-up" + aiCostLabel + "</button>" +
-      statusHtml +
-      shutdownBtn +
+      statusRow +
       "</div>" +
       "</div>";
   }
@@ -2679,12 +2625,14 @@
         "<div class='agent-icon' style='background:" + a.color + "30;color:" + a.color + "'>" + a.icon + "</div>" +
         "<div class='agent-info'>" +
         "<div class='name'>" + a.name + (task ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>" + task.name + " (" + Math.floor(task.workDone / task.workRequired * 100) + "%)</span>" : a.roleId === "manager" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--accent);margin-left:8px'>Managing</span>" : a.roleId === "token_mgr" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--token);margin-left:8px'>Monitoring tokens</span>" : a.roleId === "devops" && a.status === "idle" ? " <span style='font-weight:400;font-size:.72rem;color:var(--green);margin-left:8px'>Incident response</span>" : a.autoAssign ? " <span style='font-weight:400;font-size:.72rem;color:var(--green);margin-left:8px'>Auto Assign ON</span>" : "") + "</div>" +
+        "<div class='agent-role-row'>" +
         "<div class='role'>" + a.roleName + " -- <span style='color:var(--text3)'>" + a.traitName + "</span></div>" +
         "<div class='agent-stats'>" +
         "<span class='agent-stat'>SPD " + a.speed.toFixed(2) + "</span>" +
         "<span class='agent-stat'>QUA " + a.quality.toFixed(2) + "</span>" +
         "<span class='agent-stat'>REL " + a.reliability.toFixed(2) + "</span>" +
         (G.phase >= 9 && UTILITY_ROLES.indexOf(a.roleId) === -1 ? (function () { var acl = getAgentCluster(a.id); return acl ? "<span class='agent-stat' style='color:var(--accent)'>" + acl.name + "</span>" : "<span class='agent-stat' style='color:var(--text3)'>Unassigned</span>"; })() : "") +
+        "</div>" +
         "</div>" +
         "<div class='agent-meter-row'>" +
         "<div class='task-bar'><div class='task-bar-fill' style='width:" + tokenPct + "%;background:" + meterColor + "'></div></div>" +
@@ -2693,8 +2641,8 @@
         "</div>" +
         "<div class='agent-action-col'>" +
         actionButtons +
-        renderAgentStatusButton(stateText, stateActive) +
-        "<button class='btn btn-outline btn-sm' onclick=\"GAME.fire('" + a.id + "')\">Shutdown</button>" +
+        "<div class='agent-status-row'>" + renderAgentStatusButton(stateText, stateActive) +
+        "<button class='btn btn-outline btn-sm agent-delete-btn' title='Delete' onclick=\"GAME.fire('" + a.id + "')\">X</button></div>" +
         "</div>" +
         "</div>";
       if (managerFirst && j === 0) firstManagerCard = cardHtml;
@@ -2920,7 +2868,7 @@
           "<div class='role'>" + ua2.roleName + " -- <span style='color:var(--text3)'>" + ua2.traitName + "</span></div>" +
           "</div>" +
           "<div style='display:flex;flex-direction:column;gap:8px;align-items:flex-end'>" +
-          "<button class='btn btn-outline btn-sm' onclick=\"GAME.fire('" + ua2.id + "')\">Shutdown</button>" +
+          "<button class='btn btn-outline btn-sm agent-delete-btn' title='Delete' onclick=\"GAME.fire('" + ua2.id + "')\">X</button>" +
           "</div>" +
           "</div>";
       }
@@ -3177,6 +3125,14 @@
       }
     });
 
+    $("#btn-rotate-continue").addEventListener("click", function () {
+      sessionStorage.setItem("rotate_dismissed", "1");
+      updateRotateOverlay();
+    });
+    window.addEventListener("resize", updateRotateOverlay);
+    window.addEventListener("orientationchange", updateRotateOverlay);
+    updateRotateOverlay();
+
     // Do Task button (early game)
     $("#btn-do-task").addEventListener("click", function (evt) {
       if (!G.gameStarted) return;
@@ -3255,22 +3211,21 @@
     // Cheats - jump to specific game stages for testing
     cheat: function (stage) {
       var stages = {
-        "0.5": { tasks: 0, cash: 0, ph: 1 }, // Initial state after start
-        1: { tasks: 11, cash: 53, ph: 1 },  // -> Pressure Building (task 12)
-        2: { tasks: 19, cash: 78, ph: 1 },  // -> Tools of the Trade (task 20)
-        3: { tasks: 89, cash: 90, ph: 1 },  // -> Reality Check / expenses (task 90)
-        4: { tasks: 109, cash: 5, ph: 1 },  // -> Discover Free-Tier AI / phase 2 (task 110)
-        5: { tasks: 189, cash: 209, ph: 1 },  // -> Discover Free-Tier AI, just before / phase 2
-        6: { tasks: 308, cash: 498, ph: 2 }, // -> Pro AI Subscription / phase 3
-        7: { tasks: 450, cash: 1950, tokens: 200, ph: 3 }, // -> Multi-Bot License / phase 4
-        8: { tasks: 500, cash: 17300, tokens: 436, ph: 5 },   // Phase 5 entry: web/code upgrades available
-        9: { tasks: 560, cash: 22000, tokens: 500, ph: 6 },   // Phase 6 entry: manager works before playbooks
-        10: { tasks: 990, cash: 60000, tokens: 900, ph: 9 }, // Phase 9 entry: single cluster Alpha
-        11: { tasks: 1030, cash: 90000, tokens: 1000, ph: 9 }, // Phase 9: second cluster upgrade available soon
-        12: { tasks: 1100, cash: 120000, tokens: 1200, ph: 9 }, // Phase 9: second cluster can be purchased
+        "0_1": { tasks: 0, cash: 0, ph: 1 }, // Initial state after start
+        "0_2": { tasks: 11, cash: 53, ph: 1 },  // -> Pressure Building (task 12)
+        "0_3": { tasks: 19, cash: 78, ph: 1 },  // -> Tools of the Trade (task 20)
+        1: { tasks: 89, cash: 90, ph: 1 },  // -> Reality Check / expenses (task 90)
+        2: { tasks: 128, cash: 205, ph: 1 },  // -> Discover Free-Tier AI / phase 2 (task 110)
+        3: { tasks: 247, cash: 498, ph: 2 }, // -> Pro AI Subscription / phase 3
+        4: { tasks: 510, cash: 7000, tokens: 200, ph: 3 }, // -> Multi-Bot License / phase 4
+        5: { tasks: 850, cash: 15000, tokens: 436, ph: 4 },   // Phase 5 entry: web/code upgrades available
+
+        6: { tasks: 560, cash: 22000, tokens: 500, ph: 5 },   // Phase 6 entry: manager works before playbooks
+        9: { tasks: 990, cash: 60000, tokens: 900, ph: 9 }, // Phase 9 entry: single cluster Alpha
+        10: { tasks: 1030, cash: 90000, tokens: 1000, ph: 9 }, // Phase 9: second cluster upgrade available soon
+        11: { tasks: 1100, cash: 120000, tokens: 1200, ph: 9 }, // Phase 9: second cluster can be purchased
       };
       var s = stages[stage];
-      if (!s) { console.log("Stages: 0.5, 1-12"); return; }
       G = defaultState();
       G.gameStarted = true;
       G.totalTasksDone = s.tasks;
@@ -3288,6 +3243,24 @@
           purchaseUpgrade(u.id);
           changed = true;
         }
+      }
+      // Fill all currently available hire slots
+      var hireGuard = 0;
+      while (G.phase >= 4 && G.agents.length < getHireAgentCapacity() && hireGuard < 100) {
+        hireGuard++;
+        var candidates = AGENT_ROLES.filter(function (role) {
+          if (role.id === "manager" && !G.managerUnlock) return false;
+          if (role.id === "devops" && G.phase < 7) return false;
+          if (role.id === "sales" && G.phase < 8) return false;
+          if (role.id === "token_mgr" && G.purchasedUpgrades.indexOf("token_manager_unlock") === -1) return false;
+          if ((UTILITY_ROLES.indexOf(role.id) >= 0 || G.phase < 9) && G.agents.some(function (a) { return a.roleId === role.id; })) return false;
+          return true;
+        });
+        if (candidates.length === 0) break;
+        var roleToHire = candidates[0];
+        var beforeHireCount = G.agents.length;
+        hireAgent(roleToHire.id);
+        if (G.agents.length === beforeHireCount) break;
       }
       // Clean up side effects from purchases
       G.cash = s.cash;
@@ -3314,27 +3287,14 @@
 
   // Console shortcuts
   var cheatShortcuts = [
-    { suffix: "0_5", stage: 0.5 },
-    { suffix: "1", stage: 1 },
-    { suffix: "2", stage: 2 },
-    { suffix: "3", stage: 3 },
-    { suffix: "4", stage: 4 },
-    { suffix: "5", stage: 5 },
-    { suffix: "6", stage: 6 },
-    { suffix: "7", stage: 7 },
-    { suffix: "8", stage: 8 },
-    { suffix: "9", stage: 9 },
-    { suffix: "10", stage: 10 },
-    { suffix: "11", stage: 11 },
-    { suffix: "12", stage: 12 },
+    "0_1", "0_2", "0_3", 1, 2, 3, 4, 5, 6, 9, 10, 11
   ];
   for (var shortcutIndex = 0; shortcutIndex < cheatShortcuts.length; shortcutIndex++) {
     var shortcut = cheatShortcuts[shortcutIndex];
-    var shortName = "chPh" + shortcut.suffix;
+    var shortName = "chPh" + shortcut.toString();
     window[shortName] = (function (stageNum) {
       return function () { GAME.cheat(stageNum); };
-    })(shortcut.stage);
-    window["chPhase" + shortcut.suffix] = window[shortName];
+    })(shortcut);
   }
 
   // Start

@@ -108,18 +108,23 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .task-action-btn{width:132px;min-width:132px;text-align:center}
 
 /* Agent cards */
-.agent-card{display:flex;gap:10px;align-items:flex-start;padding:10px!important}
+.agent-card{display:flex;gap:8px;align-items:flex-start;padding:8px!important}
 .agent-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:var(--bg3)}
 .agent-info{flex:1;min-width:0}
 .agent-info .name{font-weight:700;font-size:.88rem}
 .agent-info .role{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
-.agent-stats{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
-.agent-meter-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.agent-role-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.agent-role-row .role{flex:1;min-width:0}
+.agent-stats{display:flex;gap:6px;margin-top:3px;flex-wrap:wrap}
+.agent-role-row .agent-stats{margin-top:0;justify-content:flex-end}
+.agent-meter-row{display:flex;align-items:center;gap:8px;margin-top:4px}
 .agent-meter-row .task-bar{width:220px;max-width:100%;margin:0;flex:1;min-width:120px}
 .agent-stat{font-size:.72rem;color:var(--text2);background:var(--bg3);padding:2px 6px;border-radius:4px}
 .agent-status{font-size:.72rem;padding:4px 10px;border-radius:var(--radius);white-space:nowrap}
-.agent-action-col{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.agent-action-col{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.agent-status-row{display:flex;align-items:center;gap:6px}
 .agent-status-btn{width:124px;cursor:default}
+.agent-delete-btn{min-width:24px;width:24px;padding:4px 0;line-height:1}
 .status-idle{background:#1e3a2e;color:var(--green)}
 .status-working{background:#1a2e3e;color:var(--accent)}
 .status-error{background:#3e1a1a;color:var(--red)}
@@ -210,6 +215,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #intro-overlay .intro-box{background:var(--bg2);border:1px solid var(--accent);border-radius:12px;padding:30px;max-width:500px;width:90%;text-align:center}
 #intro-overlay h2{color:var(--accent);margin-bottom:12px;font-size:1.4rem}
 #intro-overlay p{color:var(--text2);margin-bottom:16px;line-height:1.5;font-size:.9rem}
+
+/* Rotate prompt */
+#rotate-overlay{display:none;position:fixed;inset:0;background:rgba(5,8,14,.94);z-index:1950;align-items:center;justify-content:center;padding:20px}
+#rotate-overlay.show{display:flex}
+#rotate-overlay .rotate-box{background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;max-width:340px;width:100%;padding:20px;text-align:center}
+#rotate-overlay .rotate-icon{font-size:2rem;line-height:1;margin-bottom:10px}
+#rotate-overlay h3{color:var(--accent);margin-bottom:8px}
+#rotate-overlay p{color:var(--text2);font-size:.9rem;line-height:1.45;margin-bottom:14px}
 
 /* Click ripple */
 .click-reward{position:fixed;pointer-events:none;font-weight:700;font-size:.9rem;color:var(--cash);z-index:300;animation:floatUp .8s ease-out forwards}
@@ -350,6 +363,16 @@ button:disabled{opacity:.4;cursor:not-allowed}
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Mobile Rotate Prompt -->
+<div id="rotate-overlay">
+  <div class="rotate-box">
+    <div class="rotate-icon">📱↔</div>
+    <h3>Rotate Phone</h3>
+    <p>For the best play experience, rotate your phone widthways.</p>
+    <button class="btn btn-primary" id="btn-rotate-continue">Continue Anyway</button>
   </div>
 </div>
 
