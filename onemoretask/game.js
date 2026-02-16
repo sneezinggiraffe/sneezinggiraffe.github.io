@@ -45,7 +45,7 @@
   const AGENT_WORK_MULT = 25; // base multiplier for agent work speed
   const MAX_LOG = 200;
   const AGENT_BASE_HIRE_COST = 250;
-  const AGENT_HIRE_COST_MULT = 1.8;
+  const AGENT_HIRE_COST_MULT = 1.9;
   const MANUAL_WORK_SECONDS_PER_CLICK = 0.15;
   const MANUAL_STRESS_PER_SEC = 2;
   const AI_WORK_MULT_PHASE2 = 1.25;
@@ -203,26 +203,28 @@
     { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools. Unlock Phase 5.", cost: 12000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true },
 
     // Phase 5 (operations pressure)
-    { id: "web_browse", name: "Web Search Tool", desc: "Agents can browse the web. +15% agent speed, +20% quality on research.", cost: 800, currency: "cash", phase: 5, effect: { toolBonus: 0.2, agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +25% speed on code tasks.", cost: 1000, currency: "cash", phase: 5, effect: { codeSpeedMult: 1.25 }, oneTime: true },
-    { id: "manager_agent", name: "Manager Agent", desc: "Promote one agent to coordinator. Unlocks Phase 6.", cost: 3500, currency: "cash", phase: 5, unlockPhase: 6, effect: { managerUnlock: true, agentSlots: 6, giveRep: 150 }, oneTime: true },
+    { id: "web_browse", name: "Web Search Tool", desc: "Agents can browse the web. +15% agent speed, +20% quality on research.", cost: 2500, currency: "cash", phase: 5, effect: { toolBonus: 0.2, agentSpeedMult: 1.15 }, oneTime: true },
+    { id: "sales_playbook", name: "Sales Playbook", desc: "Sharper discovery and handoff process. Sales increase by 50%.", cost: 3600, currency: "cash", phase: 5, effect: { payMult: 1.5 }, oneTime: true },
+    { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +25% speed on code tasks.", cost: 3700, currency: "cash", phase: 5, effect: { codeSpeedMult: 1.25 }, oneTime: true },
+    { id: "revenue_ops", name: "Revenue Ops System", desc: "Pipeline discipline and better follow-up. Sales increase by 50%.", cost: 8200, currency: "cash", phase: 5, effect: { payMult: 1.50 }, oneTime: true },
+    { id: "manager_agent", name: "Manager Agent", desc: "Promote one agent to coordinator. Unlocks Phase 6.", cost: 25000, currency: "cash", phase: 5, unlockPhase: 6, effect: { managerUnlock: true, agentSlots: 6, giveRep: 150 }, oneTime: true },
 
     // Phase 6 (manager-led automation)
-    { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Manager runbooks boost assignment throughput and unlock per-agent auto toggles.", cost: 7200, currency: "cash", phase: 6, effect: { managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
-    { id: "smart_routing", name: "Smart Routing", desc: "Manager can route agents across specialties when needed.", cost: 8200, currency: "cash", phase: 6, effect: { smartRouting: true }, oneTime: true },
-    { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 35% faster.", cost: 9000, currency: "cash", phase: 6, effect: { agentSpeedMult: 1.35 }, oneTime: true, reqTasks: 580 },
-    { id: "token_manager_unlock", name: "Token Budget Console", desc: "Unlock Token Manager automation. Unlocks Phase 7.", cost: 16000, currency: "cash", phase: 6, unlockPhase: 7, effect: { giveTokens: 300 }, oneTime: true, reqTasks: 650 },
+    { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Manager runbooks boosts assignment by 50%.", cost: 15000, currency: "cash", phase: 6, effect: { managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
+    { id: "smart_routing", name: "Smart Routing", desc: "Manager can route agents across specialties when needed.", cost: 19000, currency: "cash", phase: 6, effect: { smartRouting: true }, oneTime: true },
+    { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 35% faster.", cost: 25000, currency: "cash", phase: 6, effect: { agentSpeedMult: 1.35 }, oneTime: true, reqTasks: 580 },
+    { id: "token_manager_unlock", name: "Token Budget Console", desc: "Unlock Token Manager automation. Unlocks Phase 7.", cost: 40000, currency: "cash", phase: 6, unlockPhase: 7, effect: { giveTokens: 300 }, oneTime: true, reqTasks: 650 },
 
     // Phase 7 (token-stable autopilot)
-    { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 14000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 670 },
-    { id: "compute_2", name: "Incident Command Desk", desc: "DevOps resolves incidents 35% faster.", cost: 18000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.35 }, oneTime: true, reqTasks: 720 },
-    { id: "agent_slot_7", name: "Agent Slot Expansion (8)", desc: "Allow up to 8 agents.", cost: 22000, currency: "cash", phase: 7, effect: { agentSlots: 8, giveRep: 250 }, oneTime: true, reqTasks: 770 },
-    { id: "ops_flywheel", name: "Operations Flywheel", desc: "Stable operations loops unlock growth. Unlocks Phase 8.", cost: 28000, currency: "cash", phase: 7, unlockPhase: 8, effect: { payMult: 1.18, giveRep: 300 }, oneTime: true, reqTasks: 830 },
+    { id: "agent_slot_7", name: "Agent Slot Expansion (8)", desc: "Allow up to 8 agents.", cost: 22000, currency: "cash", phase: 7, effect: { agentSlots: 8, giveRep: 250 }, oneTime: true, reqTasks: 670 },
+    { id: "compute_2", name: "Revenue Optimization Upgrade", desc: "Apply data-driven strategies to maximize sales. 2x Revenue Multiplier.", cost: 31000, currency: "cash", phase: 7, effect: { payMult: 2.0 }, oneTime: true, reqTasks: 850 },
+    { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 35000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 850 },
+    { id: "ops_flywheel", name: "Operations Flywheel", desc: "Stable operations loops unlock growth. Unlocks Phase 8.", cost: 50000, currency: "cash", phase: 7, unlockPhase: 8, effect: { payMult: 1.50, giveRep: 300 }, oneTime: true, reqTasks: 890 },
 
     // Phase 8 (growth marketing)
-    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Launch paid ads and referral loops. Adds passive cashflow and boosts agent-generated revenue.", cost: 32000, currency: "cash", phase: 8, effect: { payMult: 1.45, giveRep: 600 }, oneTime: true, reqTasks: 860 },
-    { id: "management", name: "Referral Partnerships", desc: "Partner channels bring higher-value client work.", cost: 36000, currency: "cash", phase: 8, effect: { payMult: 1.25, giveRep: 450 }, oneTime: true, reqTasks: 920 },
-    { id: "acquire_micro_agency", name: "Acquire Micro Agency", desc: "Acquire a second team and standardise handoffs. Unlocks Phase 9.", cost: 42000, currency: "cash", phase: 8, unlockPhase: 9, effect: { agentSlots: 10, giveRep: 900 }, oneTime: true, reqTasks: 980 },
+    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Launch paid ads and referral loops. Adds passive cashflow and boosts agent-generated revenue.", cost: 50000, currency: "cash", phase: 8, effect: { payMult: 2.00, giveRep: 600 }, oneTime: true, reqTasks: 860 },
+    { id: "management", name: "Referral Partnerships", desc: "Partner channels bring higher-value client work.", cost: 70000, currency: "cash", phase: 8, effect: { payMult: 1.50, giveRep: 450 }, oneTime: true, reqTasks: 920 },
+    { id: "acquire_micro_agency", name: "Acquire Micro Agency", desc: "Acquire a second team and standardise handoffs. Unlocks Phase 9.", cost: 200000, currency: "cash", phase: 8, unlockPhase: 9, effect: { agentSlots: 10, giveRep: 900 }, oneTime: true, reqTasks: 980 },
 
     // Phase 9 (clusterization)
     { id: "cluster_beta", name: "Open Cluster Bravo", desc: "Stand up a second cluster and begin multi-cluster operations.", cost: 22000, currency: "cash", phase: 9, effect: { addCluster: 1, giveRep: 350 }, oneTime: true, reqTasks: 1020 },
@@ -1395,9 +1397,8 @@
   }
 
   function getUpgradeCost(upg) {
-    if (!upg || upg.currency !== "cash") return upg ? upg.cost : 0;
-    if (upg.phase < 4) return upg.cost;
-    return Math.ceil(upg.cost * getLateCostMultiplier());
+    if (!upg) return 0;
+    return upg.cost;
   }
 
   function getAgentHireCost(agentCount) {
@@ -1407,9 +1408,13 @@
 
   function getAgentRevenueRate() {
     if (G.phase < 4) return 0;
+    var activeWorkers = G.agents.filter(function (agent) {
+      return UTILITY_ROLES.indexOf(agent.roleId) === -1 && agent.status === "working";
+    }).length;
+    if (activeWorkers <= 0) return 0;
     var perAgent = 1.4 + G.phase * 0.4;
     if (G.purchasedUpgrades.includes("growth_marketing")) perAgent *= 1.65;
-    return G.agents.length * perAgent;
+    return activeWorkers * perAgent;
   }
 
   function getMarketingRevenueRate() {
@@ -3219,11 +3224,13 @@
         3: { tasks: 247, cash: 498, ph: 2 }, // -> Pro AI Subscription / phase 3
         4: { tasks: 510, cash: 7000, tokens: 200, ph: 3 }, // -> Multi-Bot License / phase 4
         5: { tasks: 850, cash: 15000, tokens: 436, ph: 4 },   // Phase 5 entry: web/code upgrades available
-
         6: { tasks: 560, cash: 22000, tokens: 500, ph: 5 },   // Phase 6 entry: manager works before playbooks
-        9: { tasks: 990, cash: 60000, tokens: 900, ph: 9 }, // Phase 9 entry: single cluster Alpha
+        7: { tasks: 775, cash: 34000, tokens: 500, ph: 6 },   // Phase 7 entry: Token budget console
+        8: { tasks: 1050, cash: 40000, tokens: 500, ph: 7 },   // Phase 7 entry: Token budget console
+        9: { tasks: 1180, cash: 150000, tokens: 900, ph: 8 }, // Phase 9 entry: single cluster Alpha
+
         10: { tasks: 1030, cash: 90000, tokens: 1000, ph: 9 }, // Phase 9: second cluster upgrade available soon
-        11: { tasks: 1100, cash: 120000, tokens: 1200, ph: 9 }, // Phase 9: second cluster can be purchased
+        11: { tasks: 1100, cash: 120000, tokens: 1200, ph: 10 }, // Phase 9: second cluster can be purchased
       };
       var s = stages[stage];
       G = defaultState();
@@ -3287,7 +3294,7 @@
 
   // Console shortcuts
   var cheatShortcuts = [
-    "0_1", "0_2", "0_3", 1, 2, 3, 4, 5, 6, 9, 10, 11
+    "0_1", "0_2", "0_3", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
   ];
   for (var shortcutIndex = 0; shortcutIndex < cheatShortcuts.length; shortcutIndex++) {
     var shortcut = cheatShortcuts[shortcutIndex];
