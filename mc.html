@@ -3,38 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HBNLDJ6H00"></script>
-  <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HBNLDJ6H00');
-  </script>
-  <title>Free Minecraft Skin Editor (3D) - Online Skin Creator</title>
-  <link rel="icon" href="images/mc-favicon.svg" type="image/svg+xml" sizes="any">
-  <meta name="description" content="100% free and ad-free Minecraft skin editor in your browser with 3D preview. Edit Steve and Alex skins, undo/redo, and download standard PNG files.">
+  <title>SkinBurp Make MC Skins, No Ads</title>
+  <link rel="icon" href="images/icon.svg" type="image/svg+xml" sizes="any">
+  <meta name="description" content="SkinBurp is a completely free Minecraft skin creator with no ads. Edit Steve and Alex skins in 3D, undo or redo changes, and download standard PNG files.">
   <link rel="canonical" href="https://sneezinggiraffe.com/mc.html">
   <meta name="robots" content="index,follow">
 
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Minecraft 3D Skin Editor">
+  <meta property="og:site_name" content="SkinBurp">
   <meta property="og:url" content="https://sneezinggiraffe.com/mc.html">
-  <meta property="og:title" content="Free Minecraft Skin Editor (3D) - Online Skin Creator">
-  <meta property="og:description" content="Free, ad-free Minecraft skin editor with 3D preview. Edit Steve/Alex skins and download PNG.">
+  <meta property="og:title" content="SkinBurp Make MC Skins, No Ads">
+  <meta property="og:description" content="A completely free Minecraft skin creator with 3D editing and no ads. Edit Steve or Alex skins and download PNG files.">
   <meta property="og:image" content="https://sneezinggiraffe.com/images/mc-og.png">
   <meta property="og:image:secure_url" content="https://sneezinggiraffe.com/images/mc-og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Minecraft 3D Skin Editor">
+  <meta property="og:image:alt" content="SkinBurp Minecraft skin creator">
   <meta property="og:locale" content="en_GB">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Free Minecraft Skin Editor (3D) - Online Skin Creator">
-  <meta name="twitter:description" content="Free, ad-free Minecraft skin editor with 3D preview. Edit Steve/Alex skins and download PNG.">
+  <meta name="twitter:title" content="SkinBurp Make MC Skins, No Ads">
+  <meta name="twitter:description" content="A completely free Minecraft skin creator with 3D editing and no ads. Edit Steve or Alex skins and download PNG files.">
   <meta name="twitter:image" content="https://sneezinggiraffe.com/images/mc-og.png">
-  <meta name="twitter:image:alt" content="Minecraft 3D Skin Editor">
+  <meta name="twitter:image:alt" content="SkinBurp Minecraft skin creator">
   <meta name="theme-color" content="#0b1020">
+  <link rel="manifest" href="manifest.webmanifest">
 
   <script type="application/ld+json">
   {
@@ -50,12 +43,12 @@
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Minecraft Skin Editor (3D)",
-    "alternateName": "Minecraft Skin Creator",
+    "name": "SkinBurp",
+    "alternateName": "SkinBurp Make MC Skins, No Ads",
     "url": "https://sneezinggiraffe.com/mc.html",
     "applicationCategory": "MultimediaApplication",
     "operatingSystem": "Web",
-    "description": "Free, ad-free Minecraft skin editor and creator with 3D preview. Edit Steve/Alex skins and download as PNG.",
+    "description": "SkinBurp is a completely free Minecraft skin creator with 3D editing and no ads. Edit Steve or Alex skins and download PNG files.",
     "image": "https://sneezinggiraffe.com/images/mc-og.png",
     "screenshot": "https://sneezinggiraffe.com/images/mc-og.png",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -347,6 +340,21 @@
       white-space: nowrap;
     }
 
+    .save-status {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 1000;
+      transform: translateX(-50%);
+      padding: .75rem 1rem;
+      border: 1px solid var(--blue);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 8px 24px #0008;
+      font-weight: 700;
+    }
+
     @media (max-width: 800px) {
       .app { grid-template-rows: auto 1fr auto; }  /* ensure stage is the grow row */
 
@@ -374,7 +382,7 @@
 </head>
 
 <body>
-  <h1 class="visually-hidden">Free Minecraft Skin Editor (3D) - Online Skin Creator</h1>
+  <h1 class="visually-hidden">SkinBurp Make MC Skins, No Ads</h1>
   <noscript>
     <p style="padding:2rem;color:#e5e7eb;text-align:center">This free Minecraft skin editor requires JavaScript to run. Please enable JavaScript in your browser to create and edit Minecraft skins in 3D.</p>
   </noscript>
@@ -413,7 +421,7 @@
     <div class="stage">
       <section class="panel" id="glwrap">
         <canvas id="gl" aria-label="3D character canvas" role="img"></canvas>
-        <div class="hud">Drag to rotate • Pinch or scroll to zoom • Tap body to paint</div>
+        <div class="hud">Drag to rotate • Pinch or scroll to zoom • Draw on the model</div>
         <div id="markF" class="marker front" aria-hidden="true">F</div>
         <div id="markB" class="marker back" aria-hidden="true">B</div>
       </section>
@@ -424,7 +432,19 @@
         </div>
         <div class="card" id="cardSettings">
           <b>Settings</b>
-          <div class="hint">Model: Steve (4px arms). Uses standard 64×64 (1.8+).</div>
+          <div class="row" style="justify-content:center;margin-top:8px">
+            <label class="kicker" for="modelType">Model</label>
+            <select id="modelType" class="btn">
+              <option value="classic">Classic (4px arms)</option>
+              <option value="slim">Slim (3px arms)</option>
+            </select>
+          </div>
+          <div class="row" id="layers" style="justify-content:center;margin-top:8px">
+            <span class="kicker">Layer</span>
+            <button class="btn active" data-layer="base" title="Edit the main skin layer">Skin</button>
+            <button class="btn" data-layer="outer" title="Edit hats, jackets and sleeves">Clothes</button>
+          </div>
+          <div class="hint" style="margin-top:8px">Skin edits the body; Clothes edits hats, jackets and sleeves.</div>
         </div>
         <div class="card" id="cardFaq">
           <details>
@@ -450,8 +470,10 @@
     <div id="post" class="side"></div>
   </div>
 
+  <div class="save-status" id="saveStatus" role="status" aria-live="polite" hidden></div>
+
   <footer style="max-width:720px;margin:1.5rem auto;padding:0 1rem;color:var(--muted);font-size:.85rem;line-height:1.5">
-    <h2 style="font-size:1rem;color:var(--text);margin:0 0 .5rem">Free Minecraft Skin Editor - No Ads</h2>
+    <h2 style="font-size:1rem;color:var(--text);margin:0 0 .5rem">SkinBurp Make MC Skins, No Ads</h2>
     <p>Create custom Minecraft skins directly in your browser with this free, ad-free 3D skin editor and skin maker. Paint on a fully rotatable 3D model, pick colours, adjust brush size, and download your finished skin as a standard 64x64 PNG ready to upload to your Minecraft account. Works on desktop and mobile - no sign-up or installation required.</p>
     <ul style="padding-left:1.2rem;margin:.5rem 0">
       <li>3D preview with drag-to-rotate and pinch-to-zoom</li>
@@ -460,9 +482,13 @@
       <li>Undo/redo support</li>
       <li>Save as PNG - compatible with Minecraft Java and Bedrock (1.8+)</li>
     </ul>
+    <p><a href="privacy.html" style="color:var(--blue)">Privacy</a></p>
   </footer>
 
-  <script>
+  <script type="module">
+    import { createSkinFilename, savePngNatively } from './native-save.js';
+    import { detectModel, getModelDefinition, triangleRangeForLayer } from './skin-model.js';
+
     // ====== Texture (64×64) stored in 2D canvas ======
     const skin = document.createElement('canvas');
     skin.width = skin.height = 64;
@@ -509,8 +535,10 @@
         } else {
           sctx.drawImage(img, 0, 0, 64, 64);
         }
+        setModel(detectModel(sctx.getImageData(0, 0, 64, 64).data));
         texNeedsUpload = true;
         dirty = false;
+        saveLocal();
       };
       img.src = url;
     }
@@ -646,11 +674,13 @@
 
     document.getElementById('openSteveBtn').addEventListener('click', () => {
       openMenu.hidden = true;
+      setModel('classic');
       loadFromURL('skin-steve.png');
     });
 
     document.getElementById('openAlexBtn').addEventListener('click', () => {
       openMenu.hidden = true;
+      setModel('slim');
       loadFromURL('skin-alex.png');
     });
 
@@ -703,6 +733,7 @@
           } else {
             sctx.drawImage(img, 0, 0, 64, 64);
           }
+          setModel(detectModel(sctx.getImageData(0, 0, 64, 64).data));
           texNeedsUpload = true;
           dirty = false;
           saveLocal();
@@ -742,7 +773,7 @@
       const blob = await canvasToBlob(skin);
 
       // 1) Modern browsers: native Save As dialog
-      if (window.showSaveFilePicker) {
+      if (!isCapacitorNative() && window.showSaveFilePicker) {
         try {
           const handle = await window.showSaveFilePicker({
             suggestedName: 'skin.png',
@@ -761,27 +792,21 @@
         }
       }
 
-      // 2) Capacitor native app: write via Filesystem
+      // 2) Capacitor native app: save to public Downloads, with sharing as the legacy fallback
       const C = window.Capacitor;
-      const Filesystem = C && (C.Filesystem || (C.Plugins && C.Plugins.Filesystem));
-      if (isCapacitorNative() && Filesystem) {
+      if (isCapacitorNative()) {
         try {
-          const name = (prompt('File name', 'skin.png') || 'skin.png').replace(/[\/\\]/g, '');
+          const name = createSkinFilename(new Date());
           const base64 = await blobToBase64(blob);
-          if (Filesystem.requestPermissions) {
-            try { await Filesystem.requestPermissions(); } catch (e) {}
-          }
-          await Filesystem.writeFile({
-            path: name,
-            data: base64,
-            directory: 'DOCUMENTS',
-            recursive: true
-          });
-          alert('Saved to Documents as ' + name);
+          const saved = await savePngNatively(C, base64, name);
+          if (!saved.saved) return;
           dirty = false;
+          if (saved.directory) showSaveStatus(`Saved to ${saved.directory}`);
           return;
         } catch (e) {
-          // fall through to anchor download
+          console.error('Native save failed', e);
+          alert(e && e.message ? e.message : 'Save failed. Please try again or update the app.');
+          return;
         }
       }
 
@@ -805,6 +830,15 @@
     }
 
     document.getElementById('save').onclick = () => { saveSkin(); };
+
+    let saveStatusTimer;
+    function showSaveStatus(message) {
+      const status = document.getElementById('saveStatus');
+      status.textContent = message;
+      status.hidden = false;
+      clearTimeout(saveStatusTimer);
+      saveStatusTimer = setTimeout(() => { status.hidden = true; }, 2500);
+    }
 
 
     // Fullscreen toggle (Chrome/mac + Android)
@@ -891,7 +925,7 @@
 
     // Shaders: show neutral colour when tex alpha==0 so model is visible before painting
     const VSH = `attribute vec3 a_pos;attribute vec2 a_uv;uniform mat4 u_mvp;varying vec2 v_uv;void main(){v_uv=a_uv;gl_Position=u_mvp*vec4(a_pos,1.0);} `;
-    const FSH = `precision mediump float;varying vec2 v_uv;uniform sampler2D u_tex;void main(){vec4 c=texture2D(u_tex,v_uv); if(c.a==0.0){ c=vec4(0.75,0.75,0.78,1.0);} gl_FragColor=c;} `;
+    const FSH = `precision mediump float;varying vec2 v_uv;uniform sampler2D u_tex;uniform float u_outer;void main(){vec4 c=texture2D(u_tex,v_uv);if(c.a==0.0){if(u_outer>0.5)discard;c=vec4(0.75,0.75,0.78,1.0);}gl_FragColor=c;} `;
 
     function makeShader(src, type) {
       if (!gl) return null;
@@ -909,6 +943,7 @@
     let locUV = -1;
     let locMVP = null;
     let locTex = null;
+    let locOuter = null;
     if (gl && prog) {
       const vsh = makeShader(VSH, gl.VERTEX_SHADER);
       const fsh = makeShader(FSH, gl.FRAGMENT_SHADER);
@@ -923,6 +958,7 @@
       locUV = gl.getAttribLocation(prog, 'a_uv');
       locMVP = gl.getUniformLocation(prog, 'u_mvp');
       locTex = gl.getUniformLocation(prog, 'u_tex');
+      locOuter = gl.getUniformLocation(prog, 'u_outer');
       gl.uniform1i(locTex, 0);
     }
 
@@ -956,6 +992,7 @@
     let indices = [];
     const triPos = [];
     const triUV = [];
+    let baseIndexCount = 0;
 
     function addFace(a, b, c, d, rect) {
       const base = positions.length / 3;
@@ -991,57 +1028,28 @@
       addFace([minx, miny, maxz], [maxx, miny, maxz], [maxx, miny, minz], [minx, miny, minz], R.bottom);
     }
 
-    const Rct = (x1, y1, x2, y2) => [x1, y1, x2, y2];
-    const RECT = {
-      head: {
-        top: Rct(8, 0, 16, 8),
-        bottom: Rct(16, 0, 24, 8),
-        right: Rct(16, 8, 24, 16),
-        front: Rct(8, 8, 16, 16),
-        left: Rct(0, 8, 8, 16),
-        back: Rct(24, 8, 32, 16)
-      },
-      body: {
-        top: Rct(20, 16, 28, 20),
-        bottom: Rct(28, 16, 36, 20),
-        right: Rct(16, 20, 20, 32),
-        front: Rct(20, 20, 28, 32),
-        left: Rct(28, 20, 32, 32),
-        back: Rct(32, 20, 40, 32)
-      },
-      rarm: {
-        top: Rct(44, 16, 48, 20),
-        bottom: Rct(48, 16, 52, 20),
-        right: Rct(40, 20, 44, 32),
-        front: Rct(44, 20, 48, 32),
-        left: Rct(48, 20, 52, 32),
-        back: Rct(52, 20, 56, 32)
-      },
-      rleg: {
-        top: Rct(4, 16, 8, 20),
-        bottom: Rct(8, 16, 12, 20),
-        right: Rct(0, 20, 4, 32),
-        front: Rct(4, 20, 8, 32),
-        left: Rct(8, 20, 12, 32),
-        back: Rct(12, 20, 16, 32)
-      },
-      larm: {
-        top: Rct(36, 48, 40, 52),
-        bottom: Rct(40, 48, 44, 52),
-        right: Rct(32, 52, 36, 64),
-        front: Rct(36, 52, 40, 64),
-        left: Rct(40, 52, 44, 64),
-        back: Rct(44, 52, 48, 64)
-      },
-      lleg: {
-        top: Rct(20, 48, 24, 52),
-        bottom: Rct(24, 48, 28, 52),
-        right: Rct(16, 52, 20, 64),
-        front: Rct(20, 52, 24, 64),
-        left: Rct(24, 52, 28, 64),
-        back: Rct(28, 52, 32, 64)
-      }
-    };
+    let currentModel = 'classic';
+    let currentLayer = 'base';
+    let activeDefinition = getModelDefinition(currentModel);
+    const modelType = document.getElementById('modelType');
+    const layers = document.getElementById('layers');
+
+    function setModel(model) {
+      currentModel = model;
+      modelType.value = model;
+      activeDefinition = getModelDefinition(model);
+      buildModel();
+      saveLocal();
+    }
+
+    modelType.value = currentModel;
+    modelType.addEventListener('change', () => setModel(modelType.value));
+    layers.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-layer]');
+      if (!button) return;
+      currentLayer = button.dataset.layer;
+      [...layers.querySelectorAll('button')].forEach((item) => item.classList.toggle('active', item === button));
+    });
 
     function buildModel() {
       positions = [];
@@ -1050,12 +1058,10 @@
       triPos.length = 0;
       triUV.length = 0;
 
-      addBox(-4, 24, -4, 4, 32, 4, RECT.head);
-      addBox(-4, 12, -2, 4, 24, 2, RECT.body);
-      addBox(-8, 12, -2, -4, 24, 2, RECT.rarm);
-      addBox(4, 12, -2, 8, 24, 2, RECT.larm);
-      addBox(-4, 0, -2, 0, 12, 2, RECT.rleg);
-      addBox(0, 0, -2, 4, 12, 2, RECT.lleg);
+      activeDefinition.forEach(({ bounds, faces }, index) => {
+        addBox(...bounds, faces);
+        if (index === 5) baseIndexCount = indices.length;
+      });
 
       if (!gl || !posBuf || !uvBuf || !idxBuf) return;
 
@@ -1252,8 +1258,9 @@
       const { origin, dir } = rayFromScreen(mx, my);
       let bestT = 1e9;
       let bestUV = null;
+      const [start, end] = triangleRangeForLayer(currentLayer, triPos.length);
 
-      for (let i = 0; i < triPos.length; i++) {
+      for (let i = start; i < end; i++) {
         const [a, b, c] = triPos[i];
         const hit = rayTri(origin, dir, a, b, c);
         if (hit && hit.t < bestT) {
@@ -1414,7 +1421,10 @@
       gl.enable(gl.DEPTH_TEST);
       gl.clearColor(0.03, 0.06, 0.13, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+      gl.uniform1f(locOuter, 0);
+      gl.drawElements(gl.TRIANGLES, baseIndexCount, gl.UNSIGNED_SHORT, 0);
+      gl.uniform1f(locOuter, 1);
+      gl.drawElements(gl.TRIANGLES, indices.length - baseIndexCount, gl.UNSIGNED_SHORT, baseIndexCount * Uint16Array.BYTES_PER_ELEMENT);
 
       // Update front/back markers
       updateMarkers(mvp);
@@ -1513,8 +1523,8 @@
       const frontFacing = d[2] < 0;
 
       // Only show if the corresponding face center is blank
-      const frontBlank = isFaceCenterBlank(RECT.head.front);
-      const backBlank = isFaceCenterBlank(RECT.head.back);
+      const frontBlank = isFaceCenterBlank(activeDefinition[0].faces.front);
+      const backBlank = isFaceCenterBlank(activeDefinition[0].faces.back);
 
       const offsetSide = (p) => {
         if (!p) return null;
