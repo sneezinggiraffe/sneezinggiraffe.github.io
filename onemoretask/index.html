@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One More Task</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
@@ -10,14 +10,14 @@
 input,textarea{-webkit-user-select:text;user-select:text}
 :root{
   --bg:#0a0e17;--bg2:#111827;--bg3:#1e293b;--bg4:#334155;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#8b9bb0;
   --accent:#06b6d4;--accent2:#0891b2;--green:#10b981;--red:#ef4444;
   --yellow:#f59e0b;--purple:#8b5cf6;--pink:#ec4899;
   --cash:#22c55e;--token:#06b6d4;--rep:#f59e0b;--debt:#ef4444;
   --radius:8px;--shadow:0 2px 8px rgba(0,0,0,.4);
 }
 html{font-size:14px}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:auto}
 button{cursor:pointer;font-family:inherit;border:none;border-radius:var(--radius);font-size:.85rem;transition:all .15s}
 button:disabled{opacity:.4;cursor:not-allowed}
 
@@ -51,7 +51,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 /* Two-pane game layout */
 #game-container{display:flex;gap:16px;padding:4px;max-width:1200px;margin:50px auto 0;height:calc(100vh - 50px);overflow:hidden}
 
-#work-stream{flex:1 1 100%;min-width:0;min-height:0;transition:flex-basis .4s ease;overflow:hidden;position:relative}
+#work-stream{flex:1 1 100%;min-width:0;min-height:0;transition:flex-basis .4s ease;overflow-y:auto;position:relative}
 #control-panel{flex:0 0 0%;overflow-y:auto;min-height:0;transition:all .4s ease;display:none;min-width:0}
 
 #game-container.cp-visible #work-stream{flex:1 1 55%}
@@ -71,7 +71,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #btn-do-task:active{transform:scale(.95)}
 
 /* Fade out at bottom of work stream */
-#work-stream::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:10}
+#work-stream::after{display:none;content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:10}
 
 /* Task queue section */
 #task-queue-section{display:none}
@@ -96,13 +96,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .task-expiry{position:absolute;top:8px;right:10px;font-size:.68rem;color:var(--red);font-weight:600}
 .btn{padding:6px 14px;font-weight:600;font-size:.8rem}
 .btn-primary{background:var(--accent);color:#000}.btn-primary:hover:not(:disabled){background:var(--accent2)}
-.btn-work-phase2{background:#0e7490;color:#000}.btn-work-phase2:hover:not(:disabled){filter:brightness(1.08)}
-.btn-work-phase3{background:#0c6b85;color:#000}.btn-work-phase3:hover:not(:disabled){filter:brightness(1.08)}
-.btn-work-phase4{background:#0a6178;color:#000}.btn-work-phase4:hover:not(:disabled){filter:brightness(1.08)}
+.btn-work-phase2{background:#0e7490;color:#fff}.btn-work-phase2:hover:not(:disabled){filter:brightness(1.08)}
+.btn-work-phase3{background:#0c6b85;color:#fff}.btn-work-phase3:hover:not(:disabled){filter:brightness(1.08)}
+.btn-work-phase4{background:#0a6178;color:#fff}.btn-work-phase4:hover:not(:disabled){filter:brightness(1.08)}
 .btn-green{background:var(--green);color:#000}.btn-green:hover:not(:disabled){filter:brightness(1.1)}
-.btn-red{background:var(--red);color:#fff}.btn-red:hover:not(:disabled){filter:brightness(1.1)}
+.btn-red{background:var(--red);color:#000}.btn-red:hover:not(:disabled){filter:brightness(1.1)}
 .btn-yellow{background:var(--yellow);color:#000}.btn-yellow:hover:not(:disabled){filter:brightness(1.1)}
-.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover:not(:disabled){filter:brightness(1.1)}
+.btn-purple{background:var(--purple);color:#000}.btn-purple:hover:not(:disabled){filter:brightness(1.1)}
 .btn-outline{background:none;border:1px solid var(--bg4);color:var(--text2)}.btn-outline:hover:not(:disabled){border-color:var(--text3);color:var(--text)}
 .btn-sm{padding:4px 10px;font-size:.72rem}
 .task-action-btn{width:132px;min-width:132px;text-align:center}
@@ -246,20 +246,61 @@ button:disabled{opacity:.4;cursor:not-allowed}
   #btn-do-task{padding:16px 36px;font-size:1.1rem}
   .grid-2{grid-template-columns:1fr}
 }
+/* Accessible controls, dialogs, and compact screens */
+[hidden]{display:none!important}
+button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
+#save-notice{position:fixed;bottom:0;left:0;right:0;z-index:3000;background:var(--bg2);border:2px solid var(--yellow);padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#ending-overlay{position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px;overflow:auto}
+.ending-box{max-width:560px;text-align:center;line-height:1.7}
+.ending-box h1{font-size:2.5rem;color:var(--green)}
+.ending-box p{margin:24px 0}
+.worker-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.worker-controls span{flex:1;min-width:100px}
+.popup-overlay,.intro-box{max-height:100dvh;overflow-y:auto}
+.popup-msg{white-space:pre-line}
+@media(max-width:768px){
+  #top-bar{position:sticky;top:0}
+  #game-container{margin-top:0}
+  .agent-card{flex-wrap:wrap}
+  .agent-action-col{width:100%;align-items:flex-start}
+  .upgrade-card{flex-wrap:wrap}
+  .cluster-slots-row{gap:3px}
+  .cluster-slot{width:26px;height:32px}
+  .task-header{flex-wrap:wrap;gap:4px}
+  .task-card .task-client{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+.node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px}.node-grid .cluster-card{padding:10px;margin:0}.node-grid p{margin:6px 0 0;font-size:.7rem}.cluster-hiring{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.cluster-grid{display:grid;gap:10px}.cluster-grid .cluster-card{margin:0}
 </style>
 </head>
 <body>
+<div id="save-notice" role="alert" hidden>
+  <span id="save-status"></span>
+  <button id="btn-save-retry" class="btn btn-outline">Retry save</button>
+  <button id="btn-save-reset" class="btn btn-red">Reset saved progress</button>
+</div>
+<div id="ending-overlay" role="dialog" aria-modal="true" aria-labelledby="ending-title" hidden>
+  <div class="ending-box">
+    <h1 id="ending-title">No more tasks.</h1>
+    <p>You close the laptop. Your company has a new owner. For once, nothing needs your approval.</p>
+    <p id="ending-summary"></p>
+    <p>The machines don't miss you. They never did.<br>Your time belongs to you again.</p>
+    <button id="btn-ending-reset" class="btn btn-primary">Start a new story</button>
+  </div>
+</div>
 
 <!-- Top Resource Bar -->
 <div id="top-bar">
   <span id="phase-label">Phase 1</span>
   <span class="res res-cash" id="res-cash-wrap" style="display:none"><span class="label">Cash</span><span class="val" id="res-cash">$0</span></span>
-  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label">Tokens</span><span class="val" id="res-tokens">0</span></span>
+  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label" title="Unloaded tokens. Transfers to tanks spend reserve, and only a Token Manager buys automatically.">Reserve tokens</span><span class="val" id="res-tokens">0</span></span>
   <span class="res res-rep" id="res-rep-wrap" style="display:none"><span class="label">Rep</span><span class="val" id="res-rep">0</span></span>
   <span class="res res-debt" id="res-debt-wrap" style="display:none"><span class="label">Debt</span><span class="val" id="res-debt">0</span></span>
   <span class="res res-stress" id="res-stress-wrap" style="display:none"><span class="label">Stress</span><span class="val" id="res-stress">0%</span></span>
   <span class="res" id="res-expense-wrap" style="display:none"><span class="label" id="expense-tier-label">Expenses</span><span class="val" style="color:var(--red)" id="expense-rate">-$0/s</span></span>
-  <span id="income-rate" style="display:none">+$0/s</span>
+  <span id="income-rate" title="Estimated automated income, before expenses" style="display:none">+$0/s</span>
   <button class="btn btn-outline btn-sm" id="btn-settings">Settings</button>
 </div>
 
@@ -367,7 +408,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </div>
 
 <!-- Mobile Rotate Prompt -->
-<div id="rotate-overlay">
+<div id="rotate-overlay" role="dialog" aria-modal="true" aria-label="rotate overlay">
   <div class="rotate-box">
     <div class="rotate-icon">📱↔</div>
     <h3>Rotate Phone</h3>
@@ -377,7 +418,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </div>
 
 <!-- Milestone / Story Popup -->
-<div id="milestone-popup" class="popup-overlay">
+<div id="milestone-popup" role="dialog" aria-modal="true" aria-label="milestone popup" class="popup-overlay">
   <div class="popup">
     <h3 id="milestone-popup-title"></h3>
     <p class="popup-msg" id="milestone-popup-msg"></p>
@@ -386,7 +427,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </div>
 
 <!-- Offline Earnings Popup -->
-<div id="offline-popup" class="popup-overlay">
+<div id="offline-popup" role="dialog" aria-modal="true" aria-label="offline popup" class="popup-overlay">
   <div class="popup">
     <h3>Welcome Back!</h3>
     <p class="popup-msg">While you were away, your work kept running.</p>
@@ -397,7 +438,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </div>
 
 <!-- Settings Popup -->
-<div id="settings-popup" class="popup-overlay">
+<div id="settings-popup" role="dialog" aria-modal="true" aria-label="settings popup" class="popup-overlay">
   <div class="popup">
     <h3>Settings</h3>
     <p class="popup-msg" id="settings-msg">Manage settings.</p>
@@ -414,7 +455,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 </div>
 
 <!-- Intro Overlay -->
-<div id="intro-overlay" class="hidden">
+<div id="intro-overlay" role="dialog" aria-modal="true" aria-label="intro overlay" class="hidden">
   <div class="intro-box">
     <h2>One More Task</h2>
     <p>You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
