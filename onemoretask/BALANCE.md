@@ -10,15 +10,15 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 4 | 1,290–1,320 | $8–$330 | Slots and speed, then Tool Use SDK $12K |
 | 5 | 1,610–1,640 | $60–$320 | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
 | 6 | 5,015–5,045 | $33K–$61K | Token Manager unlock $40K |
-| 7 | 30,000–30,400 | $53K–$105K | Operations upgrades, then Operations Flywheel $1M |
-| 8 | 408,000–470,000 | $0.7K–$6.5K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, acquisition $1.5M |
-| 9 | 1.0M–1.01M | $195K–$1.4M | Cluster permits and staffing, then CEO readiness $4M |
-| 10 | 1.8M–1.82M | $3.5M–$6.2M | AI CEO $1M, ninth slots $15M, sixteen slots $50M, Scale Mode $200M |
-| 11 | 36M–39M | $0.3M–$3M | Fully Fitted Racks $400M, Autonomous Operating Model $750M |
-| 12 | 56M–59M | $0.1M–$4.6M | Continuous Deployment $150M, then replication at 20 or more completed nodes |
-| 13 | 68M–71M | $0.8M–$6.9M | Global Expansion $250M at 40 completed nodes |
-| 14 | 85M–89M | $4.9M–$10.9M | Reach 100 completed nodes and prepare the sale for $2B |
-| 15 | 446M–458M | $2.5M–$34.5M | Save $5B for Golden Parachute; retire at roughly 1.02B completed tasks |
+| 7 | 30,000–30,400 | $53K–$105K | Operations upgrades, then Ralph-loops $1M |
+| 8 | 408,000–470,000 | $0.7K–$6.5K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
+| 9 | 1.02M–1.21M | $1.5K–$39K | Cluster permits and staffing, then CEO readiness $4M |
+| 10 | 1.83M–2.01M | $5.9M–$7.6M | AI CEO $1M, Pipeline $10M, ninth slots $15M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
+| 11 | 29M–31M | $3.7M–$4.8M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
+| 12 | 48M–51M | $0.9M–$8.3M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
+| 13 | 123M–125M | $0.1M–$19.6M | Global Expansion $3B at 40 completed nodes |
+| 14 | 285M–288M | $9.3M–$39.2M | Reach 100 completed nodes and prepare the sale for $2B |
+| 15 | 531M–538M | $21.7M–$35.4M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.27B–1.29B completed tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. The phase-entry cheat uses the minimum rather than these sampled totals.
 
@@ -36,4 +36,4 @@ The earliest allowed entry can be substantially below these task counts. For exa
 
 ## Expansion funding
 
-CEO expansion keeps cash equal to twice the next cluster price before opening a new project. In Phase 15 it also keeps $5B for the exit. Funding pauses are expected and automatically end when sufficient cash is available. There is no hard cluster-count limit. The Planning card shows the cluster funding amount and explains the exit reserve when applicable.
+CEO expansion keeps cash equal to twice the next cluster price before opening a new project. Funding pauses are expected and automatically end when sufficient cash is available. There is no hard cluster-count limit. The Planning card shows only the cluster funding amount. There is no additional $5B exit reserve in Phase 15; expanding clusters can spend that cash until the player buys Golden Parachute. Eventually, the rising price of new clusters creates longer opportunities to buy the exit.

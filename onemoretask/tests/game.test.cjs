@@ -3,6 +3,241 @@ const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 const { play } = require('./simulate.cjs');
 
+function provisioningFixture(phase, capacity = 2) {
+  const h = harness();
+  const g = h.fresh(phase);
+  g.cash = 1e12;
+  g.tokens = 1e9;
+  g.aiWorkerShutdown = true;
+  g.incidentsExplained = true;
+  g.lastTaskSpawn = h.window.Date.now() + 1e9;
+  g.totalTasksDone = 2e6;
+  g.ceoMode = phase >= 11 ? 'scale' : 'manage';
+  g.purchasedUpgrades.push('ceo_batch');
+  if (capacity === 4) g.purchasedUpgrades.push('ceo_quad_batch');
+  if (phase >= 11) {
+    g.purchasedUpgrades.push('ceo_full_fit', 'ceo_parallel_clusters', 'ceo_fast_builds');
+    if (phase >= 12) g.purchasedUpgrades.push('ceo_continuous');
+    h.fullCluster();
+  } else {
+    for (let index = 0; index < 2; index++) {
+      const cluster = h.api.addClusterWithNextName();
+      cluster.managerAssigned = true;
+      cluster.tokenManagerAssigned = true;
+    }
+  }
+  h.api.checkMilestones();
+  h.dismiss();
+  h.api.tickAiCeo();
+  return h;
+}
+
+function provisioningTick(h, step) {
+  h.advance(100);
+  h.api.tick();
+  if (step % 2 === 0) h.api.renderAll();
+}
+
+for (const capacity of [2, 4]) {
+  test(`${capacity} installation slots stay staggered at 100ms ticks and 200ms renders`, () => {
+    const h = provisioningFixture(10, capacity);
+    try {
+      const g = h.window.GAME.state;
+      const first = g.agents.slice();
+      assert.equal(first.length, capacity);
+      assert.equal(first[0].provisionRemaining, 4);
+      for (let index = 1; index < first.length; index++) {
+        const gap = first[index].provisionRemaining - first[index - 1].provisionRemaining;
+        assert.ok(gap >= 0.3 && gap <= 0.4);
+      }
+      const completed = new Map();
+      let independentlyRefilled = false;
+      for (let step = 1; step <= 200; step++) {
+        provisioningTick(h, step);
+        const installing = h.api.provisioningAgents();
+        assert.ok(installing.length <= capacity);
+        if (first[0].status !== 'provisioning' && first[1].status === 'provisioning') {
+          assert.equal(installing.length, capacity);
+          assert.ok(g.agents.length > capacity);
+          independentlyRefilled = true;
+        }
+        if (step === 14) {
+          const bars = [...h.window.document.querySelectorAll('.capacity-slot.provisioning')];
+          assert.equal(bars.length, capacity);
+          assert.equal(new Set(bars.map(bar => bar.getAttribute('aria-valuenow'))).size, capacity);
+        }
+        for (const agent of g.agents) {
+          if (agent.status !== 'provisioning' && !completed.has(agent.id)) completed.set(agent.id, Math.ceil(step / 2) * 200);
+        }
+      }
+      assert.equal(independentlyRefilled, true);
+      assert.ok(completed.size >= capacity * 3);
+      assert.equal(new Set(completed.values()).size, completed.size);
+      assert.ok(g.clusters[1].workerAgentIds.length > 0);
+      assert.equal(h.api.validSave(g), true);
+    } finally {
+      h.close();
+    }
+  });
+}
+
+for (const phase of [10, 11, 12]) {
+  test(`queued starts and independent refills survive save/reload in Phase ${phase}`, () => {
+    const h = provisioningFixture(phase, 4);
+    let restored;
+    try {
+      provisioningTick(h, 1);
+      provisioningTick(h, 2);
+      const g = h.window.GAME.state;
+      const jobs = phase === 10 ? g.agents.slice() : g.clusters.slice(1);
+      const remaining = phase === 10 ? 'provisionRemaining' : 'buildRemaining';
+      const duration = phase === 10 ? 'provisionDuration' : 'buildDuration';
+      assert.ok(jobs.some(job => job[remaining] > job[duration]));
+      assert.equal(h.api.save(), true);
+      restored = harness(h.window.localStorage.getItem('ai_empire_save'), {seed: 8675309});
+      const loaded = restored.window.GAME.state;
+      const loadedJobs = jobs.map(job => (phase === 10 ? loaded.agents : loaded.clusters).find(item => item.id === job.id));
+      assert.deepEqual(loadedJobs.map(job => job[remaining]), jobs.map(job => job[remaining]));
+      const completionFrames = [new Map(), new Map()];
+      let independentlyRefilled = false;
+      for (let step = 1; step <= 100; step++) {
+        for (const [index, engine, tracked] of [[0, h, jobs], [1, restored, loadedJobs]]) {
+          provisioningTick(engine, step);
+          const state = engine.window.GAME.state;
+          for (const job of tracked) {
+            if (job[remaining] === 0 && !completionFrames[index].has(job.id)) completionFrames[index].set(job.id, Math.ceil(step / 2) * 200);
+          }
+          if (phase >= 11) {
+            assert.ok(state.clusters.filter(cluster => cluster.buildRemaining > 0).length <= 2);
+            if (tracked[0].buildRemaining === 0 && tracked[1].buildRemaining > 0) {
+              assert.ok(state.clusters.length > 3);
+              independentlyRefilled = true;
+            }
+          }
+          if (step % 2 === 0) {
+            const bars = [...engine.window.document.querySelectorAll('[role="progressbar"]')];
+            assert.ok(bars.every(bar => Number(bar.getAttribute('aria-valuenow')) >= 0));
+          }
+        }
+      }
+      assert.deepEqual([...completionFrames[1]], [...completionFrames[0]]);
+      assert.equal(completionFrames[0].size, jobs.length);
+      assert.equal(new Set(completionFrames[0].values()).size, jobs.length);
+      if (phase >= 11) assert.equal(independentlyRefilled, true);
+      assert.equal(h.api.validSave(loaded), true);
+    } finally {
+      if (restored) restored.close();
+      h.close();
+    }
+  });
+}
+
+test('speed upgrades retain queued start separation and funding pauses refills', () => {
+  const h = provisioningFixture(10, 4);
+  try {
+    const g = h.window.GAME.state;
+    const queued = g.agents[1];
+    const delay = queued.provisionRemaining - queued.provisionDuration;
+    h.prepareUpgrade('ceo_recruitment');
+    h.api.purchaseUpgrade('ceo_recruitment');
+    assert.equal(queued.provisionDuration, 2);
+    assert.equal(queued.provisionRemaining - queued.provisionDuration, delay);
+    h.prepareUpgrade('ceo_deploy_speed');
+    h.api.purchaseUpgrade('ceo_deploy_speed');
+    assert.equal(queued.provisionDuration, 2 / 1.5);
+    assert.equal(queued.provisionRemaining - queued.provisionDuration, delay);
+    g.cash = 0;
+    h.api.tickConstruction(10);
+    h.api.tickAiCeo();
+    assert.equal(g.agents.length, 4);
+  } finally {
+    h.close();
+  }
+});
+
+test('Ralph-loops and AI expansion advance without modals while the operating model keeps concise copy', () => {
+  const h = harness();
+  try {
+    for (const [id, phase] of [['ops_flywheel', 7], ['ceo_course', 10], ['autonomous_nodes', 11]]) {
+      const g = h.fresh(phase);
+      g.cash = 1e12;
+      g.totalTasksDone = 2e6;
+      h.prepareUpgrade(id);
+      h.api.checkMilestones();
+      h.dismiss();
+      h.api.purchaseUpgrade(id);
+      assert.equal(g.phase, phase + 1);
+      assert.equal(h.api.queue().length, id === 'autonomous_nodes' ? 1 : 0);
+      if (id === 'ops_flywheel') {
+        const upgrade = h.api.UPGRADES.find(item => item.id === id);
+        assert.equal(upgrade.name, 'Ralph-loops');
+        assert.equal(upgrade.desc, 'Agents work for longer and check their work.');
+      }
+      if (id === 'autonomous_nodes') {
+        assert.match(h.window.document.querySelector('#milestone-popup-msg').textContent, /Your CEO now operates the nodes/);
+        assert.doesNotMatch(h.window.document.querySelector('#milestone-popup-msg').textContent, /100 managed nodes/);
+      }
+      assert.equal(h.api.validSave(g), true);
+    }
+  } finally {
+    h.close();
+  }
+});
+
+test('Phase 8 additions apply paid improvements and gate acquisition until both are purchased', () => {
+  const h = harness();
+  try {
+    const g = h.fresh(8);
+    g.cash = 1e7;
+    g.totalTasksDone = 1e6;
+    h.prepareUpgrade('project_playbooks');
+    const acquisition = h.api.UPGRADES.find(item => item.id === 'acquire_micro_agency');
+    assert.equal(h.api.upgradeVisible(acquisition), false);
+    const speed = g.agentSpeedMult;
+    h.api.purchaseUpgrade('project_playbooks');
+    assert.equal(g.cash, 1e7 - 750000);
+    assert.equal(g.agentSpeedMult, speed * 1.25);
+    assert.equal(h.api.upgradeVisible(acquisition), false);
+    const pay = g.payMult;
+    const demand = g.taskSpawnMult;
+    h.api.purchaseUpgrade('account_expansion');
+    assert.equal(g.cash, 1e7 - 2000000);
+    assert.equal(g.payMult, pay * 1.3);
+    assert.equal(g.taskSpawnMult, demand * 1.2);
+    assert.equal(h.api.upgradeVisible(acquisition), true);
+    h.api.purchaseUpgrade('acquire_micro_agency');
+    assert.equal(g.phase, 9);
+  } finally {
+    h.close();
+  }
+});
+
+test('node requirements still gate purchases without appearing in upgrade descriptions', () => {
+  const h = harness();
+  try {
+    for (const id of ['replication', 'global_network', 'retire_unlock', 'fusion']) {
+      const upgrade = h.api.UPGRADES.find(item => item.id === id);
+      const g = h.fresh(upgrade.phase);
+      g.cash = 1e12;
+      g.totalTasksDone = 1e9;
+      g.uiRevealed.upgrades = true;
+      h.prepareUpgrade(id);
+      const target = h.api.nodeRequirement(upgrade);
+      for (let index = 0; index < target - 1; index++) h.fullCluster();
+      if (id === 'replication') h.api.addClusterWithNextName();
+      h.api.renderUpgradeSection();
+      const button = h.window.document.querySelector('[onclick="GAME.buy(\'' + id + '\')"]');
+      assert.equal(button.disabled, true);
+      assert.equal(button.closest('.card').querySelector('.desc').textContent, upgrade.desc);
+      assert.doesNotMatch(button.closest('.card').querySelector('.desc').textContent, /\(\d+ nodes\)/);
+    }
+    const continuous = h.api.UPGRADES.find(item => item.id === 'ceo_continuous');
+    assert.equal(continuous.desc, 'Improve deployment speed by 50%.');
+  } finally {
+    h.close();
+  }
+});
+
 test('forming Cluster 1 gives existing agents the same short names in cards and running tasks', () => {
   const h = harness();
   try {
@@ -73,7 +308,7 @@ test('manual plus buttons buy only their own next slot and cannot fill a cluster
     g.uiRevealed.clusters = true;
     h.api.openCluster();
     const cluster = g.clusters[0];
-    h.api.tickConstruction(12);
+    h.api.tickConstruction(12.1);
     h.api.renderClusterSection();
     const slots = [...h.window.document.querySelectorAll('.provision-agent')];
     assert.equal(slots.length, 8);
@@ -91,7 +326,7 @@ test('manual plus buttons buy only their own next slot and cannot fill a cluster
     }
     assert.equal(g.cash, before - 8 * 2500);
     assert.equal(new Set(g.agents.map(agent => agent.name)).size, 8);
-    h.api.tickConstruction(4);
+    h.api.tickConstruction(12);
     h.api.renderClusterSection();
     assert.deepEqual([...h.window.document.querySelectorAll('.capacity-slot')].map(slot => slot.textContent), Array.from(g.agents, agent => agent.name));
   } finally {
@@ -123,9 +358,9 @@ test('cluster builds keep upgrades visible and collapse task detail immediately 
     h.api.purchaseUpgrade('cluster_capacity_3');
     assert.equal(h.api.clusterCapacity(), 2);
     assert.equal(h.api.canManuallyProvisionCluster(), false);
-    h.api.tickConstruction(12);
+    h.api.tickConstruction(12.1);
     for (let index = 0; index < 8; index++) h.api.buyClusterWorker(g.clusters[1].id, index);
-    h.api.tickConstruction(4);
+    h.api.tickConstruction(12);
     h.api.renderUpgradeSection();
     assert.equal(permit.disabled, false);
     h.api.toggleDeliveryTasks();
@@ -148,29 +383,31 @@ test('provisioning speed upgrades shorten builds and do not overlap single-agent
     cluster.tokenManagerAssigned = true;
     h.api.tickAiCeo();
     const first = g.agents[0];
-    assert.equal(first.provisionDuration, 4);
+    const firstDuration = first.provisionDuration;
+    assert.ok(firstDuration >= 4 && firstDuration <= 4.1);
     h.api.purchaseUpgrade('ceo_recruitment');
-    assert.equal(first.provisionDuration, 2);
-    assert.equal(first.provisionRemaining, 2);
+    assert.equal(first.provisionDuration, firstDuration / 2);
+    assert.equal(first.provisionRemaining, firstDuration / 2);
     h.advance(2500);
     h.api.tickAiCeo();
     assert.equal(g.agents.length, 1);
-    h.api.tickConstruction(2);
+    h.api.tickConstruction(2.1);
     h.advance(2500);
     h.api.tickAiCeo();
     assert.equal(g.agents.length, 2);
-    assert.equal(g.agents[1].provisionDuration, 2);
+    const secondDuration = g.agents[1].provisionDuration;
+    assert.ok(secondDuration >= 2 && secondDuration <= 2.1);
     h.prepareUpgrade('ceo_deploy_speed');
     h.api.purchaseUpgrade('ceo_deploy_speed');
     assert.equal(first.status, 'idle');
-    assert.equal(g.agents[1].provisionDuration, 2 / 1.5);
+    assert.equal(g.agents[1].provisionDuration, secondDuration / 1.5);
     assert.equal(h.api.validSave(g), true);
   } finally {
     h.close();
   }
 });
 
-test('single-agent CEO provisioning waits across clusters until parallel cluster builds are purchased', () => {
+test('agent installation capacity stays global across clusters and refills independently', () => {
   const h = harness();
   try {
     const g = h.fresh(10);
@@ -189,11 +426,14 @@ test('single-agent CEO provisioning waits across clusters until parallel cluster
     g.purchasedUpgrades.push('ceo_parallel_clusters');
     h.advance(5000);
     h.api.tickAiCeo();
+    assert.equal(second.workerAgentIds.length, 0);
+    h.api.tickConstruction(4);
+    h.api.tickAiCeo();
     assert.equal(second.workerAgentIds.length, 1);
     h.advance(5000);
     h.api.tickAiCeo();
     assert.equal(second.workerAgentIds.length, 1);
-    h.api.tickConstruction(4);
+    h.api.tickConstruction(12);
     h.advance(5000);
     h.api.tickAiCeo();
     assert.equal(first.workerAgentIds.length, 8);
@@ -242,7 +482,7 @@ test('planning waits for a stable random threshold of nine to twelve online agen
   }
 });
 
-test('funding explains the reserve and expansion resumes beyond Cluster 331 without a cap', () => {
+test('funding excludes an exit reserve and expansion resumes beyond Cluster 331 without a cap', () => {
   const h = harness();
   try {
     const g = h.fresh(15);
@@ -251,13 +491,13 @@ test('funding explains the reserve and expansion resumes beyond Cluster 331 with
     h.fullCluster();
     g.clustersProvisioned = 331;
     const target = h.api.expansionFundingTarget();
-    assert.equal(target, h.api.provisionCost() * 2 + 5e9);
+    assert.equal(target, h.api.provisionCost() * 2);
     g.cash = target - 1;
     h.api.tickAiCeo();
     assert.equal(g.clusters.length, 1);
     h.api.renderClusterSection();
     assert.match(h.window.document.querySelector('.planning-card').textContent, /Securing \$[\d.]+M funding/);
-    assert.match(h.window.document.querySelector('.planning-card').textContent, /\$5B kept for your exit/);
+    assert.doesNotMatch(h.window.document.querySelector('.planning-card').textContent, /kept for your exit/);
     g.cash = target;
     h.advance(1000);
     h.api.tickAiCeo();
@@ -280,7 +520,7 @@ test('the Phase 8 entry cheat leaves growth upgrades to play through and late in
     assert.equal(g.purchasedUpgrades.includes('enterprise_pipeline'), false);
     assert.equal(h.api.validSave(g), true);
     g.cash = 1e9;
-    for (const [tasks, id] of [[175000, 'growth_marketing'], [350000, 'management'], [600000, 'enterprise_pipeline']]) {
+    for (const [tasks, id] of [[175000, 'growth_marketing'], [350000, 'management'], [600000, 'enterprise_pipeline'], [720000, 'project_playbooks'], [860000, 'account_expansion']]) {
       g.totalTasksDone = tasks - 1;
       const upgrade = h.api.UPGRADES.find(item => item.id === id);
       assert.equal(h.api.upgradeVisible(upgrade), false);
@@ -291,7 +531,9 @@ test('the Phase 8 entry cheat leaves growth upgrades to play through and late in
     }
     assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'ceo_full_fit').cost, 400000000);
     const operatingModel = h.api.UPGRADES.find(upgrade => upgrade.id === 'autonomous_nodes');
-    assert.equal(operatingModel.cost, 750000000);
+    assert.equal(operatingModel.cost, 760000000);
+    assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'replication').cost, 1500000000);
+    assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'global_network').cost, 3000000000);
     assert.equal(h.api.nodeRequirement(operatingModel), 0);
   } finally {
     h.close();
@@ -329,9 +571,9 @@ test('cluster capacity advances from eight to nine to sixteen only after the CEO
     h.api.openCluster();
     const second = g.clusters[1];
     assert.equal(second.workerSlotsMax, 8);
-    h.api.tickConstruction(12);
+    h.api.tickConstruction(12.1);
     for (let index = 0; index < 8; index++) h.api.buyClusterWorker(second.id, index);
-    h.api.tickConstruction(4);
+    h.api.tickConstruction(12);
     g.phase = 10;
     h.prepareUpgrade('ai_ceo');
     h.api.purchaseUpgrade('ai_ceo');
@@ -345,6 +587,7 @@ test('cluster capacity advances from eight to nine to sixteen only after the CEO
     assert.equal(card.querySelector('.cluster-capacity').style.getPropertyValue('--cluster-columns'), '3');
     assert.equal(card.querySelectorAll('.capacity-slot').length, 9);
     assert.equal(card.querySelector('.capacity-slot.empty').textContent, '+');
+    h.api.purchaseUpgrade('ceo_deploy_speed');
     h.api.purchaseUpgrade('cluster_capacity_16');
     assert.ok(g.clusters.every(cluster => cluster.workerSlotsMax === 16));
     assert.equal(h.api.createCluster('Next').workerSlotsMax, 16);
@@ -991,23 +1234,23 @@ scenario('Token Manager purchases scaled packs and charges only missing tokens',
 scenario('clusters include staged hardware and management before agent provisioning', (h) => {
   const g=h.fresh(9);g.tokens=5000;g.cash=1e6;g.uiRevealed.clusters=true;
   h.api.openCluster();const c=g.clusters[0];assert.equal(g.cash,938000);assert.equal(c.managerAssigned,false);
-  for(const stage of ['Procuring GPUs','Racking hardware','Installing software','Final checks']){h.api.renderClusterSection();assert.match(h.window.document.querySelector('#cluster-list').textContent,new RegExp(stage));h.api.buyNextClusterWorker(c.id);assert.equal(g.agents.length,0);h.api.tickConstruction(3);}
+  for(const stage of ['Procuring GPUs','Racking hardware','Installing software','Final checks']){h.api.renderClusterSection();assert.match(h.window.document.querySelector('#cluster-list').textContent,new RegExp(stage));h.api.buyNextClusterWorker(c.id);assert.equal(g.agents.length,0);h.api.tickConstruction(c.buildDuration/4);}
   assert.equal(c.managerAssigned,true);assert.equal(c.tokenManagerAssigned,true);assert.equal(h.window.GAME.buyManagementTeam,undefined);
-  h.api.buyNextClusterWorker(c.id);assert.equal(g.cash,935500);const agent=g.agents[0];assert.equal(agent.status,'provisioning');assert.ok(agent.name.length <= 6);assert.notEqual(agent.name,'AI Agent');h.api.tickConstruction(2);h.api.renderClusterSection();assert.equal(h.window.document.querySelector('[aria-label="Provisioning agent"]').getAttribute('aria-valuenow'),'50');
-  h.api.tickConstruction(2);h.api.tickTokenManager();h.api.tickManager();assert.equal(agent.tokenTank,1500);assert.equal(c.tank,2500);assert.equal(agent.status,'idle');assert.equal(h.api.validSave(g),true);
+  h.api.buyNextClusterWorker(c.id);assert.equal(g.cash,935500);const agent=g.agents[0];assert.equal(agent.status,'provisioning');assert.ok(agent.name.length <= 6);assert.notEqual(agent.name,'AI Agent');h.api.tickConstruction(agent.provisionDuration/2);h.api.renderClusterSection();assert.equal(h.window.document.querySelector('[aria-label="Provisioning agent"]').getAttribute('aria-valuenow'),'50');
+  h.api.tickConstruction(agent.provisionDuration/2);h.api.tickTokenManager();h.api.tickManager();assert.equal(agent.tokenTank,1500);assert.equal(c.tank,2500);assert.equal(agent.status,'idle');assert.equal(h.api.validSave(g),true);
 });
 scenario('upgrades change payouts, token use, failure rate, and deploy services', (h) => {
   const g=h.fresh(5);g.cash=1e8;g.totalTasksDone=2000;const a=h.worker();const t=h.task();t.typeId='research';const baseline=h.api.getTaskCashPayout(t,'agent',a);
   h.prepareUpgrade('web_browse');h.api.purchaseUpgrade('web_browse');assert.ok(Math.abs(h.api.getTaskCashPayout(t,'agent',a)-baseline*1.2)<1e-9);
   g.phase=9;h.fullCluster();h.prepareUpgrade('code_review');h.api.purchaseUpgrade('code_review');assert.ok(Math.abs(h.api.getTaskCashPayout(t,'agent',a)-baseline*1.2*1.25)<1e-9);
   h.api.purchaseUpgrade('deploy');assert.equal(g.services.length,2);const cash=g.cash;h.api.tickServices(1);assert.ok(g.cash-cash>=160);
-  g.phase=10;g.cash=1e9;h.prepareUpgrade('ai_ceo');h.api.purchaseUpgrade('ai_ceo');h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('cluster_capacity_16');g.clusters=[];g.agents=[];for(let i=0;i<5;i++)h.fullCluster();h.api.purchaseUpgrade('server_1');assert.equal(g.services.length,5);
+  g.phase=10;g.cash=1e9;h.prepareUpgrade('ai_ceo');h.api.purchaseUpgrade('ai_ceo');h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('ceo_deploy_speed');h.api.purchaseUpgrade('cluster_capacity_16');h.api.purchaseUpgrade('ceo_batch');g.clusters=[];g.agents=[];for(let i=0;i<5;i++)h.fullCluster();h.api.purchaseUpgrade('server_1');assert.equal(g.services.length,5);
   const cost=g.cash;h.api.purchaseUpgrade('server_1');assert.equal(g.cash,cost);h.api.renderAll();
 });
 scenario('Scale Mode builds automatically through Phase 12 and replication exceeds 128 nodes', (h) => {
   const g=h.fresh(12);g.cash=1e12;g.ceoMode='scale';h.fullCluster();
   h.window.GAME.openCluster();assert.equal(g.clusters.length,1);h.api.tickAiCeo();assert.equal(g.clusters.length,2);const c=g.clusters[1];assert.equal(c.workforce,0);
-  h.advance(6000);h.api.tickConstruction(6);h.api.tickAiCeo();assert.equal(c.workforce,16);const spent=g.cash;h.api.tickAiCeo();assert.equal(g.cash,spent);
+  h.advance(6100);h.api.tickConstruction(6.1);h.api.tickAiCeo();assert.equal(c.workforce,16);const spent=g.cash;h.api.tickAiCeo();assert.ok(g.cash<spent);assert.equal(g.clusters.length,3);
   g.phase=13;for(let i=0;i<1100;i++){h.advance(2000);h.api.tickConstruction(2);h.api.tickAiCeo();}assert.ok(g.clusters.length>200);assert.equal(h.api.validSave(g),true);
   g.phase=14;h.api.checkMilestones();h.dismiss();h.api.renderAll();assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card:not(.planning-card)').length,g.clusters.length);assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card button').length,0);
   assert.equal(h.window.document.querySelector('.network-grid .cluster-card').textContent,'C1');assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
@@ -1079,7 +1322,7 @@ scenario('manager hiring burst, role gates, and automation scheduling', (h) => {
 });
 scenario('cluster panel shows ordered management and removes individual worker controls', (h) => {
   const g=h.fresh(9);g.cash=1e6;g.totalTasksDone=1200;
-  h.api.openCluster();const c=g.clusters[0];h.api.tickConstruction(12);h.api.buyNextClusterWorker(c.id,'coder');
+  h.api.openCluster();const c=g.clusters[0];h.api.tickConstruction(12.1);h.api.buyNextClusterWorker(c.id,'coder');
   h.api.openCluster();h.api.checkMilestones();h.dismiss();h.api.renderAll();
   const text=h.window.document.querySelector('#cluster-list').textContent;
   assert.match(text,/Installing agents/);assert.doesNotMatch(text,/Worker controls|Unassigned workers|Global Utility/);
@@ -1204,8 +1447,8 @@ scenario('reset buttons require confirmation before discarding saved progress', 
   for(const id of ['btn-save-reset','btn-ending-reset']){doc.getElementById(id).click();assert.equal(h.window.localStorage.getItem('ai_empire_save'),null);}
 });
 scenario('cluster workers cannot be detached fired or individually controlled', (h) => {
-  const g=h.fresh(9);g.cash=1e6;h.api.openCluster();const c=g.clusters[0];h.api.tickConstruction(12);h.api.buyNextClusterWorker(c.id,'writer');
-  h.api.tickConstruction(4);const a=g.agents[0];a.tokenTank=10;const t=h.task();h.api.assignAgentToTask(t.id,a.id);
+  const g=h.fresh(9);g.cash=1e6;h.api.openCluster();const c=g.clusters[0];h.api.tickConstruction(12.1);h.api.buyNextClusterWorker(c.id,'writer');
+  h.api.tickConstruction(12);const a=g.agents[0];a.tokenTank=10;const t=h.task();h.api.assignAgentToTask(t.id,a.id);
   assert.equal(h.window.GAME.unassignWorker,undefined);h.api.fireAgent(a.id);
   assert.equal(t.status,'agent');assert.equal(a.currentTask,t.id);assert.equal(c.managerAssigned,true);assert.equal(c.workerAgentIds[0],a.id);
   h.api.completeTask(t,'ai_assist');assert.equal(a.currentTask,null);assert.equal(h.api.validSave(g),true);
@@ -1224,7 +1467,7 @@ scenario('autopilot sustains work without manual tank refills', (h) => {
 scenario('scale requires manage mode; buying an old cluster upgrade cannot exceed the cap', (h) => {
   const g=h.fresh(10);g.cash=1e9;g.totalTasksDone=1600;h.prepareUpgrade('ai_ceo');h.fullCluster();
   h.api.purchaseUpgrade('server_1');assert.equal(g.ceoMode,'off');h.api.checkMilestones();h.dismiss();h.api.renderUpgradeSection();assert.doesNotMatch(h.window.document.querySelector('#upgrade-list').textContent,/AI CEO Scale Mode/);
-  h.api.purchaseUpgrade('ai_ceo');h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('cluster_capacity_16');g.clusters=[];g.agents=[];for(let i=0;i<5;i++)h.fullCluster();h.api.purchaseUpgrade('server_1');assert.equal(g.ceoMode,'scale');
+  h.api.purchaseUpgrade('ai_ceo');h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('ceo_deploy_speed');h.api.purchaseUpgrade('cluster_capacity_16');h.api.purchaseUpgrade('ceo_batch');g.clusters=[];g.agents=[];for(let i=0;i<5;i++)h.fullCluster();h.api.purchaseUpgrade('server_1');assert.equal(g.ceoMode,'scale');
   for(let i=0;i<7;i++)h.api.addClusterWithNextName();const cash=g.cash;h.api.purchaseUpgrade('cluster_beta');assert.equal(g.cash,cash);assert.equal(g.clusters.length,12);
   h.api.renderUpgradeSection();assert.doesNotMatch(h.window.document.querySelector('#upgrade-list').textContent,/Discounted Cluster Lease/);assert.equal(h.api.validSave(g),true);
 });
@@ -1323,7 +1566,7 @@ scenario('node production consumes real tokens and stops when empty', (h) => {
 scenario('cluster construction and node upgrades enforce stage, capacity and funds', (h) => {
   const g=h.fresh(9);g.cash=0;h.api.openCluster();assert.equal(g.clusters.length,0);
   g.cash=1e6;h.api.openCluster();const c=g.clusters[0];h.api.buyNextClusterWorker(c.id,'writer');assert.equal(g.agents.length,0);
-  g.cash=0;h.api.tickConstruction(12);assert.equal(c.managerAssigned,true);g.cash=1e6;h.api.tickConstruction(12);
+  g.cash=0;h.api.tickConstruction(12.1);assert.equal(c.managerAssigned,true);g.cash=1e6;h.api.tickConstruction(12.1);
   h.api.buyNextClusterWorker('missing');assert.equal(g.agents.length,0);
   g.cash=0;h.api.buyNextClusterWorker(c.id,'writer');assert.equal(g.agents.length,0);g.cash=1e6;
   for(let i=0;i<9;i++)h.api.buyNextClusterWorker(c.id,'coder');assert.equal(g.agents.length,8);
@@ -1369,9 +1612,9 @@ scenario('cluster permits gate provisioning and sales do not reset rising prices
   h.api.openCluster();assert.equal(g.clusters.length,1);h.api.checkMilestones();h.dismiss();h.api.renderClusterSection();assert.equal(h.window.document.querySelector('[onclick="GAME.openCluster()"]'),null);
   h.api.purchaseUpgrade('cluster_capacity_2');assert.equal(h.api.clusterCapacity(),1);h.api.purchaseUpgrade('code_agents');h.api.purchaseUpgrade('cluster_capacity_2');
   const price=h.api.provisionCost();h.api.openCluster();const second=g.clusters[1];h.api.openCluster();assert.equal(g.clusters.length,2);assert.ok(h.api.provisionCost()>price);
-  h.api.purchaseUpgrade('cluster_capacity_3');assert.equal(h.api.clusterCapacity(),2);h.api.tickConstruction(12);
+  h.api.purchaseUpgrade('cluster_capacity_3');assert.equal(h.api.clusterCapacity(),2);h.api.tickConstruction(12.1);
   h.api.renderClusterSection();assert.equal(h.window.document.querySelectorAll('.node-grid .capacity-slot').length,16);
-  h.api.sellCluster(second.id);assert.equal(g.clusters.length,2);for(let i=0;i<second.workerSlotsMax;i++)h.api.buyNextClusterWorker(second.id);h.api.tickConstruction(4);
+  h.api.sellCluster(second.id);assert.equal(g.clusters.length,2);for(let i=0;i<second.workerSlotsMax;i++)h.api.buyNextClusterWorker(second.id);h.api.tickConstruction(12);
   h.api.purchaseUpgrade('cluster_capacity_3');assert.equal(h.api.clusterCapacity(),3);
   const a=g.agents.find(item=>second.workerAgentIds.includes(item.id));a.tokenTank=100;const t=h.task();h.api.assignAgentToTask(t.id,a.id);
   const cash=g.cash;const resale=h.api.clusterSaleValue(second);const nextPrice=h.api.provisionCost();h.api.sellCluster(second.id);
@@ -1381,11 +1624,11 @@ scenario('cluster permits gate provisioning and sales do not reset rising prices
 scenario('CEO Manage Mode staffs existing clusters without provisioning and displays its job', (h) => {
   const g=h.fresh(10);g.cash=1e9;g.totalTasksDone=2000000;h.prepareUpgrade('ai_ceo');for(let i=0;i<3;i++)h.fullCluster();g.uiRevealed.clusters=true;g.uiRevealed.upgrades=true;
   h.api.renderClusterSection();assert.ok(h.window.document.querySelector('.ceo-slot'));h.api.renderUpgradeSection();assert.doesNotMatch(h.window.document.querySelector('#upgrade-list').textContent,/AI CEO \(Manage Mode\)/);
-  h.api.purchaseUpgrade('ai_ceo');assert.ok(g.clusters.every(c=>c.workerSlotsMax===8&&c.workerAgentIds.length===8));h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('cluster_capacity_16');assert.equal(h.api.canManuallyProvisionCluster(),false);
-  for(let i=0;i<24;i++){h.advance(5000);h.api.tickConstruction(5);h.api.tickAiCeo();}h.api.tickConstruction(4);assert.equal(h.api.canManuallyProvisionCluster(),true);assert.equal(g.clusters.length,3);
+  h.api.purchaseUpgrade('ai_ceo');assert.ok(g.clusters.every(c=>c.workerSlotsMax===8&&c.workerAgentIds.length===8));h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('ceo_deploy_speed');h.api.purchaseUpgrade('cluster_capacity_16');h.api.purchaseUpgrade('ceo_batch');assert.equal(h.api.canManuallyProvisionCluster(),false);
+  for(let i=0;i<24;i++){h.advance(5000);h.api.tickConstruction(5);h.api.tickAiCeo();}h.api.tickConstruction(12);assert.equal(h.api.canManuallyProvisionCluster(),true);assert.equal(g.clusters.length,3);
   h.window.GAME.openCluster();assert.equal(g.clusters.length,4);assert.equal(h.api.canManuallyProvisionCluster(),false);h.api.renderUpgradeSection();assert.match(h.window.document.querySelector('#upgrade-list').textContent,/Provisioning Pipeline/);
-  h.api.tickConstruction(12);for(let i=0;i<16;i++){h.advance(5000);h.api.tickAiCeo();h.api.tickConstruction(4);}assert.equal(h.api.canManuallyProvisionCluster(),true);
-  h.window.GAME.openCluster();assert.equal(g.clusters.length,5);h.api.tickConstruction(12);for(let i=0;i<16;i++){h.advance(5000);h.api.tickAiCeo();h.api.tickConstruction(4);}h.api.purchaseUpgrade('server_1');assert.equal(g.ceoMode,'scale');
+  h.api.tickConstruction(12.1);for(let i=0;i<16;i++){h.advance(5000);h.api.tickAiCeo();h.api.tickConstruction(12);}assert.equal(h.api.canManuallyProvisionCluster(),true);
+  h.window.GAME.openCluster();assert.equal(g.clusters.length,5);h.api.tickConstruction(12.1);for(let i=0;i<16;i++){h.advance(5000);h.api.tickAiCeo();h.api.tickConstruction(12);}h.api.purchaseUpgrade('server_1');assert.equal(g.ceoMode,'scale');
   h.window.GAME.openCluster();assert.equal(g.clusters.length,5);h.advance(2500);h.api.tickAiCeo();assert.equal(g.clusters.length,6);h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);
 });
 scenario('automatic token purchases sustain a fully staffed hundred-node network', (h) => {
@@ -1427,11 +1670,11 @@ scenario('the older Basic model is visibly slow and can be sold for a faster rep
 });
 scenario('replication is revealed at twenty nodes and waits for the required online capacity', (h) => {
   for(const existing of [3,12]) {
-    const g=h.fresh(11);g.cash=1e9;g.totalTasksDone=2000000;g.ceoMode='scale';g.uiRevealed.upgrades=true;h.prepareUpgrade('autonomous_nodes');
+    const g=h.fresh(11);g.cash=1e10;g.totalTasksDone=2000000;g.ceoMode='scale';g.uiRevealed.upgrades=true;h.prepareUpgrade('autonomous_nodes');
     for(let i=0;i<existing;i++)h.fullCluster();h.api.purchaseUpgrade('autonomous_nodes');h.api.purchaseUpgrade('ceo_continuous');const target=Math.max(20,existing+9);assert.equal(g.replicationTarget,target);
     h.api.renderUpgradeSection();assert.doesNotMatch(h.window.document.querySelector('#upgrade-list').textContent,/Node Replication/);
     while(g.clusters.length<target)h.fullCluster();
-    h.api.renderUpgradeSection();const button=h.window.document.querySelector('[onclick="GAME.buy(\'replication\')"]');assert.ok(button);assert.match(button.closest('.card').textContent,new RegExp('\\('+target+' nodes\\)'));assert.doesNotMatch(button.closest('.card').textContent,/reached|managed nodes/);
+    h.api.renderUpgradeSection();const button=h.window.document.querySelector('[onclick="GAME.buy(\'replication\')"]');assert.ok(button);assert.doesNotMatch(button.closest('.card').textContent,/\(\d+ nodes\)/);assert.doesNotMatch(button.closest('.card').textContent,/reached|managed nodes/);
     g.clusters.at(-1).workforce=0;h.api.purchaseUpgrade('replication');assert.equal(g.phase,12);h.api.renderUpgradeSection();assert.equal(button.disabled,true);
     const restored=harness(JSON.stringify(g));try{assert.equal(restored.window.GAME.state.replicationTarget,target);}finally{restored.close();}
     h.advance(5000);h.api.tickAiCeo();h.api.purchaseUpgrade('replication');assert.equal(g.phase,13);h.advance(2000);h.api.tickAiCeo();assert.equal(g.clusters.length,target+2);
@@ -1456,9 +1699,9 @@ scenario('phase progression needs a Manager and full clusters before later upgra
   h.worker('manager');h.api.purchaseUpgrade('token_manager_unlock');assert.equal(g.phase,7);
   g.phase=9;g.agents=[];h.prepareUpgrade('code_agents');const first=h.api.addClusterWithNextName();first.managerAssigned=true;first.tokenManagerAssigned=true;
   h.api.purchaseUpgrade('code_agents');assert.equal(g.purchasedUpgrades.includes('code_agents'),false);
-  for(let i=0;i<8;i++)h.api.buyNextClusterWorker(first.id);h.api.tickConstruction(4);h.api.purchaseUpgrade('code_agents');h.api.purchaseUpgrade('cluster_capacity_2');
+  for(let i=0;i<8;i++)h.api.buyNextClusterWorker(first.id);h.api.tickConstruction(12);h.api.purchaseUpgrade('code_agents');h.api.purchaseUpgrade('cluster_capacity_2');
   h.api.purchaseUpgrade('cluster_capacity_3');assert.equal(h.api.clusterCapacity(),2);
-  h.api.openCluster();const second=g.clusters[1];assert.equal(second.managerAssigned,false);h.api.tickConstruction(12);for(let i=0;i<second.workerSlotsMax;i++)h.api.buyNextClusterWorker(second.id);h.api.tickConstruction(4);
+  h.api.openCluster();const second=g.clusters[1];assert.equal(second.managerAssigned,false);h.api.tickConstruction(12.1);for(let i=0;i<second.workerSlotsMax;i++)h.api.buyNextClusterWorker(second.id);h.api.tickConstruction(12);
   h.api.purchaseUpgrade('cluster_capacity_3');assert.equal(h.api.clusterCapacity(),3);h.prepareUpgrade('ceo_readiness');h.api.purchaseUpgrade('ceo_readiness');assert.equal(g.phase,9);
   h.fullCluster();g.totalTasksDone=1200000;h.api.purchaseUpgrade('ceo_readiness');assert.equal(g.phase,10);
 });
@@ -1507,9 +1750,9 @@ scenario('Manager refills at ten percent and continues assigning jobs with conse
   assert.equal(agent.tokenTank, 0);
 });
 scenario('CEO training speeds construction and DevOps retires technical debt automatically', (h) => {
-  const g=h.fresh(10);g.cash=1e9;g.ceoMode='scale';h.api.openCluster();const first=g.clusters[0];assert.equal(first.buildDuration,12);
-  h.api.tickConstruction(3);assert.equal(first.buildRemaining,9);g.uiRevealed.clusters=true;h.api.renderClusterSection();assert.match(h.window.document.querySelector('#cluster-list').textContent,/Racking hardware/);
-  g.phase=11;h.api.openCluster();assert.equal(g.clusters[1].buildDuration,6);g.phase=14;h.api.openCluster();assert.equal(g.clusters[2].buildDuration,2);
+  const g=h.fresh(10);g.cash=1e9;g.ceoMode='scale';h.api.openCluster();const first=g.clusters[0];assert.ok(first.buildDuration>=12&&first.buildDuration<=12.1);
+  h.api.tickConstruction(first.buildDuration/4);assert.equal(first.buildRemaining,first.buildDuration*3/4);g.uiRevealed.clusters=true;h.api.renderClusterSection();assert.match(h.window.document.querySelector('#cluster-list').textContent,/Racking hardware/);
+  g.phase=11;h.api.openCluster();assert.ok(g.clusters[1].buildDuration>=6&&g.clusters[1].buildDuration<=6.1);g.phase=14;h.api.openCluster();assert.ok(g.clusters[2].buildDuration>=2&&g.clusters[2].buildDuration<=2.1);
   h.api.tickConstruction(20);first.managerAssigned=true;first.tokenManagerAssigned=true;g.techDebt=10;h.api.tickDebt(10);assert.equal(g.techDebt,0);assert.equal(h.api.UPGRADES.some(u=>u.id==='pay_debt'),false);
 });
 scenario('prestige stops music and restores the introduction and first manual task', (h) => {
@@ -1542,15 +1785,57 @@ scenario('DevOps hiring and its agent card live in Incidents while management is
   g.cash=1e6;g.agentSlots=1;h.api.renderIncidentSection();assert.equal(h.window.document.querySelector('#incident-devops button').disabled,false);
   g.phase=6;g.purchasedUpgrades=[];g.uiRevealed.incidents=true;h.api.renderIncidentSection();assert.equal(h.window.document.querySelector('#incident-devops').textContent,'');
 });
-scenario('CEO provisioning upgrades follow Scale Mode and remain visible during construction', (h) => {
-  const g=h.fresh(10);g.cash=1e10;g.totalTasksDone=2000000;h.prepareUpgrade('ai_ceo');for(let i=0;i<5;i++)h.fullCluster();h.api.purchaseUpgrade('ai_ceo');g.uiRevealed.upgrades=true;
-  h.api.purchaseUpgrade('network_density');h.api.purchaseUpgrade('cluster_capacity_16');h.api.purchaseUpgrade('ceo_recruitment');h.api.purchaseUpgrade('ceo_batch');assert.equal(g.purchasedUpgrades.includes('ceo_batch'),false);
-  for(const c of g.clusters)while(c.workerAgentIds.length<c.workerSlotsMax)h.api.buyNextClusterWorker(c.id);h.api.tickConstruction(4);h.api.purchaseUpgrade('server_1');
-  const visible=()=>h.api.UPGRADES.filter(h.api.upgradeVisible).map(u=>u.id);const initial=visible();assert.ok(initial.includes('ceo_deploy_speed'));assert.ok(initial.includes('ceo_batch'));
-  h.api.tickAiCeo();const cluster=g.clusters.at(-1);assert.ok(cluster.buildRemaining>0);assert.deepEqual(visible(),initial);
-  h.api.purchaseUpgrade('ceo_batch');h.api.tickConstruction(12);h.advance(1250);h.api.tickAiCeo();assert.equal(cluster.workerAgentIds.length,2);
-  h.api.purchaseUpgrade('ceo_deploy_speed');h.api.purchaseUpgrade('ceo_quad_batch');h.advance(834);h.api.tickAiCeo();assert.equal(cluster.workerAgentIds.length,2);h.api.tickConstruction(2);h.advance(834);h.api.tickAiCeo();assert.equal(cluster.workerAgentIds.length,6);assert.equal(g.agents.at(-1).provisionDuration,2/1.5);
-  h.api.renderUpgradeSection();assert.match(h.window.document.querySelector('#upgrade-list').textContent,/Parallel Cluster Builds/);assert.match(h.window.document.querySelector('#upgrade-list').textContent,/Preassembled Server Racks/);
+scenario('provisioning improvements bracket sixteen slots and remain visible during construction', (h) => {
+  const g = h.fresh(10);
+  g.cash = 1e10;
+  g.totalTasksDone = 2e6;
+  g.uiRevealed.upgrades = true;
+  h.prepareUpgrade('ai_ceo');
+  for (let index = 0; index < 5; index++) h.fullCluster();
+  h.api.purchaseUpgrade('ai_ceo');
+  h.api.purchaseUpgrade('ceo_recruitment');
+  h.api.purchaseUpgrade('network_density');
+  h.api.purchaseUpgrade('cluster_capacity_16');
+  assert.ok(g.clusters.every(cluster => cluster.workerSlotsMax === 9));
+  h.api.purchaseUpgrade('ceo_deploy_speed');
+  h.api.purchaseUpgrade('cluster_capacity_16');
+  assert.ok(g.clusters.every(cluster => cluster.workerSlotsMax === 16));
+  assert.equal(g.ceoMode, 'manage');
+  h.api.purchaseUpgrade('server_1');
+  assert.equal(g.ceoMode, 'manage');
+  h.api.purchaseUpgrade('ceo_batch');
+  h.api.tickAiCeo();
+  assert.equal(g.clusters[0].workerAgentIds.length, 10);
+  assert.ok(g.agents.slice(-2).every(agent => agent.provisionDuration >= 2 / 1.5 && agent.provisionDuration <= 2 / 1.5 + 0.1));
+  for (const cluster of g.clusters) {
+    while (cluster.workerAgentIds.length < cluster.workerSlotsMax) h.api.buyNextClusterWorker(cluster.id);
+  }
+  h.api.tickConstruction(40);
+  h.api.purchaseUpgrade('server_1');
+  assert.equal(g.ceoMode, 'scale');
+  const visible = () => h.api.UPGRADES.filter(h.api.upgradeVisible).map(upgrade => upgrade.id);
+  const initial = visible();
+  assert.ok(initial.includes('ceo_quad_batch'));
+  h.advance(1000);
+  h.api.tickAiCeo();
+  const cluster = g.clusters.at(-1);
+  assert.ok(cluster.buildRemaining > 0);
+  assert.deepEqual(visible(), initial);
+  h.api.purchaseUpgrade('ceo_quad_batch');
+  h.api.tickConstruction(12.1);
+  h.advance(1000);
+  h.api.tickAiCeo();
+  assert.equal(cluster.workerAgentIds.length, 4);
+  h.advance(1000);
+  h.api.tickAiCeo();
+  assert.equal(cluster.workerAgentIds.length, 4);
+  h.api.tickConstruction(3);
+  h.advance(1000);
+  h.api.tickAiCeo();
+  assert.equal(cluster.workerAgentIds.length, 8);
+  h.api.renderUpgradeSection();
+  assert.match(h.window.document.querySelector('#upgrade-list').textContent, /Parallel Cluster Builds/);
+  assert.match(h.window.document.querySelector('#upgrade-list').textContent, /Preassembled Server Racks/);
 });
 scenario('two and three managed clusters increase delivery speed without a retainer footer', (h) => {
   const g=h.fresh(9);const first=h.fullCluster();const agent=g.agents[0];const task=h.task();const baseline=h.api.workerSpeed(task,agent);h.fullCluster();assert.equal(h.api.workerSpeed(task,agent),baseline*1.5);h.fullCluster();assert.equal(h.api.workerSpeed(task,agent),baseline*2);
@@ -1628,7 +1913,7 @@ scenario('cluster slots identify agents and distinguish empty slots from actual 
   g.uiRevealed.clusters = true;
   h.api.openCluster();
   const cluster = g.clusters[0];
-  h.api.tickConstruction(12);
+  h.api.tickConstruction(12.1);
   h.api.renderClusterSection();
   const card = h.window.document.querySelector('div.cluster-card');
   assert.equal(card.querySelector('.cluster-status').textContent, 'Needs Agents');
@@ -1640,7 +1925,7 @@ scenario('cluster slots identify agents and distinguish empty slots from actual 
   h.api.renderClusterSection();
   assert.equal(card.querySelector('.cluster-status').textContent, 'Installing agents');
   assert.equal(card.querySelector('[role="progressbar"]').textContent, g.agents[0].name);
-  h.api.tickConstruction(4);
+  h.api.tickConstruction(12);
   h.api.renderClusterSection();
   assert.equal(card.querySelector('.cluster-status').textContent, 'Partially Operational');
   assert.equal(card.querySelector('.capacity-slot.filled').textContent, g.agents[0].name);
@@ -1716,7 +2001,7 @@ scenario('provisioning occupies the next grid slot and respects unlocks capacity
   const g=h.fresh(9);g.uiRevealed.clusters=true;h.fullCluster();h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);
   g.purchasedUpgrades.push('cluster_capacity_2');h.api.renderClusterSection();let card=h.window.document.querySelector('.provision-card');assert.ok(card);assert.ok(card.parentElement.classList.contains('node-grid'));assert.equal(card.disabled,true);assert.equal(card.previousElementSibling.tagName,'DIV');
   g.cash=1e6;h.api.renderClusterSection();assert.equal(card.disabled,false);h.api.openCluster();h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);
-  h.api.tickConstruction(12);for(let i=0;i<8;i++)h.api.buyNextClusterWorker(g.clusters[1].id,'coder');h.api.renderClusterSection();assert.ok([...h.window.document.querySelectorAll('.cluster-card button')].every(button=>button.textContent==='Sell'));
+  h.api.tickConstruction(12.1);for(let i=0;i<8;i++)h.api.buyNextClusterWorker(g.clusters[1].id,'coder');h.api.renderClusterSection();assert.ok([...h.window.document.querySelectorAll('.cluster-card button')].every(button=>button.textContent==='Sell'));
   g.phase=10;g.ceoMode='scale';h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);assert.equal(h.window.document.querySelectorAll('.leadership-agent').length,2);
 });
 scenario('the first random AI incident shows its tutorial once before ordinary incidents', (h) => {
@@ -1752,7 +2037,7 @@ scenario('every phase cheat lands before its actual transition with usable funds
   for(const stage of ['0_1','0_2','0_3','0_4',1]){h.window['chPh'+stage]();assert.equal(h.window.GAME.state.phase,1);assert.equal(h.api.validSave(h.window.GAME.state),true);}
   for(let stage=2;stage<=15;stage++){
     h.window['chPh'+stage]();const g=h.window.GAME.state;const upgrade=h.api.UPGRADES.find(item=>item.unlockPhase===stage);assert.equal(g.phase,stage-1,'chPh'+stage);assert.ok(g.cash>=upgrade.cost);assert.equal(h.api.validSave(g),true);
-    if(stage>=13){assert.equal(g.clusters.length,upgrade.reqNodes-1);h.api.openCluster();h.api.tickConstruction(12);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,upgrade.reqTasks-3);h.window.GAME.addTasks(3);}
+    if(stage>=13){assert.equal(g.clusters.length,upgrade.reqNodes-1);h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,upgrade.reqTasks-3);h.window.GAME.addTasks(3);}
     h.api.purchaseUpgrade(upgrade.id);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
   }
   h.window.GAME.state.retired=true;h.window.chPh6();assert.equal(h.window.GAME.state.phase,5);assert.equal(h.window.GAME.state.totalTasksDone,4997);assert.equal(new Set(h.window.GAME.state.agents.map(agent=>agent.roleId)).size,5);assert.equal(h.window.GAME.state.retired,false);
@@ -1797,17 +2082,17 @@ scenario('batch upgrades count delivered tasks without multiplying cash or infla
   g.phase=12;g.batchSize=2000;const c=h.fullCluster();c.tank=4000;const count=g.totalTasksDone;h.api.tickNetwork(.1);assert.equal(g.totalTasksDone-count,1600);assert.ok(c.tank<4000);assert.ok(batch.batchSize>=8&&batch.batchSize<=12);
 });
 scenario('batch and provisioning save data reject invalid states and preserve construction', (h) => {
-  const g=h.fresh(9);g.cash=1e6;h.api.openCluster();h.api.tickConstruction(12);h.api.buyNextClusterWorker(g.clusters[0].id);h.api.tickConstruction(2);const raw=JSON.stringify(g);const restored=harness(raw);try{assert.equal(restored.window.GAME.state.agents[0].provisionRemaining,2);restored.api.tickConstruction(2);assert.equal(restored.window.GAME.state.agents[0].status,'idle');}finally{restored.close();}
-  g.batchSize=0;assert.equal(h.api.validSave(g),false);g.batchSize=1;const task=h.task();task.batchSize=0;assert.equal(h.api.validSave(g),false);task.batchSize=1;g.agents[0].provisionRemaining=5;assert.equal(h.api.validSave(g),false);g.agents[0].provisionRemaining=2;assert.equal(h.api.validSave(g),true);
+  const g=h.fresh(9);g.cash=1e6;h.api.openCluster();h.api.tickConstruction(12.1);h.api.buyNextClusterWorker(g.clusters[0].id);h.api.tickConstruction(2);const raw=JSON.stringify(g);const restored=harness(raw);try{assert.equal(restored.window.GAME.state.agents[0].provisionRemaining,g.agents[0].provisionRemaining);restored.api.tickConstruction(2.1);assert.equal(restored.window.GAME.state.agents[0].status,'idle');}finally{restored.close();}
+  g.batchSize=0;assert.equal(h.api.validSave(g),false);g.batchSize=1;const task=h.task();task.batchSize=0;assert.equal(h.api.validSave(g),false);task.batchSize=1;g.agents[0].provisionDuration=0;assert.equal(h.api.validSave(g),false);g.agents[0].provisionDuration=4;g.agents[0].provisionRemaining=2;assert.equal(h.api.validSave(g),true);
   assert.equal(new Set(h.api.UPGRADES.map(u=>u.id)).size,h.api.UPGRADES.length);
 });
 scenario('compact nodes wait for paid agent installations to finish', (h) => {
-  const g=h.fresh(11);g.cash=1e9;g.totalTasksDone=2000000;g.ceoMode='scale';g.uiRevealed.upgrades=true;h.prepareUpgrade('autonomous_nodes');const first=h.fullCluster();h.fullCluster();h.fullCluster();const id=first.workerAgentIds.pop();g.agents=g.agents.filter(agent=>agent.id!==id);h.api.buyNextClusterWorker(first.id);assert.equal(g.agents.at(-1).status,'provisioning');
+  const g=h.fresh(11);g.cash=1e10;g.totalTasksDone=2000000;g.ceoMode='scale';g.uiRevealed.upgrades=true;h.prepareUpgrade('autonomous_nodes');const first=h.fullCluster();h.fullCluster();h.fullCluster();const id=first.workerAgentIds.pop();g.agents=g.agents.filter(agent=>agent.id!==id);h.api.buyNextClusterWorker(first.id);assert.equal(g.agents.at(-1).status,'provisioning');
   h.api.renderUpgradeSection();const button=h.window.document.querySelector('[onclick="GAME.buy(\'autonomous_nodes\')"]');assert.equal(button.disabled,true);h.api.purchaseUpgrade('autonomous_nodes');assert.equal(g.phase,11);h.api.tickConstruction(2);h.api.renderUpgradeSection();assert.equal(button.disabled,false);h.api.purchaseUpgrade('autonomous_nodes');assert.equal(g.phase,12);assert.equal(first.workforce,16);assert.equal(h.api.validSave(g),true);
 });
 
 scenario('parallel construction respects two active builds and charges each rising price', (h) => {
-  const g=h.fresh(10);g.cash=1e10;g.ceoMode='scale';h.fullCluster();g.purchasedUpgrades.push('ceo_parallel_clusters','ceo_fast_builds');const before=g.cash;const firstPrice=h.api.provisionCost();h.api.tickAiCeo();assert.equal(g.clusters.length,3);assert.equal(g.clusters[1].buildDuration,6);assert.equal(g.clusters[2].buildDuration,6);assert.ok(g.clusters[2].invested>g.clusters[1].invested);assert.equal(before-g.cash,g.clusters[1].invested+g.clusters[2].invested);assert.equal(g.clusters[1].invested,firstPrice);
+  const g=h.fresh(10);g.cash=1e10;g.ceoMode='scale';h.fullCluster();g.purchasedUpgrades.push('ceo_parallel_clusters','ceo_fast_builds');const before=g.cash;const firstPrice=h.api.provisionCost();h.api.tickAiCeo();assert.equal(g.clusters.length,3);assert.ok(g.clusters[1].buildDuration>=6&&g.clusters[1].buildDuration<=6.1);assert.ok(g.clusters[2].buildDuration>=6&&g.clusters[2].buildDuration<=6.1);assert.ok(g.clusters[2].invested>g.clusters[1].invested);assert.equal(before-g.cash,g.clusters[1].invested+g.clusters[2].invested);assert.equal(g.clusters[1].invested,firstPrice);
   h.advance(5000);h.api.tickAiCeo();assert.equal(g.clusters.length,3);g.cash=0;h.api.tickConstruction(6);h.advance(5000);h.api.tickAiCeo();assert.equal(g.clusters.length,3);assert.equal(g.clusters[1].workerAgentIds.length,0);
 });
 scenario('fully fitted racks pay for all agents and complete installations with construction', (h) => {
@@ -1818,9 +2103,9 @@ scenario('fully fitted racks pay for all agents and complete installations with 
 scenario('fully fitted construction survives the compact-node transition without early delivery', (h) => {
   const g=h.fresh(11);g.cash=1e10;g.ceoMode='scale';g.totalTasksDone=2000000;h.prepareUpgrade('autonomous_nodes');for(let i=0;i<3;i++)h.fullCluster();h.api.openCluster();const c=g.clusters.at(-1);h.api.purchaseUpgrade('autonomous_nodes');assert.equal(g.phase,12);assert.equal(c.workforce,16);assert.equal(c.managerAssigned,false);c.tank=4000;h.api.tickNetwork(1);assert.equal(c.progress,0);h.api.tickConstruction(c.buildDuration);assert.equal(h.api.completedClusterCount(),4);assert.equal(h.api.validSave(g),true);
 });
-scenario('continuous deployment delivers a fully fitted cluster per second without free agents', (h) => {
+scenario('continuous deployment sustains two independently refilled builds without free agents', (h) => {
   const g=h.fresh(12);g.cash=1e12;g.ceoMode='scale';g.totalTasksDone=2000000;h.prepareUpgrade('ceo_continuous');h.fullCluster();h.api.purchaseUpgrade('ceo_continuous');assert.ok(g.purchasedUpgrades.includes('ceo_continuous'));const initial=g.cash;h.api.tickAiCeo();assert.equal(g.clusters.length,3);assert.equal(h.api.completedClusterCount(),1);
-  for(let i=0;i<200;i++){h.advance(100);h.api.tickConstruction(.1);h.api.tickAiCeo();}assert.equal(h.api.completedClusterCount(),21);assert.equal(g.clusters.length,23);assert.ok(g.clusters.slice(1).every(c=>c.workforce===16));assert.equal(initial-g.cash,g.clusters.slice(1).reduce((sum,c)=>sum+c.invested,0));assert.equal(h.api.validSave(g),true);
+  for(let i=0;i<250;i++){h.advance(100);h.api.tickConstruction(.1);h.api.tickAiCeo();}assert.equal(h.api.completedClusterCount(),25);assert.equal(g.clusters.length,27);assert.ok(g.clusters.slice(1).every(c=>c.workforce===16));assert.equal(initial-g.cash,g.clusters.slice(1).reduce((sum,c)=>sum+c.invested,0));assert.equal(h.api.validSave(g),true);
   const upg=h.api.UPGRADES.find(u=>u.id==='replication');g.uiRevealed.upgrades=true;assert.equal(h.api.upgradeVisible(upg),true);h.api.renderUpgradeSection();const button=h.window.document.querySelector('[onclick="GAME.buy(\'replication\')"]');assert.equal(button.disabled,false);h.api.purchaseUpgrade('replication');assert.equal(g.phase,13);
   g.cash=0;const count=g.clusters.length;h.advance(2000);h.api.tickConstruction(2);h.api.tickAiCeo();assert.equal(g.clusters.length,count);
 });
@@ -2213,11 +2498,11 @@ scenario('late expansion accelerates gradually and respects the fourfold speed l
   g.lastCeoAction = h.window.Date.now();
   h.advance(249);
   h.api.tickAiCeo();
-  assert.equal(g.clusters.length, 60);
+  assert.equal(g.clusters.length, 62);
   h.advance(1);
   h.api.tickAiCeo();
   assert.equal(g.clusters.length, 62);
-  assert.equal(g.clusters.at(-1).buildDuration, 1);
+  assert.ok(g.clusters.at(-1).buildDuration >= 1 && g.clusters.at(-1).buildDuration <= 1.1);
   while (h.api.completedClusterCount() < 100) h.fullCluster();
   g.phase = 15;
   assert.equal(h.api.expansionSpeed(), 4);
@@ -2249,19 +2534,21 @@ scenario('network task throughput grows in stages while cash and token costs sta
   }
 });
 
-scenario('the CEO reserves enough cash for the final Golden Parachute', (h) => {
+scenario('the CEO keeps expanding while the player can choose the Golden Parachute', (h) => {
   const g = h.fresh(15);
   g.ceoMode = 'scale';
   g.cash = 5e9;
   h.fullCluster();
+  const price = h.api.provisionCost();
   h.api.tickAiCeo();
-  assert.equal(g.clusters.length, 1);
-  assert.equal(g.cash, 5e9);
-  g.cash += h.api.provisionCost() * 2;
+  assert.equal(g.clusters.length, 2);
+  assert.equal(g.cash, 5e9 - price);
+  g.clustersProvisioned = 5000;
+  assert.ok(h.api.provisionCost() > 5e9);
   h.advance(1000);
   h.api.tickAiCeo();
   assert.equal(g.clusters.length, 2);
-  assert.ok(g.cash >= 5e9);
+  assert.equal(g.cash, 5e9 - price);
 });
 
 scenario('prestige adds a real slot at each capacity upgrade, including the former four-slot no-op', (h) => {
@@ -2306,7 +2593,7 @@ scenario('chRetire prepares an immediate Golden Parachute and retirement restore
   assert.ok(h.audioPlayers.every(player => player.paused));
   g.musicMode = 'layered';
   h.api.save();
-  const restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+  const restored = harness(h.window.localStorage.getItem('ai_empire_save'), {seed: 8675309});
   try {
     restored.api.unlockMusicPlayback();
     assert.ok(restored.audioPlayers.some(player => player.src === 'soundtrack-loop.mp3' && !player.paused));

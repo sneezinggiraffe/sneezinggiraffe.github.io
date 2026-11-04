@@ -1,7 +1,153 @@
 const { test, expect } = require('@playwright/test');
 const { harness } = require('../harness.cjs');
 
+for (const [phase, capacity] of [[10, 2], [10, 4], [12, 2]]) {
+  test(`Phase ${phase} keeps ${capacity} provisioning slots staggered through real renders and reload`, async ({page}) => {
+    const h = harness();
+    const g = h.fresh(phase);
+    g.ceoMode = phase === 10 ? 'manage' : 'scale';
+    g.cash = 1e12;
+    g.tokens = 1e9;
+    g.totalTasksDone = 2e6;
+    g.aiWorkerShutdown = true;
+    g.incidentsExplained = true;
+    g.purchasedUpgrades.push('ceo_batch');
+    if (capacity === 4) g.purchasedUpgrades.push('ceo_quad_batch');
+    if (phase === 12) {
+      g.purchasedUpgrades.push('ceo_full_fit', 'ceo_continuous', 'ceo_parallel_clusters');
+      h.fullCluster();
+    } else {
+      for (let index = 0; index < 2; index++) {
+        const cluster = h.api.addClusterWithNextName();
+        cluster.managerAssigned = true;
+        cluster.tokenManagerAssigned = true;
+      }
+    }
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastTaskSpawn = g.lastTick + 1e9;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.clock.install({time: new Date(g.lastTick)});
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => {
+      if (!sessionStorage.getItem('pipeline_seeded')) {
+        localStorage.setItem('ai_empire_save', value);
+        sessionStorage.setItem('pipeline_seeded', '1');
+      }
+    }, raw);
+    await page.goto('/');
+    await page.clock.runFor(200);
+    const remaining = phase === 10 ? 'provisionRemaining' : 'buildRemaining';
+    const duration = phase === 10 ? 'provisionDuration' : 'buildDuration';
+    const snapshot = await page.evaluate(({phase, remaining, duration}) => {
+      window.dispatchEvent(new Event('pagehide'));
+      return (phase === 10 ? GAME.state.agents : GAME.state.clusters).filter(job => job[remaining] > 0).map(job => ({id: job.id, remaining: job[remaining], duration: job[duration]}));
+    }, {phase, remaining, duration});
+    expect(snapshot).toHaveLength(capacity);
+    expect(snapshot.some(job => job.remaining > job.duration)).toBe(true);
+    await page.reload();
+    expect(await page.evaluate(({phase, remaining}) => (phase === 10 ? GAME.state.agents : GAME.state.clusters).filter(job => job[remaining] > 0).map(job => job[remaining]), {phase, remaining})).toEqual(snapshot.map(job => job.remaining));
+    const completed = new Map();
+    let refilledIndependently = false;
+    for (let frame = 1; frame <= 70; frame++) {
+      await page.clock.runFor(200);
+      const state = await page.evaluate(({phase, remaining, ids}) => {
+        const jobs = phase === 10 ? GAME.state.agents : GAME.state.clusters;
+        const selector = phase === 10 ? '.capacity-slot.provisioning' : '[aria-label="Cluster construction"]';
+        return {
+          active: jobs.filter(job => job[remaining] > 0).length,
+          cohort: ids.map(id => jobs.find(job => job.id === id)[remaining]),
+          count: jobs.length,
+          bars: [...document.querySelectorAll(selector)].map(bar => Number(bar.getAttribute('aria-valuenow'))),
+        };
+      }, {phase, remaining, ids: snapshot.map(job => job.id)});
+      expect(state.active).toBeLessThanOrEqual(capacity);
+      expect(state.bars.every(progress => progress >= 0 && progress <= 100)).toBe(true);
+      if (frame === 7) expect(new Set(state.bars).size).toBe(capacity);
+      snapshot.forEach((job, index) => {
+        if (state.cohort[index] === 0 && !completed.has(job.id)) completed.set(job.id, frame);
+      });
+      if (state.cohort[0] === 0 && state.cohort[1] > 0) {
+        expect(state.active).toBe(capacity);
+        expect(state.count).toBeGreaterThan(phase === 10 ? capacity : capacity + 1);
+        refilledIndependently = true;
+      }
+    }
+    expect(completed.size).toBe(capacity);
+    expect(new Set(completed.values()).size).toBe(capacity);
+    expect(refilledIndependently).toBe(true);
+  });
+}
+
+test('Ralph-loops and AI expansion skip modals and the operating model uses the new price and copy', async ({page}) => {
+  await page.clock.install();
+  await page.goto('/');
+  await page.evaluate(() => { chPh8(); GAME.addTasks(3); });
+  await page.clock.runFor(200);
+  const loops = page.locator('[onclick="GAME.buy(\'ops_flywheel\')"]');
+  await expect(loops.locator('..').locator('..')).toContainText('Ralph-loops');
+  await expect(loops.locator('..').locator('..').locator('.desc')).toHaveText('Agents work for longer and check their work.');
+  await loops.click();
+  expect(await page.evaluate(() => GAME.state.phase)).toBe(8);
+  await expect(page.locator('#milestone-popup')).toBeHidden();
+  await page.evaluate(() => { chPh11(); GAME.addTasks(3); });
+  await page.clock.runFor(200);
+  await page.locator('[onclick="GAME.buy(\'ceo_course\')"]').click();
+  expect(await page.evaluate(() => GAME.state.phase)).toBe(11);
+  await expect(page.locator('#milestone-popup')).toBeHidden();
+  await page.evaluate(() => { GAME.addCash(2e9); GAME.addTasks(2e6); });
+  await page.clock.runFor(200);
+  await page.locator('[onclick="GAME.buy(\'ceo_full_fit\')"]').click();
+  await page.clock.runFor(200);
+  const model = page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]');
+  await expect(model).toHaveText('$760.00M');
+  await model.click();
+  expect(await page.evaluate(() => GAME.state.phase)).toBe(12);
+  await expect(page.locator('#milestone-popup')).toBeVisible();
+  await expect(page.locator('#milestone-popup-msg')).not.toContainText('100 managed nodes');
+});
+
 for (const width of [1440, 390]) {
+  test(`late Phase 8 offers two improvements before acquisition at ${width}px`, async ({page}) => {
+    const h = harness(fixture(8));
+    const g = h.window.GAME.state;
+    g.purchasedUpgrades = g.purchasedUpgrades.filter(id => !['project_playbooks', 'account_expansion'].includes(id));
+    g.cash = 5e6;
+    g.totalTasksDone = 720000;
+    g.lastTick = Date.now();
+    g.lastTaskSpawn = g.lastTick + 1e6;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({width, height: 900});
+    await page.clock.install({time: new Date(g.lastTick)});
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const playbooks = page.locator('[onclick="GAME.buy(\'project_playbooks\')"]');
+    const accounts = page.locator('[onclick="GAME.buy(\'account_expansion\')"]');
+    const acquisition = page.locator('[onclick="GAME.buy(\'acquire_micro_agency\')"]');
+    await expect(playbooks).toBeVisible();
+    await expect(playbooks).toHaveText('$750.0K');
+    await expect(accounts).toHaveCount(0);
+    await expect(acquisition).toHaveCount(0);
+    await page.evaluate(() => GAME.addTasks(140000));
+    await page.clock.runFor(200);
+    await expect(accounts).toBeVisible();
+    await expect(accounts).toHaveText('$1.25M');
+    await page.locator('#upgrade-list').screenshot({path: `test-results/phase8-upgrades-${width}.png`});
+    await playbooks.click();
+    await page.clock.runFor(200);
+    await accounts.click();
+    await page.evaluate(() => GAME.addTasks(140000));
+    await page.clock.runFor(200);
+    await expect(acquisition).toBeEnabled();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await acquisition.click();
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(9);
+  });
+
   test(`opening checkpoints reveal their upgrade groups at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.clock.install();
@@ -142,11 +288,13 @@ for (const width of [1440, 390]) {
     await page.locator('[onclick="GAME.buy(\'network_density\')"]').click();
     await page.clock.runFor(200);
     await expect(card.locator('.capacity-slot')).toHaveCount(9);
-    await expect(card.locator('.capacity-slot.empty')).toHaveText('+');
+    await expect(card.locator('.capacity-slot.provisioning')).toBeVisible();
     expect(await card.locator('.cluster-capacity').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(3);
-    const names = await page.evaluate(() => GAME.state.clusters[0].workerAgentIds.map(id => GAME.state.agents.find(agent => agent.id === id).name));
+    const names = await page.evaluate(() => GAME.state.clusters[0].workerAgentIds.map(id => GAME.state.agents.find(agent => agent.id === id)).filter(agent => agent.status !== 'provisioning').map(agent => agent.name));
     expect(await card.locator('.capacity-slot.filled').allTextContents()).toEqual(names);
     await card.screenshot({ path: `test-results/cluster-nine-${width}.png` });
+    await page.locator('[onclick="GAME.buy(\'ceo_deploy_speed\')"]').click();
+    await page.clock.runFor(200);
     await page.locator('[onclick="GAME.buy(\'cluster_capacity_16\')"]').click();
     await page.clock.runFor(200);
     await expect(card.locator('.capacity-slot')).toHaveCount(16);
@@ -605,8 +753,8 @@ test('an existing twelve-node company must provision and staff nine more nodes b
   await page.clock.pauseAt(new Date(g.lastTick + 1000));
   await page.addInitScript(value=>{if(!sessionStorage.getItem('replication_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('replication_seeded','1')}},raw);await page.goto('/');
   await page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]').click();await page.clock.runFor(200);await page.locator('#btn-dismiss-popup').click();const buy=page.locator('[onclick="GAME.buy(\'replication\')"]');await expect(buy).toHaveCount(0);
-  await page.locator('[onclick="GAME.buy(\'ceo_continuous\')"]').click();await page.clock.runFor(8500);await expect(buy).toBeDisabled();await expect(buy.locator('..').locator('..')).toContainText('(21 nodes)');await page.evaluate(()=>GAME.state.lastSave=0);await page.clock.runFor(200);await page.reload();expect(await page.evaluate(()=>GAME.state.replicationTarget)).toBe(21);
-  await page.clock.runFor(2500);await expect(buy).toBeEnabled();await buy.click();await page.clock.runFor(200);expect(await page.evaluate(()=>GAME.state.phase)).toBe(13);
+  await page.locator('[onclick="GAME.buy(\'ceo_continuous\')"]').click();await page.clock.runFor(8500);await expect(buy).toBeDisabled();await expect(buy.locator('..').locator('..').locator('.desc')).toHaveText('Standardize node replication. Reduce cluster costs by 35%.');await page.evaluate(()=>GAME.state.lastSave=0);await page.clock.runFor(200);await page.reload();expect(await page.evaluate(()=>GAME.state.replicationTarget)).toBe(21);
+  await page.clock.runFor(5000);await expect(buy).toBeEnabled();await buy.click();await page.clock.runFor(200);expect(await page.evaluate(()=>GAME.state.phase)).toBe(13);
 });
 
 for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
@@ -1000,8 +1148,53 @@ test('CEO is provisioned from its card without implicitly expanding agent capaci
   await page.evaluate(()=>GAME.addCash(1e8));await page.clock.runFor(100000);await expect(page.locator('.provision-card')).toHaveCount(1);const upgrade=page.locator('[onclick="GAME.buy(\'ceo_recruitment\')"]');await expect(upgrade).toBeVisible();await page.locator('.provision-card').click();await page.clock.runFor(200);await expect(upgrade).toBeVisible();await expect(page.locator('.provision-card')).toHaveCount(0);await page.screenshot({path:'test-results/ceo-provisioning.png',fullPage:true,animations:'disabled'});
 });
 
-test('Scale Mode exposes lasting provisioning upgrades while clusters build and fill', async ({page}) => {
-  const h=harness();const g=h.fresh(10);g.ceoMode='scale';g.cash=0;g.tokens=1e6;g.totalTasksDone=2000000;g.aiWorkerShutdown=true;g.incidentsExplained=true;h.prepareUpgrade('ceo_deploy_speed');for(let i=0;i<5;i++)h.fullCluster();h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
-  await page.clock.install();await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');const speed=page.locator('[onclick="GAME.buy(\'ceo_deploy_speed\')"]');const dual=page.locator('[onclick="GAME.buy(\'ceo_batch\')"]');await expect(speed).toBeVisible();await expect(speed).toBeDisabled();await expect(dual).toBeVisible();await page.evaluate(()=>GAME.addCash(1e9));await page.clock.runFor(1500);await expect(page.locator('div.cluster-card:not(.planning-card)')).toHaveCount(6);await expect(speed).toBeVisible();await expect(dual).toBeVisible();await speed.click();await page.clock.runFor(200);await dual.click();await page.clock.runFor(200);const quad=page.locator('[onclick="GAME.buy(\'ceo_quad_batch\')"]');await expect(quad).toBeVisible();await quad.click();await page.clock.runFor(200);await expect(page.locator('#upgrade-list')).toContainText('Parallel Cluster Builds');await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');
-  await page.clock.runFor(12500);await expect(page.locator('#upgrade-list')).toContainText('Parallel Cluster Builds');await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');await page.locator('#upgrade-list').screenshot({path:'/private/tmp/omt-scaling-upgrades.png'});
+test('provisioning improvements bracket sixteen slots and stay available during construction', async ({page}) => {
+  const h = harness();
+  const g = h.fresh(10);
+  g.ceoMode = 'manage';
+  g.cash = 0;
+  g.tokens = 1e6;
+  g.totalTasksDone = 2e6;
+  g.aiWorkerShutdown = true;
+  g.incidentsExplained = true;
+  h.prepareUpgrade('ceo_deploy_speed');
+  for (let index = 0; index < 5; index++) h.fullCluster();
+  h.api.checkMilestones();
+  h.dismiss();
+  g.lastTick = Date.now();
+  g.lastCeoAction = g.lastTick;
+  const raw = JSON.stringify(g);
+  h.close();
+  await page.clock.install({ time: new Date(g.lastTick) });
+  await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+  await page.goto('/');
+  const speed = page.locator('[onclick="GAME.buy(\'ceo_deploy_speed\')"]');
+  const capacity = page.locator('[onclick="GAME.buy(\'cluster_capacity_16\')"]');
+  const dual = page.locator('[onclick="GAME.buy(\'ceo_batch\')"]');
+  await expect(speed).toBeVisible();
+  await expect(speed).toBeDisabled();
+  await expect(capacity).toHaveCount(0);
+  await expect(dual).toHaveCount(0);
+  await page.evaluate(() => GAME.addCash(1e9));
+  await page.clock.runFor(200);
+  await speed.click();
+  await page.clock.runFor(200);
+  await capacity.click();
+  await page.clock.runFor(200);
+  await expect(dual).toBeVisible();
+  await dual.click();
+  await page.clock.runFor(40000);
+  await page.locator('[onclick="GAME.buy(\'server_1\')"]').click();
+  await page.clock.runFor(1500);
+  await expect(page.locator('div.cluster-card:not(.planning-card)')).toHaveCount(6);
+  const quad = page.locator('[onclick="GAME.buy(\'ceo_quad_batch\')"]');
+  await expect(quad).toBeVisible();
+  await quad.click();
+  await page.clock.runFor(200);
+  await expect(page.locator('#upgrade-list')).toContainText('Parallel Cluster Builds');
+  await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');
+  await page.clock.runFor(12500);
+  await expect(page.locator('#upgrade-list')).toContainText('Parallel Cluster Builds');
+  await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');
+  await page.locator('#upgrade-list').screenshot({path:'test-results/scaling-upgrades.png'});
 });
