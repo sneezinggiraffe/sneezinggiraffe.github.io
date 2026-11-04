@@ -76,6 +76,10 @@
   ];
   const MUSIC_TARGET_VOLUME = 0.25;
   const DRUM_TARGET_VOLUME = 0.18;
+  const SYNTH_START_PHASE = 5;
+  const SYNTH_LAYER_PATH = "synth_d4_loop.mp3";
+  const SYNTH_TARGET_VOLUME = 0.0729;
+  const SYNTH_FADE_IN_MS = 8000;
   const MUSIC_FADE_IN_MS = 6000;
   const MUSIC_FADE_STEP_MS = 50;
   const DRUM_FADE_IN_MS = 10000;
@@ -1656,6 +1660,7 @@
     // Phase unlock
     if (upg.unlockPhase && upg.unlockPhase > G.phase) {
       G.phase = upg.unlockPhase;
+      syncMusicPlayback();
       log("PHASE " + G.phase + " UNLOCKED!", "info");
 
       // Phase 3: grant starter tokens
@@ -1770,6 +1775,7 @@
     G.cash = G.retirementValue;
     G.retired = true;
     G.retiredAt = Date.now();
+    syncMusicPlayback();
     popupQueue = [];
     dismissPopup();
     save();
@@ -2074,6 +2080,8 @@
   let musicPlayer = null;
   let drumPlayer = null;
   let outgoingDrumPlayer = null;
+  let synthPlayer = null;
+  let synthFadeInterval = null;
   let musicUnlocked = false;
   let activeSoundtrackPath = null;
   let activeDrumLayerPath = null;
@@ -2375,6 +2383,40 @@
     }
   }
 
+  function stopSynthPlayback() {
+    if (synthFadeInterval) {
+      clearInterval(synthFadeInterval);
+      synthFadeInterval = null;
+    }
+    stopAndResetAudio(synthPlayer, 0);
+  }
+
+  function syncSynthLayerPlayback() {
+    if (G.phase < SYNTH_START_PHASE || !musicUnlocked) {
+      stopSynthPlayback();
+      return;
+    }
+    if (!synthPlayer) {
+      synthPlayer = new Audio();
+      synthPlayer.preload = "auto";
+      synthPlayer.loop = true;
+      synthPlayer.src = SYNTH_LAYER_PATH;
+      synthPlayer.volume = 0;
+    }
+    if (synthPlayer.paused) playAudioIfUnlocked(synthPlayer, "synth layer");
+    if (synthFadeInterval || synthPlayer.volume === SYNTH_TARGET_VOLUME) return;
+    var elapsed = 0;
+    synthFadeInterval = setInterval(function () {
+      elapsed += MUSIC_FADE_STEP_MS;
+      var progress = Math.min(elapsed / SYNTH_FADE_IN_MS, 1);
+      synthPlayer.volume = SYNTH_TARGET_VOLUME * progress;
+      if (progress === 1) {
+        clearInterval(synthFadeInterval);
+        synthFadeInterval = null;
+      }
+    }, MUSIC_FADE_STEP_MS);
+  }
+
   function syncMusicPlayback() {
     if (!musicPlayer) return;
     var mode = getCurrentMusicMode();
@@ -2386,15 +2428,18 @@
       stopAndResetAudio(musicPlayer, MUSIC_TARGET_VOLUME);
       activeSoundtrackPath = null;
       stopDrumPlayback();
+      stopSynthPlayback();
       return;
     }
 
     syncBaseSoundtrack(nextSoundtrackPath);
     if (!nextSoundtrackPath || mode !== "layered") {
       stopDrumPlayback();
+      stopSynthPlayback();
       return;
     }
     syncDrumLayerPlayback(nextDrumLayerPath);
+    syncSynthLayerPlayback();
   }
 
   function unlockMusicPlayback() {

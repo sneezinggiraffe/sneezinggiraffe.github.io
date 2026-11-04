@@ -11,6 +11,138 @@ function fixture(phase) {
   h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;g.lastCeoAction=g.lastTick;g.incidentsExplained=true;
   const raw=JSON.stringify(g);h.close();return raw;
 }
+
+test('Phase 5 adds two D4 and F4 phrases per bar with quiet chorus and reverb', async ({page}) => {
+  const raw = fixture(4);
+  await page.clock.install();
+  await page.addInitScript(value => {
+    localStorage.setItem('ai_empire_save', value);
+    const NativeAudio = window.Audio;
+    window.testAudioPlayers = [];
+    window.Audio = function () {
+      const player = new NativeAudio();
+      window.testAudioPlayers.push(player);
+      return player;
+    };
+  }, raw);
+  await page.goto('/');
+  await page.locator('#btn-settings').click();
+  await page.keyboard.press('Escape');
+  expect(await page.evaluate(() => window.testAudioPlayers.some(player => player.src.endsWith('/synth_d4_loop.mp3')))).toBe(false);
+  await page.locator('[onclick="GAME.buy(\'tool_use\')"]').click();
+  expect(await page.evaluate(() => GAME.state.phase)).toBe(5);
+  await page.clock.runFor(8100);
+  await expect.poll(() => page.evaluate(() => {
+    const synth = window.testAudioPlayers.find(player => player.src.endsWith('/synth_d4_loop.mp3'));
+    return synth && { playing: !synth.paused, ready: synth.readyState >= 2, loop: synth.loop, volume: synth.volume, error: synth.error };
+  })).toEqual({ playing: true, ready: true, loop: true, volume: 0.0729, error: null });
+
+  const audio = await page.evaluate(async () => {
+    const response = await fetch('synth_d4_loop.mp3');
+    const context = new AudioContext();
+    const buffer = await context.decodeAudioData(await response.arrayBuffer());
+    await context.close();
+    const samples = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+    const rms = (start, end) => {
+      const first = Math.floor(start * buffer.sampleRate);
+      const last = Math.floor(end * buffer.sampleRate);
+      let sum = 0;
+      for (let i = first; i < last; i++) sum += samples[i] ** 2;
+      return Math.sqrt(sum / (last - first));
+    };
+    const spectralPower = (frequency, onset = 0.012) => {
+      const first = Math.floor((onset + 0.018) * buffer.sampleRate);
+      const last = Math.floor((onset + 0.103) * buffer.sampleRate);
+      let real = 0;
+      let imaginary = 0;
+      for (let i = first; i < last; i++) {
+        const window = 0.5 - 0.5 * Math.cos(2 * Math.PI * (i - first) / (last - first - 1));
+        const phase = 2 * Math.PI * frequency * i / buffer.sampleRate;
+        real += samples[i] * window * Math.cos(phase);
+        imaginary += samples[i] * window * Math.sin(phase);
+      }
+      return real ** 2 + imaginary ** 2;
+    };
+    const pitches = [293.665, 349.228].map(target => {
+      let peakFrequency = 0;
+      let peakPower = 0;
+      for (let frequency = target - 8; frequency <= target + 8; frequency += 0.25) {
+        const power = spectralPower(frequency);
+        if (power > peakPower) { peakPower = power; peakFrequency = frequency; }
+      }
+      return { target, peakFrequency };
+    });
+    const beat = buffer.duration / 16;
+    const phrases = Array.from({ length: 8 }, (_, phrase) => {
+      const sixteenths = Array.from({ length: 8 }, (_, sixteenth) => {
+        const onset = (phrase * 2 + sixteenth / 4) * beat + 0.012;
+        return rms(onset + 0.015, onset + 0.075);
+      });
+      const notes = [0, 0.25, 0.75, 1.25, 1.5].map(position => {
+        const onset = (phrase * 2 + position) * beat + 0.012;
+        return {
+          body: rms(onset + 0.015, onset + 0.075),
+          decay: rms(onset + 0.095, onset + 0.125),
+          dyadBalance: spectralPower(349.228, onset) / spectralPower(293.665, onset),
+        };
+      });
+      const tails = [0.25, 0.75, 1.5].map(position => {
+        const onset = (phrase * 2 + position) * beat + 0.012;
+        return rms(onset + 0.145, onset + 0.225) / rms(onset + 0.015, onset + 0.075);
+      });
+      const first = Math.floor((phrase * 2 * beat + 0.03) * buffer.sampleRate);
+      const last = Math.floor((phrase * 2 * beat + 0.11) * buffer.sampleRate);
+      let difference = 0;
+      let centre = 0;
+      for (let index = first; index < last; index++) {
+        difference += (samples[index] - right[index]) ** 2;
+        centre += (samples[index] + right[index]) ** 2;
+      }
+      return { sixteenths, notes, tails, stereoWidth: Math.sqrt(difference / centre) };
+    });
+    return {
+      duration: buffer.duration,
+      pitches,
+      brightness: (spectralPower(293.665 * 2) + spectralPower(293.665 * 3)) / spectralPower(293.665),
+      phrases,
+      edges: [Math.abs(samples[0]), Math.abs(samples[samples.length - 1])],
+    };
+  });
+  expect(audio.duration).toBeCloseTo(8.36, 1);
+  for (const pitch of audio.pitches) expect(Math.abs(pitch.peakFrequency - pitch.target)).toBeLessThan(1.5);
+  expect(audio.brightness).toBeGreaterThan(0.03);
+  expect(audio.phrases).toHaveLength(8);
+  for (const phrase of audio.phrases) {
+    for (const sixteenth of [0, 1, 3, 5, 6]) expect(phrase.sixteenths[sixteenth]).toBeGreaterThan(0.1);
+    const quietLimit = Math.min(...phrase.notes.map(note => note.body)) * 0.15;
+    for (const sixteenth of [2, 4, 7]) expect(phrase.sixteenths[sixteenth]).toBeLessThan(quietLimit);
+    for (const note of phrase.notes) {
+      expect(note.decay).toBeLessThan(note.body * 0.5);
+      expect(note.dyadBalance).toBeGreaterThan(0.5);
+      expect(note.dyadBalance).toBeLessThan(2);
+    }
+    for (const tail of phrase.tails) {
+      expect(tail).toBeGreaterThan(0.005);
+      expect(tail).toBeLessThan(0.12);
+    }
+    const otherNotes = [0, 1, 3, 4].map(index => phrase.notes[index].body);
+    const accent = phrase.notes[2].body / (otherNotes.reduce((sum, value) => sum + value, 0) / otherNotes.length);
+    expect(accent).toBeGreaterThan(1.05);
+    expect(accent).toBeLessThan(1.3);
+  }
+  const widths = audio.phrases.map(phrase => phrase.stereoWidth);
+  expect(Math.max(...widths)).toBeGreaterThan(0.04);
+  expect(Math.max(...widths)).toBeLessThan(0.35);
+  expect(Math.max(...widths) - Math.min(...widths)).toBeGreaterThan(0.02);
+  for (const edge of audio.edges) expect(edge).toBeLessThan(0.001);
+
+  await page.locator('#btn-dismiss-popup').click();
+  await page.locator('#btn-settings').click();
+  await page.locator('#btn-settings-music').click();
+  expect(await page.evaluate(() => window.testAudioPlayers.every(player => player.paused))).toBe(true);
+});
+
 test('new game, keyboard work, settings focus, save and reload', async ({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.goto('/');
   await page.getByRole('button',{name:'Find Work'}).click();

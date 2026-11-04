@@ -6,6 +6,102 @@ const { play } = require('./simulate.cjs');
 function scenario(name, run) {
   test(name, () => { const h = harness(); try { run(h); } finally { h.close(); } });
 }
+
+test('the quiet Phase 5 synth waits for interaction, fades in and survives the drum change', () => {
+  const intervals = new Map();
+  let nextInterval = 0;
+  const h = harness(undefined, { before(window) {
+    window.setInterval = (fn, delay) => { const id = ++nextInterval; intervals.set(id, { fn, delay }); return id; };
+    window.clearInterval = (id) => intervals.delete(id);
+  } });
+  const advanceFades = (ms) => {
+    for (let elapsed = 0; elapsed < ms; elapsed += 50) {
+      for (const [id, timer] of [...intervals]) if (timer.delay === 50 && intervals.has(id)) timer.fn();
+    }
+  };
+  try {
+    const g = h.fresh(5);
+    g.totalTasksDone = 12;
+    h.api.syncMusicPlayback();
+    assert.equal(h.audioPlayers.length, 2);
+    assert.ok(h.audioPlayers.every(player => player.paused));
+    g.phase = 4;
+    h.api.unlockMusicPlayback();
+    assert.equal(h.audioPlayers.length, 2);
+    g.cash = 12000;
+    g.totalTasksDone = 1150;
+    h.prepareUpgrade('tool_use');
+    h.api.purchaseUpgrade('tool_use');
+    assert.equal(g.phase, 5);
+    const synth = h.audioPlayers.find(player => player.src === 'synth_d4_loop.mp3');
+    assert.ok(synth);
+    assert.equal(synth.preload, 'auto');
+    assert.equal(synth.loop, true);
+    assert.equal(synth.paused, false);
+    assert.equal(synth.volume, 0);
+    const timerCount = nextInterval;
+    h.api.syncMusicPlayback();
+    assert.equal(nextInterval, timerCount);
+    advanceFades(4000);
+    assert.equal(synth.volume, 0.03645);
+    h.api.syncMusicPlayback();
+    assert.equal(synth.volume, 0.03645);
+    advanceFades(4000);
+    assert.equal(synth.volume, 0.0729);
+    synth.currentTime = 1.5;
+    synth.pause();
+    h.api.syncMusicPlayback();
+    assert.equal(synth.paused, false);
+    assert.equal(synth.volume, 0.0729);
+    g.phase = 8;
+    h.api.syncMusicPlayback();
+    advanceFades(2000);
+    assert.equal(h.audioPlayers.filter(player => player.src === 'synth_d4_loop.mp3').length, 1);
+    assert.equal(synth.currentTime, 1.5);
+    assert.equal(synth.paused, false);
+    assert.equal(synth.volume, 0.0729);
+    g.phase = 4;
+    h.api.syncMusicPlayback();
+    assert.equal(synth.paused, true);
+    assert.equal(synth.currentTime, 0);
+    assert.equal(synth.volume, 0);
+    g.phase = 5;
+    h.api.syncMusicPlayback();
+    advanceFades(1000);
+    assert.ok(synth.volume > 0 && synth.volume < 0.0729);
+    g.musicMode = 'on';
+    h.api.syncMusicPlayback();
+    advanceFades(10000);
+    assert.equal(synth.paused, true);
+    assert.equal(synth.volume, 0);
+    assert.ok(h.audioPlayers.some(player => player.src === 'soundtrack-loop.mp3' && !player.paused));
+    g.musicMode = 'layered';
+    h.api.syncMusicPlayback();
+    advanceFades(8000);
+    assert.equal(synth.volume, 0.0729);
+    for (const change of [() => { g.musicMode = 'off'; }, () => { g.totalTasksDone = 0; }, () => { g.gameStarted = false; }, () => { g.retired = true; }]) {
+      change();
+      h.api.syncMusicPlayback();
+      assert.equal(synth.paused, true);
+      assert.equal(synth.currentTime, 0);
+      assert.equal(synth.volume, 0);
+      g.musicMode = 'layered'; g.totalTasksDone = 12; g.gameStarted = true; g.retired = false;
+      h.api.syncMusicPlayback();
+      assert.equal(synth.paused, false);
+      advanceFades(1000);
+    }
+    g.phase = 15;
+    h.api.sellCompany();
+    assert.ok(h.audioPlayers.every(player => player.paused));
+    assert.equal(synth.volume, 0);
+    h.window.GAME.prestige();
+    assert.ok(h.audioPlayers.every(player => player.paused));
+    assert.equal(synth.volume, 0);
+  } finally {
+    h.close();
+  }
+});
+
 scenario('onboarding, manual work, keyboard action and rendering', (h) => {
   h.window.document.querySelector('#btn-start-game').click();
   h.window.document.querySelector('#btn-do-task').click();

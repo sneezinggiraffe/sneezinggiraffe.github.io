@@ -29,6 +29,7 @@ Open http://127.0.0.1:4173. Python 3 is needed for this development server. Any 
 - AI CEO **Manage Mode** staffs existing clusters and changes the status display. Recruitment Pipeline ($600K) halves its decision interval; Batch Onboarding ($1.2M) hires two agents per round. **Scale Mode** additionally provisions more clusters, with no eight-cluster cap. Phase 10 cards simplify when the CEO is hired.
 - Phase 12 introduces compact nodes. Provision each one manually; the CEO automatically employs its team. Phase 13 unlocks automatic replication after reaching at least twenty online nodes and adding at least nine nodes during Phase 12. Its upgrade is hidden until twenty shells exist, then waits for all required nodes to be online and reduces provision costs by 35%. Phase 14 unlocks at forty nodes, reduces costs another 40%, and uses dense `C1`, `C2`, etc. boxes. There is no fixed node cap; prices continue rising.
 - Client retainer upgrades deploy contracts automatically, each earning $80/s before downtime and $2/s upkeep. The cluster footer shows the active contract count and current income after downtime. Two managed clusters increase agent task speed by 50%; three or more double it.
+- Layered music adds a bright D4 + F4 synth motif from Phase 5: both notes sound together in two five-hit phrases per 4/4 bar, with each phrase lasting two beats. The 125 ms plucks have a slightly stronger middle hit, subtle stereo chorus and a light reverb tail. It fades in over eight seconds at a quiet background level and continues alongside the later drum layer. Music: On plays the base soundtrack; Music: Off silences every layer.
 
 ## Company leadership and delivery
 
@@ -94,6 +95,7 @@ Run `npm run check`, then publish the static runtime files through the repositor
 - `favicon.svg`
 - `soundtrack-loop.mp3`
 - `precursor_kick.mp3`
+- `synth_d4_loop.mp3`
 - `dnb_deep_loop.mp3`
 
 Do not publish `node_modules`, coverage reports, or test artifacts. Tests and tooling are development-only. This work does not require a new hosting service.
