@@ -224,7 +224,10 @@
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 35% more valuable.", cost: 3000, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 500 },
     { id: "client_outreach", name: "Client Outreach", desc: "Build a steady pipeline for both subscriptions. Tasks arrive twice as often.", cost: 4500, currency: "cash", phase: 3, effect: { taskSpawnMult: 2 }, oneTime: true, reqTasks: 650 },
     { id: "second_ai", requires: "client_outreach", showBeforeRequires: true, name: "Second AI Subscription", desc: "A second AI subscription with its own token allowance.", cost: 18000, currency: "cash", phase: 3, oneTime: true, reqTasks: 650 },
-    { id: "multi_bot", name: "Multi-Agent Licence", requires: "second_ai", desc: "More agents, more work.", cost: 25000, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 750 },
+    { id: "inference_tuning", requires: "second_ai", name: "Inference Tuning", desc: "Tune both subscriptions to work 15% faster.", cost: 6000, currency: "cash", phase: 3, effect: { aiPowerMult: 1.15, agentSpeedMult: 1.15 }, oneTime: true, reqTasks: 900 },
+    { id: "prompt_refinement", requires: "inference_tuning", name: "Prompt Refinement", desc: "Polish reusable prompts. Both subscriptions work 5% faster.", cost: 1500, currency: "cash", phase: 3, effect: { aiPowerMult: 1.05, agentSpeedMult: 1.05 }, oneTime: true, reqTasks: 925 },
+    { id: "context_pruning", requires: "prompt_refinement", name: "Context Pruning", desc: "Trim unnecessary context. Both subscriptions use 5% fewer tokens.", cost: 2500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.95 }, oneTime: true, reqTasks: 950 },
+    { id: "multi_bot", name: "Multi-Agent Licence", requires: "context_pruning", visibleAfter: "inference_tuning", desc: "More agents, more work.", cost: 25000, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 1000 },
 
     // Phase 4 -> 5
     { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
@@ -1686,6 +1689,7 @@
     if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
+    if (upgrade.visibleAfter) return G.purchasedUpgrades.includes(upgrade.visibleAfter);
     if (upgrade.requires && !upgrade.showBeforeRequires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
     if (upgrade.requiresRole && !G.agents.some((agent) => agent.roleId === upgrade.requiresRole)) return false;
     if (!upgrade.oneTime) return true;
@@ -3639,7 +3643,7 @@
     const early = { "0_1": 0, "0_2": 7, "0_3": 35, "0_4": 100, "1": 89 };
     const startPhase8 = stage === "start8";
     const number = startPhase8 ? 8 : Number(stage);
-    const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
+    const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
     G = defaultState();
@@ -3648,7 +3652,7 @@
     G.totalIncidents = 3;
     G.incidentsExplained = true;
     G.cash = 1e15;
-    const preceding = UPGRADES.filter((upgrade) => upgrade !== target && upgrade.oneTime && (!Object.hasOwn(early, stage) || upgrade.reqTasks < early[stage]) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
+    const preceding = UPGRADES.filter((upgrade, index) => upgrade !== target && (stage !== "3_1" || index < UPGRADES.indexOf(target)) && upgrade.oneTime && (!Object.hasOwn(early, stage) || upgrade.reqTasks < early[stage]) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
     const requiredClusters = Math.max(phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
@@ -3660,9 +3664,10 @@
     fillCheatCompany(requiredClusters);
     tickConstruction(12.1);
     if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - (stage === "retire" ? 0 : 1)));
-    G.totalTasksDone = stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
+    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 } }[stage];
+    G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
-    G.cash = target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
+    G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
     G.tokens = phase >= 9 ? Math.max(100000, G.clusters.length * 12000) : phase >= 6 ? 50000 : phase >= 3 ? 10000 : 0;
     G.aiWorkerTokenTank = phase >= 2 && !G.aiWorkerShutdown ? workerTokenCapacity() : 0;
     G.managerTokenTank = phase >= 6 && phase < 9 ? MANAGER_TOKEN_TANK_MAX : 0;
@@ -3761,7 +3766,7 @@
 
   // Console shortcuts
   var cheatShortcuts = [
-    "0_1", "0_2", "0_3", "0_4", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    "0_1", "0_2", "0_3", "0_4", 1, 2, 3, "3_1", 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
   ];
   window.chStart8 = function () { GAME.cheat("start8"); };
   window.chRetire = function () { GAME.cheat("retire"); };

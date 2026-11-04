@@ -6,7 +6,7 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | --- | ---: | ---: | --- |
 | 1 | 0 | $0 | First tools: $34–$51 |
 | 2 | 106 | $26–$51 | Prompt Library $150, Gig Alerts $250, Prompting $450, Marketing $650, Basic subscription $2,000 |
-| 3 | 370–395 | $4–$41 | Client Outreach $4,500, Second subscription $18K, Multi-Agent Licence $25K |
+| 3 | 370–395 | $4–$41 | Client Outreach $4,500, Second subscription $18K, Inference Tuning $6K, Prompt Refinement $1.5K, Context Pruning $2.5K, Multi-Agent Licence $25K |
 | 4 | 1,290–1,320 | $8–$330 | Slots and speed, then Tool Use SDK $12K |
 | 5 | 1,610–1,640 | $60–$320 | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
 | 6 | 5,015–5,045 | $33K–$61K | Token Manager unlock $40K |
@@ -28,8 +28,10 @@ The earliest allowed entry can be substantially below these task counts. For exa
 - `chPh0_3()` loads 35 tasks with Side Hustle Optimization, Inbox Zero and GTD Workflow available.
 - `chPh0_4()` loads 100 tasks with Discover Free-Tier AI visible; one five-task manual session reaches its 105-task requirement.
 
+- `chPh3_1()` loads Phase 3 at 870 tasks and $14,000, just before Second AI Subscription. All earlier upgrades are purchased; another $4,000 funds the subscription.
+
 - `chStart8()` loads the beginning of Phase 8 at 150,000 tasks, with its growth upgrades left to play through.
-- `chPh8()` loads just before unlocking Phase 8.
+- `chPh8()` loads Phase 7 at 390,000 tasks and $800,000, leaving $200,000 to earn before buying Ralph-loops.
 - `chPh9()` loads late Phase 8, with ordinary upgrades already purchased, just before the acquisition.
 - Other `chPhN()` shortcuts likewise prepare the transition into that numbered phase. Their injected cash and purchased upgrades are not balance measurements.
 - `chRetire()` loads an immediately purchasable Golden Parachute.

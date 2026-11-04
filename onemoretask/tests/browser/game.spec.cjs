@@ -84,7 +84,7 @@ for (const [phase, capacity] of [[10, 2], [10, 4], [12, 2]]) {
 test('Ralph-loops and AI expansion skip modals and the operating model uses the new price and copy', async ({page}) => {
   await page.clock.install();
   await page.goto('/');
-  await page.evaluate(() => { chPh8(); GAME.addTasks(3); });
+  await page.evaluate(() => { chPh8(); GAME.addCash(200000); });
   await page.clock.runFor(200);
   const loops = page.locator('[onclick="GAME.buy(\'ops_flywheel\')"]');
   await expect(loops.locator('..').locator('..')).toContainText('Ralph-loops');
@@ -734,14 +734,46 @@ test('Scale Mode continues automatic construction and staffing in Phase 12',asyn
   await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)').nth(100).locator('.capacity-slot.filled')).toHaveCount(16);await expect(page.locator('.node-grid div.cluster-card:not(.planning-card) button')).toHaveCount(0);
 });
 
-test('Phase 3 requires the second subscription before upgrading both workers',async({page})=>{
+test('Phase 3 requires two cheap upgrades while keeping the multi-agent licence visible',async({page})=>{
+  await page.emulateMedia({reducedMotion: 'reduce'});
   const h=harness();const g=h.fresh(3);g.cash=100000;g.tokens=200;g.totalTasksDone=800;h.prepareUpgrade('second_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();
+  await page.clock.install({time: new Date(g.lastTick)});
+  await page.clock.pauseAt(new Date(g.lastTick + 1000));
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   await expect(page.locator('[onclick="GAME.buy(\'multi_bot\')"]')).toHaveCount(0);await page.locator('[onclick="GAME.buy(\'second_ai\')"]').click();
+  await page.clock.runFor(200);
   await expect(page.locator('#agent-list').getByRole('button',{name:'Top-up tokens'})).toHaveCount(2);await expect(page.locator('#agent-slots')).toHaveCount(0);
   for(const button of await page.locator('#agent-list').getByRole('button',{name:'Top-up tokens'}).all())await button.click();
   expect(await page.evaluate(()=>GAME.state.tokens)).toBe(60);await page.screenshot({path:'test-results/phase3-two-subscriptions.png',fullPage:true});
+  const tuning = page.locator('[onclick="GAME.buy(\'inference_tuning\')"]');
+  const licence = page.locator('[onclick="GAME.buy(\'multi_bot\')"]');
+  await expect(tuning).toHaveCount(0);
+  await expect(licence).toHaveCount(0);
+  await page.evaluate(() => GAME.addTasks(100));
+  await page.clock.runFor(200);
+  await expect(tuning).toHaveText('$6.0K');
+  await expect(licence).toHaveCount(0);
+  await tuning.click();
+  await page.clock.runFor(200);
+  expect(await page.evaluate(() => ({basic: GAME.state.aiPowerMult, pro: GAME.state.agentSpeedMult}))).toEqual({basic: 1.15, pro: 1.15});
+  await expect(licence).toHaveCount(0);
+  await page.evaluate(() => GAME.addTasks(100));
+  await page.clock.runFor(200);
+  await expect(licence).toBeVisible();
+  await expect(licence).toBeDisabled();
+  const refinement = page.locator('[onclick="GAME.buy(\'prompt_refinement\')"]');
+  const pruning = page.locator('[onclick="GAME.buy(\'context_pruning\')"]');
+  await expect(refinement).toHaveText('$1.5K');
+  await expect(pruning).toHaveCount(0);
+  await refinement.click();
+  await page.clock.runFor(200);
+  await expect(licence).toBeDisabled();
+  await expect(pruning).toHaveText('$2.5K');
+  await pruning.click();
+  await page.clock.runFor(200);
+  await expect(licence).toBeEnabled();
   await page.locator('[onclick="GAME.buy(\'multi_bot\')"]').click();expect(await page.evaluate(()=>GAME.state.phase)).toBe(4);expect(await page.evaluate(()=>GAME.state.aiWorkerShutdown)).toBe(true);expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(2);
+  await page.clock.runFor(200);
   await expect(page.locator('#agent-list').getByRole('button',{name:'Sell'})).toHaveCount(2);
 });
 
@@ -828,7 +860,7 @@ for (const width of [1440, 390]) {
 
 for(const width of [1440,390]) {
   test(`AI subscriptions keep matching bars and buttons through licensing at ${width}px`,async({page})=>{
-    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});const h=harness();const g=h.fresh(3);g.cash=1e6;g.tokens=200;g.totalTasksDone=800;h.prepareUpgrade('second_ai');h.api.purchaseUpgrade('second_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();
+    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});const h=harness();const g=h.fresh(3);g.cash=1e6;g.tokens=200;g.totalTasksDone=1000;h.prepareUpgrade('second_ai');h.api.purchaseUpgrade('second_ai');h.api.purchaseUpgrade('inference_tuning');h.api.purchaseUpgrade('prompt_refinement');h.api.purchaseUpgrade('context_pruning');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();
     await page.addInitScript(value=>{localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('rotate_dismissed','1')},raw);await page.goto('/');
     if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();
     for(const phase of [3,4]){
@@ -1198,3 +1230,39 @@ test('provisioning improvements bracket sixteen slots and stay available during 
   await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');
   await page.locator('#upgrade-list').screenshot({path:'test-results/scaling-upgrades.png'});
 });
+
+test('phase checkpoints save the requested task and cash amounts', async ({page}) => {
+  await page.clock.install();
+  await page.goto('/');
+  for (const [stage, cash, tasks] of [['3_1', 14000, 870], [8, 800000, 390000]]) {
+    const checkpoint = await page.evaluate(stage => {
+      window['chPh' + stage]();
+      const saved = JSON.parse(localStorage.getItem('ai_empire_save'));
+      return {cash: GAME.state.cash, savedCash: saved.cash, tasks: GAME.state.totalTasksDone, savedTasks: saved.totalTasksDone};
+    }, stage);
+    expect(checkpoint).toEqual({cash, savedCash: cash, tasks, savedTasks: tasks});
+  }
+});
+
+for (const width of [1440, 390]) {
+  test(`the second subscription checkpoint preserves its savings goal after reload at ${width}px`, async ({page}) => {
+    await page.setViewportSize({width, height: 900});
+    const now = new Date();
+    await page.clock.install({time: now});
+    await page.clock.pauseAt(new Date(now.getTime() + 1000));
+    await page.goto('/');
+    await page.evaluate(() => chPh3_1());
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const second = page.locator('[onclick="GAME.buy(\'second_ai\')"]');
+    await expect(second).toBeVisible();
+    await expect(second).toHaveText('$18.0K');
+    await expect(second).toBeDisabled();
+    expect(await page.evaluate(() => ({phase: GAME.state.phase, tasks: GAME.state.totalTasksDone, cash: GAME.state.cash, agents: GAME.state.agents.length}))).toEqual({phase: 3, tasks: 870, cash: 14000, agents: 0});
+    await page.evaluate(() => GAME.addCash(4000));
+    await page.clock.runFor(200);
+    await second.click();
+    await page.clock.runFor(200);
+    await expect(page.locator('#agent-list')).toContainText('AI 2000 Pro');
+  });
+}
