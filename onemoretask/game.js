@@ -3669,7 +3669,7 @@
     const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
-    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "11": { tasks: 27000000, cash: 280000000, clusters: 18 } }[stage];
+    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 280000000, clusters: 18 } }[stage];
     G = defaultState();
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];

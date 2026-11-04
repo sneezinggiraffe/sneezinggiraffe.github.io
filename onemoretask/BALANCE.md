@@ -50,6 +50,7 @@ These task milestones control visibility in the background. Existing staffing re
 - `chStart8()` loads the beginning of Phase 8 at 150,000 tasks, with its growth upgrades left to play through.
 - `chPh8()` loads Phase 7 at 390,000 tasks and $800,000, leaving $200,000 to earn before buying Ralph-loops.
 - `chPh9()` loads late Phase 8 at 1M tasks and $1.2M, with ordinary upgrades already purchased and $300K left to earn for the acquisition.
+- `chPh10()` loads late Phase 9 at 4.6M tasks, $30M and 3 fully staffed clusters, leaving $5M to earn for AI CEO Readiness.
 - `chPh11()` loads late Phase 10 at 27M tasks, $280M and 18 fully staffed clusters, with $20M left to earn for AI Expansion Optimisation.
 - Other `chPhN()` shortcuts likewise prepare the transition into that numbered phase. Their injected cash and purchased upgrades are not balance measurements.
 - `chRetire()` loads an immediately purchasable Golden Parachute.

@@ -131,7 +131,7 @@ The fixed coverage baseline keeps the release coverage requirement enforceable a
 
 ## Console checkpoints
 
-Use `chStart8()` to play Phase 8 from its entry, with growth upgrades still unpurchased. `chPh9()` is an end-of-Phase-8 checkpoint with 1M tasks and $1.2M, including the growth purchases and leaving $300K to earn for the acquisition. `chPh11()` prepares late Phase 10 with 27M tasks, $280M and 18 fully staffed clusters, leaving $20M to earn for AI Expansion Optimisation. See [balance landmarks](BALANCE.md) for rough task and cash ranges during ordinary play.
+Use `chStart8()` to play Phase 8 from its entry, with growth upgrades still unpurchased. `chPh9()` is an end-of-Phase-8 checkpoint with 1M tasks and $1.2M, including the growth purchases and leaving $300K to earn for the acquisition. `chPh10()` prepares late Phase 9 with 4.6M tasks, $30M and 3 fully staffed clusters, leaving $5M to earn for AI CEO Readiness. `chPh11()` prepares late Phase 10 with 27M tasks, $280M and 18 fully staffed clusters, leaving $20M to earn for AI Expansion Optimisation. See [balance landmarks](BALANCE.md) for rough task and cash ranges during ordinary play.
 
 `chRetire()` replaces the current save with Phase 15, one billion tasks, one hundred fully staffed nodes, sufficient cash, healthy operations and an immediately usable **Golden Parachute**. Clicking its $5B button opens the retirement ending in one action.
 
