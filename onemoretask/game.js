@@ -57,7 +57,7 @@
   const MANUAL_WORK_SECONDS_PER_CLICK = 0.15;
   const MANUAL_STRESS_PER_SEC = 2;
   // Keep AI throughput after moving the early 4.5x click-power bonuses into manual queues.
-  const AI_WORK_MULT_PHASE2 = 5.625;
+  const AI_WORK_MULT_PHASE2 = 2.8125;
   const AI_WORK_MULT_PHASE3 = 8.1;
   const AI_FAIL_BASE_PHASE2_PER_SEC = 0.018;
   const AI_FAIL_BASE_PHASE3_PER_SEC = 0.009;
@@ -173,9 +173,9 @@
   const UPGRADES = [
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
-    { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 10 },
-    { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 10 },
-    { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 10 },
+    { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 7 },
+    { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
+    { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 30 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 30 },
     { id: "gtd_workflow", name: "GTD Workflow", desc: "Work on 5 tasks at once with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 30 },
@@ -184,20 +184,20 @@
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
     { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
-    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically. Free after 50 completed tasks; top up its tokens to keep it running.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 50 },
+    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 50 },
 
     // Phase 2 -> 3
-    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 450, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 200 },
+    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "30% more work per prompt", cost: 450, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 200 },
     { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 650, currency: "cash", phase: 2, effect: { payMult: 1.6, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 200 },
     { id: "pro_model", name: "Upgrade to AI 2000 Basic", desc: "A larger token allowance for longer sessions.", cost: 2500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 300 },
 
     // Phase 3 -> 4
     { id: "token_pack_1", name: "Token Pack (200)", desc: "Get 200 tokens.", cost: 110, currency: "cash", phase: 3, effect: { giveTokens: 200 }, oneTime: false },
-    { id: "token_optimizer", name: "Token Optimizer", desc: "Smarter caching reduces AI assist token usage by 20%.", cost: 1000, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.8 }, oneTime: true, reqTasks: 350},
+    { id: "token_optimizer", name: "KV Caching", desc: "Reduces token use by 20%.", cost: 1000, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.8 }, oneTime: true, reqTasks: 350},
     { id: "guardrails", name: "Output Guardrails", desc: "Validation layer catches hallucinations. AI failure rate -30%.", cost: 1200, currency: "cash", phase: 3, effect: { aiFailMult: 0.7 }, oneTime: true, reqTasks: 350 },
-    { id: "token_compressor", name: "Prompt Compression", desc: "Prompt compacting reduces AI assist token usage by 25%.", cost: 1500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 350 },
+    { id: "token_compressor", name: "Prompt Compression", desc: "Shorter prompts reduce AI token use by 25%.", cost: 1500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 350 },
     { id: "premium_support", name: "Premium Support", desc: "Priority response times. Clients are thrilled.", cost: 800, currency: "cash", phase: 3, effect: { payMult: 1.05 }, oneTime: true, reqTasks: 425 },
-    { id: "token_distiller", name: "Model Distillation", desc: "Smaller model handles routine work. AI assist token usage drops by 33%.", cost: 1500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.67 }, oneTime: true, reqTasks: 425 },
+    { id: "token_distiller", name: "Model Distillation", desc: "Reduces token use by 33%.", cost: 1500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.67 }, oneTime: true, reqTasks: 425 },
     { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 1200, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 425 },
     { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 2500, currency: "cash", phase: 3, effect: { payMult: 2.0 }, oneTime: true, reqTasks: 500 },
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 35% more valuable.", cost: 3000, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 500 },
@@ -208,13 +208,13 @@
     { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
     { id: "inbound_pipeline", name: "Inbound Pipeline", desc: "Run an early growth push. Tasks arrive 30% faster.", cost: 1800, currency: "cash", phase: 4, effect: { taskSpawnMult: 1.3 }, oneTime: true },
     { id: "task_templates", name: "Task Templates", desc: "Pre-written briefs. Tasks require 15% less work.", cost: 2400, currency: "cash", phase: 4, effect: { workReduction: 0.15 }, oneTime: true },
-    { id: "agent_slot_3", name: "Agent Slot Expansion (4)", desc: "Allow up to 4 agents.", cost: 5000, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true, requires: "task_templates", reqAgents: 3 },
+    { id: "agent_slot_3", name: "Additional Agent Slot", desc: "Add room for one more agent.", cost: 5000, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true, requires: "task_templates", reqAgents: 3 },
     { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 40% more.", cost: 2500, currency: "cash", phase: 4, effect: { payMult: 1.4 }, oneTime: true },
     { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 3200, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true, reqTasks: 350, reqIncidents: 3 },
     { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 4000, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true },
     { id: "parallel_prompts", name: "Parallel Prompting", desc: "Run independent steps together. Agents work 15% faster.", cost: 3800, currency: "cash", phase: 4, requires: "agent_slot_3", effect: { agentSpeedMult: 1.15 }, oneTime: true },
     { id: "response_streaming", name: "Response Streaming", desc: "Process results as they arrive. Agents work 20% faster.", cost: 5200, currency: "cash", phase: 4, requires: "parallel_prompts", effect: { agentSpeedMult: 1.2 }, oneTime: true },
-    { id: "agent_slot_5", requires: "response_streaming", name: "Agent Slot Expansion (6)", desc: "Allow up to 6 agents.", cost: 6500, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
+    { id: "agent_slot_5", requires: "response_streaming", name: "Two More Agent Slots", desc: "Add room for two more agents.", cost: 6500, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
     { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools.", cost: 12000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true, reqTasks: 1150 },
 
     // Phase 5 (operations pressure)
@@ -234,7 +234,7 @@
     // Phase 7 (token-stable autopilot)
     { id: "agent_slot_7", name: "Add Another Agent Slot", desc: "Room for another agent.", cost: 22000, currency: "cash", phase: 8, requiresRole: "token_mgr", effect: { agentSlots: 8 }, oneTime: true, reqTasks: 670 },
     { id: "compute_2", name: "Revenue Optimization Upgrade", desc: "Deliver batches of around 500 tasks. Double revenue.", cost: 150000, currency: "cash", phase: 7, effect: { batchSize: 500, payMult: 2.0 }, oneTime: true, reqTasks: 45000 },
-    { id: "devops_unlock", name: "DevOps Agent Slot", desc: "Automate incident response.", cost: 60000, currency: "cash", phase: 7, oneTime: true, reqTasks: 30000 },
+    { id: "devops_unlock", name: "DevOps Agent Slot", desc: "Automate incident response.", cost: 60000, currency: "cash", phase: 7, oneTime: true, reqTasks: 28000 },
     { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 175000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 65000 },
     { id: "delivery_pipeline", name: "Delivery Pipeline", desc: "A smoother handoff. All agents work 25% faster.", cost: 250000, currency: "cash", phase: 7, effect: { agentSpeedMult: 1.25 }, oneTime: true, reqTasks: 90000 },
     { id: "premium_contracts", name: "Premium Client Contracts", desc: "Win better client work. All tasks pay 35% more.", cost: 350000, currency: "cash", phase: 7, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 115000 },
@@ -265,18 +265,18 @@
     { id: "ceo_parallel_clusters", name: "Parallel Cluster Builds", desc: "Build two clusters at once.", cost: 150000000, currency: "cash", phase: 10, requires: "ceo_quad_batch", oneTime: true },
     { id: "ceo_fast_builds", name: "Preassembled Server Racks", desc: "Halve cluster construction time.", cost: 200000000, currency: "cash", phase: 10, requires: "server_1", oneTime: true },
     { id: "server_2", name: "Autonomous Expansion Desk", desc: "Refine expansion workflows. Task pay increases by 20%.", cost: 2500000, currency: "cash", phase: 10, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1440 },
-    { id: "retire_unlock", name: "Golden Parachute", desc: "Reach 100 managed nodes and prepare your exit.", cost: 2000000000, currency: "cash", phase: 14, reqNodes: 100, unlockPhase: 15, effect: {}, oneTime: true, reqTasks: 1520 },
+    { id: "retire_unlock", name: "Prepare Company Sale", desc: "Reach 100 managed nodes and prepare your exit.", cost: 2000000000, currency: "cash", phase: 14, reqNodes: 100, unlockPhase: 15, effect: {}, oneTime: true, reqTasks: 1520 },
 
-    { id: "ceo_course", name: "CEO Goes on a Course", desc: "Halve cluster construction time again. The CEO coordinates twice as often.", cost: 100000000, currency: "cash", phase: 10, requires: "server_1", unlockPhase: 11, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
+    { id: "ceo_course", name: "AI Expansion Optimisation", desc: "Halve cluster construction time again. The AI CEO coordinates twice as often.", cost: 300000000, currency: "cash", phase: 10, requires: "server_1", unlockPhase: 11, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
     { id: "ceo_full_fit", name: "Fully Fitted Racks", desc: "Install all 16 agents during construction. Agent costs are included in the cluster price.", cost: 80000000, currency: "cash", phase: 11, requires: "ceo_course", oneTime: true },
     { id: "autonomous_nodes", name: "Autonomous Operating Model", desc: "Compact infrastructure for a larger autonomous company.", cost: 75000000, currency: "cash", phase: 11, reqNodes: 3, unlockPhase: 12, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 2000000 },
     { id: "ceo_continuous", name: "Continuous Deployment", desc: "Complete two fully fitted clusters every two seconds, while funds allow.", cost: 150000000, currency: "cash", phase: 12, requires: "ceo_full_fit", oneTime: true },
     { id: "replication", name: "Node Replication", desc: "Standardize node replication. Reduce cluster costs by 35%.", cost: 50000000, currency: "cash", phase: 12, reqNodes: 20, unlockPhase: 13, effect: { payMult: 1.15 }, oneTime: true },
-    { id: "global_network", name: "Global Expansion", desc: "Expand every second, with node costs reduced another 40%.", cost: 250000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
+    { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 250000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
 
     // Phase 11 (retirement)
     // Retirement now follows the four new network stages, in Phase 15.
-    { id: "fusion", name: "Sell the Company and Retire Early!", desc: "Close the deal, play golf and finally look after your health. Requires 100 managed nodes, debt below 10, no incidents and income above twice expenses.", cost: 5000000000, currency: "cash", phase: 15, effect: {}, oneTime: true, reqTasks: 1560 },
+    { id: "fusion", name: "Golden Parachute", desc: "Sell the company, play golf and finally look after your health. Requires debt below 10, no incidents and income above twice expenses.", cost: 5000000000, currency: "cash", phase: 15, reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
 
     // Repeatable
     { id: "token_pack_2", name: "Token Pack (500)", desc: "Get 500 tokens.", cost: 300, currency: "cash", phase: 3, effect: { giveTokens: 500 }, oneTime: false },
@@ -294,7 +294,7 @@
     { phase: 8, name: "Growth spend + referrals", rate: 28 },
     { phase: 9, name: "Server power & cooling", rate: 45 },
     { phase: 10, name: "AI CEO command stack", rate: 70 },
-    { phase: 11, name: "Executive training", rate: 120 },
+    { phase: 11, name: "Expansion infrastructure", rate: 120 },
     { phase: 12, name: "Autonomous network", rate: 180 },
     { phase: 13, name: "Replication platform", rate: 250 },
     { phase: 14, name: "Global network", rate: 400 },
@@ -307,13 +307,13 @@
     { id: "first_task", reqTasks: 3, reveals: ["topBar", "cash"] },
     { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], popup: { title: "Incoming...", msg: "More gigs are coming in. Your inbox is filling up." }, spawnOnTrigger: 2 },
     { id: "stress_unlock", reqTasks: 12, reveals: ["stress"], popup: { title: "Pressure Building", msg: "The work keeps coming. You are starting to feel the pressure." } },
-    { id: "upgrades_unlock", reqTasks: 15, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true }, popup: { title: "Tools of the Trade", msg: "Maybe some better tools would help you keep up..." } },
+    { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true }, popup: { title: "Tools of the Trade", msg: "Maybe some better tools would help you keep up..." } },
     { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true }, popup: { title: "Reality Check", msg: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash." } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
     { id: "ai_hint", reqTasks: 35, popup: { title: "There Must Be a Better Way", msg: "You are getting faster, but the work never stops. Maybe there is a smarter way..." } },
     // Phase-based
     { id: "tokens_unlock", reqPhase: 3, reveals: ["tokens"] },
-    { id: "agents_unlock", reqPhase: 2, reveals: ["agents"], popup: { title: "AI Agent", msg: "Your first AI agent is available. Top it up to keep it running tasks for you." } },
+    { id: "agents_unlock", reqPhase: 2, reveals: ["agents"] },
     { id: "dashboard_unlock", reqPhase: 8, reveals: ["dashboard"] },
     { id: "clusters_unlock", reqPhase: 9, reveals: ["clusters"] },
     { id: "debt_unlock", reqPhase: 9, reveals: ["debt"] },
@@ -581,6 +581,7 @@
 
   function getMaxTasks() {
     if (G.phase >= 9) return Math.max(MAX_TASKS, managedNodeCount() * 12);
+    if (G.phase === 2 || G.phase === 3) return MAX_TASKS;
     if (G.totalTasksDone < 10) return 3;
     if (G.totalTasksDone < 20) return 5;
     if (G.totalTasksDone < 50) return 6;
@@ -592,6 +593,7 @@
     var base;
     {
       if (!G.uiRevealed.taskQueue) return Infinity; // No auto-spawn before task queue
+      if (G.phase === 2 || G.phase === 3) return (G.phase === 2 ? 4000 : 3500) / Math.max(1, G.taskSpawnMult);
       if (G.totalTasksDone < 10) base = 2000;
       else if (G.totalTasksDone < 15) base = 1600;
       else if (G.totalTasksDone < 20) base = 1100;
@@ -721,7 +723,7 @@
   }
 
   function workerTokenRate() {
-    return G.phase >= 6 ? 150 : G.phase === 5 ? 60 : G.phase === 4 ? 15 : G.phase === 3 ? 4 : 1.2;
+    return G.phase >= 6 ? 150 : G.phase === 5 ? 60 : G.phase === 4 ? 15 : G.phase === 3 ? 4 : 2.4;
   }
 
   function workerTokenCost(agent) {
@@ -1641,8 +1643,7 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
-    if (upgrade.id === "free_ai") return true;
-    if (upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks && !(G.phase === 7 && upgrade.phase === 7)) return false;
+    if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
     if (upgrade.requires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
@@ -1697,7 +1698,7 @@
       if (upg.effect.aiFailMult) G.aiFailMult *= upg.effect.aiFailMult;
       if (upg.effect.aiPowerMult) G.aiPowerMult *= upg.effect.aiPowerMult;
       if (upg.effect.giveTokens) { const amount = upg.id.startsWith("token_pack_") ? tokenPackAmount(upg) : upg.effect.giveTokens; G.tokens += amount; log(upg.name + ": +" + amount + " tokens.", "info"); }
-      if (upg.effect.agentSlots) G.agentSlots = Math.max(G.agentSlots, upg.effect.agentSlots);
+      if (upg.effect.agentSlots) G.agentSlots = Math.max(G.agentSlots, upg.effect.agentSlots + Number(G.prestigeBonusSlot));
       if (upg.effect.toolBonus) G.toolBonus += upg.effect.toolBonus;
       if (upg.effect.codeSpeedMult) G.codeSpeedMult *= upg.effect.codeSpeedMult;
       if (upg.effect.agentSpeedMult) G.agentSpeedMult *= upg.effect.agentSpeedMult;
@@ -1951,7 +1952,7 @@
     if (interval === Infinity) return;
     if (Date.now() - G.lastTaskSpawn < interval) return;
     G.lastTaskSpawn = Date.now();
-    const batch = G.phase >= 9 ? Math.max(1, managedNodeCount()) : 1;
+    const batch = G.phase === 2 || G.phase === 3 ? randInt(5, 10) : G.phase >= 9 ? Math.max(1, managedNodeCount()) : 1;
     for (let index = 0; index < batch; index++) spawnTask();
   }
 
@@ -1988,9 +1989,13 @@
 
 
   function clusterBuildDuration() {
-    if (G.purchasedUpgrades.includes("ceo_continuous")) return 2;
+    if (G.purchasedUpgrades.includes("ceo_continuous")) return 2 / expansionSpeed();
     const base = G.phase >= 14 ? 2 : G.phase >= 13 ? 3 : G.phase >= 11 ? 6 : 12;
-    return base / (G.purchasedUpgrades.includes("ceo_fast_builds") ? 2 : 1);
+    return base / (G.purchasedUpgrades.includes("ceo_fast_builds") ? 2 : 1) / expansionSpeed();
+  }
+
+  function expansionSpeed() {
+    return G.phase < 14 ? 1 : clamp(1 + (completedClusterCount() - 40) / 20, 1, 4);
   }
 
   function openCluster() {
@@ -2094,7 +2099,7 @@
       const income = cluster.workforce * 15 * G.payMult * elapsed;
       G.cash += income;
       G.totalCashEarned += income;
-      cluster.progress += cluster.workforce * G.batchSize * elapsed / 4;
+      cluster.progress += cluster.workforce * G.batchSize * elapsed * (G.phase >= 14 ? 4.5 : G.phase === 13 ? 3 : 2) / 4;
       const completed = Math.floor(cluster.progress);
       cluster.progress -= completed;
       G.totalTasksDone += completed;
@@ -2122,7 +2127,7 @@
   function tickAiCeo() {
     if (G.ceoMode === "off") return;
     const baseInterval = G.phase >= 14 ? 1000 : G.phase >= 13 ? 2000 : G.phase >= 11 ? 2500 : 5000;
-    const interval = baseInterval / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.ceoMode === "scale" ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1);
+    const interval = baseInterval / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.ceoMode === "scale" ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1) / expansionSpeed();
     if (Date.now() - G.lastCeoAction < interval) return;
     G.lastCeoAction = Date.now();
     if (G.phase >= 12) {
@@ -2148,8 +2153,9 @@
     if (G.ceoMode !== "scale" || G.clusters.length === 0) return;
     const concurrent = G.purchasedUpgrades.includes("ceo_parallel_clusters") ? 2 : 1;
     const pending = G.clusters.filter((cluster) => !clusterOnline(cluster)).length;
+    const reserve = G.phase >= FINAL_PHASE ? getUpgradeCost(UPGRADES.find((upgrade) => upgrade.id === "fusion")) : 0;
     for (let index = pending; index < concurrent; index++) {
-      if (G.cash < provisionCost() * 2) break;
+      if (G.cash < provisionCost() * 2 + reserve) break;
       openCluster();
     }
   }
@@ -2576,7 +2582,7 @@
     var nextSoundtrackPath = getCurrentSoundtrackPath();
     var nextDrumLayerPath = getCurrentDrumLayerPath();
 
-    if (mode === "off" || !G.gameStarted || G.retired) {
+    if (mode === "off" || !G.gameStarted) {
       clearMusicFadeTimerIfAny();
       stopAndResetAudio(musicPlayer, MUSIC_TARGET_VOLUME);
       activeSoundtrackPath = null;
@@ -2586,7 +2592,7 @@
     }
 
     syncBaseSoundtrack(nextSoundtrackPath);
-    if (!nextSoundtrackPath || mode !== "layered") {
+    if (!nextSoundtrackPath || mode !== "layered" || G.retired) {
       stopDrumPlayback();
       stopSynthPlayback();
       return;
@@ -3032,11 +3038,10 @@
       html += "<div class='card upgrade-card'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
-        "<div class='desc'>" + u.desc + (requiredNodes ? " (" + requiredNodes + " nodes)" : "") + (u.phase === 7 && u.reqTasks ? " (" + fmtTokens(u.reqTasks) + " tasks)" : "") + "</div>" +
+        "<div class='desc'>" + u.desc + (requiredNodes ? " (" + requiredNodes + " nodes)" : "") + "</div>" +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
-        "<span class='upgrade-cost'>" + (u.currency === "tasks" ? u.reqTasks + " tasks" : u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford || !requirementsMet ? "disabled" : "") + ">" + (u.currency === "tasks" ? "Unlock" : "Buy") + "</button>" +
+        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford || !requirementsMet ? "disabled" : "") + ">" + (u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>" +
         "</div>";
     }
@@ -3048,8 +3053,7 @@
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       html += "<div style='display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);margin-right:6px;margin-bottom:6px'>" +
         "<span class='text-sm'>" + (u.id.startsWith("token_pack_") ? "Token Pack (" + fmtTokens(tokenPackAmount(u)) + ")" : u.name) + "</span>" +
-        "<span class='upgrade-cost text-sm'>" + (u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>Buy</button>" +
+        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>" + (u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>";
     }
     updateHTML($("#upgrade-list"), html);
@@ -3174,7 +3178,8 @@
     const compact = G.phase >= 12;
     const minimal = G.phase >= 14;
     const delegated = G.phase >= 10 && G.ceoMode !== "off";
-    const tiles = G.clusters.length + (canManuallyProvisionCluster() ? 1 : 0);
+    const planning = G.ceoMode === "scale" && G.clusters.length > 0;
+    const tiles = G.clusters.length + (canManuallyProvisionCluster() || planning ? 1 : 0);
     const density = Math.max(0, tiles - 3);
     const overview = !compact && density > 0;
     $("#cluster-count").textContent = managedNodeCount() + " online / " + G.clusters.length + " clusters";
@@ -3208,6 +3213,10 @@
       html += "</div>";
     }
     if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
+    if (planning) {
+      const stage = G.cash < provisionCost() * 2 ? "Securing funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
+      html += "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + (minimal ? "C" : "Cluster ") + (G.clustersProvisioned + 1) + "</strong><span>Planning</span><small>" + stage + "</small></div>";
+    }
     html += "</div>";
     updateHTML($("#cluster-list"), html);
   }
@@ -3537,16 +3546,16 @@
   function loadCheatStage(stage) {
     const early = { "0_1": 0, "0_2": 11, "0_3": 14, "1": 89 };
     const number = Number(stage);
-    const target = UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
+    const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
-    const phase = target ? number - 1 : 1;
+    const phase = target ? target.phase : 1;
     G = defaultState();
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];
     G.totalIncidents = 3;
     G.incidentsExplained = true;
     G.cash = 1e15;
-    const preceding = UPGRADES.filter((upgrade) => upgrade.oneTime && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
+    const preceding = UPGRADES.filter((upgrade) => upgrade !== target && upgrade.oneTime && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
     const requiredClusters = Math.max(phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
@@ -3557,8 +3566,8 @@
     }
     fillCheatCompany(requiredClusters);
     tickConstruction(12);
-    if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - 1));
-    G.totalTasksDone = target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
+    if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - (stage === "retire" ? 0 : 1)));
+    G.totalTasksDone = stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
     G.cash = target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
     G.tokens = phase >= 9 ? Math.max(100000, G.clusters.length * 12000) : phase >= 6 ? 50000 : phase >= 3 ? 10000 : 0;
@@ -3657,6 +3666,7 @@
   var cheatShortcuts = [
     "0_1", "0_2", "0_3", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
   ];
+  window.chRetire = function () { GAME.cheat("retire"); };
   for (var shortcutIndex = 0; shortcutIndex < cheatShortcuts.length; shortcutIndex++) {
     var shortcut = cheatShortcuts[shortcutIndex];
     var shortName = "chPh" + shortcut.toString();
