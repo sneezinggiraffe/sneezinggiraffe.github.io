@@ -56,8 +56,8 @@ function harness(saved, options = {}) {
   }
   function fullCluster() {
     const state=window.GAME.state;const cluster=api.addClusterWithNextName();cluster.managerAssigned=true;cluster.tokenManagerAssigned=true;
-    if(state.phase>=12)cluster.workforce=8;
-    else for(let i=0;i<8;i++)cluster.workerAgentIds.push(worker('coder').id);
+    if(state.phase>=12)cluster.workforce=cluster.workerSlotsMax;
+    else for(let i=0;i<cluster.workerSlotsMax;i++)cluster.workerAgentIds.push(worker('coder').id);
     return cluster;
   }
   return { dom, window, api, audioPlayers, advance, fresh, worker, task, dismiss, prepareUpgrade, fullCluster, close: () => dom.window.close() };

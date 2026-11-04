@@ -50,28 +50,28 @@ Phase 3 requires Second AI Subscription before Multi-Agent Licence becomes avail
 
 ## DevOps
 
-DevOps resolves warning and critical incidents automatically. Critical incidents consume twice the response time. There is no final player approval step. Manual and paid fixes remain optional shortcuts. A cluster management team includes its own DevOps response capacity.
+DevOps resolves warning and critical incidents automatically. Critical incidents consume twice the response time. There is no final player approval step. Manual and paid fixes remain optional shortcuts. Cluster construction includes management agents and DevOps software.
 
 ## Clusters, Phase 9 through 11
 
-1. The existing workforce becomes Cluster 1 with a complete management team.
-2. The first Phase 9 upgrade is the Operations Blueprint. A subsequent Second Cluster Permit reveals Provision cluster and permits exactly one additional cluster. A later Third Cluster Permit requires the second cluster to be full and adds one more. Three full clusters are required before Phase 10. All existing clusters must be built and full for subsequent cluster upgrades to appear, except Provisioning Pipeline and Batch Onboarding, which remain available while staffing. The discounted lease is removed.
-3. A newly provisioned shell needs one $12K management-team purchase containing Manager, Token Manager and DevOps, then agents cost $2.5K each. Render all eight slots after construction, even before hiring and under CEO management. Part-filled automated clusters say Scaling; full clusters say Operating or Awaiting tokens. Use a card grid before buying the CEO. Utilities consume no agent slots.
+1. The existing workforce becomes Cluster 1 with management agents included.
+2. Operations Blueprint precedes the Second Cluster Permit. The Third Cluster Permit requires a full second cluster. Three full clusters are required before Phase 10. Full-company upgrade visibility gates apply only in Phase 9. From Phase 10, upgrades remain visible while agents and clusters are being added.
+3. Bring cluster online includes its $12K management software cost in the infrastructure price. Construction progresses through Procuring GPUs, Racking hardware, Installing software and Final checks. Afterward, click empty slots to provision identical $2.5K agents. Each slot fills with a four-second installation progress background, reduced to two seconds after CEO training. All eight slots remain visible; automated clusters later have sixteen. Utility agents consume no slots.
 4. Each team's token balance serves its own agents. Top-ups spend reserve tokens; Token Managers make visible paid purchases.
-5. Provisioning initially costs $50K and rises with the number ever provisioned. Full spare clusters can be sold using Sell, with proceeds based on their purchase investment. Retain at least one cluster. Selling cannot reset the next provision price.
-6. CEO Manage Mode visibly staffs existing clusters. Provisioning Pipeline ($600K) halves its decision interval; Batch Onboarding ($1.2M) hires two agents per round. Scale Mode additionally provisions new ones, subject to budget but without the former eight-cluster cap. Detailed agent controls disappear and cluster cards simplify once CEO management begins.
+5. Provisioning starts at $50K plus $12K included management software and rises with the number ever provisioned. Full spare clusters can be sold. Retain at least one cluster; selling never resets the next provision price.
+6. The $1M AI CEO is a dashed purchase card above the clusters, not an upgrade-list item. Buying it expands every cluster from eight to sixteen slots. It provisions one agent every five seconds; Provisioning Pipeline ($600K) halves that interval. Agent batching upgrades follow Scale Mode. Scale Mode halves the interval again and takes over new cluster creation. Manual provisioning disappears.
 7. Service upgrades deploy client retainer contracts at $80/s before downtime and $2/s upkeep. The footer shows current income after downtime. Two managed clusters increase agent task speed by 50%; three or more double it.
 
-New shells show Building cluster and a progress bar. Construction takes twelve seconds initially, six after CEO training, and two in Phase 14. CEO training also halves the decision interval. DevOps automatically reduces technical debt; remove the Pay Down Tech Debt purchase.
+New clusters show the current hardware build stage and progress bar. Construction takes twelve seconds initially. Preassembled Server Racks halves that duration, CEO training halves it again, and Continuous Deployment fixes it at two seconds with two concurrent builds.
 
 ## Autonomous network, Phase 12 onward
 
 1. Three managed clusters and 1,600 completed tasks unlock the autonomous operating model. Existing agents and loaded tokens convert to aggregate workforce and token balances.
-2. In Phase 12 the player provisions compact nodes manually. The CEO automatically employs management and agents; individual node controls are absent.
-3. After at least twenty nodes are online and at least nine additional nodes have been provisioned and staffed during Phase 12, Replication unlocks automatic provisioning and reduces provision costs by 35%. At forty, Global Expansion reduces costs another 40% and accelerates decisions. Provision prices also continue rising with the number ever purchased.
+2. Phase 12 compacts clusters into autonomous nodes. The CEO continues constructing and staffing them; manual cluster and agent controls are absent.
+3. After twenty online nodes and at least nine additional nodes during Phase 12, Replication reduces costs by 35%. Global Expansion at forty completed nodes reduces costs another 40%. Costs rise with the number ever purchased.
 4. Aggregate production consumes tokens and stops when depleted. Token Managers buy packs and distribute reserve tokens.
 5. Phase 14 boxes show only short names such as C1 and C100. There is no fixed 128-node limit, and saved networks may exceed two hundred nodes.
-6. Golden Parachute requires at least one hundred managed nodes. Node Replication appears once twenty shells exist and remains disabled until its online target and full staffing are met. Upgrade requirements show only a target such as “(20 nodes)”, without progress fractions.
+6. Golden Parachute requires at least one hundred managed nodes. Node Replication appears once twenty shells exist and remains disabled until its target number of fully completed clusters is online. Additional clusters under construction do not block the purchase. Upgrade requirements show only a target such as “(20 nodes)”, without progress fractions.
 
 ## Early automation and hiring checkpoints
 
@@ -83,23 +83,37 @@ The initial licence has three total slots. Buying the third specialist and buyin
 
 Unlocked empty Manager and Token Manager positions are dashed purchase cards at the top of Agents. Those positions are reserved until bought. Each other empty slot has its own dashed card with direct buttons for buying each specialist type. Unaffordable purchases remain disabled. Buying a Manager costs $20,000, separately from its unlock upgrade.
 
-Phase-entry task minimums are 150, 300, 750, 1,150, 1,350, 1,550, 1,750, 2,000, 2,400, 2,800 and 3,200 for Phases 2 through 12. Later transitions use node requirements.
+Phase-entry task minimums are 150, 300, 750, 1,150, 5,000, 30,000, 150,000, 1,000,000, 1,200,000, 1,500,000 and 2,000,000 for Phases 2 through 12. Later transitions use node requirements.
 
-Phase 5 gives its tools and operations upgrades more room: Web Search Tool costs $7,500, Sales Playbook $12,000, Code Execution Tool $16,000 and Revenue Ops System $28,000. In the seed-17 active-player simulation, the phase lasts 41.5 seconds rather than 17.5 seconds. This is a comparative pacing check, not a human playtime target.
+Phase 5 gives its tools and operations upgrades more room: Web Search Tool costs $7,500, Sales Playbook $12,000, Code Execution Tool $16,000 and Revenue Ops System $28,000. Bulk Processing ($9,000) delivers ten tasks per job. The active-player simulation spends over a minute in Phase 5. This is a comparative pacing check, not a human playtime target.
 
 Empty agent slots offer one-click Buy Writer, Buy Researcher, Buy Coder, Buy Analyst and Buy Support buttons, with Buy Sales appearing in Phase 8. The card shows the per-agent price; each purchase button is disabled when unaffordable. There is no role dropdown. DevOps has a matching dashed Buy DevOps placeholder with its price and a Dedicated incident slot label. Full shared capacity cannot block that purchase.
 
-Player-facing actions use Buy for agents and management teams, and Provision cluster for infrastructure. The Token Manager upgrade description is “Automatically buy tokens when they run out.” Its existing automatic purchasing and distribution behaviour is retained.
+Before clusters, player-facing actions use Buy for agents. Clusters use Bring cluster online and Provision agent. The Token Manager upgrade description is “Automatically buy tokens when they run out.” Purchasing now happens before tank transfers, with enough headroom to keep tokens above the 4,000-token warning threshold when cash is available. DevOps has a separate $28K unlock upgrade in Phase 7.
+
+## Batch throughput and progression
+
+The Multi-Agent Licence description is “More agents, more work.” Four-slot and six-slot expansions block later upgrades until purchased. Bulk Processing starts ten-task jobs in Phase 5, Auto-Assign Playbooks raises batches to 100 in Phase 6, Revenue Optimization to 500 in Phase 7, and Growth Marketing to 2,000 in Phase 8. Every job stores its batch size when created. Completion adds that many tasks without multiplying its cash payout. Job difficulty stops growing after the early fatigue ramp. No free task-count grants are used to reach one million before Cluster 1.
+
+Cluster expenses are labelled Server power & cooling. Cluster construction includes management agents, then empty slots provision identical agents with an installation progress bar. No specialist-role purchase buttons appear inside clusters.
+
+## CEO scaling upgrades
+
+After Scale Mode, upgrades stay available throughout construction and staffing. Faster AI Provisioning ($40M) speeds both coordination and agent installation by 50%; Dual Agent Provisioning ($75M) installs two agents per cycle, followed by Four-Agent Provisioning ($100M). Parallel Cluster Builds ($150M) allows two concurrent builds. Preassembled Server Racks ($200M) halves construction time. Their costs spread purchases across the scaling phase instead of allowing the entire chain to be bought immediately.
+
+Phase 11 adds Fully Fitted Racks ($80M): all sixteen agents install during construction, with their $40K cost included in each new cluster purchase. Phase 12 adds Continuous Deployment ($150M), completing two fully fitted clusters every two seconds when funds permit. Construction consumes real cash, respects its concurrency limit, and stays visible in the existing progress cards. Buying these upgrades uses the existing save-format-8 upgrade list and requires no new save schema.
+
+Node-based progression counts fully completed clusters. A new construction project cannot disable an otherwise satisfied node target. Compact-node conversion preserves ongoing fully fitted rack construction without prematurely producing tasks.
 
 ## Company leadership and delivery
 
 From Phase 10, token purchasing becomes one company-wide Token Manager service, shown beside the AI CEO in agent cards above the cluster grid. Cluster managers and DevOps remain local to each team. The Token Manager automatically supplies every managed cluster and shows reserve tokens, smoothed consumption and its latest purchase. Transfers continue in small increments: up to 250 tokens into each cluster and 25 into each agent per 100ms tick. Purchases still deduct cash and follow the existing pack-price curve. There is no additional manual Manager-refill requirement.
 
-Cluster work capacity scales with the company: twelve task spaces and one arrival per spawn interval for each managed cluster. This removes the old twelve-task ceiling across the entire company. A three-cluster Phase 10 regression scenario consumes over 60,000 tokens in one minute while conserving total tokens across reserve, cluster and agent tanks.
+Cluster work capacity scales with the company: twelve task spaces and one arrival per spawn interval for each managed cluster. This removes the old twelve-task ceiling across the entire company. A three-cluster Phase 10 regression scenario consumes over 25,000 tokens in one minute while conserving total tokens across reserve, cluster and agent tanks.
 
-An outlined, dashed Provision cluster card occupies the next free position in the grid. It shows the price, remains disabled when unaffordable, and disappears at the current cluster limit. Cluster sale controls read Sell. Provisioning still needs the relevant permit or CEO scale mode; Phase 12 remains manual until replication.
+An outlined Bring cluster online card occupies the next free grid position. It is disabled when unaffordable and hidden during construction, at capacity, or after Scale Mode is bought. Manual Cluster 4 appears once the original three clusters have at least twelve agents each. Cluster 5 follows when the existing clusters are fully online. Both must be full before Scale Mode appears. Cluster sale controls read Sell.
 
-At two managed clusters, the task board defaults to a compact Delivery panel: a ten-second smoothed completion rate shown per minute, queued and in-progress counts, and the last three completed tasks. Show tasks expands the existing interactive task list. A phase change returns to the compact view. From Phase 12 the panel shows the delivery rate, managed-node count and delivery revenue without individual task controls. Observation history and the expanded-list preference are session-only, reset on a new story, and do not alter the save schema.
+At two managed clusters, the board adds a Delivery panel with a ten-second smoothed completion rate, queued and in-progress counts, and three recent completions. Tasks remain expanded by default. A right-aligned Hide tasks / Show tasks chevron toggles detail and keeps keyboard focus. A phase change restores expanded tasks. From Phase 12 the panel shows the delivery rate, managed-node count and delivery revenue without individual task controls. Observation history and the expanded-list preference are session-only, reset on a new story, and do not alter the save schema.
 
 ## Ending
 
@@ -109,7 +123,7 @@ Selling freezes the company and opens a separate golf-and-health ending screen. 
 
 ## Persistence and interaction
 
-- Save format version 7 is a breaking change. There is no migration. Older or invalid saves are preserved until the player explicitly resets them. Storage errors have visible recovery controls.
+- Save format version 8 is a breaking change. There is no migration. Older or invalid saves are preserved until the player explicitly resets them. Storage errors have visible recovery controls.
 - Offline earnings include recurring services and referral contracts at half efficiency, minus expenses, for up to eight hours. Losses are forgiven. Saved busy agents and aggregate nodes do not generate offline production. Offline awards are immediately saved.
 - Story and settings dialogs pause foreground play. Background gaps follow the offline policy.
 - Keyboard activation, stable focus during live updates, dialog focus management, zoom, reduced motion and small-screen scrolling are supported.

@@ -283,6 +283,9 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 @media(max-width:420px){.company-leadership{grid-template-columns:1fr}}
 .hire-slot{border:2px dashed var(--accent2);display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;color:var(--text2);width:100%;min-height:76px}.hire-slot:not(.management-agent){background:transparent}.hire-slot:disabled{opacity:.45;cursor:not-allowed}.hire-slot:hover:not(:disabled){border-color:var(--accent)}
 .agent-vacancy{flex-direction:column;align-items:stretch;padding:12px}.vacancy-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.vacancy-heading>span:last-child{margin-left:auto;color:var(--text3);font-size:.75rem}.agent-buy-options{display:flex;gap:6px;flex-wrap:wrap}.agent-buy-options button{flex:1 1 90px}.devops-slot small{flex-basis:100%;color:var(--text3)}
+.delivery-card{position:relative;padding-top:42px}.delivery-toggle{position:absolute;top:10px;right:10px}.agent-info .name .role{font-weight:400;font-size:.75rem;margin-left:6px}
+.capacity-slot.provision-agent{background:var(--bg2);padding:0;cursor:pointer;border:1px dashed var(--text3);color:var(--text2);font-size:1rem}.capacity-slot.provision-agent:disabled{cursor:default;opacity:.4}.capacity-slot.provisioning{background:linear-gradient(to right,rgba(139,92,246,.6) var(--progress),rgba(139,92,246,.12) var(--progress));font-size:.55rem;color:var(--text);display:flex;align-items:center;justify-content:center}.cluster-capacity .capacity-slot{min-height:24px}.ceo-slot{justify-content:center}
+.agent-grid{grid-template-columns:repeat(auto-fill,minmax(min(180px,100%),1fr))}.agent-grid .cluster-capacity{grid-template-columns:repeat(4,minmax(0,1fr))}.agent-grid .capacity-slot{min-height:32px}.capacity-slot.provision-agent:hover:not(:disabled){background:var(--bg4);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -310,7 +313,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
   <span class="res"><span class="label">Tasks</span><span class="val" id="res-tasks">0</span></span>
   <span id="phase-label">Phase 1</span>
   <span class="res res-cash" id="res-cash-wrap" style="display:none"><span class="label">Cash</span><span class="val" id="res-cash">$0</span></span>
-  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label" title="Reserve tokens. Top-ups transfer tokens to agents.">Reserve tokens</span><span class="val" id="res-tokens">0</span><span class="sub" id="token-burn"></span></span>
+  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label" title="Tokens. Top-ups transfer tokens to agents.">Tokens</span><span class="val" id="res-tokens">0</span><span class="sub" id="token-burn"></span></span>
   <span class="res res-debt" id="res-debt-wrap" style="display:none"><span class="label">Debt</span><span class="val" id="res-debt">0</span></span>
   <span class="res res-stress" id="res-stress-wrap" style="display:none"><span class="label">Stress</span><span class="val" id="res-stress">0%</span></span>
   <span class="res" id="res-expense-wrap" style="display:none"><span class="label" id="expense-tier-label">Expenses</span><span class="val" style="color:var(--red)" id="expense-rate">-$0/s</span></span>

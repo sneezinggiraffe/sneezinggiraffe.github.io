@@ -22,8 +22,8 @@ function play(seed=17) {
       }
     }
     if(step%5===0 && g.phase>=9 && g.phase<=12){
-      if((g.phase===12 && g.clusters.length<g.replicationTarget) || (g.phase<12 && g.clusters.length<3))h.api.openCluster();
-      if(g.phase<10)for(const c of g.clusters){h.api.buyManagementTeam(c.id);h.api.buyClusterWorker(c.id,'coder');}
+      if(h.api.canManuallyProvisionCluster())h.window.GAME.openCluster();
+      if(g.phase<10)for(const c of g.clusters){h.api.buyClusterWorker(c.id,'coder');}
     }
     h.api.tick();
     if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,cash:Math.round(g.cash)});lastPhase=g.phase;}
