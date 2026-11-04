@@ -204,8 +204,8 @@ test('an empty cluster needs its management team before worker buttons appear',a
   await page.getByRole('button',{name:'Provision cluster'}).click();const second=page.locator('div.cluster-card').nth(1);
   const firstBox=await page.locator('div.cluster-card').first().boundingBox();const secondBox=await second.boundingBox();expect(secondBox.x).toBeGreaterThan(firstBox.x);expect(secondBox.y).toBe(firstBox.y);
   await expect(second).toContainText('Building cluster');await expect(second.getByRole('progressbar')).toBeVisible();await expect(second).toContainText('Awaiting management',{timeout:15000});await expect(second.getByRole('button')).toHaveCount(1);
-  await second.getByRole('button',{name:'Employ management team'}).click();await expect(second).toContainText('Manager · Token Manager · DevOps');
-  await second.getByRole('button',{name:'Coder ($2.5K)',exact:true}).click();await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);await expect(second.locator('.cluster-status')).toHaveText('Hiring');
+  await second.getByRole('button',{name:'Buy management team'}).click();await expect(second).toContainText('Manager · Token Manager · DevOps');
+  await second.getByRole('button',{name:'Buy Coder ($2.5K)',exact:true}).click();await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);await expect(second.locator('.cluster-status')).toHaveText('Adding agents');
   await expect(page.locator('#cluster-list')).not.toContainText('Worker controls');await page.screenshot({path:'test-results/phase9-grid.png',fullPage:true});
 });
 test('Phase 8 simplifies agents and allows a paid partial top-up with Manager online',async({page})=>{
@@ -238,7 +238,7 @@ test('Phase 3 requires the second subscription before upgrading both workers',as
 });
 
 test('an existing twelve-node company must provision and staff nine more nodes before replication',async({page})=>{
-  const h=harness();const g=h.fresh(11);g.cash=1e9;g.tokens=1e6;g.totalTasksDone=2000;g.ceoMode='scale';g.aiWorkerShutdown=true;h.prepareUpgrade('autonomous_nodes');
+  const h=harness();const g=h.fresh(11);g.cash=1e9;g.tokens=1e6;g.totalTasksDone=3200;g.ceoMode='scale';g.aiWorkerShutdown=true;h.prepareUpgrade('autonomous_nodes');
   for(let i=0;i<12;i++){const c=h.api.addClusterWithNextName();c.managerAssigned=true;c.tokenManagerAssigned=true;for(let j=0;j<8;j++)c.workerAgentIds.push(h.worker('coder').id);}
   h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.clock.install();await page.addInitScript(value=>{if(!sessionStorage.getItem('replication_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('replication_seeded','1')}},raw);await page.goto('/');
@@ -267,7 +267,7 @@ test('early upgrade visibility follows task milestones and prior purchases',asyn
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toHaveCount(0);
   await page.evaluate(()=>GAME.addTasks(1));await expect(buy('free_ai')).toBeVisible();await buy('free_ai').click();await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('pro_model')).toHaveCount(0);
-  await page.evaluate(()=>GAME.addTasks(49));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toBeVisible();await expect(buy('prompt_examples')).toBeVisible();
+  await page.evaluate(()=>GAME.addTasks(49));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('prompt_examples')).toBeVisible();
 });
 
 for(const width of [1440,390]) {
@@ -277,7 +277,7 @@ for(const width of [1440,390]) {
     if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();
     for(const phase of [3,4]){
       if(phase===4)await expect(page.locator('#agent-list').getByRole('button',{name:'Sell'})).toHaveCount(2);
-      const cards=page.locator('#agent-list .agent-card');await expect(cards).toHaveCount(2);await expect(cards.nth(0).locator('.name')).toHaveText('AI 2000 Free');await expect(cards.nth(1).locator('.name')).toHaveText('AI 2000 Pro');
+      const cards=page.locator('#agent-list .agent-card');await expect(cards).toHaveCount(2);await expect(cards.nth(0).locator('.name')).toHaveText('AI 2000 Basic');await expect(cards.nth(1).locator('.name')).toHaveText('AI 2000 Pro');
       const bars=await cards.locator('.task-bar').all();const first=await bars[0].boundingBox();const second=await bars[1].boundingBox();expect(first.width).toBe(second.width);
       const counts=await cards.locator('.agent-token-count').all();expect((await counts[0].boundingBox()).x).toBe(first.x);expect((await counts[1].boundingBox()).x).toBe(second.x);
       const buttons=cards.getByRole('button',{name:'Top-up tokens'});expect((await buttons.nth(0).boundingBox()).width).toBe((await buttons.nth(1).boundingBox()).width);
@@ -318,3 +318,22 @@ test('delivery details can be opened and collapsed without losing keyboard focus
   const h=harness(fixture(10));const g=h.window.GAME.state;g.agentSpeedMult=.00001;h.task();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   await expect(page.locator('#delivery-summary')).toContainText('completed / min');await expect(page.locator('#task-list')).toBeHidden();const toggle=page.locator('#delivery-summary button');await toggle.focus();await page.keyboard.press('Enter');await expect(page.locator('#task-list')).toBeVisible();await expect(toggle).toHaveText('Hide tasks');await page.waitForTimeout(300);await expect(toggle).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#task-list')).toBeHidden();await expect(toggle).toHaveText('Show tasks');await page.screenshot({path:'test-results/compact-delivery.png',fullPage:true,animations:'disabled'});
 });
+for(const width of [1440,390]){
+  test(`Manager and agent hiring placeholders work at ${width}px`,async({page})=>{
+    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh6();GAME.addTasks(3);GAME.buy('manager_agent');});
+    if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();if(await page.locator('#milestone-popup').isVisible())await page.locator('#btn-dismiss-popup').click();
+    const manager=page.locator('.manager-slot');await expect(manager).toBeVisible();await expect(manager).toContainText('$20.0K');expect(await manager.evaluate(el=>el===el.parentElement.firstElementChild)).toBe(true);await manager.screenshot({path:`test-results/manager-slot-${width}.png`});await manager.click();await expect(manager).toHaveCount(0);await expect(page.locator('#agent-list .agent-card').first()).toContainText('Manager');
+    const sell=page.locator('#agent-list .agent-card').nth(1).getByRole('button',{name:'Sell',exact:true});await sell.click();const vacancy=page.locator('.agent-vacancy');await expect(vacancy).toHaveCount(1);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeDisabled();await page.evaluate(()=>GAME.addCash(10000));await expect(vacancy.locator('select')).toHaveCount(0);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeEnabled();await vacancy.getByRole('button',{name:'Buy Coder',exact:true}).focus();await page.waitForTimeout(300);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeFocused();await page.screenshot({path:`test-results/hiring-${width}.png`,fullPage:true,animations:'disabled'});await vacancy.getByRole('button',{name:'Buy Coder',exact:true}).click();await expect(vacancy).toHaveCount(0);expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(7);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  });
+}
+test('Phase 2 AI income appears and the Basic purchase changes model and lifestyle names',async({page})=>{
+  await page.goto('/');await page.evaluate(()=>{chPh3();GAME.addTasks(3);});await expect.poll(()=>page.locator('#income-rate').textContent()).not.toBe('+$0/s');await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Free');await page.locator('[onclick="GAME.buy(\'pro_model\')"]').click();await page.locator('#btn-dismiss-popup').click();await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Basic');await expect(page.locator('#expense-tier-label')).toHaveText('Coffee Shop Regular');await expect(page.locator('[onclick="GAME.buy(\'prompt_basics\')"]')).toHaveCount(0);await page.screenshot({path:'test-results/basic-tier.png',fullPage:true,animations:'disabled'});
+});
+
+for(const width of [1440,390]){
+  test(`DevOps can be bought with a full agent pool at ${width}px`,async({page})=>{
+    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh7();GAME.addTasks(3);GAME.buy('token_manager_unlock');GAME.addCash(1000000);});
+    if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();await page.getByRole('button',{name:/Buy Token Manager/}).click();await expect(page.locator('#agent-slots')).toHaveText('8/8 slots');
+    const button=page.getByRole('button',{name:/Buy DevOps/});await expect(button).toBeEnabled();await button.screenshot({path:`test-results/devops-slot-${width}.png`});await button.focus();await page.keyboard.press('Enter');await expect(button).toHaveCount(0);await expect(page.locator('#incident-devops .agent-card')).toContainText('DevOps');await expect(page.locator('#agent-slots')).toHaveText('8/8 slots');expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(9);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  });
+}

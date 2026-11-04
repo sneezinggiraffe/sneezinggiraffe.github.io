@@ -31,11 +31,11 @@ Start with manual freelance work, delegate to AI, feel the cost of keeping it ru
 
 ## Upgrade pacing and simplification
 
-Up to three ordinary upgrades reveal together; some are deliberately unaffordable when first offered. Every phase transition and the second subscription requires all preceding upgrades. Discover Free-Tier AI requires 150 tasks after Reality Check; Phase 2 starts without upgrades, the prompt upgrades appear together at 200 tasks and the $3,500 Token Subscription requires 300. Phase 3 groups begin at 350, 425 and 500 tasks. Second AI Subscription follows all preceding upgrades, requires 650 tasks and costs $18K. The licence requires 750 tasks and costs $25K. Reputation is removed from state, rewards, UI and retirement conditions. The Phase 9 acquisition costs $1.5M.
+Up to three ordinary upgrades reveal together; some are deliberately unaffordable when first offered. Every phase transition and the second subscription requires all preceding upgrades. Discover Free-Tier AI requires 150 tasks after Reality Check; Phase 2 starts without upgrades, Few-Shot Prompting and Marketing Campaign appear together at 200 tasks and the $3,500 Upgrade to AI 2000 Basic requires 300. Phase 3 groups begin at 350, 425 and 500 tasks. Second AI Subscription follows all preceding upgrades, requires 650 tasks and costs $18K. The licence requires 750 tasks and costs $25K. Reputation is removed from state, rewards, UI and retirement conditions. The Phase 9 acquisition costs $1.5M.
 
 ## Two-agent transition
 
-Phase 3 requires Second AI Subscription before Multi-Agent Licence becomes available. Both subscriptions have individual manual Top-up tokens controls. The licence converts them into normal agent cards while preserving loaded tokens and current jobs. AI 2000 Free and AI 2000 Pro have matching token bars and buttons through Phase 4. The original AI 2000 Free is explicitly labelled as an older, slower model. Selling and replacing agents becomes available in Phase 4.
+Phase 3 requires Second AI Subscription before Multi-Agent Licence becomes available. Both subscriptions have individual manual Top-up tokens controls. The licence converts them into normal agent cards while preserving loaded tokens and current jobs. AI 2000 Basic and AI 2000 Pro have matching token bars and buttons through Phase 4. The original AI 2000 Basic is explicitly labelled as an older, slower model. Selling and replacing agents becomes available in Phase 4.
 
 ## Tasks and tokens
 
@@ -43,9 +43,9 @@ Phase 3 requires Second AI Subscription before Multi-Agent Licence becomes avail
 2. Every agent and Manager uses “Top-up tokens”. A partial top-up transfers exactly the missing amount from reserve, even with a Manager online. The bar counts actual tokens, shown as integers. Top-up buttons remain enabled. tok/s is a five-second smoothed average of actual consumption. Remove Auto toggles and label dismissal Sell.
 3. Worker capacities are 10, 40, 200, 500 and 1,500 across Phases 2 through 6. Base consumption rises from 1.2 to 4, 15, 40 and 150 tokens per working second. Traits and efficiency apply. Eight fully busy Phase 6 agents consume roughly 29,000 tokens/minute after all three efficiency upgrades.
 4. The Manager holds 4,000 tokens and supplies agents in small increments, including the original AI agent. An empty Manager continues assigning jobs to loaded agents. It cannot create tokens.
-5. The Phase 7 unlock first reserves a Token Manager slot. A hired Manager is required to enter Phase 7. The extra agent slot appears in Phase 8 and requires a hired Token Manager. Its purchases use cash; unlocking the role alone does not enable purchases.
+5. The Phase 7 unlock first reserves a Token Manager slot. A purchased Manager is required to enter Phase 7. The extra agent slot appears in Phase 8 and requires a purchased Token Manager. Its purchases use cash; unlocking the role alone does not enable purchases.
 6. Token pack sizes rise with workload; prices rise 2% of the base price for each pack bought, including automatic purchases. Incident costs are determined at creation using earned wealth. Spending cash does not reset either price curve.
-7. Before clusters, order roles Manager, Token Manager, then agents. Manager and Token Manager cards use a slightly lighter background. DevOps occupies the top of the Incidents section, including its hire control. Only the unlocked Token Manager has a dedicated empty role card. Locked roles remain absent.
+7. Before clusters, order roles Manager, Token Manager, then agents. Manager and Token Manager cards use a slightly lighter background. DevOps occupies a dedicated slot at the top of Incidents, including a dashed Buy DevOps card. It does not consume shared agent capacity. Unlocked Manager, Token Manager and DevOps roles have dedicated empty purchase cards. Locked roles remain absent.
 8. Phase 8 simplifies agent cards by removing detailed stats and status buttons. Remove the dashboard. Tasks completed leads the top bar, followed by the other counters; token consumption is visible beside reserve tokens.
 
 ## DevOps
@@ -55,11 +55,11 @@ DevOps resolves warning and critical incidents automatically. Critical incidents
 ## Clusters, Phase 9 through 11
 
 1. The existing workforce becomes Cluster 1 with a complete management team.
-2. The first Phase 9 upgrade is the Operations Blueprint. A subsequent Second Cluster Permit reveals Provision cluster and permits exactly one additional cluster. A later Third Cluster Permit requires the second cluster to be full and adds one more. Three full clusters are required before Phase 10. All existing clusters must be built and full for subsequent cluster upgrades to appear, except Recruitment Pipeline and Batch Onboarding, which remain available while staffing. The discounted lease is removed.
-3. A newly provisioned shell needs one $12K management-team purchase containing Manager, Token Manager and DevOps, then agents cost $2.5K each. Render all eight slots after construction, even before hiring and under CEO management. Part-filled automated clusters say Scaling; full clusters say Operating or Awaiting tokens. Use a card grid before hiring the CEO. Utilities consume no agent slots.
+2. The first Phase 9 upgrade is the Operations Blueprint. A subsequent Second Cluster Permit reveals Provision cluster and permits exactly one additional cluster. A later Third Cluster Permit requires the second cluster to be full and adds one more. Three full clusters are required before Phase 10. All existing clusters must be built and full for subsequent cluster upgrades to appear, except Provisioning Pipeline and Batch Onboarding, which remain available while staffing. The discounted lease is removed.
+3. A newly provisioned shell needs one $12K management-team purchase containing Manager, Token Manager and DevOps, then agents cost $2.5K each. Render all eight slots after construction, even before hiring and under CEO management. Part-filled automated clusters say Scaling; full clusters say Operating or Awaiting tokens. Use a card grid before buying the CEO. Utilities consume no agent slots.
 4. Each team's token balance serves its own agents. Top-ups spend reserve tokens; Token Managers make visible paid purchases.
 5. Provisioning initially costs $50K and rises with the number ever provisioned. Full spare clusters can be sold using Sell, with proceeds based on their purchase investment. Retain at least one cluster. Selling cannot reset the next provision price.
-6. CEO Manage Mode visibly staffs existing clusters. Recruitment Pipeline ($600K) halves its decision interval; Batch Onboarding ($1.2M) hires two agents per round. Scale Mode additionally provisions new ones, subject to budget but without the former eight-cluster cap. Detailed agent controls disappear and cluster cards simplify once CEO management begins.
+6. CEO Manage Mode visibly staffs existing clusters. Provisioning Pipeline ($600K) halves its decision interval; Batch Onboarding ($1.2M) hires two agents per round. Scale Mode additionally provisions new ones, subject to budget but without the former eight-cluster cap. Detailed agent controls disappear and cluster cards simplify once CEO management begins.
 7. Service upgrades deploy client retainer contracts at $80/s before downtime and $2/s upkeep. The footer shows current income after downtime. Two managed clusters increase agent task speed by 50%; three or more double it.
 
 New shells show Building cluster and a progress bar. Construction takes twelve seconds initially, six after CEO training, and two in Phase 14. CEO training also halves the decision interval. DevOps automatically reduces technical debt; remove the Pay Down Tech Debt purchase.
@@ -72,6 +72,24 @@ New shells show Building cluster and a progress bar. Construction takes twelve s
 4. Aggregate production consumes tokens and stops when depleted. Token Managers buy packs and distribute reserve tokens.
 5. Phase 14 boxes show only short names such as C1 and C100. There is no fixed 128-node limit, and saved networks may exceed two hundred nodes.
 6. Golden Parachute requires at least one hundred managed nodes. Node Replication appears once twenty shells exist and remains disabled until its online target and full staffing are met. Upgrade requirements show only a target such as “(20 nodes)”, without progress fractions.
+
+## Early automation and hiring checkpoints
+
+The original agent is AI 2000 Free in Phase 2. Upgrade to AI 2000 Basic renames it in Phase 3, where the lifestyle is Coffee Shop Regular. The second subscription is AI 2000 Pro. The income estimate includes the original agent using the same work-rate calculation as its production loop; empty tanks and idle agents add no estimated task income.
+
+The first incident, whether triggered by a random failure or the twenty-second tutorial timer, introduces incidents exactly once. A timed introduction cannot also create a random incident in that tick. Prompt Engineering 101 appears in Phase 4 after at least three incidents have occurred, costs $3,200, and reduces failure rate by 20%.
+
+The initial licence has three total slots. Buying the third specialist and buying Task Templates exposes the four-slot expansion, priced at $5,000. Parallel Prompting ($3,800, +15% speed) and Response Streaming ($5,200, +20% speed) follow that expansion and are required before six slots. Specialist roles may be bought repeatedly; Manager, Token Manager and DevOps remain unique. DevOps has its own slot in Incidents and does not consume shared agent capacity. This makes every advertised specialist slot usable.
+
+Unlocked empty Manager and Token Manager positions are dashed purchase cards at the top of Agents. Those positions are reserved until bought. Each other empty slot has its own dashed card with direct buttons for buying each specialist type. Unaffordable purchases remain disabled. Buying a Manager costs $20,000, separately from its unlock upgrade.
+
+Phase-entry task minimums are 150, 300, 750, 1,150, 1,350, 1,550, 1,750, 2,000, 2,400, 2,800 and 3,200 for Phases 2 through 12. Later transitions use node requirements.
+
+Phase 5 gives its tools and operations upgrades more room: Web Search Tool costs $7,500, Sales Playbook $12,000, Code Execution Tool $16,000 and Revenue Ops System $28,000. In the seed-17 active-player simulation, the phase lasts 41.5 seconds rather than 17.5 seconds. This is a comparative pacing check, not a human playtime target.
+
+Empty agent slots offer one-click Buy Writer, Buy Researcher, Buy Coder, Buy Analyst and Buy Support buttons, with Buy Sales appearing in Phase 8. The card shows the per-agent price; each purchase button is disabled when unaffordable. There is no role dropdown. DevOps has a matching dashed Buy DevOps placeholder with its price and a Dedicated incident slot label. Full shared capacity cannot block that purchase.
+
+Player-facing actions use Buy for agents and management teams, and Provision cluster for infrastructure. The Token Manager upgrade description is “Automatically buy tokens when they run out.” Its existing automatic purchasing and distribution behaviour is retained.
 
 ## Company leadership and delivery
 
