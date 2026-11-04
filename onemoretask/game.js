@@ -183,7 +183,7 @@
 
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
-    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Work on 10 tasks at once with one click.", cost: 99, currency: "cash", phase: 1, effect: { manualQueueSize: 10 }, oneTime: true, reqTasks: 50 },
+    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
     { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically. Free after 50 completed tasks; top up its tokens to keep it running.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 50 },
 
     // Phase 2 -> 3
@@ -219,27 +219,29 @@
 
     // Phase 5 (operations pressure)
     { id: "web_browse", name: "Web Search Tool", desc: "Agents can browse the web. +15% agent speed, +20% quality on research.", cost: 7500, currency: "cash", phase: 5, effect: { toolBonus: 0.2, agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "bulk_jobs", name: "Bulk Processing", desc: "Deliver 10 tasks in each job.", cost: 9000, currency: "cash", phase: 5, effect: { batchSize: 10 }, oneTime: true },
+    { id: "bulk_jobs", name: "Bulk Processing", desc: "Deliver around 10 tasks in each job.", cost: 9000, currency: "cash", phase: 5, effect: { batchSize: 10 }, oneTime: true },
     { id: "sales_playbook", name: "Sales Playbook", desc: "Sharper discovery and handoff process. Sales increase by 50%.", cost: 12000, currency: "cash", phase: 5, effect: { payMult: 1.5 }, oneTime: true },
     { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +25% speed on code tasks.", cost: 16000, currency: "cash", phase: 5, effect: { codeSpeedMult: 1.25 }, oneTime: true },
     { id: "revenue_ops", name: "Revenue Ops System", desc: "Pipeline discipline and better follow-up. Sales increase by 50%.", cost: 28000, currency: "cash", phase: 5, effect: { payMult: 1.50 }, oneTime: true },
     { id: "manager_agent", name: "Manager Agent", desc: "Add a Manager role to coordinate your agents.", cost: 12000, currency: "cash", phase: 5, unlockPhase: 6, effect: { managerUnlock: true, agentSlots: 6 }, oneTime: true, reqTasks: 5000 },
 
     // Phase 6 (manager-led automation)
-    { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Coordinate batches of 100 tasks. Assignment is 50% faster.", cost: 15000, currency: "cash", phase: 6, effect: { batchSize: 100, managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
+    { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Coordinate batches of around 100 tasks. Assignment is 50% faster.", cost: 15000, currency: "cash", phase: 6, effect: { batchSize: 100, managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
     { id: "smart_routing", name: "Smart Routing", desc: "Manager can route agents across specialties when needed.", cost: 19000, currency: "cash", phase: 6, effect: { smartRouting: true }, oneTime: true },
     { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 35% faster.", cost: 25000, currency: "cash", phase: 6, effect: { agentSpeedMult: 1.35 }, oneTime: true, reqTasks: 580 },
     { id: "token_manager_unlock", name: "Token Manager Slot", desc: "Automatically buy tokens when they run out.", cost: 40000, currency: "cash", phase: 6, requiresRole: "manager", unlockPhase: 7, effect: { giveTokens: 300, agentSlots: 7 }, oneTime: true, reqTasks: 30000 },
 
     // Phase 7 (token-stable autopilot)
     { id: "agent_slot_7", name: "Add Another Agent Slot", desc: "Room for another agent.", cost: 22000, currency: "cash", phase: 8, requiresRole: "token_mgr", effect: { agentSlots: 8 }, oneTime: true, reqTasks: 670 },
-    { id: "compute_2", name: "Revenue Optimization Upgrade", desc: "Deliver batches of 500 tasks. Double revenue.", cost: 31000, currency: "cash", phase: 7, effect: { batchSize: 500, payMult: 2.0 }, oneTime: true, reqTasks: 720 },
-    { id: "devops_unlock", name: "DevOps Agent Slot", desc: "Automate incident response.", cost: 28000, currency: "cash", phase: 7, oneTime: true },
-    { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 35000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 770 },
-    { id: "ops_flywheel", name: "Operations Flywheel", desc: "Stable operations loops unlock growth.", cost: 50000, currency: "cash", phase: 7, unlockPhase: 8, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 150000 },
+    { id: "compute_2", name: "Revenue Optimization Upgrade", desc: "Deliver batches of around 500 tasks. Double revenue.", cost: 150000, currency: "cash", phase: 7, effect: { batchSize: 500, payMult: 2.0 }, oneTime: true, reqTasks: 45000 },
+    { id: "devops_unlock", name: "DevOps Agent Slot", desc: "Automate incident response.", cost: 60000, currency: "cash", phase: 7, oneTime: true, reqTasks: 30000 },
+    { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 175000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 65000 },
+    { id: "delivery_pipeline", name: "Delivery Pipeline", desc: "A smoother handoff. All agents work 25% faster.", cost: 250000, currency: "cash", phase: 7, effect: { agentSpeedMult: 1.25 }, oneTime: true, reqTasks: 90000 },
+    { id: "premium_contracts", name: "Premium Client Contracts", desc: "Win better client work. All tasks pay 35% more.", cost: 350000, currency: "cash", phase: 7, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 115000 },
+    { id: "ops_flywheel", name: "Operations Flywheel", desc: "Stable operations loops unlock growth.", cost: 1000000, currency: "cash", phase: 7, unlockPhase: 8, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 150000 },
 
     // Phase 8 (growth marketing)
-    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Serve larger clients with batches of 2,000 tasks. Double revenue.", cost: 50000, currency: "cash", phase: 8, effect: { batchSize: 2000, payMult: 2.00 }, oneTime: true, reqTasks: 860 },
+    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Serve larger clients with batches of around 2,000 tasks. Double revenue.", cost: 50000, currency: "cash", phase: 8, effect: { batchSize: 2000, payMult: 2.00 }, oneTime: true, reqTasks: 860 },
     { id: "management", name: "Referral Partnerships", desc: "Partner channels bring higher-value client work.", cost: 70000, currency: "cash", phase: 8, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 920 },
     { id: "acquire_micro_agency", name: "Acquire Micro Agency", desc: "Bring your team together as a managed cluster.", cost: 1500000, currency: "cash", phase: 8, unlockPhase: 9, effect: { agentSlots: 10 }, oneTime: true, reqTasks: 1000000 },
 
@@ -526,6 +528,10 @@
     return TASK_TYPES.filter((t) => t.phase <= G.phase);
   }
 
+  function taskBatchSize() {
+    return G.batchSize === 1 ? 1 : randInt(Math.ceil(G.batchSize * 0.8), Math.floor(G.batchSize * 1.2));
+  }
+
   function generateTask() {
     const types = availableTaskTypes();
     const type = pick(types);
@@ -539,7 +545,7 @@
       name: type.name,
       icon: type.icon,
       client: pickClient(),
-      batchSize: G.batchSize,
+      batchSize: taskBatchSize(),
       workRequired: Math.ceil(type.baseWork * mult * fatigueMult * (1 - G.workReduction)),
       workDone: 0,
       pay: Math.round(type.basePay * mult * 10) / 10,
@@ -710,12 +716,16 @@
 
   function workerTokenCapacity(agent) {
     if (agent && agent.olderModel) return 40;
-    if (agent && agent.name === "AI 2000 Pro") return 100;
+    if (agent && agent.name === "AI 2000 Pro" && G.phase < 4) return 100;
     return G.phase >= 6 ? 1500 : G.phase === 5 ? 500 : G.phase === 4 ? 200 : G.phase === 3 ? 40 : 10;
   }
 
   function workerTokenRate() {
-    return G.phase >= 6 ? 150 : G.phase === 5 ? 40 : G.phase === 4 ? 15 : G.phase === 3 ? 4 : 1.2;
+    return G.phase >= 6 ? 150 : G.phase === 5 ? 60 : G.phase === 4 ? 15 : G.phase === 3 ? 4 : 1.2;
+  }
+
+  function workerTokenCost(agent) {
+    return G.phase >= 4 && agent.name === "AI 2000 Pro" ? 1 : agent.tokenCost;
   }
 
   function topUpAiWorker() {
@@ -923,7 +933,7 @@
     const specialty = agent.specialty.includes(task.typeId) ? 1.4 : 1;
     const code = ["code", "integration", "webapp", "saas"].includes(task.typeId) ? G.codeSpeedMult : 1;
     const scale = G.phase >= 9 ? 1 + Math.min(2, Math.max(0, managedNodeCount() - 1)) * 0.5 : 1;
-    return agent.speed * AGENT_WORK_MULT * G.agentSpeedMult * specialty * code * scale;
+    return agent.speed * (agent.olderModel ? 0.25 : 1) * AGENT_WORK_MULT * G.agentSpeedMult * specialty * code * scale;
   }
 
   function hasIdleManager() {
@@ -1207,7 +1217,7 @@
       }
 
       var effectiveDt = dtSec;
-      var tokenDrain = workerTokenRate() * agent.tokenCost * G.tokenEfficiency * dtSec;
+      var tokenDrain = workerTokenRate() * workerTokenCost(agent) * G.tokenEfficiency * dtSec;
       if (agent.tokenTank < tokenDrain) {
         effectiveDt = tokenDrain > 0 ? dtSec * (agent.tokenTank / tokenDrain) : 0;
         agent.tokenTank = 0;
@@ -1223,7 +1233,7 @@
         continue;
       }
       agent.tokenStarved = false;
-      G.tokensConsumed += workerTokenRate() * agent.tokenCost * G.tokenEfficiency * effectiveDt;
+      G.tokensConsumed += workerTokenRate() * workerTokenCost(agent) * G.tokenEfficiency * effectiveDt;
 
       // Work done per second
       let workRate = workerSpeed(task, agent) * effectiveDt;
@@ -1344,7 +1354,7 @@
 
   function tokenBurnRate() {
     if (G.phase >= 12) return G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned && cluster.tank > 0 ? cluster.workforce : 0), 0) * workerTokenRate() * G.tokenEfficiency;
-    return (G.agents.reduce((total, agent) => total + (agent.status === "working" && agent.tokenTank > 0 ? agent.tokenCost : 0), 0) + (G.aiWorkerCurrentTaskId && G.aiWorkerTokenTank > 0 ? 1 : 0)) * workerTokenRate() * G.tokenEfficiency;
+    return (G.agents.reduce((total, agent) => total + (agent.status === "working" && agent.tokenTank > 0 ? workerTokenCost(agent) : 0), 0) + (G.aiWorkerCurrentTaskId && G.aiWorkerTokenTank > 0 ? 1 : 0)) * workerTokenRate() * G.tokenEfficiency;
   }
 
   function buyTokenPacks(pack, count) {
@@ -1632,7 +1642,7 @@
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
     if (upgrade.id === "free_ai") return true;
-    if (upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
+    if (upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks && !(G.phase === 7 && upgrade.phase === 7)) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
     if (upgrade.requires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
@@ -2984,6 +2994,12 @@
     if (!G.uiRevealed.upgrades) { section.style.display = "none"; return; }
     section.style.display = "";
 
+    const previousCard = $("#upgrade-list .upgrade-card");
+    if (previousCard) {
+      const height = previousCard.getBoundingClientRect().height;
+      if (height > 0) $("#upgrade-list").style.setProperty("--upgrade-card-height", height + "px");
+    }
+
     var available = UPGRADES.filter(upgradeVisible);
 
     if (available.length === 0) {
@@ -3015,7 +3031,7 @@
       html += "<div class='card upgrade-card'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
-        "<div class='desc'>" + u.desc + (requiredNodes ? " (" + requiredNodes + " nodes)" : "") + "</div>" +
+        "<div class='desc'>" + u.desc + (requiredNodes ? " (" + requiredNodes + " nodes)" : "") + (u.phase === 7 && u.reqTasks ? " (" + fmtTokens(u.reqTasks) + " tasks)" : "") + "</div>" +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
         "<span class='upgrade-cost'>" + (u.currency === "tasks" ? u.reqTasks + " tasks" : u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +

@@ -474,7 +474,7 @@ for(const width of [1440,390]) {
       const cards=page.locator('#agent-list .agent-card');await expect(cards).toHaveCount(2);await expect(cards.nth(0).locator('.name')).toContainText('AI 2000 Basic');await expect(cards.nth(1).locator('.name')).toContainText('AI 2000 Pro');
       const bars=await cards.locator('.task-bar').all();const first=await bars[0].boundingBox();const second=await bars[1].boundingBox();expect(first.width).toBe(second.width);
       const counts=await cards.locator('.agent-token-count').all();expect((await counts[0].boundingBox()).x).toBe(first.x);expect((await counts[1].boundingBox()).x).toBe(second.x);
-      await expect(counts[0]).toHaveText(/\/40 tokens$/);await expect(counts[1]).toHaveText(/\/100 tokens$/);await expect(page.locator('#agent-slots')).toHaveCount(0);await expect(page.locator('#token-burn')).toHaveText(/^-\d[\d,]* tok\/s$/);
+      await expect(counts[0]).toHaveText(/\/40 tokens$/);await expect(counts[1]).toHaveText(new RegExp('/'+(phase===3?100:200)+' tokens$'));await expect(page.locator('#agent-slots')).toHaveCount(0);await expect(page.locator('#token-burn')).toHaveText(/^-\d[\d,]* tok\/s$/);
       const buttons=cards.getByRole('button',{name:'Top-up tokens'});expect((await buttons.nth(0).boundingBox()).width).toBe((await buttons.nth(1).boundingBox()).width);
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`test-results/phase${phase}-agents-${width}.png`,fullPage:true});
       if(phase===3)await page.locator('[onclick="GAME.buy(\'multi_bot\')"]').click();
@@ -490,8 +490,76 @@ test('DevOps sits in Incidents and management cards stand out',async({page})=>{
 test('empty upgrades retain a blank card of space above token packs',async({page})=>{
   const h=harness(fixture(9));const g=h.window.GAME.state;g.clusters[0].workerAgentIds.pop();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  await expect(page.locator('#upgrade-list .upgrade-space')).toBeVisible();expect((await page.locator('#upgrade-list .upgrade-space').boundingBox()).height).toBeGreaterThanOrEqual(88);await expect(page.locator('#upgrade-list')).not.toContainText('No upgrades');
+  await expect(page.locator('#upgrade-list .upgrade-space')).toBeVisible();expect((await page.locator('#upgrade-list .upgrade-space').boundingBox()).height).toBeCloseTo(68,1);await expect(page.locator('#upgrade-list')).not.toContainText('No upgrades');
 });
+
+for (const width of [1440, 390]) {
+  test(`buying the last upgrade preserves the exact empty panel height at ${width}px`, async ({ page }) => {
+    const h = harness();
+    const g = h.fresh();
+    g.totalTasksDone = 49;
+    h.prepareUpgrade('free_ai');
+    h.api.checkMilestones();
+    h.dismiss();
+    g.tasks = [];
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    g.lastTaskSpawn = g.lastTick;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const section = page.locator('#section-upgrades');
+    const beforePanel = await section.boundingBox();
+    const beforeCard = await section.locator('.upgrade-card').boundingBox();
+    await page.evaluate(() => GAME.addTasks(1));
+    await page.clock.runFor(200);
+    await page.getByRole('button', { name: 'Unlock', exact: true }).click();
+    await page.clock.runFor(200);
+    const placeholder = section.locator('.upgrade-space');
+    await expect(placeholder).toBeVisible();
+    expect((await placeholder.boundingBox()).height).toBeCloseTo(beforeCard.height, 1);
+    expect((await section.boundingBox()).height).toBeCloseTo(beforePanel.height, 1);
+    await expect(page.locator('#upgrade-list')).toHaveText('');
+  });
+}
+
+test('Phase 7 shows upcoming task milestones and purchases before the growth transition', async ({ page }) => {
+  const h = harness();
+  const g = h.fresh(7);
+  g.totalTasksDone = 30000;
+  g.cash = 100000;
+  g.aiWorkerShutdown = true;
+  h.prepareUpgrade('compute_2');
+  h.api.checkMilestones();
+  h.dismiss();
+  g.tasks = [];
+  g.lastTick = Date.now();
+  g.lastSave = g.lastTick;
+  g.lastTaskSpawn = g.lastTick;
+  const raw = JSON.stringify(g);
+  h.close();
+  await page.clock.install({ time: new Date(g.lastTick) });
+  await page.clock.pauseAt(new Date(g.lastTick + 1000));
+  await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+  await page.goto('/');
+  const button = id => page.locator('[onclick="GAME.buy(\'' + id + '\')"]');
+  await expect(button('compute_2')).toBeDisabled();
+  await expect(button('compute_2').locator('../..')).toContainText('45,000 tasks');
+  await expect(button('compute_1')).toBeDisabled();
+  await expect(button('devops_unlock')).toBeEnabled();
+  await button('devops_unlock').click();
+  expect(await page.evaluate(() => GAME.state.cash)).toBe(40000);
+  await page.clock.runFor(200);
+  await expect(button('delivery_pipeline')).toBeVisible();
+  await expect(button('delivery_pipeline')).toBeDisabled();
+  await expect(button('delivery_pipeline').locator('../..')).toContainText('90,000 tasks');
+});
+
 test('CEO scaling displays filled and vacant slots alongside hiring upgrades',async({page})=>{
   const h=harness(fixture(10));const g=h.window.GAME.state;g.clusters[2].workerAgentIds.splice(4);g.purchasedUpgrades=g.purchasedUpgrades.filter(id=>!['ceo_recruitment','ceo_batch'].includes(id));g.lastTick=Date.now();g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');

@@ -322,7 +322,7 @@ scenario('Post-It Notes work on two jobs in parallel, preserve pay and survive a
   }
 });
 
-scenario('GTD and Headphones increase parallel work without changing task batches or per-job speed', (h) => {
+scenario('manual work stops at five tasks and Headphones reduce work for manual and AI jobs', (h) => {
   const g = h.fresh();
   g.cash = 10000;
   g.totalTasksDone = 50;
@@ -340,13 +340,14 @@ scenario('GTD and Headphones increase parallel work without changing task batche
   assert.equal(g.totalTasksDone, 55);
   h.prepareUpgrade('noise_cancelling');
   h.api.purchaseUpgrade('noise_cancelling');
-  assert.equal(h.api.getManualQueueSize(), 10);
+  assert.equal(h.api.getManualQueueSize(), 5);
+  assert.equal(g.workReduction, 0.1);
   assert.equal(g.clickPower, 1);
   while (g.tasks.filter(task => task.status === 'available').length < 11) h.task();
   h.api.clickTask(g.tasks.find(task => task.status === 'available').id);
-  assert.equal(g.tasks.filter(task => task.status === 'active').length, 10);
+  assert.equal(g.tasks.filter(task => task.status === 'active').length, 5);
   h.api.tickManualWork(100);
-  assert.equal(g.totalTasksDone, 65);
+  assert.equal(g.totalTasksDone, 60);
   assert.equal(g.totalClicks, 2);
   g.phase = 4;
   assert.equal(h.api.getManualQueueSize(), 1);
@@ -354,7 +355,7 @@ scenario('GTD and Headphones increase parallel work without changing task batche
   h.task();
   h.api.clickTask(g.tasks.find(task => task.status === 'available').id);
   h.api.tickManualWork(100);
-  assert.equal(g.totalTasksDone, 67);
+  assert.equal(g.totalTasksDone, 62);
 });
 
 scenario('AI Basic costs exactly $2,500 and cannot be bought below that price', (h) => {
@@ -383,7 +384,7 @@ scenario('AI retains its former upgraded throughput when early upgrades provide 
   assert.equal(h.api.originalAiWorkRate(), 108);
 });
 
-scenario('Basic stays at 40 tokens after licensing while Pro retains 100 and a faster bar drain', (h) => {
+scenario('Basic stays slow with 40 tokens while licensed Pro scales with ordinary agents', (h) => {
   const g = h.fresh(3);
   g.cash = 1e6;
   g.tokens = 1000;
@@ -413,7 +414,9 @@ scenario('Basic stays at 40 tokens after licensing while Pro retains 100 and a f
   h.api.purchaseUpgrade('multi_bot');
   const basic = g.agents.find(agent => agent.olderModel);
   assert.equal(h.api.workerTokenCapacity(basic), 40);
-  assert.equal(h.api.workerTokenCapacity(pro), 100);
+  assert.equal(h.api.workerTokenCapacity(pro), 200);
+  assert.equal(h.api.workerTokenCost(pro), 1);
+  assert.ok(h.api.workerSpeed(task, pro) > h.api.workerSpeed(task, basic) * 5);
   assert.equal(h.api.workerTokenCapacity(h.worker()), 200);
   basic.tokenTank = 5;
   pro.tokenTank = 5;
@@ -421,21 +424,25 @@ scenario('Basic stays at 40 tokens after licensing while Pro retains 100 and a f
   h.api.topUpAgent(basic.id);
   h.api.topUpAgent(pro.id);
   assert.equal(basic.tokenTank, 40);
-  assert.equal(pro.tokenTank, 100);
-  assert.equal(g.tokens, reserve - 130);
+  assert.equal(pro.tokenTank, 200);
+  assert.equal(g.tokens, reserve - 230);
   h.api.renderAgentSection();
   assert.match(h.window.document.querySelector('#agent-list').textContent, /40\/40 tokens/);
-  assert.match(h.window.document.querySelector('#agent-list').textContent, /100\/100 tokens/);
+  assert.match(h.window.document.querySelector('#agent-list').textContent, /200\/200 tokens/);
+  const beforeLicensedWork = g.tokensConsumed;
+  h.api.tickAgents(1);
+  assert.equal(g.tokensConsumed - beforeLicensedWork, 30);
+  assert.equal(pro.tokenTank, 185);
   assert.equal(h.window.document.querySelector('#agent-slots'), null);
   g.phase = 6;
   g.managerUnlock = true;
   h.worker('manager');
   g.managerTokenTank = 4000;
   basic.tokenTank = 39;
-  pro.tokenTank = 99;
+  pro.tokenTank = 1499;
   h.api.tickManager();
   assert.equal(basic.tokenTank, 40);
-  assert.equal(pro.tokenTank, 100);
+  assert.equal(pro.tokenTank, 1500);
   g.phase = 9;
   const cluster = h.api.addClusterWithNextName();
   cluster.managerAssigned = true;
@@ -446,7 +453,7 @@ scenario('Basic stays at 40 tokens after licensing while Pro retains 100 and a f
   pro.tokenTank = 0;
   h.api.tickClusterManagers();
   assert.equal(basic.tokenTank, 40);
-  assert.equal(pro.tokenTank, 100);
+  assert.equal(pro.tokenTank, 1500);
   assert.equal(h.api.validSave(g), true);
 });
 
@@ -462,6 +469,108 @@ scenario('token consumption is negative in the top bar and company leadership, i
   g.averageTokenBurn = 0;
   h.api.renderTopBar();
   assert.equal(h.window.document.querySelector('#token-burn').textContent, '-0 tok/s');
+});
+
+scenario('Phase 5 needs a normal worker refill after about twenty seconds of continuous work', (h) => {
+  const g = h.fresh(5);
+  g.aiFailMult = 0;
+  g.tokenEfficiency = 0.402;
+  const agent = h.worker();
+  agent.tokenCost = 1;
+  agent.reliability = 2;
+  agent.tokenTank = h.api.workerTokenCapacity(agent);
+  const task = h.task();
+  task.workRequired = 1e9;
+  h.api.assignAgentToTask(task.id, agent.id);
+  assert.equal(h.api.workerTokenRate(), 60);
+  h.api.tickAgents(20);
+  assert.ok(agent.tokenTank > 0 && agent.tokenTank < 20);
+  h.api.tickAgents(1);
+  assert.equal(agent.tokenTank, 0);
+  assert.equal(g.tokensConsumed, 500);
+});
+
+scenario('real batch sizes vary around their upgrade target and change the completion counter digits', (h) => {
+  const g = h.fresh(6);
+  g.batchSize = 100;
+  g.totalTasksDone = 5067;
+  const sizes = [];
+  const endings = new Set();
+  for (let i = 0; i < 500; i++) {
+    const task = h.task();
+    sizes.push(task.batchSize);
+    h.api.completeTask(task, 'manual');
+    endings.add(g.totalTasksDone % 100);
+  }
+  assert.ok(sizes.every(size => Number.isInteger(size) && size >= 80 && size <= 120));
+  assert.ok(new Set(sizes).size > 20);
+  assert.ok(endings.size > 50);
+  const mean = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+  assert.ok(mean > 97 && mean < 103);
+  assert.equal(g.totalTasksDone, 5067 + sizes.reduce((sum, size) => sum + size, 0));
+  const savedSize = g.tasks[0].batchSize;
+  g.batchSize = 500;
+  assert.equal(g.tasks[0].batchSize, savedSize);
+  assert.equal(h.api.validSave(g), true);
+});
+
+scenario('empty upgrade space retains the height of the last visible upgrade card', (h) => {
+  const g = h.fresh();
+  g.totalTasksDone = 0;
+  g.uiRevealed.upgrades = true;
+  h.api.renderUpgradeSection();
+  const list = h.window.document.querySelector('#upgrade-list');
+  const card = list.querySelector('.upgrade-card');
+  assert.ok(card);
+  card.getBoundingClientRect = () => ({ height: 74 });
+  g.purchasedUpgrades.push('free_ai');
+  h.api.renderUpgradeSection();
+  assert.equal(list.style.getPropertyValue('--upgrade-card-height'), '74px');
+  assert.ok(list.querySelector('.upgrade-space'));
+  assert.equal(list.textContent, '');
+  h.api.renderUpgradeSection();
+  assert.equal(list.style.getPropertyValue('--upgrade-card-height'), '74px');
+});
+
+scenario('Phase 7 shows upcoming savings goals, gates purchases and spreads upgrades before growth', (h) => {
+  const g = h.fresh(7);
+  g.totalTasksDone = 30000;
+  g.cash = 1e9;
+  g.uiRevealed.upgrades = true;
+  h.prepareUpgrade('compute_2');
+  h.api.renderUpgradeSection();
+  const button = id => h.window.document.querySelector('[onclick="GAME.buy(\'' + id + '\')"]');
+  assert.ok(button('compute_2'));
+  assert.equal(button('compute_2').disabled, true);
+  assert.match(button('compute_2').closest('.upgrade-card').textContent, /45,000 tasks/);
+  assert.equal(button('devops_unlock').disabled, false);
+  h.api.purchaseUpgrade('compute_2');
+  assert.equal(g.purchasedUpgrades.includes('compute_2'), false);
+  h.api.purchaseUpgrade('devops_unlock');
+  g.totalTasksDone = 45000;
+  h.api.purchaseUpgrade('compute_2');
+  assert.equal(g.batchSize, 500);
+  g.totalTasksDone = 65000;
+  h.api.purchaseUpgrade('compute_1');
+  g.totalTasksDone = 90000;
+  const speed = g.agentSpeedMult;
+  h.api.purchaseUpgrade('delivery_pipeline');
+  assert.equal(g.agentSpeedMult, speed * 1.25);
+  g.totalTasksDone = 115000;
+  const pay = g.payMult;
+  h.api.purchaseUpgrade('premium_contracts');
+  assert.equal(g.payMult, pay * 1.35);
+  h.api.renderUpgradeSection();
+  assert.ok(button('ops_flywheel'));
+  assert.equal(button('ops_flywheel').disabled, true);
+  g.totalTasksDone = 150000;
+  g.cash = 999999;
+  h.api.purchaseUpgrade('ops_flywheel');
+  assert.equal(g.phase, 7);
+  g.cash = 1000000;
+  h.api.purchaseUpgrade('ops_flywheel');
+  assert.equal(g.phase, 8);
+  assert.equal(g.cash, 0);
 });
 
 for (const buyUpgrades of [false, true]) {
@@ -647,6 +756,14 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
     assert.ok(freeAi.clicks <= 50);
     assert.equal(result.offers.find(offer => offer.id === 'free_ai').cost, 0);
     assert.equal(result.offers.find(offer => offer.id === 'pro_model').cost, 2500);
+    const growth = result.purchases.find(purchase => purchase.id === 'ops_flywheel');
+    assert.equal(growth.cost, 1000000);
+    for (const id of ['compute_2', 'compute_1', 'delivery_pipeline', 'premium_contracts']) {
+      const purchase = result.purchases.find(item => item.id === id);
+      assert.ok(purchase.tasks >= ({ compute_2: 45000, compute_1: 65000, delivery_pipeline: 90000, premium_contracts: 115000 })[id]);
+      assert.ok(purchase.seconds < growth.seconds);
+    }
+    t.diagnostic('Phase 7 purchases: ' + JSON.stringify(result.purchases.filter(purchase => purchase.phase === 7)));
     t.diagnostic('Seed ' + seed + ': free AI at ' + freeAi.clicks + ' work clicks; Basic at ' + result.phases.find(phase => phase.phase === 3).seconds + ' simulation seconds');
     assert.ok(result.phases.find(p => p.phase === 6).seconds - result.phases.find(p => p.phase === 5).seconds >= 35, 'Phase 5 has time for its upgrades');
     assert.ok(result.phases.find(p => p.phase === 9).tasks >= 1000000);
@@ -861,7 +978,7 @@ scenario('sale conditions gate the upgrade and restarting preserves bonuses with
   assert.equal(h.api.validSave({...next,retirementFinal:true}),false);assert.match(h.window.document.querySelector('#intro-story').textContent,/bored/);
   h.window.document.querySelector('#btn-start-game').click();assert.equal(next.gameStarted,true);assert.equal(next.tasks.length,0);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);
 });
-scenario('the older Pro model is visibly slow and can be sold for a faster replacement', (h) => {
+scenario('the older Basic model is visibly slow and can be sold for a faster replacement', (h) => {
   const g=h.fresh(3);g.cash=1e6;g.totalTasksDone=800;g.tokens=200;h.prepareUpgrade('second_ai');h.api.purchaseUpgrade('second_ai');h.api.purchaseUpgrade('multi_bot');
   const original=g.agents.find(agent=>agent.olderModel);const task=h.task();const slow=h.api.workerSpeed(task,original);h.api.renderAgentSection();g.uiRevealed.agents=true;h.api.renderAgentSection();
   assert.match(h.window.document.querySelector('#agent-list').textContent,/Older model · slow/);assert.doesNotMatch(h.window.document.querySelector('#agent-list').textContent,/Auto ON|Dismiss/);
@@ -1083,9 +1200,9 @@ scenario('Token Manager replenishes ahead of the warning even during rapid tank 
   g.cash=0;g.tokens=0;h.api.tickTokenManager();assert.equal(g.tokens,0);assert.equal(h.api.validSave(g),true);
 });
 scenario('batch upgrades count delivered tasks without multiplying cash or inflating job complexity', (h) => {
-  const g=h.fresh(5);g.cash=1e9;g.totalTasksDone=1200;h.prepareUpgrade('bulk_jobs');const before=h.task();h.api.purchaseUpgrade('bulk_jobs');const task=h.task();assert.equal(before.batchSize,1);assert.equal(task.batchSize,10);const pay=h.api.getTaskCashPayout(task,'manual',null);const cash=g.cash;h.api.completeTask(task,'manual');assert.equal(g.totalTasksDone,1210);assert.equal(g.cash,cash+pay);
-  g.uiRevealed.taskQueue=true;const batch=h.task();h.api.renderTaskQueue();assert.match(h.window.document.querySelector('#task-list').textContent,/Batch: 10 tasks/);g.totalTasksDone=1000000;const large=h.task();assert.ok(large.workRequired<1000);assert.equal(h.api.validSave(g),true);
-  g.phase=12;g.batchSize=2000;const c=h.fullCluster();c.tank=4000;const count=g.totalTasksDone;h.api.tickNetwork(.1);assert.equal(g.totalTasksDone-count,400);assert.ok(c.tank<4000);assert.ok(batch.batchSize===10);
+  const g=h.fresh(5);g.cash=1e9;g.totalTasksDone=1200;h.prepareUpgrade('bulk_jobs');const before=h.task();h.api.purchaseUpgrade('bulk_jobs');const task=h.task();assert.equal(before.batchSize,1);assert.ok(task.batchSize>=8&&task.batchSize<=12);const pay=h.api.getTaskCashPayout(task,'manual',null);const cash=g.cash;h.api.completeTask(task,'manual');assert.equal(g.totalTasksDone,1200+task.batchSize);assert.equal(g.cash,cash+pay);
+  g.uiRevealed.taskQueue=true;const batch=h.task();h.api.renderTaskQueue();assert.match(h.window.document.querySelector('#task-list').textContent,new RegExp('Batch: '+batch.batchSize+' tasks'));g.totalTasksDone=1000000;const large=h.task();assert.ok(large.workRequired<1000);assert.equal(h.api.validSave(g),true);
+  g.phase=12;g.batchSize=2000;const c=h.fullCluster();c.tank=4000;const count=g.totalTasksDone;h.api.tickNetwork(.1);assert.equal(g.totalTasksDone-count,400);assert.ok(c.tank<4000);assert.ok(batch.batchSize>=8&&batch.batchSize<=12);
 });
 scenario('batch and provisioning save data reject invalid states and preserve construction', (h) => {
   const g=h.fresh(9);g.cash=1e6;h.api.openCluster();h.api.tickConstruction(12);h.api.buyClusterWorker(g.clusters[0].id);h.api.tickConstruction(2);const raw=JSON.stringify(g);const restored=harness(raw);try{assert.equal(restored.window.GAME.state.agents[0].provisionRemaining,2);restored.api.tickConstruction(2);assert.equal(restored.window.GAME.state.agents[0].status,'idle');}finally{restored.close();}
