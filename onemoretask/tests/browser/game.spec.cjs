@@ -1162,8 +1162,122 @@ for(const width of [1440,390]){
   });
 }
 test('Phase 2 AI income appears and the Basic purchase changes model and lifestyle names',async({page})=>{
-  await page.clock.install();await page.goto('/');await page.evaluate(()=>{chPh3();GAME.addTasks(3);});await page.clock.runFor(1000);await expect.poll(()=>page.locator('#income-rate').textContent()).not.toBe('+$0/s');await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Free');await page.locator('[onclick="GAME.buy(\'pro_model\')"]').click();await page.clock.runFor(200);await page.locator('#btn-dismiss-popup').click();await page.clock.runFor(200);await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Basic');await expect(page.locator('#expense-tier-label')).toHaveText('Coffee Shop Regular');await expect(page.locator('[onclick="GAME.buy(\'prompt_basics\')"]')).toHaveCount(0);await page.screenshot({path:'test-results/basic-tier.png',fullPage:true,animations:'disabled'});
+  await page.clock.install();
+  await page.goto('/');
+  await page.evaluate(() => { chPh3(); GAME.addTasks(3); });
+  await page.clock.runFor(1000);
+  await expect.poll(() => page.locator('#income-rate').textContent()).not.toBe('+$0/s');
+  await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Free');
+  await page.evaluate(() => GAME.addCash(2000 - GAME.state.cash));
+  await page.clock.runFor(200);
+  await page.locator('[onclick="GAME.buy(\'pro_model\')"]').click();
+  await page.clock.runFor(200);
+  await page.locator('#btn-dismiss-popup').click();
+  await page.clock.runFor(200);
+  await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Basic');
+  await expect(page.locator('#expense-tier-label')).toHaveText('Coffee Shop Regular');
+  await expect(page.locator('[onclick="GAME.buy(\'prompt_basics\')"]')).toHaveCount(0);
+  await page.screenshot({path:'test-results/basic-tier.png',fullPage:true,animations:'disabled'});
 });
+
+test('phase checkpoints save the requested task and cash amounts', async ({page}) => {
+  await page.clock.install();
+  await page.goto('/');
+  for (const [stage, cash, tasks] of [[3, 1900, 297], ['3_1', 14000, 870], [4, 1300, 997], [8, 800000, 390000]]) {
+    const checkpoint = await page.evaluate(stage => {
+      window['chPh' + stage]();
+      const saved = JSON.parse(localStorage.getItem('ai_empire_save'));
+      return {cash: GAME.state.cash, savedCash: saved.cash, tasks: GAME.state.totalTasksDone, savedTasks: saved.totalTasksDone};
+    }, stage);
+    expect(checkpoint).toEqual({cash, savedCash: cash, tasks, savedTasks: tasks});
+  }
+});
+
+for (const width of [1440, 390]) {
+  test(`the second subscription checkpoint preserves its savings goal after reload at ${width}px`, async ({page}) => {
+    await page.setViewportSize({width, height: 900});
+    const now = new Date();
+    await page.clock.install({time: now});
+    await page.clock.pauseAt(new Date(now.getTime() + 1000));
+    await page.goto('/');
+    await page.evaluate(() => chPh3_1());
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const second = page.locator('[onclick="GAME.buy(\'second_ai\')"]');
+    await expect(second).toBeVisible();
+    await expect(second).toHaveText('$18.0K');
+    await expect(second).toBeDisabled();
+    expect(await page.evaluate(() => ({phase: GAME.state.phase, tasks: GAME.state.totalTasksDone, cash: GAME.state.cash, agents: GAME.state.agents.length}))).toEqual({phase: 3, tasks: 870, cash: 14000, agents: 0});
+    await page.evaluate(() => GAME.addCash(4000));
+    await page.clock.runFor(200);
+    await second.click();
+    await page.clock.runFor(200);
+    await expect(page.locator('#agent-list')).toContainText('AI 2000 Pro');
+  });
+}
+
+for (const width of [1440, 390]) {
+  test(`selling Basic leaves the first slot available through reload and replacement at ${width}px`, async ({page}) => {
+    const h = harness();
+    const g = h.fresh(3);
+    g.cash = 1e6;
+    g.totalTasksDone = 1000;
+    h.prepareUpgrade('second_ai');
+    h.api.purchaseUpgrade('second_ai');
+    h.api.purchaseUpgrade('inference_tuning');h.api.purchaseUpgrade('prompt_refinement');h.api.purchaseUpgrade('context_pruning');
+    h.api.purchaseUpgrade('multi_bot');
+    h.api.hireAgent('coder', 2);
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastTaskSpawn = g.lastTick + 1e9;
+    const raw = JSON.stringify(g);
+    const proId = g.agents.find(agent => agent.name === 'AI 2000 Pro').id;
+    const coderId = g.agents.find(agent => agent.roleId === 'coder').id;
+    h.close();
+    await page.setViewportSize({width, height: 900});
+    await page.clock.install({time: new Date(g.lastTick)});
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => {
+      if (!sessionStorage.getItem('slots_seeded')) {
+        localStorage.setItem('ai_empire_save', value);
+        sessionStorage.setItem('slots_seeded', '1');
+      }
+    }, raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const slots = page.locator('#agent-list > [data-agent-slot]');
+    await expect(slots.nth(0)).toContainText('AI 2000 Basic');
+    await expect(slots.nth(1)).toContainText('AI 2000 Pro');
+    await slots.nth(0).getByRole('button', {name: 'Sell', exact: true}).click();
+    await page.clock.runFor(200);
+    await expect(slots.nth(0)).toHaveClass(/agent-vacancy/);
+    await expect(slots.nth(0)).toContainText('Agent slot 1');
+    await expect(slots.nth(1)).toContainText('AI 2000 Pro');
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(slots.nth(0)).toHaveClass(/agent-vacancy/);
+    await expect(slots.nth(1)).toContainText('AI 2000 Pro');
+    await page.screenshot({path: `test-results/basic-vacancy-${width}.png`, fullPage: true});
+    await slots.nth(0).getByRole('button', {name: 'Buy Writer', exact: true}).click();
+    await page.clock.runFor(200);
+    await expect(slots.nth(0)).toHaveClass(/agent-card/);
+    await expect(slots.nth(0)).toContainText('Writer');
+    await expect(slots.nth(1)).toContainText('AI 2000 Pro');
+    expect(await page.evaluate(({proId, coderId}) => ({
+      proSlot: GAME.state.agents.find(agent => agent.id === proId).slotIndex,
+      coderSlot: GAME.state.agents.find(agent => agent.id === coderId).slotIndex,
+      replacementIsOld: GAME.state.agents.find(agent => agent.slotIndex === 0).olderModel,
+      fits: document.documentElement.scrollWidth <= innerWidth,
+    }), {proId, coderId})).toEqual({proSlot: 1, coderSlot: 2, replacementIsOld: false, fits: true});
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(slots.nth(0)).toContainText('Writer');
+    await expect(slots.nth(1)).toContainText('AI 2000 Pro');
+  });
+}
 
 for(const width of [1440,390]){
   test(`DevOps can be bought with a full agent pool at ${width}px`,async({page})=>{
@@ -1230,39 +1344,3 @@ test('provisioning improvements bracket sixteen slots and stay available during 
   await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');
   await page.locator('#upgrade-list').screenshot({path:'test-results/scaling-upgrades.png'});
 });
-
-test('phase checkpoints save the requested task and cash amounts', async ({page}) => {
-  await page.clock.install();
-  await page.goto('/');
-  for (const [stage, cash, tasks] of [['3_1', 14000, 870], [8, 800000, 390000]]) {
-    const checkpoint = await page.evaluate(stage => {
-      window['chPh' + stage]();
-      const saved = JSON.parse(localStorage.getItem('ai_empire_save'));
-      return {cash: GAME.state.cash, savedCash: saved.cash, tasks: GAME.state.totalTasksDone, savedTasks: saved.totalTasksDone};
-    }, stage);
-    expect(checkpoint).toEqual({cash, savedCash: cash, tasks, savedTasks: tasks});
-  }
-});
-
-for (const width of [1440, 390]) {
-  test(`the second subscription checkpoint preserves its savings goal after reload at ${width}px`, async ({page}) => {
-    await page.setViewportSize({width, height: 900});
-    const now = new Date();
-    await page.clock.install({time: now});
-    await page.clock.pauseAt(new Date(now.getTime() + 1000));
-    await page.goto('/');
-    await page.evaluate(() => chPh3_1());
-    await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    const second = page.locator('[onclick="GAME.buy(\'second_ai\')"]');
-    await expect(second).toBeVisible();
-    await expect(second).toHaveText('$18.0K');
-    await expect(second).toBeDisabled();
-    expect(await page.evaluate(() => ({phase: GAME.state.phase, tasks: GAME.state.totalTasksDone, cash: GAME.state.cash, agents: GAME.state.agents.length}))).toEqual({phase: 3, tasks: 870, cash: 14000, agents: 0});
-    await page.evaluate(() => GAME.addCash(4000));
-    await page.clock.runFor(200);
-    await second.click();
-    await page.clock.runFor(200);
-    await expect(page.locator('#agent-list')).toContainText('AI 2000 Pro');
-  });
-}

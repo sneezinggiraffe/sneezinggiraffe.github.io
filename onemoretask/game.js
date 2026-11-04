@@ -90,7 +90,7 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
-  const SAVE_VERSION = 8;
+  const SAVE_VERSION = 9;
 
   const CLUSTER_COST = 50000;
   const CLUSTER_AGENT_NAMES = [
@@ -414,6 +414,7 @@
       lastTick: Date.now(),
       lastSave: Date.now(),
       lastTaskSpawn: Date.now(),
+      taskSpawnDelay: 1,
       lastIncidentCheck: Date.now(),
       gameStarted: false,
       startTime: Date.now(),
@@ -484,7 +485,7 @@
     if (!Number.isInteger(state.phase) || state.phase < 1 || state.phase > FINAL_PHASE) return false;
     if (!["off", "manage", "scale"].includes(state.ceoMode) || !["off", "on", "layered"].includes(state.musicMode)) return false;
     const taskShape = { batchSize: 1, id: "", typeId: "", name: "", icon: "", client: "", workRequired: 1, workDone: 0, pay: 0, tokenCost: 0, failChance: 0, assignedAgent: null, status: "", createdAt: 0 };
-    const agentShape = { id: "", name: "", olderModel: false, roleId: "", roleName: "", icon: "", color: "", specialty: [], traitId: "", traitName: "", traitDesc: "", speed: 1, quality: 1, reliability: 1, tokenCost: 1, tokenTank: 0, status: "", autoAssign: true, currentTask: null, tasksCompleted: 0, hired: 0, tokenStarved: false, errorTime: null, provisionRemaining: 0, provisionDuration: 0 };
+    const agentShape = { id: "", name: "", olderModel: false, slotIndex: 0, roleId: "", roleName: "", icon: "", color: "", specialty: [], traitId: "", traitName: "", traitDesc: "", speed: 1, quality: 1, reliability: 1, tokenCost: 1, tokenTank: 0, status: "", autoAssign: true, currentTask: null, tasksCompleted: 0, hired: 0, tokenStarved: false, errorTime: null, provisionRemaining: 0, provisionDuration: 0 };
     const incidentShape = { id: "", templateId: "", name: "", desc: "", sev: "", cashCost: 0, tokenCost: 0, fixProgress: 0, createdAt: 0, resolved: false };
     const clusterShape = { id: "", name: "", invested: 0, buildRemaining: 0, buildDuration: 0, workforce: 0, tank: 0, progress: 0, workerSlotsMax: 8, workerAgentIds: [], managerAssigned: false, tokenManagerAssigned: false, active: true };
     const collections = [[state.tasks, taskShape], [state.agents, agentShape], [state.incidents, incidentShape], [state.clusters, clusterShape], [state.services, { id: "", name: "", incomeRate: 0, active: true }], [state.log, { msg: "", type: "", t: 0 }]];
@@ -494,6 +495,8 @@
     if (new Set(entities.map((item) => item.id)).size !== entities.length) return false;
     if (!state.tasks.every((task) => TASK_TYPES.some((type) => type.id === task.typeId) && Number.isInteger(task.batchSize) && task.batchSize > 0 && task.workRequired > 0 && task.workDone <= task.workRequired && ["available", "active", "ai", "agent", "done"].includes(task.status))) return false;
     if (!state.agents.every((agent) => AGENT_ROLES.some((role) => role.id === agent.roleId) && /^#[0-9a-f]{6}$/i.test(agent.color) && agent.speed > 0 && agent.tokenCost > 0 && agent.specialty.every((id) => TASK_TYPES.some((type) => type.id === id)) && ["idle", "working", "error", "provisioning"].includes(agent.status) && (agent.status !== "provisioning" || (agent.provisionRemaining > 0 && agent.provisionDuration > 0)))) return false;
+    const workers = state.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId));
+    if (state.taskSpawnDelay <= 0 || !workers.every((agent) => Number.isInteger(agent.slotIndex)) || new Set(workers.map((agent) => agent.slotIndex)).size !== workers.length) return false;
     if (!state.incidents.every((incident) => ["warning", "critical"].includes(incident.sev) && incident.fixProgress <= 100)) return false;
     if (!state.purchasedUpgrades.every((id) => UPGRADES.some((upgrade) => upgrade.id === id)) || !state.milestonesReached.every((id) => MILESTONES.some((milestone) => milestone.id === id))) return false;
     if (!state.log.every((entry) => ["", "good", "bad", "warn", "info"].includes(entry.type))) return false;
@@ -624,7 +627,7 @@
     var base;
     {
       if (!G.uiRevealed.taskQueue) return Infinity; // No auto-spawn before task queue
-      if (G.phase === 2 || G.phase === 3) return (G.phase === 2 ? 4000 : 3500) / Math.max(1, G.taskSpawnMult);
+      if (G.phase === 2 || G.phase === 3) return (G.phase === 2 ? 4000 : 3500) / 7.5 * G.taskSpawnDelay / Math.max(1, G.taskSpawnMult);
       if (G.totalTasksDone < 10) base = 2000;
       else if (G.totalTasksDone < 15) base = 1600;
       else if (G.totalTasksDone < 20) base = 1100;
@@ -1060,7 +1063,14 @@
     return pick(available.length > 0 ? available : CLUSTER_AGENT_NAMES);
   }
 
-  function createAgent(roleId) {
+  function nextWorkerSlot() {
+    let slot = !G.aiWorkerShutdown && G.phase >= 2 ? 1 : 0;
+    const occupied = new Set(G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).map((agent) => agent.slotIndex));
+    while (occupied.has(slot)) slot++;
+    return slot;
+  }
+
+  function createAgent(roleId, slotIndex = nextWorkerSlot()) {
     const role = AGENT_ROLES.find((r) => r.id === roleId);
     if (!role) return null;
     const trait = pick(TRAITS);
@@ -1071,6 +1081,7 @@
       id: uid(),
       name: generateAgentName(),
       olderModel: false,
+      slotIndex: slotIndex,
       roleId: role.id,
       roleName: role.name,
       icon: role.icon,
@@ -1130,7 +1141,11 @@
     return ["manager", "token_mgr"].filter((role) => (role === "manager" ? G.managerUnlock : G.purchasedUpgrades.includes("token_manager_unlock")) && !G.agents.some((agent) => agent.roleId === role));
   }
 
-  function hireAgent(roleId) {
+  function workerSlotCount() {
+    return getSharedAgentPoolSize() - G.agents.filter((agent) => ["manager", "token_mgr"].includes(agent.roleId)).length - reservedHireRoles().length;
+  }
+
+  function hireAgent(roleId, slotIndex = nextWorkerSlot()) {
     if (G.phase >= 9) return;
     const role = AGENT_ROLES.find((candidate) => candidate.id === roleId);
     if (!role || G.phase < 4 || (roleId === "manager" && !G.managerUnlock) ||
@@ -1144,6 +1159,8 @@
         return;
       }
     }
+    if (!isUtility && (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= workerSlotCount() ||
+        (!G.aiWorkerShutdown && slotIndex === 0) || G.agents.some((agent) => !UTILITY_ROLES.includes(agent.roleId) && agent.slotIndex === slotIndex))) return;
     const reserved = reservedHireRoles();
     if (roleId !== "devops" && !reserved.includes(roleId) && sharedAgentCount() >= getHireAgentCapacity() - reserved.length) return;
     const activeAgents = G.agents.length;
@@ -1157,7 +1174,7 @@
       return;
     }
     G.cash -= cost;
-    const agent = createAgent(roleId);
+    const agent = createAgent(roleId, slotIndex);
     G.agents.push(agent);
     log("Bought " + agent.name + " (" + agent.roleName + ", " + agent.traitName + ")!", "info");
 
@@ -1887,7 +1904,7 @@
 
   function convertSubscriptions() {
     if (G.aiWorkerShutdown) return;
-    const original = createAgent("writer");
+    const original = createAgent("writer", 0);
     original.speed = 0.35;
     original.tokenCost = 1;
     original.olderModel = true;
@@ -2010,7 +2027,8 @@
     if (interval === Infinity) return;
     if (Date.now() - G.lastTaskSpawn < interval) return;
     G.lastTaskSpawn = Date.now();
-    const batch = G.phase === 2 || G.phase === 3 ? randInt(5, 10) : G.phase >= 9 ? Math.max(1, managedNodeCount()) : 1;
+    if (G.phase === 2 || G.phase === 3) G.taskSpawnDelay = rand(0.25, 1.75) * (Math.random() < 0.15 ? 5 : 0.3);
+    const batch = G.phase >= 9 ? Math.max(1, managedNodeCount()) : 1;
     for (let index = 0; index < batch; index++) spawnTask();
   }
 
@@ -3184,7 +3202,7 @@
     const capacity = manager ? MANAGER_TOKEN_TANK_MAX : workerTokenCapacity(agent);
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
-    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 8 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 4 ? "" : agent.roleName) + "</span></div>";
+    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 8 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 4 ? "" : agent.roleName) + "</span></div>";
     if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
     else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
@@ -3211,14 +3229,19 @@
         html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy " + name + "</strong><span>" + fmtCash(price) + "</span></button>";
       }
     }
-    html += renderAiWorkerCard();
-    for (const agent of G.agents.filter((item) => !UTILITY_ROLES.includes(item.roleId))) html += renderAgentCard(agent);
+    const workers = G.agents.filter((item) => !UTILITY_ROLES.includes(item.roleId));
+    if (G.phase < 4) {
+      html += renderAiWorkerCard();
+      for (const agent of workers) html += renderAgentCard(agent);
+    }
     const hireRoles = availableHireRoles().filter((item) => !UTILITY_ROLES.includes(item.id));
-    const vacancies = G.phase >= 4 ? getHireAgentCapacity() - sharedAgentCount() - reserved.length : 0;
-    for (let slot = 0; slot < vacancies; slot++) {
-      const number = getSharedAgentPoolUsed() + reserved.length + slot + 1;
-      html += "<div class='card hire-slot agent-vacancy'><div class='vacancy-heading'><span class='provision-icon'>+</span><strong>Agent slot " + number + "</strong><span>" + fmtCash(cost) + " each</span></div><div class='agent-buy-options'>";
-      for (const role of hireRoles) html += "<button class='btn btn-green btn-sm' onclick=\"GAME.hire('" + role.id + "')\" " + (G.cash < cost ? "disabled" : "") + ">Buy " + role.name + "</button>";
+    for (let slot = 0; G.phase >= 4 && slot < workerSlotCount(); slot++) {
+      if (slot === 0 && !G.aiWorkerShutdown) { html += renderAiWorkerCard(); continue; }
+      const agent = workers.find((item) => item.slotIndex === slot);
+      if (agent) { html += renderAgentCard(agent); continue; }
+      const number = slot + getSharedAgentPoolSize() - workerSlotCount() + 1;
+      html += "<div class='card hire-slot agent-vacancy' data-agent-slot='" + slot + "'><div class='vacancy-heading'><span class='provision-icon'>+</span><strong>Agent slot " + number + "</strong><span>" + fmtCash(cost) + " each</span></div><div class='agent-buy-options'>";
+      for (const role of hireRoles) html += "<button class='btn btn-green btn-sm' onclick=\"GAME.hire('" + role.id + "'," + slot + ")\" " + (G.cash < cost ? "disabled" : "") + ">Buy " + role.name + "</button>";
       html += "</div></div>";
     }
     updateHTML($("#agent-list"), html);
@@ -3668,6 +3691,8 @@
     G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
     G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
+    if (number === 3) G.cash = 1900;
+    if (number === 4) G.cash = 1300;
     G.tokens = phase >= 9 ? Math.max(100000, G.clusters.length * 12000) : phase >= 6 ? 50000 : phase >= 3 ? 10000 : 0;
     G.aiWorkerTokenTank = phase >= 2 && !G.aiWorkerShutdown ? workerTokenCapacity() : 0;
     G.managerTokenTank = phase >= 6 && phase < 9 ? MANAGER_TOKEN_TANK_MAX : 0;

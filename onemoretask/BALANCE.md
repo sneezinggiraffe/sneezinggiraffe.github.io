@@ -6,29 +6,30 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | --- | ---: | ---: | --- |
 | 1 | 0 | $0 | First tools: $34–$51 |
 | 2 | 106 | $26–$51 | Prompt Library $150, Gig Alerts $250, Prompting $450, Marketing $650, Basic subscription $2,000 |
-| 3 | 370–395 | $4–$41 | Client Outreach $4,500, Second subscription $18K, Inference Tuning $6K, Prompt Refinement $1.5K, Context Pruning $2.5K, Multi-Agent Licence $25K |
-| 4 | 1,290–1,320 | $8–$330 | Slots and speed, then Tool Use SDK $12K |
-| 5 | 1,610–1,640 | $60–$320 | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
-| 6 | 5,015–5,045 | $33K–$61K | Token Manager unlock $40K |
-| 7 | 30,000–30,400 | $53K–$105K | Operations upgrades, then Ralph-loops $1M |
-| 8 | 408,000–470,000 | $0.7K–$6.5K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
-| 9 | 1.02M–1.21M | $1.5K–$39K | Cluster permits and staffing, then CEO readiness $4M |
-| 10 | 1.83M–2.01M | $5.9M–$7.6M | AI CEO $1M, Pipeline $10M, ninth slots $15M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
-| 11 | 29M–31M | $3.7M–$4.8M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
-| 12 | 48M–51M | $0.9M–$8.3M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
-| 13 | 123M–125M | $0.1M–$19.6M | Global Expansion $3B at 40 completed nodes |
-| 14 | 285M–288M | $9.3M–$39.2M | Reach 100 completed nodes and prepare the sale for $2B |
-| 15 | 531M–538M | $21.7M–$35.4M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.27B–1.29B completed tasks |
+| 3 | 371–385 | $0–$6 | Client Outreach $4,500, Second subscription $18K, Inference Tuning $6K, Prompt Refinement $1.5K, Context Pruning $2.5K, Multi-Agent Licence $25K |
+| 4 | 1,350–1,415 | $138–$414 | Slots and speed, then Tool Use SDK $12K |
+| 5 | 1,595–1,710 | $262–$14.1K | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
+| 6 | 5,000–5,035 | $57K–$107K | Token Manager unlock $40K |
+| 7 | 30,145–30,400 | $130K–$209K | Operations upgrades, then Ralph-loops $1M |
+| 8 | 318,000–369,000 | $5.9K–$9.2K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
+| 9 | 1.002M–1.006M | $597K–$2.11M | Cluster permits and staffing, then CEO readiness $4M |
+| 10 | 1.810M–1.818M | $8.9M–$16.9M | AI CEO $1M, Pipeline $10M, ninth slots $15M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
+| 11 | 25M–28M | $0.9M–$7.1M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
+| 12 | 43M–48M | $3.4M–$10.2M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
+| 13 | 118M–121M | $2.1M–$20.4M | Global Expansion $3B at 40 completed nodes |
+| 14 | 278M–283M | $5.2M–$30.8M | Reach 100 completed nodes and prepare the sale for $2B |
+| 15 | 527M–530M | $4.2M–$50.1M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.26B–1.29B completed tasks |
 
-The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. The phase-entry cheat uses the minimum rather than these sampled totals.
+The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
 
 ## Checkpoint interpretation
 
 - `chPh0_2()` loads seven tasks with the first three upgrades available.
 - `chPh0_3()` loads 35 tasks with Side Hustle Optimization, Inbox Zero and GTD Workflow available.
 - `chPh0_4()` loads 100 tasks with Discover Free-Tier AI visible; one five-task manual session reaches its 105-task requirement.
-
+- `chPh3()` loads the transition into Phase 3 with $1,900 cash, leaving $100 to earn for the Basic subscription.
 - `chPh3_1()` loads Phase 3 at 870 tasks and $14,000, just before Second AI Subscription. All earlier upgrades are purchased; another $4,000 funds the subscription.
+- `chPh4()` loads the transition into Phase 4 with $1,300 cash. The subscriptions, Inference Tuning, Prompt Refinement and Context Pruning are already purchased; the licence remains a savings goal.
 
 - `chStart8()` loads the beginning of Phase 8 at 150,000 tasks, with its growth upgrades left to play through.
 - `chPh8()` loads Phase 7 at 390,000 tasks and $800,000, leaving $200,000 to earn before buying Ralph-loops.

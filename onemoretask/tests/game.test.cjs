@@ -2039,7 +2039,7 @@ scenario('phase cheats preserve their requested savings goals and prepare valid 
   for(const stage of ['0_1','0_2','0_3','0_4',1]){h.window['chPh'+stage]();assert.equal(h.window.GAME.state.phase,1);assert.equal(h.api.validSave(h.window.GAME.state),true);}
   for(let stage=2;stage<=15;stage++){
     h.window['chPh'+stage]();const g=h.window.GAME.state;const upgrade=h.api.UPGRADES.find(item=>item.unlockPhase===stage);assert.equal(g.phase,stage-1,'chPh'+stage);assert.equal(h.api.validSave(g),true);
-    if(stage===8){assert.equal(g.cash,800000);g.cash=upgrade.cost;}else assert.ok(g.cash>=upgrade.cost);
+    if([3,4,8].includes(stage)){assert.equal(g.cash,stage===3?1900:stage===4?1300:800000);g.cash=upgrade.cost;}else assert.ok(g.cash>=upgrade.cost);
     if(stage>=13){assert.equal(g.clusters.length,upgrade.reqNodes-1);h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,stage===8?390000:upgrade.reqTasks-3);if(stage!==8)h.window.GAME.addTasks(3);}
     h.api.purchaseUpgrade(upgrade.id);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
   }
@@ -2144,7 +2144,7 @@ scenario('the first paid tools appear at seven tasks and free AI reveals without
 });
 
 for (const phase of [2, 3]) {
-  scenario('Phase ' + phase + ' demand arrives in varied bursts with visible work and catch-up gaps', (h) => {
+  scenario('Phase ' + phase + ' demand arrives one task at a time with busy spells and quiet gaps', (h) => {
     const g = h.fresh(phase);
     g.uiRevealed.taskQueue = true;
     g.totalTasksDone = phase === 2 ? 100 : 400;
@@ -2158,17 +2158,26 @@ for (const phase of [2, 3]) {
     h.advance(interval - 1);
     h.api.tickTaskSpawn();
     assert.equal(g.tasks.length, 0);
-    h.advance(1);
+    h.advance(1.01);
     h.api.tickTaskSpawn();
-    assert.ok(g.tasks.length >= 5 && g.tasks.length <= 10);
-    const sizes = new Set([g.tasks.length]);
-    for (let burst = 0; burst < 20; burst++) {
+    assert.equal(g.tasks.length, 1);
+    const delays = [];
+    for (let arrival = 0; arrival < 100; arrival++) {
       g.tasks = [];
-      h.advance(interval);
+      const delay = h.api.getSpawnInterval();
+      delays.push(delay);
       h.api.tickTaskSpawn();
-      sizes.add(g.tasks.length);
+      assert.equal(h.api.getSpawnInterval(), delay, 'Polling keeps the sampled delay');
+      h.advance(delay - 0.01);
+      h.api.tickTaskSpawn();
+      assert.equal(g.tasks.length, 0);
+      h.advance(0.02);
+      h.api.tickTaskSpawn();
+      assert.equal(g.tasks.length, 1);
     }
-    assert.ok(sizes.size > 1);
+    assert.ok(new Set(delays).size > 90);
+    assert.ok(delays.some(delay => delay < 300), 'Busy spells bring individual tasks close together');
+    assert.ok(delays.some(delay => delay >= 1000), 'Quiet gaps leave room to catch up');
     g.tasks = [];
     let sawBacklog = false;
     let caughtUp = false;
@@ -2187,7 +2196,7 @@ for (const phase of [2, 3]) {
   });
 }
 
-scenario('the second subscription gets real work and consumes its own tokens during a burst', (h) => {
+scenario('both subscriptions take separate arrivals and consume their own tokens', (h) => {
   const g = h.fresh(3);
   g.cash = 1e6;
   g.totalTasksDone = 650;
@@ -2196,7 +2205,9 @@ scenario('the second subscription gets real work and consumes its own tokens dur
   g.incidentsExplained = true;
   h.prepareUpgrade('second_ai');
   h.api.purchaseUpgrade('second_ai');
-  h.advance(h.api.getSpawnInterval());
+  h.advance(Math.ceil(h.api.getSpawnInterval()));
+  h.api.tickTaskSpawn();
+  h.advance(Math.ceil(h.api.getSpawnInterval()));
   h.api.tickTaskSpawn();
   g.tokens = 200;
   h.api.topUpAiWorker();
@@ -2210,6 +2221,316 @@ scenario('the second subscription gets real work and consumes its own tokens dur
   assert.ok(g.aiWorkerTokenTank < originalTokens);
   assert.ok(second.tokenTank < secondTokens);
   assert.notEqual(second.currentTask, g.aiWorkerCurrentTaskId);
+});
+
+scenario('Inference Tuning improves both subscriptions before the licence can appear', (h) => {
+  const g = h.fresh(3);
+  g.cash = 100000;
+  g.totalTasksDone = 1000;
+  g.uiRevealed.upgrades = true;
+  h.prepareUpgrade('second_ai');
+  const tuning = h.api.UPGRADES.find(upgrade => upgrade.id === 'inference_tuning');
+  const licence = h.api.UPGRADES.find(upgrade => upgrade.id === 'multi_bot');
+  assert.equal(h.api.upgradeVisible(tuning), false);
+  h.api.purchaseUpgrade('second_ai');
+  const pro = g.agents[0];
+  const task = h.task();
+  const basicSpeed = h.api.originalAiWorkRate();
+  const proSpeed = h.api.workerSpeed(task, pro);
+  const tokenRate = h.api.workerTokenRate();
+  g.totalTasksDone = 899;
+  assert.equal(h.api.upgradeVisible(tuning), false);
+  h.api.purchaseUpgrade('inference_tuning');
+  assert.equal(g.aiPowerMult, 1);
+  g.totalTasksDone = 900;
+  assert.equal(h.api.upgradeVisible(tuning), true);
+  h.api.renderUpgradeSection();
+  assert.match(h.window.document.querySelector('#upgrade-list').textContent, /Inference Tuning/);
+  assert.equal(h.api.upgradeVisible(licence), false);
+  g.totalTasksDone = 1000;
+  h.api.purchaseUpgrade('multi_bot');
+  assert.equal(g.phase, 3, 'The licence cannot bypass the performance upgrade');
+  g.totalTasksDone = 900;
+  g.cash = 5999;
+  h.api.purchaseUpgrade('inference_tuning');
+  assert.equal(g.cash, 5999);
+  assert.equal(g.agentSpeedMult, 1);
+  g.cash = 6000;
+  h.api.purchaseUpgrade('inference_tuning');
+  assert.equal(g.cash, 0);
+  assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.15);
+  assert.equal(h.api.workerSpeed(task, pro), proSpeed * 1.15);
+  assert.equal(h.api.workerTokenRate(), tokenRate);
+  assert.equal(h.api.upgradeVisible(licence), false);
+  g.totalTasksDone = 1000;
+  assert.equal(h.api.upgradeVisible(licence), true);
+  g.cash = 4000;
+  h.api.purchaseUpgrade('prompt_refinement');
+  h.api.purchaseUpgrade('context_pruning');
+  g.cash = 25000;
+  h.api.purchaseUpgrade('multi_bot');
+  assert.equal(g.phase, 4);
+  assert.equal(g.cash, 0);
+  assert.equal(h.api.validSave(g), true);
+});
+
+scenario('the second subscription checkpoint saves 870 tasks and $14K before the purchase', (h) => {
+  h.window.GAME.state.retired = true;
+  h.window.chPh3_1();
+  const g = h.window.GAME.state;
+  const second = h.api.UPGRADES.find(upgrade => upgrade.id === 'second_ai');
+  const prior = h.api.UPGRADES.filter(upgrade => upgrade.oneTime && h.api.UPGRADES.indexOf(upgrade) < h.api.UPGRADES.indexOf(second));
+  assert.equal(g.phase, 3);
+  assert.equal(g.totalTasksDone, 870);
+  assert.equal(g.totalClicks, 6960);
+  assert.equal(g.cash, 14000);
+  assert.equal(g.retired, false);
+  assert.equal(g.agents.length, 0);
+  assert.deepEqual([...g.purchasedUpgrades], [...prior].map(upgrade => upgrade.id));
+  assert.equal(h.api.upgradeVisible(second), true);
+  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'second_ai\')"]').disabled, true);
+  assert.equal(h.api.validSave(g), true);
+  const restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+  try {
+    const loaded = restored.window.GAME.state;
+    assert.equal(loaded.totalTasksDone, 870);
+    assert.equal(loaded.cash, 14000);
+    assert.equal(restored.api.validSave(loaded), true);
+    restored.api.purchaseUpgrade('second_ai');
+    assert.equal(loaded.cash, 14000);
+    loaded.cash += 4000;
+    restored.api.purchaseUpgrade('second_ai');
+    assert.equal(loaded.cash, 0);
+    assert.equal(loaded.agents.length, 1);
+    assert.equal(loaded.agents[0].name, 'AI 2000 Pro');
+  } finally {
+    restored.close();
+  }
+});
+
+scenario('two inexpensive modest upgrades are required while the licence stays visible after tuning', (h) => {
+  const g = h.fresh(3);
+  g.cash = 100000;
+  g.tokens = 1000;
+  g.totalTasksDone = 1000;
+  g.uiRevealed.upgrades = true;
+  h.prepareUpgrade('second_ai');
+  h.api.purchaseUpgrade('second_ai');
+  const refinement = h.api.UPGRADES.find(upgrade => upgrade.id === 'prompt_refinement');
+  const pruning = h.api.UPGRADES.find(upgrade => upgrade.id === 'context_pruning');
+  const licence = h.api.UPGRADES.find(upgrade => upgrade.id === 'multi_bot');
+  assert.equal(h.api.upgradeVisible(refinement), false);
+  assert.equal(h.api.upgradeVisible(pruning), false);
+  assert.equal(h.api.upgradeVisible(licence), false);
+  h.api.purchaseUpgrade('inference_tuning');
+  assert.equal(h.api.upgradeVisible(licence), true);
+  h.api.renderUpgradeSection();
+  const licenceButton = h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]');
+  assert.equal(licenceButton.disabled, true);
+  h.api.purchaseUpgrade('multi_bot');
+  assert.equal(g.phase, 3);
+  const pro = g.agents[0];
+  const task = h.task();
+  task.workRequired = 1e6;
+  const basicSpeed = h.api.originalAiWorkRate();
+  const proSpeed = h.api.workerSpeed(task, pro);
+  g.totalTasksDone = 924;
+  assert.equal(h.api.upgradeVisible(refinement), false);
+  h.api.purchaseUpgrade(refinement.id);
+  assert.equal(h.api.originalAiWorkRate(), basicSpeed);
+  g.totalTasksDone = 925;
+  assert.equal(h.api.upgradeVisible(refinement), true);
+  g.cash = 1499;
+  h.api.purchaseUpgrade(refinement.id);
+  assert.equal(g.cash, 1499);
+  g.cash = 1500;
+  h.api.purchaseUpgrade(refinement.id);
+  assert.equal(g.cash, 0);
+  assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.05);
+  assert.equal(h.api.workerSpeed(task, pro), proSpeed * 1.05);
+  h.api.purchaseUpgrade(refinement.id);
+  assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.05);
+  const efficiency = g.tokenEfficiency;
+  g.totalTasksDone = 949;
+  assert.equal(h.api.upgradeVisible(pruning), false);
+  h.api.purchaseUpgrade(pruning.id);
+  assert.equal(g.tokenEfficiency, efficiency);
+  g.totalTasksDone = 950;
+  assert.equal(h.api.upgradeVisible(pruning), true);
+  g.cash = 2499;
+  h.api.purchaseUpgrade(pruning.id);
+  assert.equal(g.cash, 2499);
+  g.cash = 2500;
+  h.api.purchaseUpgrade(pruning.id);
+  assert.equal(g.cash, 0);
+  assert.equal(g.tokenEfficiency, efficiency * 0.95);
+  h.api.topUpAiWorker();
+  h.api.topUpAgent(pro.id);
+  h.api.tickAiWorker(0.1);
+  const proTask = h.task();
+  proTask.workRequired = 1e6;
+  h.api.assignAgentToTask(proTask.id, pro.id);
+  const basicTokens = g.aiWorkerTokenTank;
+  const proTokens = pro.tokenTank;
+  h.api.tickAiWorker(0.1);
+  h.api.tickAgents(0.1);
+  const tokenRate = h.api.workerTokenRate() * efficiency * 0.95;
+  assert.ok(Math.abs(basicTokens - g.aiWorkerTokenTank - tokenRate * 0.1) < 1e-9);
+  assert.ok(Math.abs(proTokens - pro.tokenTank - tokenRate * 3 * 0.1) < 1e-9);
+  g.totalTasksDone = 1000;
+  g.cash = 24999;
+  h.api.renderUpgradeSection();
+  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]').disabled, true);
+  g.cash = 25000;
+  h.api.renderUpgradeSection();
+  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]').disabled, false);
+  h.api.purchaseUpgrade('multi_bot');
+  assert.equal(g.phase, 4);
+  assert.equal(g.cash, 0);
+  assert.equal(h.api.validSave(g), true);
+});
+
+scenario('selling Basic preserves every worker slot through reload and replacement', (h) => {
+  const g = h.fresh(3);
+  g.cash = 1e6;
+  g.totalTasksDone = 1000;
+  g.uiRevealed.agents = true;
+  h.prepareUpgrade('second_ai');
+  h.api.purchaseUpgrade('second_ai');
+  h.api.purchaseUpgrade('inference_tuning');h.api.purchaseUpgrade('prompt_refinement');h.api.purchaseUpgrade('context_pruning');
+  h.api.purchaseUpgrade('multi_bot');
+  h.api.hireAgent('coder', 2);
+  const basic = g.agents.find(agent => agent.olderModel);
+  const pro = g.agents.find(agent => agent.name === 'AI 2000 Pro');
+  const coder = g.agents.find(agent => agent.roleId === 'coder');
+  const task = h.task();
+  basic.tokenTank = 40;
+  h.api.assignAgentToTask(task.id, basic.id);
+  h.api.fireAgent(basic.id);
+  assert.equal(task.status, 'available');
+  assert.equal(task.assignedAgent, null);
+  h.api.renderAgentSection();
+  const cards = [...h.window.document.querySelector('#agent-list').children];
+  assert.deepEqual(cards.map(card => card.dataset.agentSlot), ['0', '1', '2']);
+  assert.ok(cards[0].classList.contains('agent-vacancy'));
+  assert.match(cards[0].textContent, /Agent slot 1/);
+  assert.match(cards[1].textContent, /AI 2000 Pro/);
+  assert.ok(cards[2].textContent.includes(coder.name));
+  assert.equal(h.api.save(), true);
+  const restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+  try {
+    const loaded = restored.window.GAME.state;
+    assert.equal(restored.api.validSave(loaded), true);
+    assert.equal(loaded.agents.find(agent => agent.id === pro.id).slotIndex, 1);
+    assert.equal(loaded.agents.find(agent => agent.id === coder.id).slotIndex, 2);
+    const first = restored.window.document.querySelector('#agent-list').firstElementChild;
+    assert.ok(first.classList.contains('agent-vacancy'));
+    const buy = [...first.querySelectorAll('button')].find(button => button.textContent === 'Buy Writer');
+    const cash = loaded.cash;
+    const cost = restored.api.getAgentHireCost(loaded.agents.length);
+    restored.window.eval(buy.getAttribute('onclick'));
+    const replacement = loaded.agents.find(agent => agent.slotIndex === 0);
+    assert.equal(replacement.olderModel, false);
+    assert.equal(replacement.roleId, 'writer');
+    assert.equal(loaded.cash, cash - cost);
+    assert.ok(restored.api.workerSpeed(task, replacement) > h.api.workerSpeed(task, basic) * 2);
+    restored.api.renderAgentSection();
+    assert.equal(restored.window.document.querySelector('#agent-list').firstElementChild.dataset.agentSlot, '0');
+    assert.equal(restored.window.document.querySelectorAll('.agent-vacancy').length, 0);
+    restored.api.fireAgent(pro.id);
+    restored.api.renderAgentSection();
+    assert.equal(restored.window.document.querySelector('.agent-vacancy').dataset.agentSlot, '1');
+    restored.api.hireAgent('analyst');
+    assert.equal(loaded.agents.find(agent => agent.roleId === 'analyst').slotIndex, 1);
+    assert.equal(loaded.agents.find(agent => agent.id === coder.id).slotIndex, 2);
+    assert.equal(restored.api.validSave(loaded), true);
+  } finally {
+    restored.close();
+  }
+});
+
+scenario('worker purchases respect the chosen vacancy and reject occupied or invalid slots', (h) => {
+  const g = h.fresh(4);
+  g.cash = 100000;
+  g.uiRevealed.agents = true;
+  for (const slot of [-1, 0, 0.5, 3, NaN]) h.api.hireAgent('coder', slot);
+  assert.equal(g.agents.length, 0);
+  assert.equal(g.cash, 100000);
+  h.api.hireAgent('coder', 2);
+  assert.equal(g.agents[0].slotIndex, 2);
+  const cash = g.cash;
+  h.api.hireAgent('writer', 2);
+  assert.equal(g.cash, cash);
+  assert.equal(g.agents.length, 1);
+  h.api.renderAgentSection();
+  assert.deepEqual([...h.window.document.querySelectorAll('#agent-list [data-agent-slot]')].map(card => card.dataset.agentSlot), ['0', '1', '2']);
+  h.api.shutdownAiWorker();
+  h.api.hireAgent('writer');
+  assert.equal(g.agents[1].slotIndex, 0);
+  h.api.hireAgent('researcher');
+  assert.equal(g.agents[2].slotIndex, 1);
+  assert.equal(h.api.validSave(g), true);
+});
+
+scenario('arrival delays survive reloads and neither full queues nor time jumps create batches', (h) => {
+  const g = h.fresh(3);
+  g.uiRevealed.taskQueue = true;
+  h.advance(Math.ceil(h.api.getSpawnInterval()));
+  h.api.tickTaskSpawn();
+  const delay = h.api.getSpawnInterval();
+  const restored = harness(JSON.stringify(g));
+  try {
+    const loaded = restored.window.GAME.state;
+    restored.advance(h.window.Date.now() - restored.window.Date.now());
+    assert.equal(loaded.lastTaskSpawn, g.lastTaskSpawn);
+    assert.equal(loaded.taskSpawnDelay, g.taskSpawnDelay);
+    assert.equal(restored.api.getSpawnInterval(), delay);
+    restored.advance(delay - 0.01);
+    restored.api.tickTaskSpawn();
+    assert.equal(loaded.tasks.length, 1);
+    restored.advance(0.02);
+    restored.api.tickTaskSpawn();
+    assert.equal(loaded.tasks.length, 2);
+  } finally {
+    restored.close();
+  }
+  while (g.tasks.length < h.api.getMaxTasks()) h.task();
+  h.advance(60000);
+  h.api.tickTaskSpawn();
+  assert.equal(g.tasks.length, h.api.getMaxTasks());
+  g.tasks = [];
+  h.api.tickTaskSpawn();
+  assert.equal(g.tasks.length, 0);
+  h.advance(60000);
+  h.api.tickTaskSpawn();
+  assert.equal(g.tasks.length, 1);
+});
+
+scenario('save validation enforces persistent slot identities and a positive arrival delay', (h) => {
+  const g = h.fresh(4);
+  g.aiWorkerShutdown = true;
+  const first = h.worker();
+  const second = h.worker();
+  assert.equal(h.api.validSave(g), true);
+  second.slotIndex = first.slotIndex;
+  assert.equal(h.api.validSave(g), false);
+  second.slotIndex = 0.5;
+  assert.equal(h.api.validSave(g), false);
+  second.slotIndex = 1;
+  g.taskSpawnDelay = 0;
+  assert.equal(h.api.validSave(g), false);
+  g.taskSpawnDelay = 1;
+  assert.equal(h.api.validSave(g), true);
+  const previous = JSON.stringify({...g, saveVersion: 8});
+  const restored = harness(previous);
+  try {
+    assert.equal(restored.window.GAME.state.phase, 1);
+    assert.equal(restored.window.localStorage.getItem('ai_empire_save'), previous);
+    assert.match(restored.window.document.querySelector('#save-status').textContent, /older version/);
+    assert.equal(restored.api.save(), false);
+  } finally {
+    restored.close();
+  }
 });
 
 scenario('the free AI tank drains twice as fast and needs another top-up after four seconds', (h) => {
@@ -2604,171 +2925,4 @@ scenario('chRetire prepares an immediate Golden Parachute and retirement restore
   } finally {
     restored.close();
   }
-});
-
-scenario('Inference Tuning improves both subscriptions before the licence can appear', (h) => {
-  const g = h.fresh(3);
-  g.cash = 100000;
-  g.totalTasksDone = 1000;
-  g.uiRevealed.upgrades = true;
-  h.prepareUpgrade('second_ai');
-  const tuning = h.api.UPGRADES.find(upgrade => upgrade.id === 'inference_tuning');
-  const licence = h.api.UPGRADES.find(upgrade => upgrade.id === 'multi_bot');
-  assert.equal(h.api.upgradeVisible(tuning), false);
-  h.api.purchaseUpgrade('second_ai');
-  const pro = g.agents[0];
-  const task = h.task();
-  const basicSpeed = h.api.originalAiWorkRate();
-  const proSpeed = h.api.workerSpeed(task, pro);
-  const tokenRate = h.api.workerTokenRate();
-  g.totalTasksDone = 899;
-  assert.equal(h.api.upgradeVisible(tuning), false);
-  h.api.purchaseUpgrade('inference_tuning');
-  assert.equal(g.aiPowerMult, 1);
-  g.totalTasksDone = 900;
-  assert.equal(h.api.upgradeVisible(tuning), true);
-  h.api.renderUpgradeSection();
-  assert.match(h.window.document.querySelector('#upgrade-list').textContent, /Inference Tuning/);
-  assert.equal(h.api.upgradeVisible(licence), false);
-  g.totalTasksDone = 1000;
-  h.api.purchaseUpgrade('multi_bot');
-  assert.equal(g.phase, 3, 'The licence cannot bypass the performance upgrade');
-  g.totalTasksDone = 900;
-  g.cash = 5999;
-  h.api.purchaseUpgrade('inference_tuning');
-  assert.equal(g.cash, 5999);
-  assert.equal(g.agentSpeedMult, 1);
-  g.cash = 6000;
-  h.api.purchaseUpgrade('inference_tuning');
-  assert.equal(g.cash, 0);
-  assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.15);
-  assert.equal(h.api.workerSpeed(task, pro), proSpeed * 1.15);
-  assert.equal(h.api.workerTokenRate(), tokenRate);
-  assert.equal(h.api.upgradeVisible(licence), false);
-  g.totalTasksDone = 1000;
-  assert.equal(h.api.upgradeVisible(licence), true);
-  g.cash = 4000;
-  h.api.purchaseUpgrade('prompt_refinement');
-  h.api.purchaseUpgrade('context_pruning');
-  g.cash = 25000;
-  h.api.purchaseUpgrade('multi_bot');
-  assert.equal(g.phase, 4);
-  assert.equal(g.cash, 0);
-  assert.equal(h.api.validSave(g), true);
-});
-
-scenario('the second subscription checkpoint saves 870 tasks and $14K before the purchase', (h) => {
-  h.window.GAME.state.retired = true;
-  h.window.chPh3_1();
-  const g = h.window.GAME.state;
-  const second = h.api.UPGRADES.find(upgrade => upgrade.id === 'second_ai');
-  const prior = h.api.UPGRADES.filter(upgrade => upgrade.oneTime && h.api.UPGRADES.indexOf(upgrade) < h.api.UPGRADES.indexOf(second));
-  assert.equal(g.phase, 3);
-  assert.equal(g.totalTasksDone, 870);
-  assert.equal(g.totalClicks, 6960);
-  assert.equal(g.cash, 14000);
-  assert.equal(g.retired, false);
-  assert.equal(g.agents.length, 0);
-  assert.deepEqual([...g.purchasedUpgrades], [...prior].map(upgrade => upgrade.id));
-  assert.equal(h.api.upgradeVisible(second), true);
-  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'second_ai\')"]').disabled, true);
-  assert.equal(h.api.validSave(g), true);
-  const restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-  try {
-    const loaded = restored.window.GAME.state;
-    assert.equal(loaded.totalTasksDone, 870);
-    assert.equal(loaded.cash, 14000);
-    assert.equal(restored.api.validSave(loaded), true);
-    restored.api.purchaseUpgrade('second_ai');
-    assert.equal(loaded.cash, 14000);
-    loaded.cash += 4000;
-    restored.api.purchaseUpgrade('second_ai');
-    assert.equal(loaded.cash, 0);
-    assert.equal(loaded.agents.length, 1);
-    assert.equal(loaded.agents[0].name, 'AI 2000 Pro');
-  } finally {
-    restored.close();
-  }
-});
-
-scenario('two inexpensive modest upgrades are required while the licence stays visible after tuning', (h) => {
-  const g = h.fresh(3);
-  g.cash = 100000;
-  g.tokens = 1000;
-  g.totalTasksDone = 1000;
-  g.uiRevealed.upgrades = true;
-  h.prepareUpgrade('second_ai');
-  h.api.purchaseUpgrade('second_ai');
-  const refinement = h.api.UPGRADES.find(upgrade => upgrade.id === 'prompt_refinement');
-  const pruning = h.api.UPGRADES.find(upgrade => upgrade.id === 'context_pruning');
-  const licence = h.api.UPGRADES.find(upgrade => upgrade.id === 'multi_bot');
-  assert.equal(h.api.upgradeVisible(refinement), false);
-  assert.equal(h.api.upgradeVisible(pruning), false);
-  assert.equal(h.api.upgradeVisible(licence), false);
-  h.api.purchaseUpgrade('inference_tuning');
-  assert.equal(h.api.upgradeVisible(licence), true);
-  h.api.renderUpgradeSection();
-  const licenceButton = h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]');
-  assert.equal(licenceButton.disabled, true);
-  h.api.purchaseUpgrade('multi_bot');
-  assert.equal(g.phase, 3);
-  const pro = g.agents[0];
-  const task = h.task();
-  task.workRequired = 1e6;
-  const basicSpeed = h.api.originalAiWorkRate();
-  const proSpeed = h.api.workerSpeed(task, pro);
-  g.totalTasksDone = 924;
-  assert.equal(h.api.upgradeVisible(refinement), false);
-  h.api.purchaseUpgrade(refinement.id);
-  assert.equal(h.api.originalAiWorkRate(), basicSpeed);
-  g.totalTasksDone = 925;
-  assert.equal(h.api.upgradeVisible(refinement), true);
-  g.cash = 1499;
-  h.api.purchaseUpgrade(refinement.id);
-  assert.equal(g.cash, 1499);
-  g.cash = 1500;
-  h.api.purchaseUpgrade(refinement.id);
-  assert.equal(g.cash, 0);
-  assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.05);
-  assert.equal(h.api.workerSpeed(task, pro), proSpeed * 1.05);
-  h.api.purchaseUpgrade(refinement.id);
-  assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.05);
-  const efficiency = g.tokenEfficiency;
-  g.totalTasksDone = 949;
-  assert.equal(h.api.upgradeVisible(pruning), false);
-  h.api.purchaseUpgrade(pruning.id);
-  assert.equal(g.tokenEfficiency, efficiency);
-  g.totalTasksDone = 950;
-  assert.equal(h.api.upgradeVisible(pruning), true);
-  g.cash = 2499;
-  h.api.purchaseUpgrade(pruning.id);
-  assert.equal(g.cash, 2499);
-  g.cash = 2500;
-  h.api.purchaseUpgrade(pruning.id);
-  assert.equal(g.cash, 0);
-  assert.equal(g.tokenEfficiency, efficiency * 0.95);
-  h.api.topUpAiWorker();
-  h.api.topUpAgent(pro.id);
-  h.api.tickAiWorker(0.1);
-  const proTask = h.task();
-  proTask.workRequired = 1e6;
-  h.api.assignAgentToTask(proTask.id, pro.id);
-  const basicTokens = g.aiWorkerTokenTank;
-  const proTokens = pro.tokenTank;
-  h.api.tickAiWorker(0.1);
-  h.api.tickAgents(0.1);
-  const tokenRate = h.api.workerTokenRate() * efficiency * 0.95;
-  assert.ok(Math.abs(basicTokens - g.aiWorkerTokenTank - tokenRate * 0.1) < 1e-9);
-  assert.ok(Math.abs(proTokens - pro.tokenTank - tokenRate * 3 * 0.1) < 1e-9);
-  g.totalTasksDone = 1000;
-  g.cash = 24999;
-  h.api.renderUpgradeSection();
-  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]').disabled, true);
-  g.cash = 25000;
-  h.api.renderUpgradeSection();
-  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]').disabled, false);
-  h.api.purchaseUpgrade('multi_bot');
-  assert.equal(g.phase, 4);
-  assert.equal(g.cash, 0);
-  assert.equal(h.api.validSave(g), true);
 });
