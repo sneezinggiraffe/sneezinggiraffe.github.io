@@ -29,7 +29,8 @@ Open http://127.0.0.1:4173. Python 3 is needed for this development server. Any 
 - The $1M AI CEO is a dashed purchase card above the clusters, not an upgrade-list item. Buying it expands every cluster from eight to sixteen slots. It provisions one agent every five seconds; Provisioning Pipeline ($600K) halves that interval. Agent batching upgrades follow Scale Mode. Scale Mode halves the interval again and takes over new cluster creation. Manual provisioning disappears.
 - Phase 12 introduces compact autonomous nodes. Scale Mode continues provisioning and staffing automatically. Replication requires twenty online nodes and at least nine additional nodes during Phase 12, reduces costs by 35%. Global Expansion begins at forty completed nodes and reduces costs another 40%. Dense cards show C1, C2 and so on, with no fixed node cap.
 - Client retainer upgrades deploy contracts automatically, each earning $80/s before downtime and $2/s upkeep. The cluster footer shows the active contract count and current income after downtime. Two managed clusters increase agent task speed by 50%; three or more double it.
-- Layered music adds a bright D4 + F4 synth motif from Phase 5: both notes sound together in two five-hit phrases per 4/4 bar, with each phrase lasting two beats. The 125 ms plucks have a slightly stronger middle hit, subtle stereo chorus and a light reverb tail. It fades in over eight seconds at a quiet background level and continues alongside the later drum layer. Music: On plays the base soundtrack; Music: Off silences every layer.
+- Layered music adds a bright D4 + F4 synth motif from Phase 5: both notes sound together in two five-hit phrases per 4/4 bar, with each phrase lasting two beats. The 125 ms plucks have a slightly stronger middle hit, subtle stereo chorus and a light reverb tail. It fades in over eight seconds at a quiet background level. Music: On plays the base soundtrack; Music: Off silences every layer.
+- Phase 8 restores the original 172 BPM DnB groove with its own D4 + F4 hook, premixed into one seamless sixteen-bar WAV. One broad five-hit phrase per DnB bar keeps the hook locked to the faster drums. The drum component is mixed 15% lower while the hook retains its level. Once the mix is ready, it enters on the next drum downbeat; the earlier kick and standalone synth fade out together over three bars, about 6.3 seconds.
 
 ## Early automation and hiring checkpoints
 
@@ -134,7 +135,7 @@ Run `npm run check`, then publish the static runtime files through the repositor
 - `soundtrack-loop.mp3`
 - `precursor_kick.mp3`
 - `synth_d4_loop.mp3`
-- `dnb_deep_loop.mp3`
+- `dnb_synth_loop.wav`
 
 Do not publish `node_modules`, coverage reports, or test artifacts. Tests and tooling are development-only. This work does not require a new hosting service.
 

@@ -70,9 +70,10 @@
   const SOUNDTRACKS = [
     { minTasks: 12, path: "soundtrack-loop.mp3" },
   ];
+  const DNB_LAYER_PATH = "dnb_synth_loop.wav";
   const DRUM_LAYERS = [
     { minPhase: 4, path: "precursor_kick.mp3" },
-    { minPhase: 8, path: "dnb_deep_loop.mp3" },
+    { minPhase: 8, path: DNB_LAYER_PATH },
   ];
   const MUSIC_TARGET_VOLUME = 0.25;
   const DRUM_TARGET_VOLUME = 0.18;
@@ -83,7 +84,9 @@
   const MUSIC_FADE_IN_MS = 6000;
   const MUSIC_FADE_STEP_MS = 50;
   const DRUM_FADE_IN_MS = 10000;
-  const DRUM_CROSSFADE_MS = 1800;
+  const DRUM_BAR_SECONDS = 2.09;
+  const DRUM_CROSSFADE_MS = DRUM_BAR_SECONDS * 2000;
+  const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
   const SAVE_VERSION = 8;
@@ -2169,6 +2172,7 @@
   let musicPlayer = null;
   let drumPlayer = null;
   let outgoingDrumPlayer = null;
+  let drumTransitionPending = false;
   let synthPlayer = null;
   let synthFadeInterval = null;
   let musicUnlocked = false;
@@ -2372,6 +2376,7 @@
   function stopDrumPlayback() {
     clearDrumFadeTimerIfAny();
     clearDrumCrossfadeTimerIfAny();
+    drumTransitionPending = false;
     stopAndResetAudio(drumPlayer, 0);
     if (outgoingDrumPlayer) {
       stopAndResetAudio(outgoingDrumPlayer, 0);
@@ -2402,8 +2407,11 @@
   function crossfadeDrumPlayer(nextDrumPath) {
     clearDrumFadeTimerIfAny();
     clearDrumCrossfadeTimerIfAny();
+    drumTransitionPending = false;
 
+    if (outgoingDrumPlayer) stopAndResetAudio(outgoingDrumPlayer, 0);
     outgoingDrumPlayer = drumPlayer;
+    var previousDrumPlayer = outgoingDrumPlayer;
     var nextDrumPlayer = createDrumPlayer(nextDrumPath);
     drumPlayer = nextDrumPlayer;
     activeDrumLayerPath = nextDrumPath;
@@ -2416,26 +2424,46 @@
       return;
     }
 
-    playAudioIfUnlocked(drumPlayer, "drum layer");
-    var outgoingStartVolume = outgoingDrumPlayer && outgoingDrumPlayer.volume > 0 ? outgoingDrumPlayer.volume : DRUM_TARGET_VOLUME;
-    var elapsed = 0;
-    drumCrossfadeInterval = setInterval(function () {
-      elapsed += DRUM_FADE_STEP_MS;
-      var progress = elapsed / DRUM_CROSSFADE_MS;
-      if (progress >= 1) {
-        drumPlayer.volume = DRUM_TARGET_VOLUME;
-        if (outgoingDrumPlayer) {
-          stopAndResetAudio(outgoingDrumPlayer, 0);
-          outgoingDrumPlayer = null;
-        }
-        clearDrumCrossfadeTimerIfAny();
+    drumTransitionPending = true;
+    nextDrumPlayer.addEventListener("canplay", function () {
+      if (!drumTransitionPending || drumPlayer !== nextDrumPlayer) return;
+      var barPosition = previousDrumPlayer.currentTime % DRUM_BAR_SECONDS;
+      var beginCrossfade = function () {
+        if (!drumTransitionPending || drumPlayer !== nextDrumPlayer) return;
+        drumTransitionPending = false;
+        playAudioIfUnlocked(drumPlayer, "drum layer");
+        var outgoingSynth = nextDrumPath === DNB_LAYER_PATH ? synthPlayer : null;
+        var outgoingSynthVolume = outgoingSynth ? outgoingSynth.volume : 0;
+        if (outgoingSynth) clearSynthFadeTimerIfAny();
+        var outgoingStartVolume = outgoingDrumPlayer && outgoingDrumPlayer.volume > 0 ? outgoingDrumPlayer.volume : DRUM_TARGET_VOLUME;
+        var fadeDuration = nextDrumPath === DNB_LAYER_PATH ? DNB_CROSSFADE_MS : DRUM_CROSSFADE_MS;
+        var elapsed = 0;
+        drumCrossfadeInterval = setInterval(function () {
+          elapsed += DRUM_FADE_STEP_MS;
+          var progress = elapsed / fadeDuration;
+          if (progress >= 1) {
+            drumPlayer.volume = DRUM_TARGET_VOLUME;
+            if (outgoingSynth) stopSynthPlayback();
+            if (outgoingDrumPlayer) {
+              stopAndResetAudio(outgoingDrumPlayer, 0);
+              outgoingDrumPlayer = null;
+            }
+            clearDrumCrossfadeTimerIfAny();
+            return;
+          }
+          drumPlayer.volume = DRUM_TARGET_VOLUME * progress;
+          if (outgoingSynth) outgoingSynth.volume = outgoingSynthVolume * (1 - progress);
+          if (outgoingDrumPlayer) {
+            outgoingDrumPlayer.volume = outgoingStartVolume * (1 - progress);
+          }
+        }, DRUM_FADE_STEP_MS);
+      };
+      if (barPosition === 0) {
+        beginCrossfade();
         return;
       }
-      drumPlayer.volume = DRUM_TARGET_VOLUME * progress;
-      if (outgoingDrumPlayer) {
-        outgoingDrumPlayer.volume = outgoingStartVolume * (1 - progress);
-      }
-    }, DRUM_FADE_STEP_MS);
+      setTimeout(beginCrossfade, (DRUM_BAR_SECONDS - barPosition) * 1000);
+    }, { once: true });
   }
 
   function syncDrumLayerPlayback(nextDrumPath) {
@@ -2465,6 +2493,7 @@
       return;
     }
 
+    if (drumTransitionPending) return;
     playAudioIfUnlocked(drumPlayer, "drum layer");
     if (!drumCrossfadeInterval && !drumFadeInterval && drumPlayer.volume < DRUM_TARGET_VOLUME) {
       var remaining = DRUM_TARGET_VOLUME - drumPlayer.volume;
@@ -2472,17 +2501,25 @@
     }
   }
 
-  function stopSynthPlayback() {
+  function clearSynthFadeTimerIfAny() {
     if (synthFadeInterval) {
       clearInterval(synthFadeInterval);
       synthFadeInterval = null;
     }
+  }
+
+  function stopSynthPlayback() {
+    clearSynthFadeTimerIfAny();
     stopAndResetAudio(synthPlayer, 0);
   }
 
   function syncSynthLayerPlayback() {
     if (G.phase < SYNTH_START_PHASE || !musicUnlocked) {
       stopSynthPlayback();
+      return;
+    }
+    if (G.phase >= 8) {
+      if (!drumTransitionPending && !drumCrossfadeInterval) stopSynthPlayback();
       return;
     }
     if (!synthPlayer) {

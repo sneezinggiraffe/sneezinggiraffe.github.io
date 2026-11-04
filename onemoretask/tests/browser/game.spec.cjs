@@ -143,6 +143,157 @@ test('Phase 5 adds two D4 and F4 phrases per bar with quiet chorus and reverb', 
   expect(await page.evaluate(() => window.testAudioPlayers.every(player => player.paused))).toBe(true);
 });
 
+test('DnB uses the original fast drums with a broad hook in one seamless premix', async ({page}) => {
+  const raw = fixture(7);
+  await page.clock.install();
+  await page.addInitScript(value => {
+    localStorage.setItem('ai_empire_save', value);
+    const NativeAudio = window.Audio;
+    window.testAudioPlayers = [];
+    window.testDnbStart = null;
+    window.testDnbReady = false;
+    window.Audio = function () {
+      const player = new NativeAudio();
+      player.addEventListener('canplay', () => {
+        if (player.src.endsWith('/dnb_synth_loop.wav')) {
+          window.testDnbReady = true;
+        }
+      }, { once: true });
+      player.addEventListener('playing', () => {
+        if (player.src.endsWith('/dnb_synth_loop.wav')) window.testDnbStart = player.currentTime;
+      }, { once: true });
+      window.testAudioPlayers.push(player);
+      return player;
+    };
+  }, raw);
+  await page.goto('/');
+  await page.locator('#btn-settings').click();
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(11000);
+  await expect.poll(() => page.evaluate(() => {
+    const kick = window.testAudioPlayers.find(player => player.src.endsWith('/precursor_kick.mp3'));
+    return kick.readyState >= 2 && !kick.paused;
+  })).toBe(true);
+  const transition = await page.evaluate(() => {
+    const synth = window.testAudioPlayers.find(player => player.src.endsWith('/synth_d4_loop.mp3'));
+    const synthTime = synth.currentTime;
+    GAME.buy('ops_flywheel');
+    return { phase: GAME.state.phase, synthTime, synthAfter: synth.currentTime };
+  });
+  expect(transition.phase).toBe(8);
+  expect(transition.synthAfter).toBeCloseTo(transition.synthTime, 2);
+  await expect.poll(() => page.evaluate(() => window.testDnbReady)).toBe(true);
+  await page.clock.runFor(2500);
+  await expect.poll(() => page.evaluate(() => window.testDnbStart)).not.toBeNull();
+  expect(await page.evaluate(() => window.testDnbStart)).toBeLessThan(0.05);
+  await page.clock.runFor(6400);
+  await expect.poll(() => page.evaluate(() => {
+    const dnb = window.testAudioPlayers.find(player => player.src.endsWith('/dnb_synth_loop.wav'));
+    const kick = window.testAudioPlayers.find(player => player.src.endsWith('/precursor_kick.mp3'));
+    const synth = window.testAudioPlayers.find(player => player.src.endsWith('/synth_d4_loop.mp3'));
+    return { playing: !dnb.paused, ready: dnb.readyState >= 2, loop: dnb.loop, volume: dnb.volume, outgoingPaused: kick.paused, standaloneStopped: synth.paused && synth.volume === 0, error: dnb.error };
+  })).toEqual({ playing: true, ready: true, loop: true, volume: 0.18, outgoingPaused: true, standaloneStopped: true, error: null });
+
+  const audio = await page.evaluate(async () => {
+    const context = new AudioContext();
+    const decode = async path => context.decodeAudioData(await (await fetch(path)).arrayBuffer());
+    const mixed = await decode('dnb_synth_loop.wav');
+    const original = await decode('dnb_deep_loop.mp3');
+    const earlySynth = await decode('synth_d4_loop.mp3');
+    await context.close();
+    const samples = mixed.getChannelData(0);
+    const reference = original.getChannelData(0);
+    const beat = 60 / 172;
+    const offset = Math.round(16 * beat * mixed.sampleRate);
+    const rms = (first, last) => {
+      let energy = 0;
+      for (let index = first; index < last; index++) energy += samples[index] ** 2;
+      return Math.sqrt(energy / (last - first));
+    };
+    const power = (signal, onset, frequency) => {
+      const first = Math.round((onset + 0.025) * mixed.sampleRate);
+      const last = Math.round((onset + 0.105) * mixed.sampleRate);
+      let real = 0;
+      let imaginary = 0;
+      for (let index = first; index < last; index++) {
+        const window = 0.5 - 0.5 * Math.cos(2 * Math.PI * (index - first) / (last - first - 1));
+        const phase = 2 * Math.PI * frequency * index / mixed.sampleRate;
+        real += signal[index] * window * Math.cos(phase);
+        imaginary += signal[index] * window * Math.sin(phase);
+      }
+      return real ** 2 + imaginary ** 2;
+    };
+    const notes = [];
+    const rests = [];
+    for (let bar = 0; bar < 16; bar++) {
+      for (const position of [0, 0.5, 1.5, 2.5, 3]) {
+        const onset = (bar * 4 + position) * beat + 0.012;
+        notes.push({
+          d: power(samples, onset, 293.665),
+          f: power(samples, onset, 349.228),
+          originalD: power(reference, onset + offset / mixed.sampleRate, 293.665),
+          originalF: power(reference, onset + offset / mixed.sampleRate, 349.228),
+        });
+      }
+      for (const position of [1, 2, 3.5]) rests.push(power(samples, (bar * 4 + position) * beat + 0.012, 349.228));
+    }
+    const lowpass = signal => {
+      const result = new Float32Array(signal.length);
+      const coefficient = 1 - Math.exp(-2 * Math.PI * 550 / mixed.sampleRate);
+      let value = 0;
+      for (let index = 0; index < signal.length; index++) {
+        value += coefficient * (signal[index] - value);
+        result[index] = value;
+      }
+      return result;
+    };
+    const mixedLow = lowpass(samples);
+    const referenceLow = lowpass(reference);
+    let correlation = -1;
+    for (const shift of [-24, -16, -8, 0, 8, 16, 24]) {
+      let product = 0;
+      let mixedEnergy = 0;
+      let originalEnergy = 0;
+      for (let index = Math.floor(mixed.sampleRate * 0.1); index < samples.length - mixed.sampleRate * 0.1; index += 8) {
+        const a = mixedLow[index];
+        const b = referenceLow[index + offset + shift];
+        product += a * b;
+        mixedEnergy += a ** 2;
+        originalEnergy += b ** 2;
+      }
+      correlation = Math.max(correlation, product / Math.sqrt(mixedEnergy * originalEnergy));
+    }
+    let differences = 0;
+    const edgeSamples = Math.floor(mixed.sampleRate * 0.02);
+    for (let index = 1; index < edgeSamples; index++) differences += (samples[index] - samples[index - 1]) ** 2;
+    return {
+      duration: mixed.duration,
+      playbackDuration: window.testAudioPlayers.find(player => player.src.endsWith('/dnb_synth_loop.wav')).duration,
+      earlyPhraseDuration: earlySynth.duration / 8,
+      correlation,
+      notes,
+      rests,
+      seamJump: Math.abs(samples[0] - samples[samples.length - 1]),
+      normalStep: Math.sqrt(differences / (edgeSamples - 1)),
+      head: rms(0, Math.floor(mixed.sampleRate * beat * 4)),
+      tail: rms(samples.length - Math.floor(mixed.sampleRate * beat * 4), samples.length),
+      overall: rms(0, samples.length),
+    };
+  });
+  expect(audio.duration).toBeCloseTo(16 * 4 * 60 / 172, 3);
+  expect(Math.abs(audio.playbackDuration - audio.duration)).toBeLessThan(0.002);
+  expect(audio.duration / 16).toBeGreaterThan(audio.earlyPhraseDuration);
+  expect(audio.correlation).toBeGreaterThan(0.85);
+  expect(audio.seamJump).toBeLessThan(audio.normalStep * 4);
+  expect(audio.head).toBeGreaterThan(audio.overall * 0.6);
+  expect(audio.tail).toBeGreaterThan(audio.overall * 0.6);
+  expect(audio.notes).toHaveLength(80);
+  const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length;
+  expect(mean(audio.notes.map(note => note.d))).toBeGreaterThan(mean(audio.notes.map(note => note.originalD)) * 1.2);
+  expect(mean(audio.notes.map(note => note.f))).toBeGreaterThan(mean(audio.notes.map(note => note.originalF)) * 3);
+  expect(mean(audio.notes.map(note => note.f))).toBeGreaterThan(mean(audio.rests) * 3);
+});
+
 test('new game, keyboard work, settings focus, save and reload', async ({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.goto('/');
   await page.getByRole('button',{name:'Find Work'}).click();

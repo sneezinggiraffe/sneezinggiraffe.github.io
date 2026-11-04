@@ -102,6 +102,143 @@ test('the quiet Phase 5 synth waits for interaction, fades in and survives the d
   }
 });
 
+scenario('DnB source changes stay silent until music is unlocked', (h) => {
+  const g = h.fresh(7);
+  g.totalTasksDone = 12;
+  h.api.syncMusicPlayback();
+  g.phase = 8;
+  h.api.syncMusicPlayback();
+  assert.ok(h.audioPlayers.every(player => player.paused));
+  h.api.unlockMusicPlayback();
+  assert.ok(h.audioPlayers.some(player => player.src === 'dnb_synth_loop.wav' && !player.paused));
+});
+
+scenario('a game already in DnB mode plays only the premix and base soundtrack', (h) => {
+  const g = h.fresh(8);
+  g.totalTasksDone = 12;
+  h.api.unlockMusicPlayback();
+  assert.equal(h.audioPlayers.length, 2);
+  assert.ok(h.audioPlayers.some(player => player.src === 'dnb_synth_loop.wav' && !player.paused));
+  assert.ok(h.audioPlayers.every(player => player.src !== 'synth_d4_loop.mp3'));
+  g.musicMode = 'off';
+  h.api.syncMusicPlayback();
+  assert.ok(h.audioPlayers.every(player => player.paused));
+});
+
+test('DnB waits for a downbeat and hands the standalone hook to the premixed track', () => {
+  const intervals = new Map();
+  let nextInterval = 0;
+  const h = harness(undefined, { before(window) {
+    window.setInterval = (fn, delay) => { const id = ++nextInterval; intervals.set(id, { fn, delay }); return id; };
+    window.clearInterval = (id) => intervals.delete(id);
+  } });
+  const advanceFades = (ms) => {
+    for (let elapsed = 0; elapsed < ms; elapsed += 50) {
+      for (const [id, timer] of [...intervals]) if (timer.delay === 50 && intervals.has(id)) timer.fn();
+    }
+  };
+  try {
+    const g = h.fresh(7);
+    g.totalTasksDone = 12;
+    h.api.unlockMusicPlayback();
+    advanceFades(10000);
+    const kick = h.audioPlayers.find(player => player.src === 'precursor_kick.mp3');
+    const synth = h.audioPlayers.find(player => player.src === 'synth_d4_loop.mp3');
+    kick.currentTime = 5.1;
+    synth.currentTime = 2.5;
+    g.phase = 8;
+    h.api.syncMusicPlayback();
+    const dnb = h.audioPlayers.find(player => player.src === 'dnb_synth_loop.wav');
+    assert.equal(dnb.paused, true);
+    h.api.syncMusicPlayback();
+    assert.equal(dnb.paused, true);
+    assert.equal(kick.paused, false);
+    dnb.dispatchEvent(new h.window.Event('canplay'));
+    h.advance(1100);
+    assert.equal(dnb.paused, true);
+    h.advance(71);
+    assert.equal(dnb.volume, 0);
+    assert.equal(dnb.paused, false);
+    assert.equal(synth.currentTime, 2.5);
+    const timers = nextInterval;
+    h.api.syncMusicPlayback();
+    assert.equal(nextInterval, timers);
+    advanceFades(2000);
+    assert.ok(Math.abs(dnb.volume - 0.18 * 2000 / 6270) < 1e-9);
+    assert.ok(Math.abs(kick.volume - 0.18 * (1 - 2000 / 6270)) < 1e-9);
+    assert.ok(Math.abs(synth.volume - 0.0729 * (1 - 2000 / 6270)) < 1e-9);
+    h.api.syncMusicPlayback();
+    assert.ok(Math.abs(synth.volume - 0.0729 * (1 - 2000 / 6270)) < 1e-9);
+    assert.equal(kick.paused, false);
+    advanceFades(2200);
+    assert.ok(dnb.volume < 0.18);
+    assert.equal(kick.paused, false);
+    assert.equal(synth.paused, false);
+    advanceFades(2100);
+    assert.equal(dnb.volume, 0.18);
+    assert.equal(kick.paused, true);
+    assert.equal(kick.currentTime, 0);
+    assert.equal(kick.volume, 0);
+    assert.equal(synth.currentTime, 0);
+    assert.equal(synth.paused, true);
+    assert.equal(synth.volume, 0);
+    h.api.syncMusicPlayback();
+    assert.equal(synth.paused, true);
+    g.phase = 7;
+    h.api.syncMusicPlayback();
+    const stoppedKick = h.audioPlayers[h.audioPlayers.length - 1];
+    g.musicMode = 'off';
+    h.api.syncMusicPlayback();
+    stoppedKick.dispatchEvent(new h.window.Event('canplay'));
+    assert.equal(stoppedKick.currentTime, 0);
+    advanceFades(5000);
+    assert.ok(h.audioPlayers.every(player => player.paused));
+    assert.ok(h.audioPlayers.filter(player => player.src !== 'soundtrack-loop.mp3').every(player => player.volume === 0));
+    g.musicMode = 'layered';
+    h.api.syncMusicPlayback();
+    stoppedKick.currentTime = 1.3;
+    g.phase = 8;
+    h.api.syncMusicPlayback();
+    const obsoleteDnb = h.audioPlayers[h.audioPlayers.length - 1];
+    g.phase = 7;
+    h.api.syncMusicPlayback();
+    obsoleteDnb.currentTime = 0;
+    obsoleteDnb.dispatchEvent(new h.window.Event('canplay'));
+    assert.equal(obsoleteDnb.currentTime, 0);
+    const zeroKick = h.audioPlayers[h.audioPlayers.length - 1];
+    obsoleteDnb.currentTime = 0;
+    zeroKick.dispatchEvent(new h.window.Event('canplay'));
+    assert.equal(zeroKick.paused, false);
+    zeroKick.currentTime = 1.3;
+    g.phase = 8;
+    h.api.syncMusicPlayback();
+    const cancelledDnb = h.audioPlayers[h.audioPlayers.length - 1];
+    cancelledDnb.dispatchEvent(new h.window.Event('canplay'));
+    g.musicMode = 'off';
+    h.api.syncMusicPlayback();
+    assert.equal(cancelledDnb.paused, true);
+    g.musicMode = 'layered';
+    h.api.syncMusicPlayback();
+    const resumedTimers = nextInterval;
+    h.advance(2200);
+    assert.equal(nextInterval, resumedTimers);
+    g.musicMode = 'layered';
+    g.phase = 7;
+    h.api.syncMusicPlayback();
+    h.audioPlayers[h.audioPlayers.length - 1].currentTime = 1.7;
+    g.phase = 8;
+    h.api.syncMusicPlayback();
+    const replacedDnb = h.audioPlayers[h.audioPlayers.length - 1];
+    replacedDnb.dispatchEvent(new h.window.Event('canplay'));
+    g.phase = 7;
+    h.api.syncMusicPlayback();
+    h.advance(2200);
+    assert.equal(replacedDnb.paused, true);
+  } finally {
+    h.close();
+  }
+});
+
 scenario('onboarding, manual work, keyboard action and rendering', (h) => {
   h.window.document.querySelector('#btn-start-game').click();
   h.window.document.querySelector('#btn-do-task').click();

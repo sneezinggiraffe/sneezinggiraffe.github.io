@@ -18,7 +18,7 @@ function harness(saved, options = {}) {
   window.Date.now = () => now;
   window.Math.random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const audioPlayers=[];
-  window.Audio = class { constructor() { this.paused = true; audioPlayers.push(this); } pause() { this.paused = true; } play() { this.paused = false; return Promise.resolve(); } load() {} removeAttribute() {} };
+  window.Audio = class extends window.EventTarget { constructor() { super(); this.paused = true; this.currentTime = 0; audioPlayers.push(this); } pause() { this.paused = true; } play() { this.paused = false; return Promise.resolve(); } load() {} removeAttribute() {} };
   window.setInterval = () => 1;
   window.clearInterval = () => {};
   window.setTimeout = (fn, delay) => { timers.push({ fn, at: now + delay }); };
