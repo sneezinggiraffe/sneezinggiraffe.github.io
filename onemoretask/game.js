@@ -173,17 +173,17 @@
   const UPGRADES = [
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
-    { id: "post_it_notes", name: "Post-It Notes", desc: "Work through 2 queued tasks with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 10 },
+    { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 10 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 10 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 10 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 30 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 30 },
-    { id: "gtd_workflow", name: "GTD Workflow", desc: "Work through 5 queued tasks with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 30 },
+    { id: "gtd_workflow", name: "GTD Workflow", desc: "Work on 5 tasks at once with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 30 },
     { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 79, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 50 },
 
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
-    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Work through 10 queued tasks with one click.", cost: 99, currency: "cash", phase: 1, effect: { manualQueueSize: 10 }, oneTime: true, reqTasks: 50 },
+    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Work on 10 tasks at once with one click.", cost: 99, currency: "cash", phase: 1, effect: { manualQueueSize: 10 }, oneTime: true, reqTasks: 50 },
     { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically. Free after 50 completed tasks; top up its tokens to keep it running.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 50 },
 
     // Phase 2 -> 3
@@ -646,21 +646,16 @@
     if (activeTasks.length === 0) return;
 
     var workPerSec = G.clickPower / MANUAL_WORK_SECONDS_PER_CLICK;
-    var sequential = G.phase < 4;
-    var remainingWork = workPerSec * dtSec;
-    if (sequential) activeTasks.sort((a, b) => Number(b.id === G.activeTaskId) - Number(a.id === G.activeTaskId));
     for (var i = 0; i < activeTasks.length; i++) {
-      if (sequential && remainingWork <= 0) break;
       var task = activeTasks[i];
-      var work = Math.min(task.workRequired - task.workDone, sequential ? remainingWork : workPerSec * dtSec);
+      var work = Math.min(task.workRequired - task.workDone, workPerSec * dtSec);
       task.workDone += work;
-      remainingWork -= work;
       if (task.workDone >= task.workRequired) {
         completeTask(task, "manual");
       }
     }
-    if (sequential && !G.activeTaskId) G.activeTaskId = (G.tasks.find((t) => t.status === "active") || {}).id || null;
-    G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * (sequential ? 1 : activeTasks.length), 0, 100);
+    if (!G.activeTaskId) G.activeTaskId = (G.tasks.find((t) => t.status === "active") || {}).id || null;
+    G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * activeTasks.length, 0, 100);
   }
 
   function getCurrentAiWorkerTask() {
@@ -713,7 +708,9 @@
   }
 
 
-  function workerTokenCapacity() {
+  function workerTokenCapacity(agent) {
+    if (agent && agent.olderModel) return 40;
+    if (agent && agent.name === "AI 2000 Pro") return 100;
     return G.phase >= 6 ? 1500 : G.phase === 5 ? 500 : G.phase === 4 ? 200 : G.phase === 3 ? 40 : 10;
   }
 
@@ -751,7 +748,7 @@
     if (G.phase >= 9) return;
     const agent = G.agents.find((item) => item.id === agentId);
     if (!agent || UTILITY_ROLES.includes(agent.roleId)) return;
-    const amount = Math.min(G.tokens, Math.max(0, workerTokenCapacity() - agent.tokenTank));
+    const amount = Math.min(G.tokens, Math.max(0, workerTokenCapacity(agent) - agent.tokenTank));
     G.tokens -= amount;
     agent.tokenTank += amount;
     const task = findMatchingTask(agent) || pickNextAiTask();
@@ -1129,7 +1126,7 @@
           bt = avail[0] || null;
         }
         if (!bt || !clusterControl(ba, "managerAssigned")) continue;
-        const amount = Math.min(G.managerTokenTank, 75, workerTokenCapacity() - ba.tokenTank);
+        const amount = Math.min(G.managerTokenTank, 75, workerTokenCapacity(ba) - ba.tokenTank);
         ba.tokenTank += amount;
         G.managerTokenTank -= amount;
         assignAgentToTask(bt.id, ba.id);
@@ -1286,8 +1283,8 @@
         if (G.managerTokenTank <= 0) break;
         var refillAgent = G.agents[ri];
         if (UTILITY_ROLES.indexOf(refillAgent.roleId) >= 0) continue;
-        if (!managerControls(refillAgent) || refillAgent.tokenTank >= workerTokenCapacity()) continue;
-        const amount = Math.min(G.managerTokenTank, 25, workerTokenCapacity() - refillAgent.tokenTank);
+        if (!managerControls(refillAgent) || refillAgent.tokenTank >= workerTokenCapacity(refillAgent)) continue;
+        const amount = Math.min(G.managerTokenTank, 25, workerTokenCapacity(refillAgent) - refillAgent.tokenTank);
         refillAgent.tokenTank += amount;
         refillAgent.tokenStarved = false;
         G.managerTokenTank -= amount;
@@ -1373,7 +1370,7 @@
     const online = G.phase >= 10 || (G.phase >= 9 ? G.clusters.some((cluster) => cluster.managerAssigned) : G.agents.some((agent) => agent.roleId === "token_mgr" && agent.status === "idle"));
     if (!online) return;
     const demand = G.phase >= 9 ? G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned ? (G.phase >= 12 ? cluster.workforce : cluster.workerAgentIds.length) : 0), 0) * workerTokenRate() * G.tokenEfficiency : tokenBurnRate();
-    const transfers = G.phase >= 9 ? G.clusters.filter((cluster) => cluster.managerAssigned).reduce((total, cluster) => total + MANAGER_TOKEN_TANK_MAX - cluster.tank, 0) : MANAGER_TOKEN_TANK_MAX + G.agents.length * workerTokenCapacity();
+    const transfers = G.phase >= 9 ? G.clusters.filter((cluster) => cluster.managerAssigned).reduce((total, cluster) => total + MANAGER_TOKEN_TANK_MAX - cluster.tank, 0) : MANAGER_TOKEN_TANK_MAX + G.agents.reduce((total, agent) => total + workerTokenCapacity(agent), 0);
     const reserveTarget = MANAGER_TOPUP_COST_TOKEN + Math.max(demand * 5, transfers);
     if (G.tokens < reserveTarget) {
       // Buy bulk pack if affordable, otherwise starter pack
@@ -1390,7 +1387,7 @@
     }
     if (!hasIdleManager()) {
       for (const agent of G.agents) {
-        if (workerAvailable(agent) && agent.tokenTank < workerTokenCapacity() * 0.25) topUpAgent(agent.id);
+        if (workerAvailable(agent) && agent.tokenTank < workerTokenCapacity(agent) * 0.25) topUpAgent(agent.id);
       }
       if (!G.aiWorkerShutdown && G.aiWorkerTokenTank < workerTokenCapacity() * 0.25) topUpAiWorker();
     }
@@ -1728,6 +1725,7 @@
       const second = createAgent("researcher");
       second.name = "AI 2000 Pro";
       second.icon = "🤖";
+      second.tokenCost = 3;
       G.agents.push(second);
     }
     if (upgradeId === "multi_bot") convertSubscriptions();
@@ -1739,8 +1737,8 @@
       log("PHASE " + G.phase + " UNLOCKED!", "info");
 
       // Phase 3: grant starter tokens
-      const starter_tokens = 200;
-      if (G.phase === 3) { G.tokens += starter_tokens; log("Basic subscription starter grant: +200 tokens.", "info"); }
+      const starter_tokens = 50;
+      if (G.phase === 3) { G.tokens += starter_tokens; log("Basic subscription starter grant: +50 tokens.", "info"); }
 
       // Build phase upgrade popup copy and show only on major beats
       var newTier = null;
@@ -1821,6 +1819,7 @@
     if (G.aiWorkerShutdown) return;
     const original = createAgent("writer");
     original.speed = 0.35;
+    original.tokenCost = 1;
     original.olderModel = true;
     original.name = "AI 2000 Basic";
     original.icon = "🤖";
@@ -2056,8 +2055,8 @@
       if (!cluster.managerAssigned) continue;
       for (const id of cluster.workerAgentIds) {
         const agent = G.agents.find((item) => item.id === id);
-        if (agent.tokenTank < workerTokenCapacity() * (G.phase >= 10 ? 1 : 0.25)) {
-          const amount = Math.min(cluster.tank, workerTokenCapacity() - agent.tokenTank, G.phase >= 10 ? 25 : workerTokenCapacity());
+        if (agent.tokenTank < workerTokenCapacity(agent) * (G.phase >= 10 ? 1 : 0.25)) {
+          const amount = Math.min(cluster.tank, workerTokenCapacity(agent) - agent.tokenTank, G.phase >= 10 ? 25 : workerTokenCapacity(agent));
           cluster.tank -= amount;
           agent.tokenTank += amount;
         }
@@ -2799,7 +2798,7 @@
 	    $("#res-cash").textContent = "$" + G.cash.toLocaleString("en-US", { minimumFractionDigits: cashDigits, maximumFractionDigits: cashDigits });
 	    $("#res-tokens").textContent = fmtTokens(G.tokens);
         $("#res-tasks").textContent = fmt(G.totalTasksDone);
-        $("#token-burn").textContent = fmtTokens(G.averageTokenBurn) + " tok/s";
+        $("#token-burn").textContent = "-" + fmtTokens(G.averageTokenBurn) + " tok/s";
 	    $("#res-debt").textContent = fmt(G.techDebt);
 	    $("#res-stress").textContent = Math.round(G.stress) + "%";
 	    $("#phase-label").textContent = "Phase " + G.phase;
@@ -2929,11 +2928,11 @@
 
       var actions = "";
       if (t.status === "available") {
-        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\" " + (manualBusy ? "disabled" : "") + ">" + (queueSize > 1 ? "Work next " + queueSize : "Work") + "</button>";
+        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\" " + (manualBusy ? "disabled" : "") + ">" + (queueSize > 1 ? "Work on " + queueSize : "Work") + "</button>";
         actions += clickBtn;
       }
       if (t.status === "active") {
-        actions = "<button class='" + getWorkTaskButtonClass() + "' disabled style='cursor:wait'>" + (manualBusy && t.id !== G.activeTaskId ? "Queued" : "Working...") + "</button>";
+        actions = "<button class='" + getWorkTaskButtonClass() + "' disabled style='cursor:wait'>Working...</button>";
       }
       if (t.status === "ai") {
         actions = "<button class='btn btn-purple btn-sm task-action-btn' disabled style='cursor:wait'>" + getAiWorkerDisplayName() + " (" + pct + "%)</button>";
@@ -3071,7 +3070,7 @@
     const utility = UTILITY_ROLES.includes(agent.roleId);
     const manager = agent.roleId === "manager";
     const original = agent.roleId === "original_ai";
-    const capacity = manager ? MANAGER_TOKEN_TANK_MAX : workerTokenCapacity();
+    const capacity = manager ? MANAGER_TOKEN_TANK_MAX : workerTokenCapacity(agent);
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
     let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 8 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 4 ? "" : agent.roleName) + "</span></div>";
@@ -3088,7 +3087,6 @@
     const section = $("#section-agents");
     section.style.display = G.uiRevealed.agents && !G.uiRevealed.clusters ? "" : "none";
     if (!G.uiRevealed.agents || G.uiRevealed.clusters) return;
-    $("#agent-slots").textContent = G.phase < 4 ? (G.agents.length ? "Two AI subscriptions" : "Solo AI") : getSharedAgentPoolUsed() + "/" + getSharedAgentPoolSize() + " slots";
     updateHTML($("#agent-hire-section"), "");
     let html = "";
     const cost = getAgentHireCost(G.agents.length);
@@ -3164,7 +3162,7 @@
       html += "<div class='company-leadership' aria-label='Company leadership'>";
       if (G.ceoMode === "off") html += "<button class='card hire-slot management-agent leadership-agent ceo-slot' onclick=\"GAME.buy('ai_ceo')\" " + (G.cash < 1000000 ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Provision AI CEO</strong><span>$1M</span></button>";
       else html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🧠</span><div><strong>AI CEO</strong><p class='ceo-status'>" + (G.ceoMode === "manage" ? "Adding agents to existing clusters" : "Adding agents and expanding") + "</p></div></div>";
-      html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🪙</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · " + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
+      html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🪙</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
     }
     html += "<div class='" + (minimal ? "network-grid" : compact ? "node-grid" : "node-grid agent-grid") + "'>";
     for (const cluster of G.clusters) {
@@ -3550,7 +3548,7 @@
     for (const agent of G.agents) {
       agent.currentTask = null;
       agent.status = "idle";
-      agent.tokenTank = UTILITY_ROLES.includes(agent.roleId) ? 0 : workerTokenCapacity();
+      agent.tokenTank = UTILITY_ROLES.includes(agent.roleId) ? 0 : workerTokenCapacity(agent);
     }
     for (const cluster of G.clusters) cluster.tank = MANAGER_TOKEN_TANK_MAX;
     G.log = [];

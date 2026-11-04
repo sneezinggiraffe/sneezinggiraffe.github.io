@@ -273,7 +273,7 @@ scenario('free AI is a task-only unlock even with no cash or other upgrades', (h
   assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(upgrade => upgrade.id === 'free_ai')), false);
 });
 
-scenario('Post-It Notes queue real jobs sequentially, preserve pay and survive a reload', (h) => {
+scenario('Post-It Notes work on two jobs in parallel, preserve pay and survive a reload', (h) => {
   const g = h.fresh();
   g.purchasedUpgrades.push('post_it_notes');
   const first = h.task();
@@ -281,7 +281,7 @@ scenario('Post-It Notes queue real jobs sequentially, preserve pay and survive a
   const waiting = h.task();
   for (const task of g.tasks) { task.workRequired = 6; task.pay = 10; }
   h.api.renderTaskQueue();
-  assert.match(h.window.document.querySelector('#task-list').textContent, /Work next 2/);
+  assert.match(h.window.document.querySelector('#task-list').textContent, /Work on 2/);
   h.api.clickTask(selected.id);
   assert.equal(g.totalClicks, 1);
   assert.equal(waiting.status, 'available');
@@ -291,12 +291,12 @@ scenario('Post-It Notes queue real jobs sequentially, preserve pay and survive a
   h.api.tickManualWork(0);
   h.api.tickManualWork(0.3);
   assert.equal(selected.workDone, 2);
-  assert.equal(first.workDone, 0);
+  assert.equal(first.workDone, 2);
   assert.equal(g.activeTaskId, selected.id);
-  assert.equal(g.stress, 0.6);
+  assert.equal(g.stress, 1.2);
   h.api.renderTaskQueue();
   const buttons = [...h.window.document.querySelectorAll('#task-list button')];
-  assert.deepEqual(buttons.map(button => button.textContent), ['Queued', 'Working...', 'Work']);
+  assert.deepEqual(buttons.map(button => button.textContent), ['Working...', 'Working...', 'Work']);
   assert.ok(buttons.every(button => button.disabled));
   g.taskExpiryEnabled = true;
   h.advance(31000);
@@ -306,12 +306,12 @@ scenario('Post-It Notes queue real jobs sequentially, preserve pay and survive a
   const restored = harness(JSON.stringify(g));
   try {
     const state = restored.window.GAME.state;
-    restored.api.tickManualWork(0.9);
-    assert.equal(state.totalTasksDone, 1);
-    assert.equal(state.cash, 10);
-    assert.equal(state.tasks.find(task => task.id === first.id).workDone, 2);
-    assert.equal(state.activeTaskId, first.id);
-    restored.api.tickManualWork(0.6);
+    restored.api.tickManualWork(0.3);
+    assert.equal(state.totalTasksDone, 0);
+    assert.equal(state.cash, 0);
+    assert.equal(state.tasks.find(task => task.id === first.id).workDone, 4);
+    assert.equal(state.tasks.find(task => task.id === selected.id).workDone, 4);
+    restored.api.tickManualWork(0.3);
     assert.equal(state.totalTasksDone, 2);
     assert.equal(state.cash, 20);
     assert.equal(state.activeTaskId, null);
@@ -322,7 +322,7 @@ scenario('Post-It Notes queue real jobs sequentially, preserve pay and survive a
   }
 });
 
-scenario('GTD and Headphones increase queue capacity without changing task batches or work speed', (h) => {
+scenario('GTD and Headphones increase parallel work without changing task batches or per-job speed', (h) => {
   const g = h.fresh();
   g.cash = 10000;
   g.totalTasksDone = 50;
@@ -334,6 +334,8 @@ scenario('GTD and Headphones increase queue capacity without changing task batch
   for (let i = 0; i < 11; i++) h.task();
   h.api.clickTask(g.tasks[0].id);
   assert.equal(g.tasks.filter(task => task.status === 'active').length, 5);
+  h.api.tickManualWork(0.1);
+  assert.ok(g.tasks.filter(task => task.status === 'active').every(task => task.workDone > 0));
   h.api.tickManualWork(100);
   assert.equal(g.totalTasksDone, 55);
   h.prepareUpgrade('noise_cancelling');
@@ -366,6 +368,8 @@ scenario('AI Basic costs exactly $2,500 and cannot be bought below that price', 
   h.api.purchaseUpgrade('pro_model');
   assert.equal(g.phase, 3);
   assert.equal(g.cash, 0);
+  assert.equal(g.tokens, 50);
+  assert.match(g.log.map(entry => entry.msg).join(' '), /starter grant: \+50 tokens/);
 });
 
 scenario('AI retains its former upgraded throughput when early upgrades provide queues', (h) => {
@@ -377,6 +381,87 @@ scenario('AI retains its former upgraded throughput when early upgrades provide 
   assert.equal(h.api.originalAiWorkRate(), 54);
   g.clickPower = 2;
   assert.equal(h.api.originalAiWorkRate(), 108);
+});
+
+scenario('Basic stays at 40 tokens after licensing while Pro retains 100 and a faster bar drain', (h) => {
+  const g = h.fresh(3);
+  g.cash = 1e6;
+  g.tokens = 1000;
+  g.totalTasksDone = 800;
+  g.aiFailMult = 0;
+  g.uiRevealed.agents = true;
+  h.prepareUpgrade('second_ai');
+  h.api.purchaseUpgrade('second_ai');
+  const pro = g.agents[0];
+  pro.reliability = 2;
+  assert.equal(h.api.workerTokenCapacity(pro), 100);
+  h.api.topUpAiWorker();
+  h.api.topUpAgent(pro.id);
+  assert.equal(g.aiWorkerTokenTank, 40);
+  assert.equal(pro.tokenTank, 100);
+  const task = h.task();
+  task.workRequired = 1e9;
+  h.api.assignAgentToTask(task.id, pro.id);
+  const consumed = g.tokensConsumed;
+  h.api.tickAgents(1);
+  assert.equal(pro.tokenTank, 88);
+  assert.equal(g.tokensConsumed - consumed, 12);
+  assert.equal(h.api.tokenBurnRate(), 12);
+  h.api.renderAgentSection();
+  assert.match(h.window.document.querySelector('#agent-list').textContent, /40\/40 tokens/);
+  assert.match(h.window.document.querySelector('#agent-list').textContent, /88\/100 tokens/);
+  h.api.purchaseUpgrade('multi_bot');
+  const basic = g.agents.find(agent => agent.olderModel);
+  assert.equal(h.api.workerTokenCapacity(basic), 40);
+  assert.equal(h.api.workerTokenCapacity(pro), 100);
+  assert.equal(h.api.workerTokenCapacity(h.worker()), 200);
+  basic.tokenTank = 5;
+  pro.tokenTank = 5;
+  const reserve = g.tokens;
+  h.api.topUpAgent(basic.id);
+  h.api.topUpAgent(pro.id);
+  assert.equal(basic.tokenTank, 40);
+  assert.equal(pro.tokenTank, 100);
+  assert.equal(g.tokens, reserve - 130);
+  h.api.renderAgentSection();
+  assert.match(h.window.document.querySelector('#agent-list').textContent, /40\/40 tokens/);
+  assert.match(h.window.document.querySelector('#agent-list').textContent, /100\/100 tokens/);
+  assert.equal(h.window.document.querySelector('#agent-slots'), null);
+  g.phase = 6;
+  g.managerUnlock = true;
+  h.worker('manager');
+  g.managerTokenTank = 4000;
+  basic.tokenTank = 39;
+  pro.tokenTank = 99;
+  h.api.tickManager();
+  assert.equal(basic.tokenTank, 40);
+  assert.equal(pro.tokenTank, 100);
+  g.phase = 9;
+  const cluster = h.api.addClusterWithNextName();
+  cluster.managerAssigned = true;
+  cluster.tokenManagerAssigned = true;
+  cluster.tank = 4000;
+  cluster.workerAgentIds.push(basic.id, pro.id);
+  basic.tokenTank = 0;
+  pro.tokenTank = 0;
+  h.api.tickClusterManagers();
+  assert.equal(basic.tokenTank, 40);
+  assert.equal(pro.tokenTank, 100);
+  assert.equal(h.api.validSave(g), true);
+});
+
+scenario('token consumption is negative in the top bar and company leadership, including when idle', (h) => {
+  const g = h.fresh(10);
+  g.uiRevealed.topBar = true;
+  g.uiRevealed.clusters = true;
+  g.averageTokenBurn = 12.4;
+  h.api.renderTopBar();
+  h.api.renderClusterSection();
+  assert.equal(h.window.document.querySelector('#token-burn').textContent, '-12 tok/s');
+  assert.match(h.window.document.querySelector('.company-leadership').textContent, /-12 tok\/s/);
+  g.averageTokenBurn = 0;
+  h.api.renderTopBar();
+  assert.equal(h.window.document.querySelector('#token-burn').textContent, '-0 tok/s');
 });
 
 for (const buyUpgrades of [false, true]) {
@@ -759,8 +844,8 @@ scenario('second subscription is mandatory and both workers retain tokens and jo
   const g=h.fresh(3);g.cash=1e6;g.tokens=200;g.totalTasksDone=800;h.prepareUpgrade('second_ai');g.uiRevealed.agents=true;g.uiRevealed.upgrades=true;
   h.api.purchaseUpgrade('multi_bot');assert.equal(g.phase,3);h.api.renderUpgradeSection();assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'multi_bot\')"]'),null);
   h.api.purchaseUpgrade('second_ai');const second=g.agents[0];assert.equal(g.agents.length,1);h.api.purchaseUpgrade('second_ai');assert.equal(g.agents.length,1);
-  g.tasks=[];g.aiWorkerCurrentTaskId=null;second.currentTask=null;second.status='idle';h.api.renderAgentSection();assert.equal(h.window.document.querySelectorAll('#agent-list button').length,2);assert.match(h.window.document.querySelector('#agent-slots').textContent,/Two AI/);
-  h.api.topUpAiWorker();h.api.topUpAgent(second.id);assert.equal(g.tokens,120);assert.equal(second.tokenTank,40);h.api.fireAgent(second.id);assert.equal(g.agents.length,1);
+  g.tasks=[];g.aiWorkerCurrentTaskId=null;second.currentTask=null;second.status='idle';h.api.renderAgentSection();assert.equal(h.window.document.querySelectorAll('#agent-list button').length,2);assert.equal(h.window.document.querySelector('#agent-slots'),null);
+  h.api.topUpAiWorker();h.api.topUpAgent(second.id);assert.equal(g.tokens,60);assert.equal(second.tokenTank,100);h.api.fireAgent(second.id);assert.equal(g.agents.length,1);
   const originalTask=h.task();originalTask.workRequired=1e6;g.aiFailMult=0;h.api.tickAiWorker(0.1);const loaded=g.aiWorkerTokenTank;
   const secondTask=h.task();secondTask.workRequired=1e6;h.api.assignAgentToTask(secondTask.id,second.id);const secondTokens=second.tokenTank;g.aiWorkerTasksCompleted=12;
   h.api.purchaseUpgrade('multi_bot');assert.equal(g.phase,4);assert.equal(g.agents.length,2);assert.equal(g.aiWorkerShutdown,true);assert.equal(g.aiWorkerTokenTank,0);
@@ -825,7 +910,7 @@ scenario('token display uses whole numbers and smooths actual consumption betwee
   for(let i=0;i<30;i++){h.advance(100);h.api.tick();h.dismiss();}
   assert.ok(g.tokensConsumed>0);const average=g.averageTokenBurn;assert.ok(average>1);g.aiWorkerTokenTank=0;
   h.advance(100);h.api.tick();assert.ok(g.averageTokenBurn>average*0.95);assert.ok(g.averageTokenBurn<average);
-  h.api.renderAll();assert.equal(h.window.document.querySelector('#res-tokens').textContent,'1,235');assert.match(h.window.document.querySelector('#token-burn').textContent,/^\d[\d,]* tok\/s$/);
+  h.api.renderAll();assert.equal(h.window.document.querySelector('#res-tokens').textContent,'1,235');assert.match(h.window.document.querySelector('#token-burn').textContent,/^-\d[\d,]* tok\/s$/);
   assert.doesNotMatch(h.window.document.querySelector('#agent-list').textContent,/\d\.\d.*tokens/);
 });
 scenario('Manager distributes small paid increments without preventing job assignment', (h) => {

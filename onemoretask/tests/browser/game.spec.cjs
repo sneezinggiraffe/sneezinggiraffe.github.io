@@ -377,9 +377,9 @@ test('Phase 3 requires the second subscription before upgrading both workers',as
   const h=harness();const g=h.fresh(3);g.cash=100000;g.tokens=200;g.totalTasksDone=800;h.prepareUpgrade('second_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   await expect(page.locator('[onclick="GAME.buy(\'multi_bot\')"]')).toHaveCount(0);await page.locator('[onclick="GAME.buy(\'second_ai\')"]').click();
-  await expect(page.locator('#agent-list').getByRole('button',{name:'Top-up tokens'})).toHaveCount(2);await expect(page.locator('#agent-slots')).toHaveText('Two AI subscriptions');
+  await expect(page.locator('#agent-list').getByRole('button',{name:'Top-up tokens'})).toHaveCount(2);await expect(page.locator('#agent-slots')).toHaveCount(0);
   for(const button of await page.locator('#agent-list').getByRole('button',{name:'Top-up tokens'}).all())await button.click();
-  expect(await page.evaluate(()=>GAME.state.tokens)).toBe(120);await page.screenshot({path:'test-results/phase3-two-subscriptions.png',fullPage:true});
+  expect(await page.evaluate(()=>GAME.state.tokens)).toBe(60);await page.screenshot({path:'test-results/phase3-two-subscriptions.png',fullPage:true});
   await page.locator('[onclick="GAME.buy(\'multi_bot\')"]').click();expect(await page.evaluate(()=>GAME.state.phase)).toBe(4);expect(await page.evaluate(()=>GAME.state.aiWorkerShutdown)).toBe(true);expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(2);
   await expect(page.locator('#agent-list').getByRole('button',{name:'Sell'})).toHaveCount(2);
 });
@@ -416,22 +416,27 @@ test('early upgrade visibility follows task milestones and prior purchases',asyn
 });
 
 for (const width of [1440, 390]) {
-  test(`manual queues show five jobs, survive reload and need one work click at ${width}px`, async ({ page }) => {
+  test(`manual groups work in parallel, survive reload and need one work click at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh();
     g.cash = 10000;
     g.totalTasksDone = 30;
     h.prepareUpgrade('gtd_workflow');
     h.api.purchaseUpgrade('gtd_workflow');
+    g.tasks = [];
     for (let i = 0; i < 5; i++) h.task().workRequired = 40;
     h.api.checkMilestones();
     h.dismiss();
     g.lastTick = Date.now();
     g.lastSave = g.lastTick;
+    g.lastTaskSpawn = g.lastTick;
+    for (const task of g.tasks) task.createdAt = g.lastTick;
+    for (const entry of g.log) entry.t = g.lastTick;
     const raw = JSON.stringify(g);
     h.close();
     await page.setViewportSize({ width, height: 900 });
-    await page.clock.install();
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
     await page.addInitScript(value => {
       if (!sessionStorage.getItem('seeded')) {
         localStorage.setItem('ai_empire_save', value);
@@ -440,10 +445,11 @@ for (const width of [1440, 390]) {
     }, raw);
     await page.goto('/');
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    await page.getByRole('button', { name: 'Work next 5', exact: true }).first().click();
+    await expect(page.locator('#task-list .task-card')).toHaveCount(5);
+    await page.getByRole('button', { name: 'Work on 5', exact: true }).first().click();
     await page.clock.runFor(500);
-    await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(1);
-    await expect(page.getByRole('button', { name: 'Queued', exact: true })).toHaveCount(4);
+    await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(5);
+    expect(await page.evaluate(() => GAME.state.tasks.filter(task => task.status === 'active').every(task => task.workDone > 0))).toBe(true);
     expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: `test-results/manual-queue-${width}.png`, fullPage: true });
@@ -451,8 +457,8 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(200);
     await page.reload();
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    await expect(page.getByRole('button', { name: 'Queued', exact: true })).toHaveCount(4);
-    await page.clock.runFor(35000);
+    await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(5);
+    await page.clock.runFor(6500);
     expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(35);
     expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
   });
@@ -468,6 +474,7 @@ for(const width of [1440,390]) {
       const cards=page.locator('#agent-list .agent-card');await expect(cards).toHaveCount(2);await expect(cards.nth(0).locator('.name')).toContainText('AI 2000 Basic');await expect(cards.nth(1).locator('.name')).toContainText('AI 2000 Pro');
       const bars=await cards.locator('.task-bar').all();const first=await bars[0].boundingBox();const second=await bars[1].boundingBox();expect(first.width).toBe(second.width);
       const counts=await cards.locator('.agent-token-count').all();expect((await counts[0].boundingBox()).x).toBe(first.x);expect((await counts[1].boundingBox()).x).toBe(second.x);
+      await expect(counts[0]).toHaveText(/\/40 tokens$/);await expect(counts[1]).toHaveText(/\/100 tokens$/);await expect(page.locator('#agent-slots')).toHaveCount(0);await expect(page.locator('#token-burn')).toHaveText(/^-\d[\d,]* tok\/s$/);
       const buttons=cards.getByRole('button',{name:'Top-up tokens'});expect((await buttons.nth(0).boundingBox()).width).toBe((await buttons.nth(1).boundingBox()).width);
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`test-results/phase${phase}-agents-${width}.png`,fullPage:true});
       if(phase===3)await page.locator('[onclick="GAME.buy(\'multi_bot\')"]').click();
@@ -521,8 +528,8 @@ test('Phase 2 AI income appears and the Basic purchase changes model and lifesty
 for(const width of [1440,390]){
   test(`DevOps can be bought with a full agent pool at ${width}px`,async({page})=>{
     await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh7();GAME.addTasks(3);GAME.buy('token_manager_unlock');GAME.addCash(1000000);GAME.buy('devops_unlock');});
-    if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();await page.getByRole('button',{name:/Buy Token Manager/}).click();await expect(page.locator('#agent-slots')).toHaveText('8/8 slots');
-    const button=page.getByRole('button',{name:/Buy DevOps/});await expect(button).toBeEnabled();await button.screenshot({path:`test-results/devops-slot-${width}.png`});await button.focus();await page.keyboard.press('Enter');await expect(button).toHaveCount(0);await expect(page.locator('#incident-devops .agent-card')).toContainText('DevOps');await expect(page.locator('#agent-slots')).toHaveText('8/8 slots');expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(9);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();await page.getByRole('button',{name:/Buy Token Manager/}).click();await expect(page.locator('#agent-slots')).toHaveCount(0);
+    const button=page.getByRole('button',{name:/Buy DevOps/});await expect(button).toBeEnabled();await button.screenshot({path:`test-results/devops-slot-${width}.png`});await button.focus();await page.keyboard.press('Enter');await expect(button).toHaveCount(0);await expect(page.locator('#incident-devops .agent-card')).toContainText('DevOps');await expect(page.locator('#agent-slots')).toHaveCount(0);expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(9);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   });
 }
 
