@@ -92,7 +92,13 @@ test('Ralph-loops and AI expansion skip modals and the operating model uses the 
   await loops.click();
   expect(await page.evaluate(() => GAME.state.phase)).toBe(8);
   await expect(page.locator('#milestone-popup')).toBeHidden();
-  await page.evaluate(() => { chPh11(); GAME.addTasks(3); });
+  expect(await page.evaluate(() => {
+    chPh11();
+    return { cash: GAME.state.cash, tasks: GAME.state.totalTasksDone, clusters: GAME.state.clusters.length };
+  })).toEqual({ cash: 280000000, tasks: 27000000, clusters: 18 });
+  await page.clock.runFor(200);
+  await expect(page.locator('[onclick="GAME.buy(\'ceo_course\')"]')).toBeDisabled();
+  await page.evaluate(() => GAME.addCash(20000000));
   await page.clock.runFor(200);
   await page.locator('[onclick="GAME.buy(\'ceo_course\')"]').click();
   expect(await page.evaluate(() => GAME.state.phase)).toBe(11);

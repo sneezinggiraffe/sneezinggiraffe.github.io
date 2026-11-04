@@ -12,15 +12,31 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 6 | 5,000–5,035 | $57K–$107K | Token Manager unlock $40K |
 | 7 | 30,145–30,400 | $130K–$209K | Operations upgrades, then Ralph-loops $1M |
 | 8 | 318,000–369,000 | $5.9K–$9.2K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
-| 9 | 1.002M–1.006M | $597K–$2.11M | Cluster permits and staffing, then CEO readiness $4M |
-| 10 | 1.810M–1.818M | $8.9M–$16.9M | AI CEO $1M, Pipeline $10M, ninth slots $15M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
-| 11 | 25M–28M | $0.9M–$7.1M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
-| 12 | 43M–48M | $3.4M–$10.2M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
-| 13 | 118M–121M | $2.1M–$20.4M | Global Expansion $3B at 40 completed nodes |
-| 14 | 278M–283M | $5.2M–$30.8M | Reach 100 completed nodes and prepare the sale for $2B |
-| 15 | 527M–530M | $4.2M–$50.1M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.26B–1.29B completed tasks |
+| 9 | 1.002M–1.006M | $597K–$2.11M | Blueprint $1.5M, Second Permit $2.5M, Third Permit $12M, operations upgrades, then CEO Readiness $35M |
+| 10 | 3.83M–4.33M | $3.8K–$153K | AI CEO $1M, Pipeline $25M, ninth slots $30M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
+| 11 | 28M–32M | $1.1M–$6.2M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
+| 12 | 46M–51M | $1.3M–$4.9M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
+| 13 | 120M–125M | $11.2M–$16.0M | Global Expansion $3B at 40 completed nodes |
+| 14 | 282M–287M | $25.9M–$38.7M | Reach 100 completed nodes and prepare the sale for $2B |
+| 15 | 530M–534M | $13.4M–$33.0M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.27B–1.29B completed tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
+
+## Phase 9 savings goals
+
+The extra spending is concentrated in Phase 9 upgrades and the first two Phase 10 improvements. Agent installation and cluster construction retain their existing prices, preserving the later expansion curve.
+
+| Upgrade | Task milestone | Price |
+| --- | ---: | ---: |
+| Cluster Operations Blueprint | 1.05M | $1.5M |
+| Second Cluster Permit | 1.15M | $2.5M |
+| Third Cluster Permit | 1.5M | $12M |
+| Cluster Runbooks | 1.75M | $3.5M |
+| Cross-Cluster QA Mesh | 2M | $5M |
+| Cluster Revenue Platform | 2.25M | $6.5M |
+| AI CEO Readiness | 2.5M | $35M |
+
+These task milestones control visibility in the background. Existing staffing requirements still gate purchases. All three sampled journeys need to save for the Third Cluster Permit, CEO Readiness, Provisioning Pipeline and Re-architect Network when first offered. A $9M wallet cannot buy the third permit, $30M cannot buy readiness, and a $40M Phase 10 reserve cannot buy both the $25M Pipeline and $30M network upgrade.
 
 ## Checkpoint interpretation
 
@@ -33,7 +49,8 @@ The earliest allowed entry can be substantially below these task counts. For exa
 
 - `chStart8()` loads the beginning of Phase 8 at 150,000 tasks, with its growth upgrades left to play through.
 - `chPh8()` loads Phase 7 at 390,000 tasks and $800,000, leaving $200,000 to earn before buying Ralph-loops.
-- `chPh9()` loads late Phase 8, with ordinary upgrades already purchased, just before the acquisition.
+- `chPh9()` loads late Phase 8 at 1M tasks and $1.2M, with ordinary upgrades already purchased and $300K left to earn for the acquisition.
+- `chPh11()` loads late Phase 10 at 27M tasks, $280M and 18 fully staffed clusters, with $20M left to earn for AI Expansion Optimisation.
 - Other `chPhN()` shortcuts likewise prepare the transition into that numbered phase. Their injected cash and purchased upgrades are not balance measurements.
 - `chRetire()` loads an immediately purchasable Golden Parachute.
 

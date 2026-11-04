@@ -276,18 +276,18 @@
 
     // Phase 9 (clusterization)
 
-    { id: "code_agents", name: "Cluster Operations Blueprint", desc: "Standardise cluster operations. Reduce debt growth by 25% and improve output quality by 10%.", cost: 150000, currency: "cash", phase: 9, effect: { debtReduction: 0.25, codeQualityMult: 1.1 }, oneTime: true, reqTasks: 1020 },
-    { id: "cluster_capacity_2", name: "Second Cluster Permit", desc: "Unlock Provision cluster and room for one more cluster.", cost: 250000, currency: "cash", phase: 9, requires: "code_agents", effect: {}, oneTime: true, reqTasks: 1060 },
-    { id: "cluster_capacity_3", name: "Third Cluster Permit", desc: "Add room for a third cluster.", cost: 750000, currency: "cash", phase: 9, requires: "cluster_capacity_2", effect: {}, oneTime: true, reqTasks: 1180 },
-    { id: "testing", name: "Cluster Runbooks", desc: "Reduce technical debt growth and tighten incident handling.", cost: 350000, currency: "cash", phase: 9, effect: { debtReduction: 0.3, devopsIncidentMult: 1.15 }, oneTime: true, reqTasks: 1120 },
-    { id: "code_review", name: "Cross-Cluster QA Mesh", desc: "Improves cluster output quality by 25%.", cost: 500000, currency: "cash", phase: 9, effect: { codeQualityMult: 1.25 }, oneTime: true, reqTasks: 1160 },
-    { id: "deploy", name: "Cluster Revenue Platform", desc: "Sign ongoing client contracts for regular income.", cost: 650000, currency: "cash", phase: 9, effect: { serviceSlots: 2, payMult: 1.12 }, oneTime: true, reqTasks: 1200 },
-    { id: "ceo_readiness", name: "AI CEO Readiness", desc: "Formalize org controls so an AI CEO can take over.", cost: 4000000, currency: "cash", phase: 9, unlockPhase: 10, effect: {}, oneTime: true, reqTasks: 1200000 },
+    { id: "code_agents", name: "Cluster Operations Blueprint", desc: "Standardise cluster operations. Reduce debt growth by 25% and improve output quality by 10%.", cost: 1500000, currency: "cash", phase: 9, effect: { debtReduction: 0.25, codeQualityMult: 1.1 }, oneTime: true, reqTasks: 1050000 },
+    { id: "cluster_capacity_2", name: "Second Cluster Permit", desc: "Unlock Provision cluster and room for one more cluster.", cost: 2500000, currency: "cash", phase: 9, requires: "code_agents", effect: {}, oneTime: true, reqTasks: 1150000 },
+    { id: "cluster_capacity_3", name: "Third Cluster Permit", desc: "Add room for a third cluster.", cost: 12000000, currency: "cash", phase: 9, requires: "cluster_capacity_2", effect: {}, oneTime: true, reqTasks: 1500000 },
+    { id: "testing", name: "Cluster Runbooks", desc: "Reduce technical debt growth and tighten incident handling.", cost: 3500000, currency: "cash", phase: 9, effect: { debtReduction: 0.3, devopsIncidentMult: 1.15 }, oneTime: true, reqTasks: 1750000 },
+    { id: "code_review", name: "Cross-Cluster QA Mesh", desc: "Improves cluster output quality by 25%.", cost: 5000000, currency: "cash", phase: 9, effect: { codeQualityMult: 1.25 }, oneTime: true, reqTasks: 2000000 },
+    { id: "deploy", name: "Cluster Revenue Platform", desc: "Sign ongoing client contracts for regular income.", cost: 6500000, currency: "cash", phase: 9, effect: { serviceSlots: 2, payMult: 1.12 }, oneTime: true, reqTasks: 2250000 },
+    { id: "ceo_readiness", name: "AI CEO Readiness", desc: "Formalize org controls so an AI CEO can take over.", cost: 35000000, currency: "cash", phase: 9, unlockPhase: 10, effect: {}, oneTime: true, reqTasks: 2500000 },
 
     // Phase 10 (AI CEO)
     { id: "ai_ceo", name: "AI CEO", desc: "AI CEO takes over cluster coordination and budgets.", cost: 1000000, currency: "cash", phase: 10, effect: { aiCeo: true }, oneTime: true, reqTasks: 1320 },
-    { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 10000000, currency: "cash", phase: 10, requires: "ai_ceo", oneTime: true },
-    { id: "network_density", name: "Re-architect Network", desc: "Increase cluster density. Add one agent slot per cluster.", cost: 15000000, currency: "cash", phase: 10, requires: "ai_ceo", effect: { clusterSlots: 9 }, oneTime: true },
+    { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 25000000, currency: "cash", phase: 10, requires: "ai_ceo", oneTime: true },
+    { id: "network_density", name: "Re-architect Network", desc: "Increase cluster density. Add one agent slot per cluster.", cost: 30000000, currency: "cash", phase: 10, requires: "ai_ceo", effect: { clusterSlots: 9 }, oneTime: true },
     { id: "ceo_deploy_speed", name: "Faster AI Provisioning", desc: "Provision agents 50% faster.", cost: 40000000, currency: "cash", phase: 10, requires: "network_density", oneTime: true },
     { id: "cluster_capacity_16", name: "High-Density Clusters", desc: "Expand every cluster from 9 to 16 agent slots.", cost: 50000000, currency: "cash", phase: 10, requires: "ceo_deploy_speed", effect: { clusterSlots: 16 }, oneTime: true },
     { id: "ceo_batch", name: "Dual Agent Provisioning", desc: "Provision two agents at once.", cost: 75000000, currency: "cash", phase: 10, requires: "cluster_capacity_16", oneTime: true },
@@ -3669,6 +3669,7 @@
     const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
+    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "11": { tasks: 27000000, cash: 280000000, clusters: 18 } }[stage];
     G = defaultState();
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];
@@ -3676,7 +3677,7 @@
     G.incidentsExplained = true;
     G.cash = 1e15;
     const preceding = UPGRADES.filter((upgrade, index) => upgrade !== target && (stage !== "3_1" || index < UPGRADES.indexOf(target)) && upgrade.oneTime && (!Object.hasOwn(early, stage) || upgrade.reqTasks < early[stage]) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
-    const requiredClusters = Math.max(phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
+    const requiredClusters = Math.max(checkpoint?.clusters || 0, phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
       const before = G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
@@ -3687,7 +3688,6 @@
     fillCheatCompany(requiredClusters);
     tickConstruction(12.1);
     if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - (stage === "retire" ? 0 : 1)));
-    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 } }[stage];
     G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
     G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
