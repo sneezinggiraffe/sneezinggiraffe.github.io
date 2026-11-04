@@ -651,6 +651,61 @@ test('buying the AI CEO folds tasks while allowing them to be reopened', async (
 });
 
 for (const width of [1440, 390]) {
+  test(`three through six clusters shrink without hiding cards at ${width}px`, async ({ browser, baseURL }) => {
+    let previousCardHeight = Infinity;
+    let overviewHeight;
+    for (const count of [3, 4, 5, 6]) {
+      const h = harness(fixture(11), { seed: 42 });
+      const g = h.window.GAME.state;
+      for (let i = 3; i < count; i++) h.fullCluster();
+      g.lastTick = Date.now();
+      g.lastSave = g.lastTick;
+      g.lastCeoAction = g.lastTick + 1000000;
+      g.lastIncidentCheck = g.lastTick;
+      g.aiFailMult = 0;
+      expect(h.api.validSave(g)).toBe(true);
+      const raw = JSON.stringify(g);
+      h.close();
+      const context = await browser.newContext({ baseURL, viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+      try {
+        const page = await context.newPage();
+        await page.clock.install({ time: new Date(g.lastTick) });
+        await page.clock.pauseAt(new Date(g.lastTick + 1000));
+        await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+        await page.goto('/');
+        if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+        const grid = page.locator('#cluster-list .agent-grid');
+        await expect(grid.locator('div.cluster-card')).toHaveCount(count);
+        const layout = await grid.evaluate(element => {
+          const bounds = element.getBoundingClientRect();
+          const cards = [...element.querySelectorAll('div.cluster-card')];
+          const boxes = cards.map(card => card.getBoundingClientRect());
+          return {
+            height: bounds.height,
+            cardHeight: Math.max(...boxes.map(box => box.height)),
+            visibleCards: boxes.filter(box => box.top >= bounds.top - 0.5 && box.bottom <= bounds.bottom + 0.5).length,
+            controlsFit: cards.every((card, index) => [...card.querySelectorAll('.capacity-slot, button')].every(control => {
+              const box = control.getBoundingClientRect();
+              return box.top >= boxes[index].top && box.bottom <= boxes[index].bottom && box.left >= boxes[index].left && box.right <= boxes[index].right;
+            })),
+          };
+        });
+        expect(layout.cardHeight, `${count} clusters must not enlarge the cards`).toBeLessThanOrEqual(previousCardHeight);
+        expect(layout.controlsFit, `${count} clusters must keep all agent slots and Sell controls inside their cards`).toBe(true);
+        if (count >= 4) {
+          overviewHeight ??= layout.height;
+          expect(layout.height).toBeCloseTo(overviewHeight, 1);
+          expect(layout.height).toBeLessThanOrEqual(360);
+          expect(layout.visibleCards, `${count} clusters must fit without scrolling`).toBe(count);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        previousCardHeight = layout.cardHeight;
+      } finally {
+        await context.close();
+      }
+    }
+  });
+
   test(`cluster overview keeps its height and shrinks cards as groups are added at ${width}px`, async ({ page }) => {
     const h = harness(fixture(11), { seed: 42 });
     const g = h.window.GAME.state;
