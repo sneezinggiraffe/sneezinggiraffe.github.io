@@ -257,8 +257,8 @@
 
     // Phase 10 (AI CEO)
     { id: "ai_ceo", name: "AI CEO", desc: "AI CEO takes over cluster coordination and budgets.", cost: 1000000, currency: "cash", phase: 10, effect: { aiCeo: true }, oneTime: true, reqTasks: 1320 },
-    { id: "server_1", name: "AI CEO Scale Mode", desc: "AI CEO can now scale cluster output aggressively.", cost: 2000000, currency: "cash", phase: 10, requires: "ai_ceo", effect: { ceoScale: true, agentSpeedMult: 1.5, payMult: 1.3, serviceSlots: 5 }, oneTime: true, reqTasks: 1400 },
-    { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 600000, currency: "cash", phase: 10, requires: "ai_ceo", oneTime: true },
+    { id: "server_1", name: "AI CEO Scale Mode", desc: "AI CEO can now scale cluster output aggressively.", cost: 200000000, currency: "cash", phase: 10, requires: "ai_ceo", effect: { ceoScale: true, agentSpeedMult: 1.5, payMult: 1.3, serviceSlots: 5 }, oneTime: true, reqTasks: 1400 },
+    { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 10000000, currency: "cash", phase: 10, requires: "ai_ceo", oneTime: true },
     { id: "ceo_deploy_speed", name: "Faster AI Provisioning", desc: "Provision agents 50% faster.", cost: 40000000, currency: "cash", phase: 10, requires: "server_1", oneTime: true },
     { id: "ceo_batch", name: "Dual Agent Provisioning", desc: "Provision two agents at once.", cost: 75000000, currency: "cash", phase: 10, requires: "server_1", oneTime: true },
     { id: "ceo_quad_batch", name: "Four-Agent Provisioning", desc: "Provision four agents at once.", cost: 100000000, currency: "cash", phase: 10, requires: "ceo_batch", oneTime: true },
@@ -1711,6 +1711,7 @@
       if (upg.effect.smartRouting) G.smartRouting = true;
       if (upg.effect.aiCeo) {
         G.ceoMode = "manage";
+        deliveryMetrics().showTasks = false;
         for (const cluster of G.clusters) cluster.workerSlotsMax = 16;
       }
       if (upg.effect.ceoScale) G.ceoMode = "scale";
@@ -2212,10 +2213,10 @@
   let deliveryObservation = null;
 
   function deliveryMetrics() {
-    if (!deliveryObservation || deliveryObservation.game !== G) deliveryObservation = { game: G, phase: G.phase, rate: 0, recent: [], showTasks: true, purchase: "" };
+    if (!deliveryObservation || deliveryObservation.game !== G) deliveryObservation = { game: G, phase: G.phase, rate: 0, recent: [], showTasks: G.ceoMode === "off", purchase: "" };
     if (deliveryObservation.phase !== G.phase) {
       deliveryObservation.phase = G.phase;
-      deliveryObservation.showTasks = true;
+      if (G.ceoMode === "off") deliveryObservation.showTasks = true;
     }
     return deliveryObservation;
   }
@@ -2230,8 +2231,8 @@
     const metrics = deliveryMetrics();
     const queued = G.tasks.filter((task) => task.status === "available").length;
     const running = G.tasks.filter((task) => ["active", "ai", "agent"].includes(task.status)).length;
-    let html = "<div class='card delivery-card'><h3>Delivery</h3><div class='delivery-metrics'><strong>" + fmtTokens(metrics.rate * 60) + "<small>completed / min</small></strong>";
-    if (G.phase < 12) html += "<span>" + queued + " queued</span><span>" + running + " in progress</span>";
+    let html = "<div class='card delivery-card'><h3>Delivery</h3><div class='delivery-metrics'><strong class='delivery-rate'>" + fmtTokens(metrics.rate * 60) + "<small>completed / min</small></strong>";
+    if (G.phase < 12) html += "<span class='delivery-queued'>" + queued + " queued</span><span class='delivery-running'>" + running + " in progress</span>";
     else html += "<span>" + managedNodeCount() + " managed nodes</span><span>" + "$" + fmtTokens(networkIncomeRate()) + "/s delivery revenue</span>";
     html += "</div>";
     if (G.phase < 12) {
@@ -2853,7 +2854,7 @@
       renderDeliverySummary();
       if (!$("#task-list").hidden) renderTaskQueue();
       else updateHTML($("#task-list"), "");
-      $("#task-count").textContent = "Delivery";
+      $("#task-count").textContent = "";
       $("#no-tasks").style.display = "none";
       return;
     }
@@ -3156,12 +3157,14 @@
   function renderClusterSlot(cluster, index, delegated) {
     const agent = G.agents.find((item) => item.id === cluster.workerAgentIds[index]);
     const filled = G.phase >= 12 ? index < cluster.workforce : Boolean(agent);
+    const label = G.phase < 12 ? index + 1 : "";
+    const identity = cluster.name + ", agent " + (index + 1);
     if (agent && agent.status === "provisioning") {
       const progress = Math.round(100 * (1 - agent.provisionRemaining / agent.provisionDuration));
-      return "<span class='capacity-slot provisioning' role='progressbar' aria-label='Provisioning agent' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + progress + "' title='Installing agent' style='--progress:" + progress + "%'></span>";
+      return "<span class='capacity-slot provisioning' role='progressbar' aria-label='Provisioning agent' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + progress + "' title='Installing " + identity + "' style='--progress:" + progress + "%'>" + label + "</span>";
     }
-    if (!filled && !delegated && G.phase < 12) return "<button class='capacity-slot empty provision-agent' onclick=\"GAME.buyClusterWorker('" + cluster.id + "')\" aria-label='Provision agent for $2,500' " + (G.cash < 2500 || !cluster.managerAssigned ? "disabled" : "") + ">+</button>";
-    return "<span class='capacity-slot " + (filled ? "filled" : "empty") + "' title='" + (filled ? "Agent online" : "Vacant agent slot") + "'></span>";
+    if (!filled && !delegated && G.phase < 12) return "<button class='capacity-slot empty provision-agent' onclick=\"GAME.buyClusterWorker('" + cluster.id + "')\" aria-label='Provision agent for $2,500' title='Add " + identity + "' " + (G.cash < 2500 || !cluster.managerAssigned ? "disabled" : "") + ">" + label + "</button>";
+    return "<span class='capacity-slot " + (filled ? "filled" : "empty") + "' title='" + identity + (filled ? " online" : " vacant") + "'>" + label + "</span>";
   }
 
   function renderClusterSection() {
@@ -3171,6 +3174,9 @@
     const compact = G.phase >= 12;
     const minimal = G.phase >= 14;
     const delegated = G.phase >= 10 && G.ceoMode !== "off";
+    const tiles = G.clusters.length + (canManuallyProvisionCluster() ? 1 : 0);
+    const density = Math.max(0, tiles - 3);
+    const overview = !compact && density > 0;
     $("#cluster-count").textContent = managedNodeCount() + " online / " + G.clusters.length + " clusters";
     let html = "";
     if (G.phase >= 10) {
@@ -3180,7 +3186,7 @@
       else html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🧠</span><div><strong>AI CEO</strong><p class='ceo-status'>" + (G.ceoMode === "manage" ? "Adding agents to existing clusters" : "Adding agents and expanding") + "</p></div></div>";
       html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🪙</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
     }
-    html += "<div class='" + (minimal ? "network-grid" : compact ? "node-grid" : "node-grid agent-grid") + "'>";
+    html += "<div class='" + (minimal ? "network-grid" : compact ? "node-grid" : "node-grid agent-grid") + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(104, 132 - density * 7) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
     for (const cluster of G.clusters) {
       const count = compact ? cluster.workforce : cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
       const title = cluster.name + ": " + count + "/" + cluster.workerSlotsMax + " agents, " + fmtTokens(cluster.tank) + " tokens";
@@ -3192,8 +3198,9 @@
         continue;
       }
       if (!minimal) {
-        const status = count < cluster.workerSlotsMax ? (delegated ? "Scaling" : "Provisioning agents") : cluster.tank > 0 ? "Operating" : "Awaiting tokens";
-        html += "<p class='text-sm cluster-status'>" + status + "</p><div class='cluster-capacity' aria-label='" + count + " of " + cluster.workerSlotsMax + " agents online'>";
+        const installing = cluster.workerAgentIds.some((id) => G.agents.find((agent) => agent.id === id).status === "provisioning");
+        const status = count < cluster.workerSlotsMax ? (delegated ? "Scaling" : installing ? "Installing agents" : count === 0 ? "Add your first agent" : "Add more agents") : cluster.tank > 0 ? "Operating" : "Awaiting tokens";
+        html += "<p class='text-sm cluster-status'>" + status + "</p>" + (!compact ? "<p class='cluster-agents-label'>Agents " + count + "/" + cluster.workerSlotsMax + "</p>" : "") + "<div class='cluster-capacity' aria-label='" + count + " of " + cluster.workerSlotsMax + " agents online'>";
         for (let index = 0; index < cluster.workerSlotsMax; index++) html += renderClusterSlot(cluster, index, delegated);
         html += "</div>";
       }
@@ -3201,9 +3208,7 @@
       html += "</div>";
     }
     if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
-    const retainerIncome = G.services.reduce((total, service) => total + (service.active ? service.incomeRate : 0), 0) * Math.max(0.5, 1 - G.techDebt * 0.005 - G.incidents.filter((incident) => !incident.resolved).length * 0.05);
-    const contracts = G.services.filter((service) => service.active).length;
-    html += "</div><p class='text-sm'>Client retainers: " + contracts + (contracts === 1 ? " contract · " : " contracts · ") + "$" + fmtTokens(retainerIncome) + "/s</p>";
+    html += "</div>";
     updateHTML($("#cluster-list"), html);
   }
 
@@ -3224,6 +3229,11 @@
     updateHTML($("#incident-devops"), renderDevops());
     var active = G.incidents.filter(function (i) { return !i.resolved; });
     var idleDevops = G.phase >= 9 ? managedNodeCount() : G.agents.filter(function (a) { return a.roleId === "devops" && a.status === "idle"; }).length;
+    const health = $("#operations-health");
+    health.hidden = G.phase < 9;
+    health.textContent = active.length === 0 ? "Operations healthy · DevOps included in every cluster" : active.length + (active.length === 1 ? " incident · " : " incidents · ") + (idleDevops > 0 ? "Cluster DevOps responding" : "Waiting for an online cluster");
+    health.classList.toggle("attention", active.length > 0);
+    $("#incidents-header").parentElement.hidden = G.phase >= 9 && active.length === 0;
     $("#incident-count").textContent = active.length + " active";
 
     var header = $("#incidents-header");
@@ -3237,7 +3247,7 @@
 
     if (active.length === 0) {
       updateHTML($("#incident-list"), "");
-      $("#no-incidents").style.display = "";
+      $("#no-incidents").style.display = G.phase >= 9 ? "none" : "";
       return;
     }
     $("#no-incidents").style.display = "none";

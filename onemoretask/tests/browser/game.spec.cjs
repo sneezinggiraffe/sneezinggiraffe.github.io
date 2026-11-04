@@ -354,7 +354,7 @@ test('clusters build hardware and management before slots provision agents',asyn
   await page.clock.install();const raw=fixture(9);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   await page.getByRole('button',{name:/Bring cluster online/}).click();const second=page.locator('div.cluster-card').nth(1);const firstBox=await page.locator('div.cluster-card').first().boundingBox();const secondBox=await second.boundingBox();expect(secondBox.x).toBeGreaterThan(firstBox.x);expect(secondBox.y).toBe(firstBox.y);
   for(const stage of ['Procuring GPUs','Racking hardware','Installing software','Final checks']){await page.clock.runFor(100);await expect(second).toContainText(stage);await expect(second.getByRole('progressbar')).toBeVisible();await page.clock.runFor(2900);}
-  await page.clock.runFor(300);await expect(second.getByRole('button',{name:'Provision agent for $2,500',exact:true})).toHaveCount(8);await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);await expect(second.locator('.cluster-status')).toHaveText('Provisioning agents');
+  await page.clock.runFor(300);await expect(second.getByRole('button',{name:'Provision agent for $2,500',exact:true})).toHaveCount(8);await expect(second.locator('.cluster-status')).toHaveText('Add your first agent');await expect(second.locator('.cluster-agents-label')).toHaveText('Agents 0/8');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);await expect(second.locator('.capacity-slot.filled')).toHaveText('1');await expect(second.locator('.cluster-status')).toHaveText('Add more agents');
   await expect(page.locator('#cluster-list')).not.toContainText('management team');await page.screenshot({path:'test-results/phase9-grid.png',fullPage:true});
 });
 test('Phase 8 simplifies agents and allows a paid partial top-up with Manager online',async({page})=>{
@@ -435,6 +435,7 @@ for (const width of [1440, 390]) {
     const raw = JSON.stringify(g);
     h.close();
     await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.clock.install({ time: new Date(g.lastTick) });
     await page.clock.pauseAt(new Date(g.lastTick + 1000));
     await page.addInitScript(value => {
@@ -508,6 +509,7 @@ for (const width of [1440, 390]) {
     const raw = JSON.stringify(g);
     h.close();
     await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.clock.install({ time: new Date(g.lastTick) });
     await page.clock.pauseAt(new Date(g.lastTick + 1000));
     await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
@@ -573,14 +575,126 @@ for(const width of [1440,390]){
     if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();
     await expect(page.locator('.company-leadership .leadership-agent')).toHaveCount(2);await expect(page.locator('.company-leadership')).toContainText('AI CEO');await expect(page.locator('.company-leadership')).toContainText('Token Manager');await expect(page.locator('.company-leadership')).toContainText('tok/s');
     const card=page.locator('.provision-card');await expect(card).toHaveCount(1);expect(await card.evaluate(el=>el.parentElement.classList.contains('node-grid'))).toBe(true);await card.scrollIntoViewIfNeeded();await card.focus();await page.keyboard.press('Enter');await expect(page.locator('.node-grid div.cluster-card')).toHaveCount(4);
-    await expect(page.locator('#delivery-summary')).toBeVisible();await expect(page.locator('#task-list')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await expect(page.locator('#delivery-summary')).toBeVisible();await expect(page.locator('#task-list')).toBeHidden();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.locator('.company-leadership').screenshot({path:`test-results/leadership-${width}.png`});await page.locator('.node-grid').screenshot({path:`test-results/provision-${width}.png`});
   });
 }
 test('delivery details can be opened and collapsed without losing keyboard focus',async({page})=>{
   const h=harness(fixture(10));const g=h.window.GAME.state;g.agentSpeedMult=.00001;h.task();g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  await expect(page.locator('#delivery-summary')).toContainText('completed / min');await expect(page.locator('#task-list')).toBeVisible();const toggle=page.locator('#delivery-summary button');await toggle.focus();await page.keyboard.press('Enter');await expect(page.locator('#task-list')).toBeHidden();await expect(toggle).toHaveText('Show tasks ∨');await page.waitForTimeout(300);await expect(toggle).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#task-list')).toBeVisible();await expect(toggle).toHaveText('Hide tasks ∧');await page.screenshot({path:'test-results/compact-delivery.png',fullPage:true,animations:'disabled'});
+  await expect(page.locator('#delivery-summary')).toContainText('completed / min');await expect(page.locator('#task-list')).toBeHidden();const toggle=page.locator('#delivery-summary button');await toggle.click();await expect(page.locator('#task-list')).toBeVisible();await toggle.focus();await page.keyboard.press('Enter');await expect(page.locator('#task-list')).toBeHidden();await expect(toggle).toHaveText('Show tasks ∨');await page.waitForTimeout(300);await expect(toggle).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('#task-list')).toBeVisible();await expect(toggle).toHaveText('Hide tasks ∧');await page.screenshot({path:'test-results/compact-delivery.png',fullPage:true,animations:'disabled'});
 });
+
+for (const width of [1440, 320]) {
+  test(`delivery counters keep their columns when the completed count grows at ${width}px`, async ({ page }) => {
+    const h = harness(fixture(10));
+    const g = h.window.GAME.state;
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const queued = page.locator('.delivery-queued');
+    const running = page.locator('.delivery-running');
+    const queuedX = (await queued.boundingBox()).x;
+    const runningX = (await running.boundingBox()).x;
+    for (const count of ['9', '999', '99,999', '9,999,999']) {
+      await page.locator('.delivery-rate').evaluate((element, value) => { element.firstChild.textContent = value; }, count);
+      expect((await queued.boundingBox()).x).toBeCloseTo(queuedX, 1);
+      expect((await running.boundingBox()).x).toBeCloseTo(runningX, 1);
+    }
+    await expect(page.locator('#task-count')).toHaveText('');
+    await expect(page.locator('#cluster-list')).not.toContainText('Client retainers');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/delivery-stable-${width}.png`, fullPage: true, animations: 'disabled' });
+  });
+}
+
+test('buying the AI CEO folds tasks while allowing them to be reopened', async ({ page }) => {
+  const h = harness();
+  const g = h.fresh(10);
+  g.cash = 1e9;
+  g.tokens = 100000;
+  g.totalTasksDone = 2000000;
+  g.aiWorkerShutdown = true;
+  h.prepareUpgrade('ai_ceo');
+  for (let i = 0; i < 3; i++) h.fullCluster();
+  h.api.checkMilestones();
+  h.dismiss();
+  g.tasks = [];
+  g.agentSpeedMult = 0.00001;
+  g.lastTick = Date.now();
+  g.lastSave = g.lastTick;
+  const task = h.task();
+  task.createdAt = g.lastTick;
+  task.workRequired = 1e9;
+  const raw = JSON.stringify(g);
+  h.close();
+  await page.clock.install({ time: new Date(g.lastTick) });
+  await page.clock.pauseAt(new Date(g.lastTick + 1000));
+  await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+  await page.goto('/');
+  await expect(page.locator('#task-list')).toBeVisible();
+  await page.getByRole('button', { name: /Provision AI CEO/ }).click();
+  await page.clock.runFor(200);
+  await expect(page.locator('#task-list')).toBeHidden();
+  const toggle = page.locator('#delivery-summary button');
+  await expect(toggle).toHaveText('Show tasks ∨');
+  await toggle.click();
+  await expect(page.locator('#task-list')).toBeVisible();
+  await expect(toggle).toHaveText('Hide tasks ∧');
+});
+
+for (const width of [1440, 390]) {
+  test(`cluster overview keeps its height and shrinks cards as groups are added at ${width}px`, async ({ page }) => {
+    const h = harness(fixture(11), { seed: 42 });
+    const g = h.window.GAME.state;
+    h.fullCluster();
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    g.lastCeoAction = g.lastTick + 1000000;
+    g.lastIncidentCheck = g.lastTick;
+    g.aiFailMult = 0;
+    expect(h.api.validSave(g)).toBe(true);
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const overview = page.locator('.cluster-overview');
+    await expect(overview.locator('div.cluster-card')).toHaveCount(4);
+    const height = (await overview.boundingBox()).height;
+    const beforeMinimum = await overview.evaluate(element => parseFloat(element.style.getPropertyValue('--cluster-card-min')));
+    await page.evaluate(() => { GAME.state.lastCeoAction = 0; });
+    for (const target of [6, 12]) {
+      for (let step = 0; step < 80 && await page.evaluate(() => GAME.state.clusters.length) < target; step++) await page.clock.runFor(200);
+      await expect(overview.locator('div.cluster-card')).toHaveCount(target);
+      expect((await overview.boundingBox()).height).toBeCloseTo(height, 1);
+      expect(await overview.evaluate(element => parseFloat(element.style.getPropertyValue('--cluster-card-min')))).toBeLessThan(beforeMinimum);
+    }
+    await expect(overview.locator('details')).toHaveCount(0);
+    expect(await overview.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBeGreaterThanOrEqual(2);
+    const firstCard = overview.locator('div.cluster-card').first();
+    const cardBounds = await firstCard.boundingBox();
+    const lastAgent = await firstCard.locator('.capacity-slot').last().boundingBox();
+    expect(lastAgent.y + lastAgent.height).toBeLessThanOrEqual(cardBounds.y + cardBounds.height);
+    const sell = await firstCard.getByRole('button', { name: 'Sell', exact: true }).boundingBox();
+    expect(sell.y + sell.height).toBeLessThanOrEqual(cardBounds.y + cardBounds.height);
+    await expect(page.locator('#operations-health')).toContainText('Operations healthy');
+    await expect(page.locator('#incidents-header')).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/cluster-overview-${width}.png`, fullPage: true, animations: 'disabled' });
+  });
+}
 for(const width of [1440,390]){
   test(`Manager and agent hiring placeholders work at ${width}px`,async({page})=>{
     await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh6();GAME.addTasks(3);GAME.buy('manager_agent');});

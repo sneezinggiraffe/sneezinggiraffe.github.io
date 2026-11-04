@@ -1,12 +1,13 @@
 const { harness } = require('./harness.cjs');
 const assert = require('node:assert/strict');
 
-function play(seed=17) {
+function play(seed=17,actionEveryMs=500) {
+  const actionSteps=actionEveryMs/100;
   const h=harness(undefined,{seed});const g=h.fresh();const milestones=[];const offers=[];const purchases=[];const offered=new Set();
   let lastPhase=0;
   for(let step=0;step<108000;step++) {
     h.advance(100);h.dismiss();
-    if(step%5===0){
+    if(step%actionSteps===0){
       if(!g.uiRevealed.taskQueue)h.api.doEarlyTask();
       else {const task=g.tasks.find(t=>t.status==='available');if(task)h.api.clickTask(task.id);}
       if(g.phase>=2 && g.aiWorkerTokenTank<1)h.api.topUpAiWorker();
@@ -21,7 +22,7 @@ function play(seed=17) {
         for(const agent of g.agents)if(agent.tokenTank<1)h.api.topUpAgent(agent.id);
       }
     }
-    if(step%5===0 && g.phase>=9 && g.phase<=12){
+    if(step%actionSteps===0 && g.phase>=9 && g.phase<=12){
       if(h.api.canManuallyProvisionCluster())h.window.GAME.openCluster();
       if(g.phase<10)for(const c of g.clusters){h.api.buyClusterWorker(c.id,'coder');}
     }
@@ -29,7 +30,7 @@ function play(seed=17) {
     if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,clicks:g.totalClicks,cash:Math.round(g.cash)});lastPhase=g.phase;}
     if(h.api.canTrueRetire()){
       h.window.GAME.trueRetire();assert.equal(g.retired,true);assert.equal(h.api.validSave(g),true);
-      const result={seed,minutes:Math.round(step/600),tasks:g.totalTasksDone,nodes:g.clusters.length,phases:milestones,offers,purchases};h.close();return result;
+      const result={seed,actionEveryMs,minutes:Math.round(step/600),tasks:g.totalTasksDone,nodes:g.clusters.length,phases:milestones,offers,purchases};h.close();return result;
     }
   }
   const result={seed,stalled:g.phase,tasks:g.totalTasksDone,cash:g.cash,upgrades:g.purchasedUpgrades,phases:milestones};h.close();return result;
