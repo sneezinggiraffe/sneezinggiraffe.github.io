@@ -7,7 +7,7 @@ const filename = path.resolve(__dirname, '../game.js');
 const source = fs.readFileSync(filename, 'utf8');
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 const names = [...source.matchAll(/^  function (\w+)\(/gm)].map((match) => match[1]);
-const exposed = source.replace('  // Start\n  init();', `  window.testAPI = { ${names.join(',')}, UPGRADES, AGENT_ROLES, MILESTONES, reset: () => { G = defaultState(); saveBlocked = false; popupQueue = []; }, queue: () => popupQueue };\n  // Start\n  init();`);
+const exposed = source.replace('  // Start\n  init();', `  window.testAPI = { ${names.join(',')}, UPGRADES, AGENT_ROLES, MILESTONES, CLUSTER_AGENT_NAMES, reset: () => { G = defaultState(); saveBlocked = false; popupQueue = []; }, queue: () => popupQueue };\n  // Start\n  init();`);
 
 function harness(saved, options = {}) {
   const dom = new JSDOM(html, { url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true });
@@ -57,7 +57,7 @@ function harness(saved, options = {}) {
   function fullCluster() {
     const state=window.GAME.state;const cluster=api.addClusterWithNextName();cluster.managerAssigned=true;cluster.tokenManagerAssigned=true;
     if(state.phase>=12)cluster.workforce=cluster.workerSlotsMax;
-    else for(let i=0;i<cluster.workerSlotsMax;i++)cluster.workerAgentIds.push(worker('coder').id);
+    else for(let i=0;i<cluster.workerSlotsMax;i++){const agent=worker('coder');agent.name=api.newClusterAgentName();cluster.workerAgentIds.push(agent.id);}
     return cluster;
   }
   return { dom, window, api, audioPlayers, advance, fresh, worker, task, dismiss, prepareUpgrade, fullCluster, close: () => dom.window.close() };

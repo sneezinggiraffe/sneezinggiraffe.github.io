@@ -24,7 +24,7 @@ function play(seed=17,actionEveryMs=500) {
     }
     if(step%actionSteps===0 && g.phase>=9 && g.phase<=12){
       if(h.api.canManuallyProvisionCluster())h.window.GAME.openCluster();
-      if(g.phase<10)for(const c of g.clusters){h.api.buyClusterWorker(c.id,'coder');}
+      if(g.phase<10)for(const c of g.clusters){h.api.buyNextClusterWorker(c.id);}
     }
     h.api.tick();
     if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,clicks:g.totalClicks,cash:Math.round(g.cash)});lastPhase=g.phase;}
