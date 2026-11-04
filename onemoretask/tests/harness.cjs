@@ -17,7 +17,8 @@ function harness(saved, options = {}) {
   const timers = [];
   window.Date.now = () => now;
   window.Math.random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  window.Audio = class { constructor() { this.paused = true; } pause() { this.paused = true; } play() { this.paused = false; return Promise.resolve(); } load() {} removeAttribute() {} };
+  const audioPlayers=[];
+  window.Audio = class { constructor() { this.paused = true; audioPlayers.push(this); } pause() { this.paused = true; } play() { this.paused = false; return Promise.resolve(); } load() {} removeAttribute() {} };
   window.setInterval = () => 1;
   window.clearInterval = () => {};
   window.setTimeout = (fn, delay) => { timers.push({ fn, at: now + delay }); };
@@ -46,6 +47,19 @@ function harness(saved, options = {}) {
   function worker(role = 'writer') { const agent = api.createAgent(role); window.GAME.state.agents.push(agent); return agent; }
   function task() { const item = api.generateTask(); window.GAME.state.tasks.push(item); return item; }
   function dismiss() { while (api.queue().length) api.dismissPopup(); window.document.querySelector('#offline-popup').classList.remove('show'); }
-  return { dom, window, api, advance, fresh, worker, task, dismiss, close: () => dom.window.close() };
+  function prepareUpgrade(id) {
+    const upgrade=api.UPGRADES.find(item=>item.id===id);
+    const state=window.GAME.state;
+    for(const item of api.UPGRADES) {
+      if(item.oneTime && (item.phase<upgrade.phase || (item.phase===upgrade.phase && api.UPGRADES.indexOf(item)<api.UPGRADES.indexOf(upgrade))) && !state.purchasedUpgrades.includes(item.id))state.purchasedUpgrades.push(item.id);
+    }
+  }
+  function fullCluster() {
+    const state=window.GAME.state;const cluster=api.addClusterWithNextName();cluster.managerAssigned=true;cluster.tokenManagerAssigned=true;
+    if(state.phase>=12)cluster.workforce=8;
+    else for(let i=0;i<8;i++)cluster.workerAgentIds.push(worker('coder').id);
+    return cluster;
+  }
+  return { dom, window, api, audioPlayers, advance, fresh, worker, task, dismiss, prepareUpgrade, fullCluster, close: () => dom.window.close() };
 }
 module.exports = { harness };

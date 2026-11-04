@@ -13,11 +13,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
   --text:#e2e8f0;--text2:#94a3b8;--text3:#8b9bb0;
   --accent:#06b6d4;--accent2:#0891b2;--green:#10b981;--red:#ef4444;
   --yellow:#f59e0b;--purple:#8b5cf6;--pink:#ec4899;
-  --cash:#22c55e;--token:#06b6d4;--rep:#f59e0b;--debt:#ef4444;
+  --cash:#22c55e;--token:#06b6d4;--debt:#ef4444;
   --radius:8px;--shadow:0 2px 8px rgba(0,0,0,.4);
 }
 html{font-size:14px}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:auto}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flow-root;overflow:auto}
 button{cursor:pointer;font-family:inherit;border:none;border-radius:var(--radius);font-size:.85rem;transition:all .15s}
 button:disabled{opacity:.4;cursor:not-allowed}
 
@@ -27,7 +27,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .res{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .res .label{color:var(--text3);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
 .res .val{font-weight:700;font-variant-numeric:tabular-nums}
-.res-cash .val{color:var(--cash)}.res-tokens .val{color:var(--token)}.res-rep .val{color:var(--rep)}.res-debt .val{color:var(--debt)}
+.res-cash .val{color:var(--cash)}.res-tokens .val{color:var(--token)}.res-debt .val{color:var(--debt)}
 .res-stress .val{color:var(--pink)}
 .res-warning{background:rgba(239,68,68,0.15);border-radius:6px;padding:2px 6px;animation:res-pulse 2s ease-in-out infinite}
 @keyframes res-pulse{0%,100%{background:rgba(239,68,68,0.08)}50%{background:rgba(239,68,68,0.25)}}
@@ -49,7 +49,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #btn-settings{margin-left:auto}
 
 /* Two-pane game layout */
-#game-container{display:flex;gap:16px;padding:4px;max-width:1200px;margin:50px auto 0;height:calc(100vh - 50px);overflow:hidden}
+#game-container{display:flex;gap:16px;padding:4px;max-width:1200px;margin:50px auto 0;height:calc(100dvh - 50px);overflow:hidden}
 
 #work-stream{flex:1 1 100%;min-width:0;min-height:0;transition:flex-basis .4s ease;overflow-y:auto;position:relative}
 #control-panel{flex:0 0 0%;overflow-y:auto;min-height:0;transition:all .4s ease;display:none;min-width:0}
@@ -272,7 +272,15 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
-.node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px}.node-grid .cluster-card{padding:10px;margin:0}.node-grid p{margin:6px 0 0;font-size:.7rem}.cluster-hiring{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.cluster-grid{display:grid;gap:10px}.cluster-grid .cluster-card{margin:0}
+.node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px}.node-grid .cluster-card{padding:10px;margin:0}.node-grid p{margin:6px 0 0;font-size:.7rem}.cluster-hiring{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.cluster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:10px}.cluster-grid .cluster-card{margin:0;min-height:200px}
+.hire-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.simple-agent .agent-icon{font-size:1rem}.network-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:5px}.network-grid .cluster-card{padding:8px 4px;margin:0;text-align:center;font-size:.75rem}.cluster-grid .cluster-hiring{min-height:64px;align-content:start}.management-line{min-height:2em}.ceo-status{color:var(--accent);margin-bottom:8px}.cluster-slots-row{min-height:32px}
+.retirement-scene{font-size:5rem}#ending-choices{display:flex;flex-direction:column;gap:16px;align-items:center}#ending-choices .btn{white-space:normal;max-width:100%;padding:14px 22px;font-size:1rem}
+.upgrade-space{min-height:88px}.management-agent{background:#1a2638;border-color:#40516a}.agent-action-col{flex:0 0 108px;width:108px}.agent-action-col>.btn{width:100%}.agent-token-count{font-size:.75rem;color:var(--text2);margin:4px 0 6px}.devops-slot{display:flex;justify-content:space-between;align-items:center}.cluster-capacity{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin:10px 0}.capacity-slot{height:16px;border:1px dashed var(--bg4);border-radius:3px}.capacity-slot.filled{background:var(--accent2);border:1px solid var(--accent)}
+
+.company-leadership{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}.leadership-agent{display:flex;gap:8px;align-items:flex-start;margin:0;padding:10px;min-width:0}.leadership-agent .agent-icon{font-size:1.3rem;flex:0 0 28px;width:28px;height:28px}.leadership-agent p{font-size:.72rem;margin:5px 0 0;overflow-wrap:anywhere}.leadership-agent .token-purchase{color:var(--text3)}
+.provision-card{border:2px dashed var(--accent2);background:transparent;color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:115px;font-size:.8rem}.provision-card:hover:not(:disabled){background:var(--bg3);border-color:var(--accent)}.provision-icon{font-size:1.7rem;line-height:1}.provision-card:disabled{opacity:.45;cursor:not-allowed}.network-grid .provision-card{grid-column:span 2;min-height:60px;font-size:.65rem;gap:4px}.network-grid .provision-icon{font-size:1rem}
+.delivery-metrics{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0;color:var(--text2)}.delivery-metrics strong{font-size:1.5rem;color:var(--accent)}.delivery-metrics small{display:block;font-size:.7rem;font-weight:400}.recent-deliveries{list-style:none;color:var(--text2);font-size:.78rem;margin:10px 0;padding:0}.recent-deliveries li{margin:5px 0}.recent-deliveries:empty{display:none}
+@media(max-width:420px){.company-leadership{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -283,20 +291,24 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 </div>
 <div id="ending-overlay" role="dialog" aria-modal="true" aria-labelledby="ending-title" hidden>
   <div class="ending-box">
-    <h1 id="ending-title">No more tasks.</h1>
-    <p>You close the laptop. Your company has a new owner. For once, nothing needs your approval.</p>
+    <div class="retirement-scene" aria-hidden="true">⛳</div>
+    <h1 id="ending-title" tabindex="-1">You retired early!</h1>
+    <p id="ending-story"></p>
     <p id="ending-summary"></p>
-    <p>The machines don't miss you. They never did.<br>Your time belongs to you again.</p>
-    <button id="btn-ending-reset" class="btn btn-primary">Start a new story</button>
+    <div id="ending-choices">
+      <button id="btn-ending-restart" class="btn btn-purple">Interesting, there's another model out…</button>
+      <button id="btn-ending-finish" class="btn btn-green">Actually retire</button>
+    </div>
+    <button id="btn-ending-reset" class="btn btn-outline" hidden>Start a new story</button>
   </div>
 </div>
 
 <!-- Top Resource Bar -->
 <div id="top-bar">
+  <span class="res"><span class="label">Tasks</span><span class="val" id="res-tasks">0</span></span>
   <span id="phase-label">Phase 1</span>
   <span class="res res-cash" id="res-cash-wrap" style="display:none"><span class="label">Cash</span><span class="val" id="res-cash">$0</span></span>
-  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label" title="Unloaded tokens. Transfers to tanks spend reserve, and only a Token Manager buys automatically.">Reserve tokens</span><span class="val" id="res-tokens">0</span></span>
-  <span class="res res-rep" id="res-rep-wrap" style="display:none"><span class="label">Rep</span><span class="val" id="res-rep">0</span></span>
+  <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label" title="Reserve tokens. Top-ups transfer tokens to agents.">Reserve tokens</span><span class="val" id="res-tokens">0</span><span class="sub" id="token-burn"></span></span>
   <span class="res res-debt" id="res-debt-wrap" style="display:none"><span class="label">Debt</span><span class="val" id="res-debt">0</span></span>
   <span class="res res-stress" id="res-stress-wrap" style="display:none"><span class="label">Stress</span><span class="val" id="res-stress">0%</span></span>
   <span class="res" id="res-expense-wrap" style="display:none"><span class="label" id="expense-tier-label">Expenses</span><span class="val" style="color:var(--red)" id="expense-rate">-$0/s</span></span>
@@ -328,8 +340,9 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
         <h2>Tasks Complete: <span id="tasks-complete-count">0</span></h2>
         <span class="sub" id="task-count"></span>
       </div>
+      <div id="delivery-summary" hidden></div>
       <div id="task-list"></div>
-      <div id="no-tasks" class="text-muted text-sm" style="text-align:center;padding:30px;display:none">No tasks available. New tasks arrive periodically.</div>
+      <div id="no-tasks" class="text-muted text-sm" style="text-align:center;padding:30px;display:none"></div>
     </div>
 
   </div>
@@ -375,6 +388,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
           <h3 style="margin-bottom:0" id="incidents-header">Incidents</h3>
           <span class="sub" id="incident-count"></span>
         </div>
+        <div id="incident-devops"></div>
         <div id="incident-list"></div>
         <div id="no-incidents" class="text-muted text-sm" style="text-align:center;padding:20px">All clear. No active incidents.</div>
       </div>
@@ -458,8 +472,8 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 <div id="intro-overlay" role="dialog" aria-modal="true" aria-label="intro overlay" class="hidden">
   <div class="intro-box">
     <h2>One More Task</h2>
-    <p>You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
-    <p style="font-size:.8rem;color:var(--text3)">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</p>
+    <p id="intro-story">You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
+    <p id="intro-hint" style="font-size:.8rem;color:var(--text3)">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</p>
     <button class="btn btn-primary" id="btn-start-game" style="padding:10px 30px;font-size:1rem">Find Work</button>
   </div>
 </div>
