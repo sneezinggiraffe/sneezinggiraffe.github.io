@@ -26,7 +26,7 @@ function play(seed=17) {
       if(g.phase<10)for(const c of g.clusters){h.api.buyClusterWorker(c.id,'coder');}
     }
     h.api.tick();
-    if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,cash:Math.round(g.cash)});lastPhase=g.phase;}
+    if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,clicks:g.totalClicks,cash:Math.round(g.cash)});lastPhase=g.phase;}
     if(h.api.canTrueRetire()){
       h.window.GAME.trueRetire();assert.equal(g.retired,true);assert.equal(h.api.validSave(g),true);
       const result={seed,minutes:Math.round(step/600),tasks:g.totalTasksDone,nodes:g.clusters.length,phases:milestones,offers};h.close();return result;

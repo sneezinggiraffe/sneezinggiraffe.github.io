@@ -56,8 +56,9 @@
   const AGENT_HIRE_COST_MULT = 1.9;
   const MANUAL_WORK_SECONDS_PER_CLICK = 0.15;
   const MANUAL_STRESS_PER_SEC = 2;
-  const AI_WORK_MULT_PHASE2 = 1.25;
-  const AI_WORK_MULT_PHASE3 = 1.8;
+  // Keep AI throughput after moving the early 4.5x click-power bonuses into manual queues.
+  const AI_WORK_MULT_PHASE2 = 5.625;
+  const AI_WORK_MULT_PHASE3 = 8.1;
   const AI_FAIL_BASE_PHASE2_PER_SEC = 0.018;
   const AI_FAIL_BASE_PHASE3_PER_SEC = 0.009;
   const AI_FAIL_REWORK_FRACTION = 0.15;
@@ -172,23 +173,23 @@
   const UPGRADES = [
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
-    { id: "post_it_notes", name: "Post-It Notes", desc: "+50% click power. Simple but effective.", cost: 43, currency: "cash", phase: 1, effect: { clickPower: 1.5 }, oneTime: true, reqTasks: 10 },
+    { id: "post_it_notes", name: "Post-It Notes", desc: "Work through 2 queued tasks with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 10 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 10 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 10 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 30 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 30 },
-    { id: "gtd_workflow", name: "GTD Workflow", desc: "You read 'Getting Things Done'. 2x click power.", cost: 61, currency: "cash", phase: 1, effect: { clickPower: 2 }, oneTime: true, reqTasks: 30 },
+    { id: "gtd_workflow", name: "GTD Workflow", desc: "Work through 5 queued tasks with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 30 },
     { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 79, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 50 },
 
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
-    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "+50% click power.", cost: 99, currency: "cash", phase: 1, effect: { clickPower: 1.5 }, oneTime: true, reqTasks: 50 },
-    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Unlock AI Assist on tasks. Faster but risks hallucination failures.", cost: 500, currency: "cash", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 150 },
+    { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Work through 10 queued tasks with one click.", cost: 99, currency: "cash", phase: 1, effect: { manualQueueSize: 10 }, oneTime: true, reqTasks: 50 },
+    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically. Free after 50 completed tasks; top up its tokens to keep it running.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 50 },
 
     // Phase 2 -> 3
     { id: "prompt_examples", name: "Few-Shot Prompting", desc: "AI assist does 30% more work per action.", cost: 450, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 200 },
     { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 650, currency: "cash", phase: 2, effect: { payMult: 1.6, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 200 },
-    { id: "pro_model", name: "Upgrade to AI 2000 Basic", desc: "A larger token allowance for longer sessions.", cost: 3500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 300 },
+    { id: "pro_model", name: "Upgrade to AI 2000 Basic", desc: "A larger token allowance for longer sessions.", cost: 2500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 300 },
 
     // Phase 3 -> 4
     { id: "token_pack_1", name: "Token Pack (200)", desc: "Get 200 tokens.", cost: 110, currency: "cash", phase: 3, effect: { giveTokens: 200 }, oneTime: false },
@@ -622,12 +623,20 @@
   }
 
   // ---------- CLICKING / TASK WORK ----------
+  function getManualQueueSize() {
+    if (G.phase >= 4) return 1;
+    return UPGRADES.reduce((size, upgrade) => G.purchasedUpgrades.includes(upgrade.id) && upgrade.effect && upgrade.effect.manualQueueSize ? Math.max(size, upgrade.effect.manualQueueSize) : size, 1);
+  }
+
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
     if (!task || task.status !== "available") return;
+    if (G.phase < 4 && G.tasks.some((t) => t.status === "active")) return;
 
     task.status = "active";
     G.activeTaskId = taskId;
+    const queued = G.tasks.filter((t) => t.status === "available").slice(0, getManualQueueSize() - 1);
+    for (const next of queued) next.status = "active";
     G.totalClicks++;
     showClickReward(G.clickPower, evt);
   }
@@ -637,14 +646,21 @@
     if (activeTasks.length === 0) return;
 
     var workPerSec = G.clickPower / MANUAL_WORK_SECONDS_PER_CLICK;
+    var sequential = G.phase < 4;
+    var remainingWork = workPerSec * dtSec;
+    if (sequential) activeTasks.sort((a, b) => Number(b.id === G.activeTaskId) - Number(a.id === G.activeTaskId));
     for (var i = 0; i < activeTasks.length; i++) {
+      if (sequential && remainingWork <= 0) break;
       var task = activeTasks[i];
-      task.workDone = Math.min(task.workRequired, task.workDone + workPerSec * dtSec);
+      var work = Math.min(task.workRequired - task.workDone, sequential ? remainingWork : workPerSec * dtSec);
+      task.workDone += work;
+      remainingWork -= work;
       if (task.workDone >= task.workRequired) {
         completeTask(task, "manual");
       }
     }
-    G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * activeTasks.length, 0, 100);
+    if (sequential && !G.activeTaskId) G.activeTaskId = (G.tasks.find((t) => t.status === "active") || {}).id || null;
+    G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * (sequential ? 1 : activeTasks.length), 0, 100);
   }
 
   function getCurrentAiWorkerTask() {
@@ -1618,6 +1634,7 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
+    if (upgrade.id === "free_ai") return true;
     if (upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
@@ -2892,6 +2909,8 @@
     var list = $("#task-list");
     var noTasks = $("#no-tasks");
     var tasks = G.tasks.filter((task) => task.status !== "done");
+    var queueSize = Math.min(getManualQueueSize(), tasks.filter((task) => task.status === "available").length);
+    var manualBusy = G.phase < 4 && tasks.some((task) => task.status === "active");
 
     $("#task-count").textContent = tasks.length + " tasks";
 
@@ -2910,11 +2929,11 @@
 
       var actions = "";
       if (t.status === "available") {
-        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\">Work</button>";
+        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\" " + (manualBusy ? "disabled" : "") + ">" + (queueSize > 1 ? "Work next " + queueSize : "Work") + "</button>";
         actions += clickBtn;
       }
       if (t.status === "active") {
-        actions = "<button class='" + getWorkTaskButtonClass() + "' disabled style='cursor:wait'>Working...</button>";
+        actions = "<button class='" + getWorkTaskButtonClass() + "' disabled style='cursor:wait'>" + (manualBusy && t.id !== G.activeTaskId ? "Queued" : "Working...") + "</button>";
       }
       if (t.status === "ai") {
         actions = "<button class='btn btn-purple btn-sm task-action-btn' disabled style='cursor:wait'>" + getAiWorkerDisplayName() + " (" + pct + "%)</button>";
@@ -2993,15 +3012,15 @@
       var cost = getUpgradeCost(u);
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       var requiredNodes = nodeRequirement(u);
-      var requirementsMet = (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
+      var requirementsMet = (!u.reqTasks || G.totalTasksDone >= u.reqTasks) && (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
       html += "<div class='card upgrade-card'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
         "<div class='desc'>" + u.desc + (requiredNodes ? " (" + requiredNodes + " nodes)" : "") + "</div>" +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
-        "<span class='upgrade-cost'>" + (u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford || !requirementsMet ? "disabled" : "") + ">Buy</button>" +
+        "<span class='upgrade-cost'>" + (u.currency === "tasks" ? u.reqTasks + " tasks" : u.currency === "cash" ? fmtCash(cost) : u.cost + " tok") + "</span>" +
+        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford || !requirementsMet ? "disabled" : "") + ">" + (u.currency === "tasks" ? "Unlock" : "Buy") + "</button>" +
         "</div>" +
         "</div>";
     }

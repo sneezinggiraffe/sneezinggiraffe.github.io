@@ -31,7 +31,9 @@ Start with manual freelance work, delegate to AI, feel the cost of keeping it ru
 
 ## Upgrade pacing and simplification
 
-Up to three ordinary upgrades reveal together; some are deliberately unaffordable when first offered. Every phase transition and the second subscription requires all preceding upgrades. Discover Free-Tier AI requires 150 tasks after Reality Check; Phase 2 starts without upgrades, Few-Shot Prompting and Marketing Campaign appear together at 200 tasks and the $3,500 Upgrade to AI 2000 Basic requires 300. Phase 3 groups begin at 350, 425 and 500 tasks. Second AI Subscription follows all preceding upgrades, requires 650 tasks and costs $18K. The licence requires 750 tasks and costs $25K. Reputation is removed from state, rewards, UI and retirement conditions. The Phase 9 acquisition costs $1.5M.
+Up to three ordinary upgrades reveal together; some are deliberately unaffordable when first offered. Discover Free-Tier AI appears alongside them with a 50 tasks requirement and an Unlock button. It costs no cash and requires no earlier upgrades, guaranteeing at most 50 work clicks before AI even if productivity upgrades are skipped. Later phase transitions and the second subscription require all preceding upgrades. Phase 2 upgrades begin with Few-Shot Prompting and Marketing Campaign at 200 tasks; the $2,500 Upgrade to AI 2000 Basic requires 300. Phase 3 groups begin at 350, 425 and 500 tasks. Second AI Subscription follows all preceding upgrades, requires 650 tasks and costs $18K. The licence requires 750 tasks and costs $25K. Reputation is removed from state, rewards, UI and retirement conditions. The Phase 9 acquisition costs $1.5M.
+
+Post-It Notes, GTD Workflow and Noise-Cancelling Headphones replace their click-power bonuses with manual queues of 2, 5 and 10 available jobs per click through Phase 3. Jobs run sequentially at the normal manual work speed, retain individual pay and progress, do not expire while queued, and survive reloads. Work next N starts a session; Working... and Queued distinguish the current job from reserved jobs. The session finishes after its reserved jobs, while AI keeps taking new jobs until its tokens run out. AI base work rates preserve the former fully upgraded throughput. This uses the existing save format without adding a migration.
 
 ## Two-agent transition
 
@@ -83,7 +85,7 @@ The initial licence has three total slots. Buying the third specialist and buyin
 
 Unlocked empty Manager and Token Manager positions are dashed purchase cards at the top of Agents. Those positions are reserved until bought. Each other empty slot has its own dashed card with direct buttons for buying each specialist type. Unaffordable purchases remain disabled. Buying a Manager costs $20,000, separately from its unlock upgrade.
 
-Phase-entry task minimums are 150, 300, 750, 1,150, 5,000, 30,000, 150,000, 1,000,000, 1,200,000, 1,500,000 and 2,000,000 for Phases 2 through 12. Later transitions use node requirements.
+Phase-entry task minimums are 50, 300, 750, 1,150, 5,000, 30,000, 150,000, 1,000,000, 1,200,000, 1,500,000 and 2,000,000 for Phases 2 through 12. Later transitions use node requirements.
 
 Phase 5 gives its tools and operations upgrades more room: Web Search Tool costs $7,500, Sales Playbook $12,000, Code Execution Tool $16,000 and Revenue Ops System $28,000. Bulk Processing ($9,000) delivers ten tasks per job. The active-player simulation spends over a minute in Phase 5. This is a comparative pacing check, not a human playtime target.
 

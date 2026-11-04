@@ -387,7 +387,10 @@ test('Phase 3 requires the second subscription before upgrading both workers',as
 test('an existing twelve-node company must provision and staff nine more nodes before replication',async({page})=>{
   const h=harness();const g=h.fresh(11);g.cash=1e11;g.tokens=1e6;g.totalTasksDone=2000000;g.incidentsExplained=true;g.ceoMode='scale';g.aiWorkerShutdown=true;h.prepareUpgrade('autonomous_nodes');
   for(let i=0;i<12;i++)h.fullCluster();h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
-  await page.clock.install();await page.addInitScript(value=>{if(!sessionStorage.getItem('replication_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('replication_seeded','1')}},raw);await page.goto('/');
+  // Pause before navigation so the CEO cannot expand the fixture before its phase transition.
+  await page.clock.install({ time: new Date(g.lastTick) });
+  await page.clock.pauseAt(new Date(g.lastTick + 1000));
+  await page.addInitScript(value=>{if(!sessionStorage.getItem('replication_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('replication_seeded','1')}},raw);await page.goto('/');
   await page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]').click();await page.clock.runFor(200);await page.locator('#btn-dismiss-popup').click();const buy=page.locator('[onclick="GAME.buy(\'replication\')"]');await expect(buy).toHaveCount(0);
   await page.locator('[onclick="GAME.buy(\'ceo_continuous\')"]').click();await page.clock.runFor(8500);await expect(buy).toBeDisabled();await expect(buy.locator('..').locator('..')).toContainText('(21 nodes)');await page.evaluate(()=>GAME.state.lastSave=0);await page.clock.runFor(200);await page.reload();expect(await page.evaluate(()=>GAME.state.replicationTarget)).toBe(21);
   await page.clock.runFor(2500);await expect(buy).toBeEnabled();await buy.click();await page.clock.runFor(200);expect(await page.evaluate(()=>GAME.state.phase)).toBe(13);
@@ -405,12 +408,55 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
   });
 }
 test('early upgrade visibility follows task milestones and prior purchases',async({page})=>{
-  const h=harness();const g=h.fresh();g.cash=1e6;g.totalTasksDone=149;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;const raw=JSON.stringify(g);h.close();
+  const h=harness();const g=h.fresh();g.cash=0;g.totalTasksDone=49;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toHaveCount(0);
-  await page.evaluate(()=>GAME.addTasks(1));await expect(buy('free_ai')).toBeVisible();await buy('free_ai').click();await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('pro_model')).toHaveCount(0);
-  await page.evaluate(()=>GAME.addTasks(49));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('prompt_examples')).toBeVisible();
+  const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toBeDisabled();await expect(buy('free_ai')).toHaveText('Unlock');await expect(buy('free_ai').locator('..')).toContainText('50 tasks');
+  await page.evaluate(()=>GAME.addTasks(1));await expect(buy('free_ai')).toBeEnabled();await buy('free_ai').click();expect(await page.evaluate(()=>GAME.state.cash)).toBe(0);await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('pro_model')).toHaveCount(0);
+  await page.evaluate(()=>GAME.addTasks(149));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('prompt_examples')).toBeVisible();
 });
+
+for (const width of [1440, 390]) {
+  test(`manual queues show five jobs, survive reload and need one work click at ${width}px`, async ({ page }) => {
+    const h = harness();
+    const g = h.fresh();
+    g.cash = 10000;
+    g.totalTasksDone = 30;
+    h.prepareUpgrade('gtd_workflow');
+    h.api.purchaseUpgrade('gtd_workflow');
+    for (let i = 0; i < 5; i++) h.task().workRequired = 40;
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install();
+    await page.addInitScript(value => {
+      if (!sessionStorage.getItem('seeded')) {
+        localStorage.setItem('ai_empire_save', value);
+        sessionStorage.setItem('seeded', '1');
+      }
+    }, raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await page.getByRole('button', { name: 'Work next 5', exact: true }).first().click();
+    await page.clock.runFor(500);
+    await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Queued', exact: true })).toHaveCount(4);
+    expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/manual-queue-${width}.png`, fullPage: true });
+    await page.evaluate(() => { GAME.state.lastSave = 0; });
+    await page.clock.runFor(200);
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(page.getByRole('button', { name: 'Queued', exact: true })).toHaveCount(4);
+    await page.clock.runFor(35000);
+    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(35);
+    expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
+  });
+}
 
 for(const width of [1440,390]) {
   test(`AI subscriptions keep matching bars and buttons through licensing at ${width}px`,async({page})=>{
