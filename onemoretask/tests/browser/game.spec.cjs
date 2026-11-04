@@ -2,6 +2,69 @@ const { test, expect } = require('@playwright/test');
 const { harness } = require('../harness.cjs');
 
 for (const width of [1440, 390]) {
+  test(`opening checkpoints reveal their upgrade groups at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install();
+    await page.goto('/');
+    const groups = [
+      ['0_2', 7, ['Post-It Notes', 'Gas Station Coffee', 'A Box Of Paperclips']],
+      ['0_3', 35, ['Side Hustle Optimization', 'Inbox Zero Method', 'GTD Workflow']],
+      ['0_4', 100, ['Discover Free-Tier AI']],
+    ];
+    for (const [stage, tasks, names] of groups) {
+      await page.evaluate(value => GAME.cheat(value), stage);
+      if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+      await expect(page.locator('#milestone-popup')).toBeHidden();
+      expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(tasks);
+      await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(names.length);
+      for (const name of names) await expect(page.locator('#upgrade-list')).toContainText(name);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    const freeAi = page.getByRole('button', { name: '105 tasks', exact: true });
+    await expect(freeAi).toBeDisabled();
+    await page.screenshot({ path: `test-results/free-ai-checkpoint-${width}.png`, fullPage: true });
+    await page.evaluate(() => GAME.addTasks(5));
+    await page.clock.runFor(200);
+    await expect(freeAi).toBeEnabled();
+    await freeAi.click();
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(2);
+  });
+
+  test(`Client Outreach and Second AI Subscription stay visible together at ${width}px`, async ({ page }) => {
+    const h = harness();
+    const g = h.fresh(3);
+    g.totalTasksDone = 650;
+    g.cash = 23000;
+    h.prepareUpgrade('client_outreach');
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastTaskSpawn = g.lastTick;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const outreach = page.locator('[onclick="GAME.buy(\'client_outreach\')"]');
+    const second = page.locator('[onclick="GAME.buy(\'second_ai\')"]');
+    await expect(outreach).toBeVisible();
+    await expect(second).toBeVisible();
+    await expect(second).toBeDisabled();
+    await outreach.click();
+    await page.clock.runFor(200);
+    await expect(second).toBeVisible();
+    await expect(second).toBeEnabled();
+    await second.click();
+    await page.clock.runFor(200);
+    await expect(page.locator('#agent-list .agent-card')).toHaveCount(2);
+    await expect(page.locator('#agent-list')).toContainText('AI 2000 Pro');
+    expect(await page.evaluate(() => GAME.state.taskSpawnMult)).toBe(2);
+  });
+}
+
+for (const width of [1440, 390]) {
   test(`manual cluster slots require separate purchases and retain visible upgrades at ${width}px`, async ({ page }) => {
     const h = harness(fixture(9));
     const g = h.window.GAME.state;
@@ -264,7 +327,7 @@ test('Phase 5 adds two D4 and F4 phrases per bar with quiet chorus and reverb', 
   expect(Math.max(...widths) - Math.min(...widths)).toBeGreaterThan(0.02);
   for (const edge of audio.edges) expect(edge).toBeLessThan(0.001);
 
-  await page.locator('#btn-dismiss-popup').click();
+  await expect(page.locator('#milestone-popup')).toBeHidden();
   await page.locator('#btn-settings').click();
   await page.locator('#btn-settings-music').click();
   expect(await page.evaluate(() => window.testAudioPlayers.every(player => player.paused))).toBe(true);
@@ -485,15 +548,37 @@ test('clusters build hardware and management before slots provision agents',asyn
   await expect(second.locator('.cluster-status')).toHaveCSS('color', 'rgb(251, 146, 60)');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);expect(await second.locator('.capacity-slot.filled').textContent()).toBe(await page.evaluate(() => GAME.state.agents.find(agent => agent.id === GAME.state.clusters[1].workerAgentIds[0]).name));await expect(second.locator('.cluster-status')).toHaveText('Partially Operational');
   await expect(page.locator('#cluster-list')).not.toContainText('management team');await page.screenshot({path:'test-results/phase9-grid.png',fullPage:true});
 });
-test('Phase 8 simplifies agents and allows a paid partial top-up with Manager online',async({page})=>{
-  const h=harness(fixture(8),{seed:42});const g=h.window.GAME.state;g.managerTokenTank=4000;g.tokens=100000;g.aiWorkerShutdown=true;g.aiWorkerCurrentTaskId=null;g.tasks=[];
-  const a=h.worker('writer');a.tokenTank=750;const id=a.id;g.lastTick=Date.now();const raw=JSON.stringify(g);h.close();
-  await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  await expect(page.locator('#section-stats')).toBeHidden();await expect(page.locator('#agent-list')).not.toContainText('SPD');await expect(page.locator('#agent-list')).not.toContainText('Managed');
-  const button=page.locator('[onclick="GAME.topUpAgent(\''+id+'\')"]');await expect(button).toHaveText('Top-up tokens');await button.click();
-  expect(await page.evaluate(agentId=>GAME.state.agents.find(agent=>agent.id===agentId).tokenTank,id)).toBeGreaterThan(1000);
-  expect(await page.evaluate(()=>GAME.state.tokens)).toBeLessThan(100000);
-  await page.screenshot({path:'test-results/phase8-simple.png',fullPage:true});
+test('Phase 8 workers are managed and refill only at ten percent', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  await page.evaluate(() => {
+    chStart8();
+    GAME.state.aiFailMult = 0;
+    GAME.state.tasks = [];
+    GAME.state.uiRevealed.taskQueue = false;
+    GAME.state.agents.filter(agent => !['manager', 'token_mgr', 'devops'].includes(agent.roleId)).forEach(agent => { agent.tokenTank = agent.olderModel ? 20 : 750; });
+  });
+  await page.clock.runFor(200);
+  await expect(page.locator('#section-stats')).toBeHidden();
+  await expect(page.locator('#agent-list')).not.toContainText('SPD');
+  const workers = page.locator('#agent-list .agent-card').filter({ has: page.getByRole('button', { name: 'Managed', exact: true }) });
+  const count = await workers.count();
+  expect(count).toBeGreaterThan(0);
+  for (const worker of await workers.all()) {
+    await expect(worker.getByRole('button', { name: 'Managed', exact: true })).toBeDisabled();
+    await expect(worker.getByRole('button', { name: 'Top-up tokens', exact: true })).toHaveCount(0);
+    await expect(worker.locator('.agent-token-count')).toHaveText(/^(20\/40|750\/1,500) tokens$/);
+  }
+  const standardWorkers = workers.filter({ hasNotText: 'Older model' });
+  await page.clock.runFor(1000);
+  await expect(standardWorkers.first().locator('.agent-token-count')).toHaveText('750/1,500 tokens');
+  await page.evaluate(() => {
+    GAME.state.agents.find(agent => !agent.olderModel && !['manager', 'token_mgr', 'devops'].includes(agent.roleId)).tokenTank = 150;
+  });
+  await page.clock.runFor(200);
+  await expect(standardWorkers.first().locator('.agent-token-count')).toHaveText('1,500/1,500 tokens');
+  await expect(page.getByRole('button', { name: 'Top-up tokens', exact: true })).toHaveCount(1);
+  await page.screenshot({ path: 'test-results/phase8-simple.png', fullPage: true });
 });
 test('Scale Mode continues automatic construction and staffing in Phase 12',async({page})=>{
   await page.clock.install();const raw=fixture(12);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
@@ -536,11 +621,11 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
   });
 }
 test('early upgrade visibility follows task milestones and prior purchases',async({page})=>{
-  const h=harness();const g=h.fresh();g.cash=0;g.totalTasksDone=49;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;const raw=JSON.stringify(g);h.close();
+  const h=harness();const g=h.fresh();g.cash=0;g.totalTasksDone=104;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toBeDisabled();await expect(buy('free_ai')).toHaveText('50 tasks');await expect(buy('free_ai').locator('..')).toContainText('50 tasks');
+  const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toBeDisabled();await expect(buy('free_ai')).toHaveText('105 tasks');await expect(buy('free_ai').locator('..')).toContainText('105 tasks');
   await page.evaluate(()=>GAME.addTasks(1));await expect(buy('free_ai')).toBeEnabled();await buy('free_ai').click();expect(await page.evaluate(()=>GAME.state.cash)).toBe(0);await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('pro_model')).toHaveCount(0);
-  await page.evaluate(()=>GAME.addTasks(149));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('prompt_examples')).toBeVisible();
+  await page.evaluate(()=>GAME.addTasks(69));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('prompt_examples')).toBeVisible();
 });
 
 for (const width of [1440, 390]) {
@@ -548,7 +633,7 @@ for (const width of [1440, 390]) {
     const h = harness();
     const g = h.fresh();
     g.cash = 10000;
-    g.totalTasksDone = 30;
+    g.totalTasksDone = 35;
     h.prepareUpgrade('gtd_workflow');
     h.api.purchaseUpgrade('gtd_workflow');
     g.tasks = [];
@@ -588,7 +673,7 @@ for (const width of [1440, 390]) {
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
     await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(5);
     await page.clock.runFor(6500);
-    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(35);
+    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(40);
     expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
   });
 }
@@ -626,7 +711,7 @@ for (const width of [1440, 390]) {
   test(`buying the last upgrade preserves the exact empty panel height at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh();
-    g.totalTasksDone = 49;
+    g.totalTasksDone = 104;
     h.prepareUpgrade('free_ai');
     h.api.checkMilestones();
     h.dismiss();
@@ -648,7 +733,7 @@ for (const width of [1440, 390]) {
     const beforeCard = await section.locator('.upgrade-card').boundingBox();
     await page.evaluate(() => GAME.addTasks(1));
     await page.clock.runFor(200);
-    await page.getByRole('button', { name: '50 tasks', exact: true }).click();
+    await page.getByRole('button', { name: '105 tasks', exact: true }).click();
     await page.clock.runFor(200);
     const placeholder = section.locator('.upgrade-space');
     await expect(placeholder).toBeVisible();

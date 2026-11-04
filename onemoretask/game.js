@@ -112,7 +112,7 @@
     "Egon", "Hale", "Jory", "Ilan", "Kent", "Lars", "Mika", "Oren", "Paolo", "Rafi", "Seth", "Timo", "Ugo", "Vito", "Yael", "Zola",
     "Andi", "Beni", "Ciro", "Demi", "Ewan", "Gabi", "Hiro", "Inga", "Joey", "Kimi", "Ludo", "Nils", "Omar", "Perri", "Rico", "Silas",
   ];
-  const MAJOR_PHASE_POPUPS = [3, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15];
+  const MAJOR_PHASE_POPUPS = [3, 8, 9, 10, 11, 12, 13, 14, 15];
 
   const TASK_TYPES = [
     { id: "email", name: "Write Email", icon: "\u2709\uFE0F", baseWork: 5, basePay: 3, phase: 1 },
@@ -195,20 +195,22 @@
     { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 7 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
-    { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 30 },
-    { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 30 },
-    { id: "gtd_workflow", name: "GTD Workflow", desc: "Work on 5 tasks at once with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 30 },
+    { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 35 },
+    { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 35 },
+    { id: "gtd_workflow", name: "GTD Workflow", desc: "Work on 5 tasks at once with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 35 },
     { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 79, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 50 },
 
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
     { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
-    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 50 },
+    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 105 },
 
     // Phase 2 -> 3
-    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "30% more work per prompt", cost: 450, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 200 },
-    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 650, currency: "cash", phase: 2, effect: { payMult: 1.6, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 200 },
-    { id: "pro_model", name: "Upgrade to AI 2000 Basic", desc: "A larger token allowance for longer sessions.", cost: 2500, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 300 },
+    { id: "prompt_library", name: "Prompt Library", desc: "Reuse successful prompts. AI completes 10% more work per prompt.", cost: 150, currency: "cash", phase: 2, effect: { aiPowerMult: 1.1 }, oneTime: true, reqTasks: 115 },
+    { id: "gig_alerts", name: "Gig Alerts", desc: "Find new work sooner. Tasks arrive 25% faster.", cost: 250, currency: "cash", phase: 2, effect: { taskSpawnMult: 1.25 }, oneTime: true, reqTasks: 145 },
+    { id: "prompt_examples", name: "Few-Shot Prompting", desc: "30% more work per prompt", cost: 450, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 175 },
+    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 650, currency: "cash", phase: 2, effect: { payMult: 1.6, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 225 },
+    { id: "pro_model", name: "Upgrade to AI 2000 Basic", desc: "A larger token allowance for longer sessions.", cost: 2000, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 300 },
 
     // Phase 3 -> 4
     { id: "token_pack_1", name: "Token Pack (200)", desc: "Get 200 tokens.", cost: 110, currency: "cash", phase: 3, effect: { giveTokens: 200 }, oneTime: false },
@@ -220,7 +222,8 @@
     { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 1200, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 425 },
     { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 2500, currency: "cash", phase: 3, effect: { payMult: 2.0 }, oneTime: true, reqTasks: 500 },
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 35% more valuable.", cost: 3000, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 500 },
-    { id: "second_ai", name: "Second AI Subscription", desc: "A second AI subscription with its own token allowance.", cost: 18000, currency: "cash", phase: 3, oneTime: true, reqTasks: 650 },
+    { id: "client_outreach", name: "Client Outreach", desc: "Build a steady pipeline for both subscriptions. Tasks arrive twice as often.", cost: 4500, currency: "cash", phase: 3, effect: { taskSpawnMult: 2 }, oneTime: true, reqTasks: 650 },
+    { id: "second_ai", requires: "client_outreach", showBeforeRequires: true, name: "Second AI Subscription", desc: "A second AI subscription with its own token allowance.", cost: 18000, currency: "cash", phase: 3, oneTime: true, reqTasks: 650 },
     { id: "multi_bot", name: "Multi-Agent Licence", requires: "second_ai", desc: "More agents, more work.", cost: 25000, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 750 },
 
     // Phase 4 -> 5
@@ -242,6 +245,7 @@
     { id: "sales_playbook", name: "Sales Playbook", desc: "Sharper discovery and handoff process. Sales increase by 50%.", cost: 12000, currency: "cash", phase: 5, effect: { payMult: 1.5 }, oneTime: true },
     { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +25% speed on code tasks.", cost: 16000, currency: "cash", phase: 5, effect: { codeSpeedMult: 1.25 }, oneTime: true },
     { id: "revenue_ops", name: "Revenue Ops System", desc: "Pipeline discipline and better follow-up. Sales increase by 50%.", cost: 28000, currency: "cash", phase: 5, effect: { payMult: 1.50 }, oneTime: true },
+    { id: "workflow_orchestration", name: "Workflow Orchestration", desc: "Keep the team moving. Tasks arrive 25% faster and agents work 20% faster.", cost: 18000, currency: "cash", phase: 5, effect: { taskSpawnMult: 1.25, agentSpeedMult: 1.2 }, oneTime: true, reqTasks: 3500 },
     { id: "manager_agent", name: "Manager Agent", desc: "Add a Manager role to coordinate your agents.", cost: 12000, currency: "cash", phase: 5, unlockPhase: 6, effect: { managerUnlock: true, agentSlots: 6 }, oneTime: true, reqTasks: 5000 },
 
     // Phase 6 (manager-led automation)
@@ -328,7 +332,7 @@
     // Task-count based
     { id: "first_task", reqTasks: 3, reveals: ["topBar", "cash"] },
     { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], popup: { title: "Incoming...", msg: "More gigs are coming in. Your inbox is filling up." }, spawnOnTrigger: 2 },
-    { id: "stress_unlock", reqTasks: 12, reveals: ["stress"], popup: { title: "Pressure Building", msg: "The work keeps coming. You are starting to feel the pressure." } },
+    { id: "stress_unlock", reqTasks: 12, reveals: ["stress"] },
     { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true }, popup: { title: "Tools of the Trade", msg: "Maybe some better tools would help you keep up..." } },
     { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true }, popup: { title: "Reality Check", msg: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash." } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
@@ -753,7 +757,7 @@
   }
 
   function topUpAiWorker() {
-    if (G.phase < 2 || G.aiWorkerShutdown) return;
+    if (G.phase < 2 || G.aiWorkerShutdown || hasIdleManager()) return;
     const amount = Math.min(workerTokenCapacity() - G.aiWorkerTokenTank, G.phase < 3 ? workerTokenCapacity() : G.tokens);
     if (amount <= 0) return;
     if (G.phase >= 3) G.tokens -= amount;
@@ -781,7 +785,7 @@
   function topUpAgent(agentId) {
     if (G.phase >= 9) return;
     const agent = G.agents.find((item) => item.id === agentId);
-    if (!agent || UTILITY_ROLES.includes(agent.roleId)) return;
+    if (!agent || UTILITY_ROLES.includes(agent.roleId) || managerControls(agent)) return;
     const amount = Math.min(G.tokens, Math.max(0, workerTokenCapacity(agent) - agent.tokenTank));
     G.tokens -= amount;
     agent.tokenTank += amount;
@@ -1166,9 +1170,11 @@
           bt = avail[0] || null;
         }
         if (!bt || !clusterControl(ba, "managerAssigned")) continue;
-        const amount = Math.min(G.managerTokenTank, 75, workerTokenCapacity(ba) - ba.tokenTank);
-        ba.tokenTank += amount;
-        G.managerTokenTank -= amount;
+        if (ba.tokenTank <= workerTokenCapacity(ba) * 0.1) {
+          const amount = Math.min(G.managerTokenTank, workerTokenCapacity(ba) - ba.tokenTank);
+          ba.tokenTank += amount;
+          G.managerTokenTank -= amount;
+        }
         assignAgentToTask(bt.id, ba.id);
         burstCount++;
       }
@@ -1312,8 +1318,8 @@
     G.lastManagerAssignAt = now;
 
 
-    if (!G.aiWorkerShutdown && G.aiWorkerTokenTank <= workerTokenCapacity() * 0.25) {
-      const amount = Math.min(G.managerTokenTank, 25, workerTokenCapacity() - G.aiWorkerTokenTank);
+    if (!G.aiWorkerShutdown && G.aiWorkerTokenTank <= workerTokenCapacity() * 0.1) {
+      const amount = Math.min(G.managerTokenTank, workerTokenCapacity() - G.aiWorkerTokenTank);
       G.aiWorkerTokenTank += amount;
       G.managerTokenTank -= amount;
     }
@@ -1323,8 +1329,8 @@
         if (G.managerTokenTank <= 0) break;
         var refillAgent = G.agents[ri];
         if (UTILITY_ROLES.indexOf(refillAgent.roleId) >= 0) continue;
-        if (!managerControls(refillAgent) || refillAgent.tokenTank >= workerTokenCapacity(refillAgent)) continue;
-        const amount = Math.min(G.managerTokenTank, 25, workerTokenCapacity(refillAgent) - refillAgent.tokenTank);
+        if (!managerControls(refillAgent) || refillAgent.tokenTank > workerTokenCapacity(refillAgent) * 0.1) continue;
+        const amount = Math.min(G.managerTokenTank, workerTokenCapacity(refillAgent) - refillAgent.tokenTank);
         refillAgent.tokenTank += amount;
         refillAgent.tokenStarved = false;
         G.managerTokenTank -= amount;
@@ -1674,13 +1680,13 @@
     if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
-    if (upgrade.requires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
+    if (upgrade.requires && !upgrade.showBeforeRequires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
     if (upgrade.requiresRole && !G.agents.some((agent) => agent.roleId === upgrade.requiresRole)) return false;
     if (!upgrade.oneTime) return true;
     const prior = UPGRADES.filter((item) => item.oneTime && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
     if (prior.some((item) => ["agent_slot_3", "agent_slot_5"].includes(item.id) && !G.purchasedUpgrades.includes(item.id))) return false;
     if (upgrade.unlockPhase || upgrade.id === "second_ai") {
-      if (prior.some((item) => !G.purchasedUpgrades.includes(item.id))) return false;
+      if (prior.some((item) => !(upgrade.showBeforeRequires && item.id === upgrade.requires) && !G.purchasedUpgrades.includes(item.id))) return false;
     } else {
       const waiting = prior.filter((item) => item.phase === upgrade.phase && !G.purchasedUpgrades.includes(item.id));
       if (waiting.length >= 3) return false;
@@ -2129,8 +2135,8 @@
       if (!cluster.managerAssigned) continue;
       for (const id of cluster.workerAgentIds) {
         const agent = G.agents.find((item) => item.id === id);
-        if (agent.tokenTank < workerTokenCapacity(agent) * (G.phase >= 10 ? 1 : 0.25)) {
-          const amount = Math.min(cluster.tank, workerTokenCapacity(agent) - agent.tokenTank, G.phase >= 10 ? 25 : workerTokenCapacity(agent));
+        if (agent.tokenTank <= workerTokenCapacity(agent) * 0.1) {
+          const amount = Math.min(cluster.tank, workerTokenCapacity(agent) - agent.tokenTank);
           cluster.tank -= amount;
           agent.tokenTank += amount;
         }
@@ -3092,7 +3098,7 @@
       var cost = getUpgradeCost(u);
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       var requiredNodes = nodeRequirement(u);
-      var requirementsMet = upgradeStaffingReady(u) && (!u.reqTasks || G.totalTasksDone >= u.reqTasks) && (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
+      var requirementsMet = upgradeStaffingReady(u) && (!u.requires || G.purchasedUpgrades.includes(u.requires)) && (!u.reqTasks || G.totalTasksDone >= u.reqTasks) && (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
       html += "<div class='card upgrade-card'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
@@ -3156,7 +3162,7 @@
     if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
     else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
-    if (!utility || manager) html += "<button class='btn btn-purple btn-sm' onclick=\"" + action + "\" >Top-up tokens</button>";
+    if (!utility || manager) html += managerControls(agent) && !manager ? "<button class='btn btn-purple btn-sm' disabled>Managed</button>" : "<button class='btn btn-purple btn-sm' onclick=\"" + action + "\" >Top-up tokens</button>";
     if (G.phase >= 4) html += "<button class='btn btn-outline btn-sm' onclick=\"" + (original ? "GAME.shutdownAiWorker()" : "GAME.fire('" + agent.id + "')") + "\">Sell</button>";
     html += "</div></div>";
     return html;
@@ -3608,7 +3614,7 @@
   }
 
   function loadCheatStage(stage) {
-    const early = { "0_1": 0, "0_2": 11, "0_3": 14, "1": 89 };
+    const early = { "0_1": 0, "0_2": 7, "0_3": 35, "0_4": 100, "1": 89 };
     const startPhase8 = stage === "start8";
     const number = startPhase8 ? 8 : Number(stage);
     const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
@@ -3620,7 +3626,7 @@
     G.totalIncidents = 3;
     G.incidentsExplained = true;
     G.cash = 1e15;
-    const preceding = UPGRADES.filter((upgrade) => upgrade !== target && upgrade.oneTime && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
+    const preceding = UPGRADES.filter((upgrade) => upgrade !== target && upgrade.oneTime && (!Object.hasOwn(early, stage) || upgrade.reqTasks < early[stage]) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
     const requiredClusters = Math.max(phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
@@ -3733,7 +3739,7 @@
 
   // Console shortcuts
   var cheatShortcuts = [
-    "0_1", "0_2", "0_3", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    "0_1", "0_2", "0_3", "0_4", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
   ];
   window.chStart8 = function () { GAME.cheat("start8"); };
   window.chRetire = function () { GAME.cheat("retire"); };
