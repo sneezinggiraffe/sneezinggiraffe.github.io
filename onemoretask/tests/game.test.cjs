@@ -610,7 +610,7 @@ test('the Phase 8 entry cheat leaves growth upgrades to play through and late in
     const operatingModel = h.api.UPGRADES.find(upgrade => upgrade.id === 'autonomous_nodes');
     assert.equal(operatingModel.cost, 760000000);
     assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'replication').cost, 1500000000);
-    assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'global_network').cost, 3000000000);
+    assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'global_network').cost, 2000000000);
     assert.equal(h.api.nodeRequirement(operatingModel), 0);
   } finally {
     h.close();
@@ -1769,6 +1769,35 @@ scenario('replication is revealed at twenty nodes and waits for the required onl
     const restored=harness(JSON.stringify(g));try{assert.equal(restored.window.GAME.state.replicationTarget,target);}finally{restored.close();}
     h.advance(5000);h.api.tickAiCeo();h.api.purchaseUpgrade('replication');assert.equal(g.phase,13);h.advance(2000);h.api.tickAiCeo();assert.equal(g.clusters.length,target+2);
   }
+});
+scenario('Global Expansion costs $2B and requires forty completed nodes', (h) => {
+  const g = h.fresh(13);
+  g.cash = 2000000000;
+  g.totalTasksDone = 2000000;
+  g.uiRevealed.upgrades = true;
+  h.prepareUpgrade('global_network');
+  for (let index = 0; index < 39; index++) h.fullCluster();
+  h.api.renderUpgradeSection();
+  const selector = '[onclick="GAME.buy(\'global_network\')"]';
+  assert.equal(h.window.document.querySelector(selector).textContent, '$2.00B');
+  assert.equal(h.window.document.querySelector(selector).disabled, true);
+  h.api.purchaseUpgrade('global_network');
+  assert.equal(g.phase, 13);
+  assert.equal(g.cash, 2000000000);
+  h.fullCluster();
+  g.cash--;
+  h.api.renderUpgradeSection();
+  assert.equal(h.window.document.querySelector(selector).disabled, true);
+  h.api.purchaseUpgrade('global_network');
+  assert.equal(g.phase, 13);
+  assert.equal(g.cash, 1999999999);
+  g.cash++;
+  h.api.renderUpgradeSection();
+  assert.equal(h.window.document.querySelector(selector).disabled, false);
+  h.api.purchaseUpgrade('global_network');
+  assert.equal(g.phase, 14);
+  assert.equal(g.cash, 0);
+  assert.ok(g.purchasedUpgrades.includes('global_network'));
 });
 scenario('free AI unlocks at its task milestone and later upgrades retain their prerequisites', (h) => {
   const g=h.fresh();g.cash=1e9;g.totalTasksDone=89;g.uiRevealed.upgrades=true;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();

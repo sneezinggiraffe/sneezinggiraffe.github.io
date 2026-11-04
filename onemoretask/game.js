@@ -303,7 +303,7 @@
     { id: "autonomous_nodes", name: "Autonomous Operating Model", desc: "Compact infrastructure for a larger autonomous company.", cost: 760000000, currency: "cash", phase: 11, unlockPhase: 12, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 2000000 },
     { id: "ceo_continuous", name: "Continuous Deployment", desc: "Improve deployment speed by 50%.", cost: 150000000, currency: "cash", phase: 12, requires: "ceo_full_fit", oneTime: true },
     { id: "replication", name: "Node Replication", desc: "Standardize node replication. Reduce cluster costs by 35%.", cost: 1500000000, currency: "cash", phase: 12, reqNodes: 20, unlockPhase: 13, effect: { payMult: 1.15 }, oneTime: true },
-    { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 3000000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
+    { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 2000000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
 
     // Phase 11 (retirement)
     // Retirement now follows the four new network stages, in Phase 15.

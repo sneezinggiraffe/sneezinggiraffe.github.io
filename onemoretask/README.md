@@ -125,7 +125,7 @@ Browser checks use the installed macOS Chrome when available. Else install Playw
 - Coverage requires **100% of added or changed executable game lines** relative to release baseline `45bc33c`. The report also displays coverage of the entire legacy game; that is a separate metric. No production code is excluded from instrumentation.
 - Chrome checks cover desktop, 320px and 390px portrait phones, landscape, scrolling, keyboard activation/focus, invalid-save reset, and ending persistence. Screenshots are written to ignored `test-results/`.
 
-Balance checks record the first visible cash, price and task count for every one-time upgrade. The journey represents an extremely active player and is a progression check, not a human playtime target. Major upgrades now cost $35M for CEO readiness, $300M for AI Expansion Optimisation, $760M for autonomous nodes, $1.5B for replication, $3B for global expansion, $2B for the retirement unlock and $5B for sale.
+Balance checks record the first visible cash, price and task count for every one-time upgrade. The journey represents an extremely active player and is a progression check, not a human playtime target. Major upgrades now cost $35M for CEO readiness, $300M for AI Expansion Optimisation, $760M for autonomous nodes, $1.5B for replication, $2B for global expansion, $2B for the retirement unlock and $5B for sale.
 
 The fixed coverage baseline keeps the release coverage requirement enforceable after these changes are committed. When establishing a future release baseline, update it deliberately in `tests/coverage-check.cjs`.
 

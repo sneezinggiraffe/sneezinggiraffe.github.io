@@ -16,9 +16,9 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 10 | 3.83M–4.33M | $3.8K–$153K | AI CEO $1M, Pipeline $25M, ninth slots $30M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
 | 11 | 28M–32M | $1.1M–$6.2M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
 | 12 | 46M–51M | $1.3M–$4.9M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
-| 13 | 120M–125M | $11.2M–$16.0M | Global Expansion $3B at 40 completed nodes |
-| 14 | 282M–287M | $25.9M–$38.7M | Reach 100 completed nodes and prepare the sale for $2B |
-| 15 | 530M–534M | $13.4M–$33.0M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.27B–1.29B completed tasks |
+| 13 | 120M–125M | $11.2M–$16.0M | Global Expansion $2B at 40 completed nodes |
+| 14 | 228M–232M | $19.7M–$26.3M | Reach 100 completed nodes and prepare the sale for $2B |
+| 15 | 470M–475M | $2.7M–$14.1M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.20B–1.22B completed tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
 
