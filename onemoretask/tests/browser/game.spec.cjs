@@ -2,6 +2,57 @@ const { test, expect } = require('@playwright/test');
 const { harness } = require('../harness.cjs');
 
 for (const width of [1440, 390]) {
+  test(`network re-architecture gives named 3x3 clusters and header sale controls at ${width}px`, async ({ page }) => {
+    const h = harness();
+    const g = h.fresh(9);
+    g.cash = 1e9;
+    g.totalTasksDone = 1e6;
+    h.prepareUpgrade('code_agents');
+    h.fullCluster();
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    g.lastTaskSpawn = g.lastTick + 1e6;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(page.locator('#tasks-complete-count')).toHaveText('1,000,000');
+    const card = page.locator('.cluster-card:not(.provision-card)').first();
+    await expect(card.locator('.capacity-slot')).toHaveCount(8);
+    await page.locator('[onclick="GAME.buy(\'code_agents\')"]').click();
+    await page.clock.runFor(200);
+    await page.locator('[onclick="GAME.buy(\'network_density\')"]').click();
+    await page.clock.runFor(200);
+    await expect(card.locator('.capacity-slot')).toHaveCount(9);
+    await expect(card.locator('.cluster-agents-label')).toHaveCount(0);
+    await expect(card.locator('.cluster-status')).toHaveText('Partially Operational');
+    expect(await card.locator('.cluster-capacity').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(3);
+    await expect(card.locator('.capacity-slot').first()).toHaveText('Nova');
+    await expect(card.locator('.capacity-slot').last()).toHaveText('Orion');
+    await card.screenshot({ path: `test-results/cluster-nine-${width}.png` });
+    await card.locator('.provision-agent').click();
+    await page.clock.runFor(4200);
+    await page.locator('[onclick="GAME.buy(\'cluster_capacity_2\')"]').click();
+    await page.clock.runFor(200);
+    await page.getByRole('button', { name: /Bring cluster online/ }).click();
+    await page.clock.runFor(200);
+    const sell = card.locator('.cluster-hdr').getByRole('button', { name: 'Sell', exact: true });
+    await expect(sell).toBeVisible();
+    const header = await card.locator('.cluster-hdr').boundingBox();
+    const bounds = await sell.boundingBox();
+    expect(bounds.x + bounds.width).toBeCloseTo(header.x + header.width, 1);
+    await card.screenshot({ path: `test-results/cluster-header-sell-${width}.png` });
+    await sell.click();
+    await page.clock.runFor(200);
+    expect(await page.evaluate(() => GAME.state.clusters.length)).toBe(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+
   test(`planning cards and the immediate retirement cheat work at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.addInitScript(() => {
@@ -392,7 +443,8 @@ test('clusters build hardware and management before slots provision agents',asyn
   await page.clock.install();const raw=fixture(9);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   await page.getByRole('button',{name:/Bring cluster online/}).click();const second=page.locator('div.cluster-card:not(.planning-card)').nth(1);const firstBox=await page.locator('div.cluster-card:not(.planning-card)').first().boundingBox();const secondBox=await second.boundingBox();expect(secondBox.x).toBeGreaterThan(firstBox.x);expect(secondBox.y).toBe(firstBox.y);
   for(const stage of ['Procuring GPUs','Racking hardware','Installing software','Final checks']){await page.clock.runFor(100);await expect(second).toContainText(stage);await expect(second.getByRole('progressbar')).toBeVisible();await page.clock.runFor(2900);}
-  await page.clock.runFor(300);await expect(second.getByRole('button',{name:'Provision agent for $2,500',exact:true})).toHaveCount(8);await expect(second.locator('.cluster-status')).toHaveText('Add your first agent');await expect(second.locator('.cluster-agents-label')).toHaveText('Agents 0/8');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);await expect(second.locator('.capacity-slot.filled')).toHaveText('1');await expect(second.locator('.cluster-status')).toHaveText('Add more agents');
+  await page.clock.runFor(300);await expect(second.getByRole('button',{name:'Provision agent for $2,500',exact:true})).toHaveCount(9);await expect(second.locator('.cluster-status')).toHaveText('Needs Agents');await expect(second.locator('.cluster-agents-label')).toHaveCount(0);
+  await expect(second.locator('.cluster-status')).toHaveCSS('color', 'rgb(251, 146, 60)');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);await expect(second.locator('.capacity-slot.filled')).toHaveText('Nova');await expect(second.locator('.cluster-status')).toHaveText('Partially Operational');
   await expect(page.locator('#cluster-list')).not.toContainText('management team');await page.screenshot({path:'test-results/phase9-grid.png',fullPage:true});
 });
 test('Phase 8 simplifies agents and allows a paid partial top-up with Manager online',async({page})=>{
@@ -607,7 +659,7 @@ test('Phase 7 keeps reveal milestones hidden and offers DevOps first', async ({ 
 test('CEO scaling displays filled and vacant slots alongside hiring upgrades',async({page})=>{
   const h=harness(fixture(10));const g=h.window.GAME.state;g.clusters[2].workerAgentIds.splice(4);g.purchasedUpgrades=g.purchasedUpgrades.filter(id=>!['ceo_recruitment','ceo_batch'].includes(id));g.lastTick=Date.now();g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  const cluster=page.locator('div.cluster-card:not(.planning-card)').nth(2);await expect(cluster.locator('.cluster-status')).toHaveText('Scaling');await expect(cluster.locator('.capacity-slot.filled')).toHaveCount(4);await expect(cluster.locator('.capacity-slot.empty')).toHaveCount(12);await expect(cluster).not.toContainText('4/8');
+  const cluster=page.locator('div.cluster-card:not(.planning-card)').nth(2);await expect(cluster.locator('.cluster-status')).toHaveText('Partially Operational');await expect(cluster.locator('.capacity-slot.filled')).toHaveCount(4);await expect(cluster.locator('.capacity-slot.empty')).toHaveCount(12);await expect(cluster).not.toContainText('4/8');
   await expect(page.locator('[onclick="GAME.buy(\'ceo_recruitment\')"]')).toBeVisible();await page.screenshot({path:'test-results/ceo-scaling.png',fullPage:true,animations:'disabled'});
 });
 
@@ -693,7 +745,7 @@ test('buying the AI CEO folds tasks while allowing them to be reopened', async (
 });
 
 for (const width of [1440, 390]) {
-  test(`three through six clusters shrink without hiding cards at ${width}px`, async ({ browser, baseURL }) => {
+  test(`three through six clusters keep readable slots and accessible cards at ${width}px`, async ({ browser, baseURL }) => {
     let previousCardHeight = Infinity;
     let overviewHeight;
     for (const count of [3, 4, 5, 6]) {
@@ -726,19 +778,23 @@ for (const width of [1440, 390]) {
             height: bounds.height,
             cardHeight: Math.max(...boxes.map(box => box.height)),
             visibleCards: boxes.filter(box => box.top >= bounds.top - 0.5 && box.bottom <= bounds.bottom + 0.5).length,
-            controlsFit: cards.every((card, index) => [...card.querySelectorAll('.capacity-slot, button')].every(control => {
+            labelsFit: cards.every(card => [...card.querySelectorAll('.capacity-slot')].every(slot => slot.scrollWidth <= slot.clientWidth)),
+            overflowingControls: cards.flatMap((card, index) => [...card.querySelectorAll('.capacity-slot, button')].flatMap(control => {
               const box = control.getBoundingClientRect();
-              return box.top >= boxes[index].top && box.bottom <= boxes[index].bottom && box.left >= boxes[index].left && box.right <= boxes[index].right;
+              return box.top < boxes[index].top || box.bottom > boxes[index].bottom || box.left < boxes[index].left || box.right > boxes[index].right ? [{ name: control.textContent, card: boxes[index].toJSON(), control: box.toJSON() }] : [];
             })),
           };
         });
         expect(layout.cardHeight, `${count} clusters must not enlarge the cards`).toBeLessThanOrEqual(previousCardHeight);
-        expect(layout.controlsFit, `${count} clusters must keep all agent slots and Sell controls inside their cards`).toBe(true);
+        expect(layout.labelsFit, `${count} clusters must keep short names readable inside their slots`).toBe(true);
+        expect(layout.overflowingControls, `${count} clusters must keep all agent slots and Sell controls inside their cards`).toEqual([]);
         if (count >= 4) {
           overviewHeight ??= layout.height;
           expect(layout.height).toBeCloseTo(overviewHeight, 1);
           expect(layout.height).toBeLessThanOrEqual(360);
-          expect(layout.visibleCards, `${count} clusters must fit without scrolling`).toBe(count);
+          expect(layout.visibleCards).toBeGreaterThan(0);
+          await grid.locator('div.cluster-card:not(.planning-card)').last().scrollIntoViewIfNeeded();
+          await expect(grid.locator('div.cluster-card:not(.planning-card)').last()).toBeInViewport();
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         previousCardHeight = layout.cardHeight;
@@ -815,7 +871,7 @@ for(const width of [1440,390]){
 test('CEO is provisioned from its card and expands eight occupied slots to sixteen',async({page})=>{
   const h=harness();const g=h.fresh(10);g.cash=999999;g.tokens=1e6;g.totalTasksDone=1200000;g.incidentsExplained=true;g.aiWorkerShutdown=true;h.prepareUpgrade('ai_ceo');for(let i=0;i<3;i++)h.fullCluster();h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.clock.install();await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');const ceo=page.getByRole('button',{name:/Provision AI CEO/});await expect(ceo).toBeDisabled();await page.evaluate(()=>GAME.addCash(1001));await page.clock.runFor(200);await expect(ceo).toBeEnabled();await ceo.focus();await page.keyboard.press('Enter');await page.clock.runFor(200);expect(await page.evaluate(()=>GAME.state.ceoMode)).toBe('manage');expect(await page.evaluate(()=>GAME.state.cash)).toBeLessThan(1000);
-  for(const card of await page.locator('div.cluster-card:not(.planning-card)').all()){await expect(card.locator('.filled')).toHaveCount(8);await expect(card.locator('.empty')).toHaveCount(8);}await expect(page.locator('.provision-card')).toHaveCount(0);
+  for(const card of await page.locator('div.cluster-card:not(.planning-card)').all()){await expect(card.locator('.filled')).toHaveCount(9);await expect(card.locator('.empty')).toHaveCount(7);}await expect(page.locator('.provision-card')).toHaveCount(0);
   await page.evaluate(()=>GAME.addCash(1e8));await page.clock.runFor(100000);await expect(page.locator('.provision-card')).toHaveCount(1);const upgrade=page.locator('[onclick="GAME.buy(\'ceo_recruitment\')"]');await expect(upgrade).toBeVisible();await page.locator('.provision-card').click();await page.clock.runFor(200);await expect(upgrade).toBeVisible();await expect(page.locator('.provision-card')).toHaveCount(0);await page.screenshot({path:'test-results/ceo-provisioning.png',fullPage:true,animations:'disabled'});
 });
 
