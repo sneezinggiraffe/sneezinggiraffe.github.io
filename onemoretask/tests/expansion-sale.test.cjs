@@ -278,11 +278,11 @@ test('sale timers pause with dialogs and offline gaps and resume with the game t
   }
 });
 
-test('save format 17 rejects invalid sale timers and preserves older saves for explicit reset', () => {
+test('save format 18 rejects invalid sale timers and preserves older saves for explicit reset', () => {
   const h = company();
   try {
     const g = h.window.GAME.state;
-    assert.equal(g.saveVersion, 17);
+    assert.equal(g.saveVersion, 18);
     assert.equal(h.api.validSave(g), true);
     for (const preparation of [
       { upgradeId: 'missing', remaining: 1 },
@@ -299,7 +299,7 @@ test('save format 17 rejects invalid sale timers and preserves older saves for e
     assert.equal(h.api.validSave({...g, purchasedUpgrades: [...g.purchasedUpgrades, 'retire_unlock']}), false);
     h.api.tickSalePreparation(8);
     assert.equal(h.api.validSave({...g, salePreparation: {upgradeId: 'sale_terms', remaining: 1}}), false);
-    const raw = JSON.stringify({...g, saveVersion: 16});
+    const raw = JSON.stringify({...g, saveVersion: 17});
     const restored = harness(raw);
     try {
       assert.equal(restored.window.GAME.state.phase, 1);

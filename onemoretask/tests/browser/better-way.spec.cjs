@@ -10,6 +10,7 @@ for (const width of [1440, 390]) {
       GAME.state.cash = 1000;
       for (const id of ['hire_assistant', 'gas_station_coffee', 'sticky_note_system']) GAME.buy(id);
       GAME.addTasks(27);
+      GAME.buy('assistant_settling'); GAME.buy('assistant_routine');
     });
     await page.clock.runFor(200);
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();

@@ -54,6 +54,8 @@
   const MAX_LOG = 200;
   const AGENT_BASE_HIRE_COST = 250;
   const AGENT_HIRE_COST_MULT = 1.9;
+  const ASSISTANT_BREAK_SECONDS = 2;
+  const ASSISTANT_BREAK_LABELS = ["Break time", "Lunch", "Dentist", "Sleeping"];
   const MANUAL_WORK_SECONDS_PER_CLICK = 0.15;
   const MANUAL_STRESS_PER_SEC = 2;
   // Keep AI throughput after moving the early 4.5x click-power bonuses into manual queues.
@@ -90,7 +92,7 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 16;
-  const SAVE_VERSION = 17;
+  const SAVE_VERSION = 18;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
@@ -181,6 +183,8 @@
     { id: "hire_assistant", name: "Hire a Part-Time Assistant", desc: "Delegate easier tasks", cost: 30, currency: "cash", phase: 1, oneTime: true, reqTasks: 7 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
+    { id: "assistant_settling", name: "Settling In", desc: "Your assistant works 25% faster.", cost: 10, currency: "cash", phase: 1, requires: "hire_assistant", oneTime: true, reqTasks: 8 },
+    { id: "assistant_routine", name: "Knows the Routine", desc: "Your assistant works another 25% faster.", cost: 15, currency: "cash", phase: 1, requires: "assistant_settling", oneTime: true, reqTasks: 12 },
     { id: "ai_hint", name: "There Must Be a Better Way", desc: "You are getting faster, but the work never stops. Maybe there is a smarter way...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 35 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 35 },
     { id: "multitasking", name: "Multitasking", desc: "Do one task with each hand", cost: 61, currency: "cash", phase: 1, requires: "hire_assistant", oneTime: true, reqTasks: 35 },
@@ -407,7 +411,7 @@
       totalClicks: 0,
       totalIncidents: 0,
       activeTaskId: null,
-      assistant: { taskIds: [], dismissed: false, tasksCompleted: 0 },
+      assistant: { taskIds: [], dismissed: false, tasksCompleted: 0, cycleCompleted: 0, breakRemaining: 0, breakLabel: "" },
       // Prestige
       prestigeCount: 0,
       prestigeBonusClick: 0,
@@ -495,18 +499,20 @@
     const clusterShape = { id: "", name: "", invested: 0, buildRemaining: 0, buildDuration: 0, workforce: 0, tank: 0, progress: 0, workerSlotsMax: 8, workerAgentIds: [], managerAssigned: false, tokenManagerAssigned: false, active: true };
     const collections = [[state.tasks, taskShape], [state.agents, agentShape], [state.incidents, incidentShape], [state.clusters, clusterShape], [state.services, { id: "", name: "", incomeRate: 0, active: true }], [state.log, { msg: "", type: "", t: 0 }]];
     if (!collections.every(([items, shape]) => items.every((item) => validShape(item, shape)))) return false;
-    const assistantTasks = state.tasks.filter((task) => ["assistant", "assistant_queued"].includes(task.status));
+    const assistantTasks = state.tasks.filter((task) => task.status === "assistant");
     const taskIds = state.assistant.taskIds;
     const slots = state.purchasedUpgrades.includes("multitasking") ? 2 : 1;
-    if (taskIds.length > 4 || new Set(taskIds).size !== taskIds.length || taskIds.length !== assistantTasks.length) return false;
+    if (taskIds.length > 1 || taskIds.length !== assistantTasks.length) return false;
     if (taskIds.length && (state.assistant.dismissed || !state.purchasedUpgrades.includes("hire_assistant"))) return false;
     if (!taskIds.every((id) => assistantTasks.some((task) => task.id === id))) return false;
-    if (assistantTasks.filter((task) => task.status === "assistant").length !== taskIds.length) return false;
+    if (!Number.isInteger(state.assistant.cycleCompleted) || state.assistant.cycleCompleted >= 5) return false;
+    if (state.assistant.breakRemaining > ASSISTANT_BREAK_SECONDS) return false;
+    if (state.assistant.breakRemaining > 0 ? taskIds.length > 0 || state.assistant.cycleCompleted !== 0 || !ASSISTANT_BREAK_LABELS.includes(state.assistant.breakLabel) : state.assistant.breakLabel !== "") return false;
     if (state.tasks.filter((task) => task.status === "active").length > slots) return false;
     const entities = [...state.tasks, ...state.agents, ...state.clusters, ...state.services, ...state.incidents];
     if (!entities.every((item) => /^[a-z0-9_]+$/.test(item.id) && !/["'&]/.test(item.name))) return false;
     if (new Set(entities.map((item) => item.id)).size !== entities.length) return false;
-    if (!state.tasks.every((task) => TASK_TYPES.some((type) => type.id === task.typeId) && Number.isInteger(task.batchSize) && task.batchSize > 0 && task.workRequired > 0 && task.workDone <= task.workRequired && ["available", "active", "ai", "agent", "assistant", "assistant_queued", "done"].includes(task.status))) return false;
+    if (!state.tasks.every((task) => TASK_TYPES.some((type) => type.id === task.typeId) && Number.isInteger(task.batchSize) && task.batchSize > 0 && task.workRequired > 0 && task.workDone <= task.workRequired && ["available", "active", "ai", "agent", "assistant", "done"].includes(task.status))) return false;
     if (!state.agents.every((agent) => AGENT_ROLES.some((role) => role.id === agent.roleId) && /^#[0-9a-f]{6}$/i.test(agent.color) && agent.speed > 0 && agent.tokenCost > 0 && agent.specialty.every((id) => TASK_TYPES.some((type) => type.id === id)) && ["idle", "working", "error", "provisioning"].includes(agent.status) && (agent.status !== "provisioning" || (agent.provisionRemaining > 0 && agent.provisionDuration > 0)))) return false;
     const workers = state.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId));
     if (state.taskSpawnDelay <= 0 || !workers.every((agent) => Number.isInteger(agent.slotIndex)) || new Set(workers.map((agent) => agent.slotIndex)).size !== workers.length) return false;
@@ -731,31 +737,50 @@
     return G.purchasedUpgrades.includes("hire_assistant") && !G.assistant.dismissed;
   }
 
-  function startAssistantTasks() {
-    const tasks = G.assistant.taskIds.map((id) => G.tasks.find((task) => task.id === id));
-    for (const task of tasks) task.status = "assistant";
-  }
-
-  function assignAssistantWork() {
-    if (!G.gameStarted || G.retired || !assistantAvailable() || G.assistant.taskIds.length) return;
-    const tasks = G.tasks.filter((task) => task.status === "available").slice(0, 4);
-    if (!tasks.length) return;
-    G.assistant.taskIds = tasks.map((task) => task.id);
-    startAssistantTasks();
-    G.totalClicks++;
-    save();
+  function assistantTaskSeconds() {
+    if (G.purchasedUpgrades.includes("assistant_routine")) return 4 / (1.25 * 1.25);
+    if (G.purchasedUpgrades.includes("assistant_settling")) return 4 / 1.25;
+    return 4;
   }
 
   function tickAssistant(dtSec) {
-    const tasks = G.tasks.filter((task) => task.status === "assistant");
-    for (const task of tasks) {
-      task.workDone = Math.min(task.workRequired, task.workDone + 4 * dtSec);
-      if (task.workDone < task.workRequired) continue;
+    if (!G.gameStarted || G.retired || !assistantAvailable()) return;
+    while (dtSec > 0) {
+      if (G.assistant.breakRemaining > 0) {
+        const elapsed = Math.min(dtSec, G.assistant.breakRemaining);
+        G.assistant.breakRemaining = Math.max(0, G.assistant.breakRemaining - elapsed);
+        dtSec -= elapsed;
+        if (G.assistant.breakRemaining < 1e-9) {
+          G.assistant.breakRemaining = 0;
+          G.assistant.breakLabel = "";
+        }
+        continue;
+      }
+      let task = G.tasks.find((item) => item.id === G.assistant.taskIds[0]);
+      if (!task) {
+        task = G.tasks.find((item) => item.status === "available");
+        if (!task) return;
+        task.status = "assistant";
+        G.assistant.taskIds = [task.id];
+      }
+      const rate = task.workRequired / assistantTaskSeconds();
+      const remaining = (task.workRequired - task.workDone) / rate;
+      if (remaining > dtSec + 1e-9) {
+        task.workDone += rate * dtSec;
+        return;
+      }
+      task.workDone = task.workRequired;
+      dtSec = Math.max(0, dtSec - remaining);
       G.assistant.tasksCompleted += task.batchSize;
-      G.assistant.taskIds = G.assistant.taskIds.filter((id) => id !== task.id);
+      G.assistant.cycleCompleted++;
+      G.assistant.taskIds = [];
       completeTask(task, "assistant");
+      if (G.assistant.cycleCompleted === 5) {
+        G.assistant.cycleCompleted = 0;
+        G.assistant.breakRemaining = ASSISTANT_BREAK_SECONDS;
+        G.assistant.breakLabel = pick(ASSISTANT_BREAK_LABELS);
+      }
     }
-    startAssistantTasks();
   }
 
   function dismissAssistant() {
@@ -767,6 +792,9 @@
     }
     G.assistant.taskIds = [];
     G.assistant.dismissed = true;
+    G.assistant.cycleCompleted = 0;
+    G.assistant.breakRemaining = 0;
+    G.assistant.breakLabel = "";
     log("Assistant dismissed. Any unfinished tasks are ready for you or AI to finish.", "info");
     save();
   }
@@ -797,11 +825,10 @@
 
   function renderAssistantCard() {
     if (!assistantAvailable()) return "";
-    const count = G.assistant.taskIds.length;
-    const active = G.tasks.filter((task) => task.status === "assistant").length;
-    const status = count ? active + " working" : "Waiting for work · 15% task fee";
-    const disabled = count || !G.tasks.some((task) => task.status === "available");
-    return "<div class='card agent-card' data-assistant><div class='agent-icon' aria-hidden='true'>🧑‍💼</div><div class='agent-info'><div class='name'>Assistant <span class='role'>Part-time</span></div><div class='text-sm'>" + status + "</div><small>" + deliveredTasksLabel(G.assistant.tasksCompleted) + "</small></div><div class='agent-action-col'><button class='btn btn-primary btn-sm' onclick='GAME.assignAssistantWork()' " + (disabled ? "disabled" : "") + ">" + (count ? "Working..." : "Assign work") + "</button></div></div>";
+    const task = G.tasks.find((item) => item.id === G.assistant.taskIds[0]);
+    const onBreak = G.assistant.breakRemaining > 0;
+    const status = onBreak ? G.assistant.breakLabel + " - Back in " + Math.ceil(G.assistant.breakRemaining) + "s" : task ? "Working on " + task.name : "Waiting for work";
+    return "<div class='card agent-card" + (onBreak ? " assistant-on-break" : "") + "' data-assistant><div class='agent-icon' aria-hidden='true'>" + (onBreak ? "⏸" : "🧑‍💼") + "</div><div class='agent-info'><div class='name'>Assistant <span class='role'>Part-time</span></div><div class='text-sm" + (onBreak ? " assistant-break-status" : "") + "'>" + status + "</div><small>" + deliveredTasksLabel(G.assistant.tasksCompleted) + " · 15% task fee</small></div></div>";
   }
 
   function getCurrentAiWorkerTask() {
@@ -1771,8 +1798,10 @@
   function getIncomeRate() {
     // Passive growth income (Phase 5+)
     let rate = networkIncomeRate() + getAgentRevenueRate() + getMarketingRevenueRate();
-    for (const task of G.tasks.filter((item) => item.status === "assistant")) {
-      rate += getTaskCashPayout(task, "assistant", null) * 4 / task.workRequired;
+    if (assistantAvailable()) {
+      // Average the five-task cycle so short tasks and breaks do not hide assistant income between ticks.
+      const task = G.tasks.find((item) => item.status === "assistant") || G.tasks.find((item) => item.status === "available");
+      if (task) rate += getTaskCashPayout(task, "assistant", null) / (assistantTaskSeconds() + ASSISTANT_BREAK_SECONDS / 5);
     }
     const originalTask = getCurrentAiWorkerTask();
     if (originalTask && G.aiWorkerTokenTank > 0) rate += getTaskCashPayout(originalTask, "ai_assist", null) * originalAiWorkRate() / originalTask.workRequired;
@@ -3219,9 +3248,9 @@
       var pct = Math.floor((t.workDone / t.workRequired) * 100);
       var agent = t.assignedAgent ? G.agents.find(function (a) { return a.id === t.assignedAgent; }) : null;
 
-      const owner = t.status === "available" ? "Unassigned" : t.status === "active" ? "You" : t.status === "assistant" ? "Assistant" : t.status === "assistant_queued" ? "Assistant · queued" : t.status === "ai" ? getAiWorkerDisplayName() : getAgentTaskLabel(agent.name);
+      const owner = t.status === "available" ? "Unassigned" : t.status === "active" ? "You" : t.status === "assistant" ? "Assistant" : t.status === "ai" ? getAiWorkerDisplayName() : getAgentTaskLabel(agent.name);
       const actions = "<span class='task-assignee' title='" + (agent ? agent.name : owner) + "' data-assignment='" + t.status + "'>" + owner + "</span>";
-      var displayedPay = getTaskCashPayout(t, t.status === "agent" ? "agent" : ["assistant", "assistant_queued"].includes(t.status) ? "assistant" : "manual", agent);
+      var displayedPay = getTaskCashPayout(t, t.status === "agent" ? "agent" : t.status === "assistant" ? "assistant" : "manual", agent);
 
       // Task expiry countdown
       var expiryHtml = "";
@@ -3983,7 +4012,6 @@
 
   // ---------- PUBLIC API (for onclick handlers) ----------
   window.GAME = {
-    assignAssistantWork: assignAssistantWork,
     doWork: doWork,
     clickTask: function (id, evt) { clickTask(id, evt); },
     aiAssist: function (id, evt) { aiAssistTask(id, evt); },

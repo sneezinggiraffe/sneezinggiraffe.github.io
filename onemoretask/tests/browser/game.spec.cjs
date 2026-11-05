@@ -822,7 +822,7 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
   });
 }
 test('early upgrade visibility follows task milestones and prior purchases',async({page})=>{
-  const h=harness();const g=h.fresh();g.cash=0;g.totalTasksDone=104;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;const raw=JSON.stringify(g);h.close();
+  const h=harness();const g=h.fresh();g.cash=0;g.totalTasksDone=104;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;g.lastTaskSpawn=g.lastTick+1e9;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toHaveCount(0);
   await page.evaluate(()=>GAME.addTasks(1));await expect(buy('free_ai')).toBeDisabled();await page.evaluate(()=>GAME.addTasks(45));await expect(buy('free_ai')).toBeEnabled();await buy('free_ai').click();expect(await page.evaluate(()=>GAME.state.cash)).toBe(0);await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('pro_model')).toHaveCount(0);
@@ -869,7 +869,7 @@ for (const width of [1440, 390]) {
     g.tasks = [];
     g.lastTick = Date.now();
     g.lastSave = g.lastTick;
-    g.lastTaskSpawn = g.lastTick;
+    g.lastTaskSpawn = g.lastTick + 1e9;
     const raw = JSON.stringify(g);
     h.close();
     await page.setViewportSize({ width, height: 900 });
@@ -882,7 +882,6 @@ for (const width of [1440, 390]) {
     const section = page.locator('#section-upgrades');
     const beforePanel = await section.boundingBox();
     const beforeCard = await section.locator('.upgrade-card').boundingBox();
-    await page.evaluate(() => GAME.addTasks(1));
     await page.clock.runFor(200);
     await page.getByRole('button', { name: '$34', exact: true }).click();
     await page.clock.runFor(200);

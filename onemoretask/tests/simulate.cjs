@@ -8,7 +8,6 @@ function play(seed=17,actionEveryMs=500,delegateOpening=false) {
   for(let step=0;step<108000;step++) {
     h.advance(100);h.dismiss();
     if(step%actionSteps===0){
-      h.api.assignAssistantWork();
       if(!g.uiRevealed.taskQueue)h.api.doEarlyTask();
       else if (!(delegateOpening && g.phase === 1 && h.api.assistantAvailable())) h.api.doWork();
       if(g.phase>=2 && g.aiWorkerTokenTank<1)h.api.topUpAiWorker();

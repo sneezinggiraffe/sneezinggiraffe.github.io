@@ -5,7 +5,11 @@ for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.clock.install();
     await page.goto('/');
-    await page.evaluate(() => chPh1());
+    await page.evaluate(() => {
+      chPh1();
+      // Keep milestone assertions independent of automatic assistant completions.
+      GAME.state.tasks = []; GAME.state.lastTaskSpawn = Date.now() + 1e9;
+    });
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
     const cards = page.locator('#upgrade-list .upgrade-card');
     await expect(cards).toHaveCount(2);

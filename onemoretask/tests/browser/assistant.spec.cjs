@@ -5,7 +5,7 @@ async function openTeam(page, width, phase = 1) {
   const h = harness(); const g = h.fresh(phase);
   g.totalTasksDone = phase === 1 ? 7 : 650; g.cash = 20000; g.uiRevealed.taskQueue = true;
   if (phase === 1) { h.api.purchaseUpgrade('tools_of_trade'); h.api.purchaseUpgrade('hire_assistant'); h.api.purchaseUpgrade('gas_station_coffee'); h.api.purchaseUpgrade('sticky_note_system'); g.payMult = 1; }
-  else { h.prepareUpgrade('second_ai'); g.assistant.dismissed = false; }
+  else { h.prepareUpgrade('second_ai'); g.assistant.dismissed = false; g.assistant.breakRemaining = 2; g.assistant.breakLabel = 'Lunch'; }
   g.aiFailMult = 0; g.incidentsExplained = true;
   h.api.checkMilestones(); h.dismiss();
   g.tasks = [];
@@ -13,7 +13,7 @@ async function openTeam(page, width, phase = 1) {
   for (let index = 0; index < (phase === 1 ? 7 : 5); index++) {
     const task = h.task(); task.workRequired = phase === 1 ? 8 : 100; task.pay = 10; task.createdAt = g.lastTick + index;
   }
-  if (phase > 1) { h.api.assignAssistantWork(); g.aiWorkerTokenTank = h.api.workerTokenCapacity(); }
+  if (phase > 1) { g.aiWorkerTokenTank = h.api.workerTokenCapacity(); }
   const raw = JSON.stringify(g); h.close();
   await page.setViewportSize({ width, height: 900 });
   await page.clock.install({ time: new Date(g.lastTick) });
@@ -24,42 +24,52 @@ async function openTeam(page, width, phase = 1) {
 }
 
 for (const width of [1440, 390]) {
-  test(`assistant starts four concurrent tasks, survives reload and stops at ${width}px`, async ({ page }) => {
+  test(`assistant automatically completes five tasks, takes a break and resumes at ${width}px`, async ({ page }) => {
     await openTeam(page, width);
     const assistant = page.locator('[data-assistant]');
     await expect(page.locator('#team-heading')).toHaveText('Team');
     await expect(page.locator('#you-card > .agent-icon')).toBeVisible();
     await expect(page.locator('[data-assistant] > .agent-icon')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Dismiss assistant' })).toHaveCount(0);
-    await expect(assistant).toContainText('Waiting for work');
+    await expect(assistant.getByRole('button')).toHaveCount(0);
+    const border = await assistant.evaluate(element => getComputedStyle(element).borderColor);
     const cash = await page.evaluate(() => GAME.state.cash);
-    await assistant.getByRole('button', { name: 'Assign work' }).click();
-    await page.clock.runFor(500);
+    const clicks = await page.evaluate(() => GAME.state.totalClicks);
+    await page.clock.runFor(1000);
     await expect(page.locator('#task-list button')).toHaveCount(0);
-    await expect(page.locator('.task-assignee')).toHaveText(['Assistant', 'Assistant', 'Assistant', 'Assistant', 'Unassigned', 'Unassigned', 'Unassigned']);
-    await expect(assistant).toContainText('4 working');
-    await expect(assistant.getByRole('button', { name: 'Working...' })).toBeDisabled();
+    await expect(page.locator('[data-assignment="assistant"]')).toHaveCount(1);
+    await expect(assistant).toContainText('Working on');
+    await expect(assistant.getByRole('progressbar')).toHaveCount(0);
+    await expect(assistant.locator('.assistant-break-status')).toHaveCount(0);
+    await page.evaluate(() => localStorage.setItem('ai_empire_save', JSON.stringify(GAME.state)));
     const ids = await page.evaluate(() => GAME.state.assistant.taskIds);
     await page.reload();
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
     expect(await page.evaluate(() => GAME.state.assistant.taskIds)).toEqual(ids);
-    await page.clock.runFor(2100);
-    expect(await page.evaluate(() => GAME.state.assistant.tasksCompleted)).toBe(4);
-    expect(await page.evaluate(() => GAME.state.cash)).toBeCloseTo(cash + 34);
-    await expect(page.locator('#task-list .task-card')).toHaveCount(3);
+    await page.clock.runFor(19000);
+    expect(await page.evaluate(() => GAME.state.assistant.tasksCompleted)).toBe(5);
+    expect(await page.evaluate(() => GAME.state.cash)).toBeCloseTo(cash + 42.5);
+    await expect(assistant).toContainText(/Break time|Lunch|Dentist|Sleeping/);
+    await expect(assistant.getByRole('progressbar')).toHaveCount(0);
+    await expect(assistant.locator('.text-sm')).toHaveCount(1);
+    await expect(assistant.locator('.text-sm')).toHaveText(/^(Break time|Lunch|Dentist|Sleeping) - Back in [12]s$/);
+    await expect(assistant.locator('.assistant-break-status')).toHaveCSS('color', 'rgb(251, 146, 60)');
+    await expect(assistant).toHaveCSS('border-color', border);
+    await expect(assistant).toHaveClass(/assistant-on-break/);
+    await page.screenshot({ path: `test-results/assistant-break-${width}.png`, fullPage: true });
+    await page.evaluate(() => localStorage.setItem('ai_empire_save', JSON.stringify(GAME.state)));
+    const label = await page.evaluate(() => GAME.state.assistant.breakLabel);
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(assistant).toContainText(label);
+    await page.clock.runFor(11000);
+    expect(await page.evaluate(() => GAME.state.assistant.tasksCompleted)).toBe(7);
+    expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(clicks);
     await expect(assistant).toContainText('Waiting for work');
-    await page.screenshot({ path: `test-results/individual-tasks-${width}.png`, fullPage: true });
-    await page.clock.runFor(4200);
-    await expect(assistant).toContainText('Waiting for work');
-    expect(await page.evaluate(() => GAME.state.assistant.tasksCompleted)).toBe(4);
-    await page.clock.runFor(2000);
-    await expect(page.locator('.task-assignee')).toHaveText(['Unassigned', 'Unassigned', 'Unassigned']);
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page.locator('#btn-do-task')).toBeInViewport();
+    await page.screenshot({ path: `test-results/assistant-idle-${width}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 
-  test(`Pro replaces the assistant, keeps progress and renames Team at ${width}px`, async ({ page }) => {
+  test(`Pro replaces the resting assistant and renames Team at ${width}px`, async ({ page }) => {
     await openTeam(page, width, 3);
     await page.clock.runFor(500);
     await expect(page.locator('#team-heading')).toHaveText('Team');
@@ -68,18 +78,15 @@ for (const width of [1440, 390]) {
     await expect(page.getByRole('button', { name: 'Dismiss assistant' })).toHaveCount(0);
     await expect(page.locator('#section-agents .name')).toHaveText(['You', 'Assistant Part-time', 'AI 2000 Basic']);
     const before = await page.evaluate(() => GAME.state.tasks.map(task => ({ id: task.id, status: task.status, work: task.workDone })));
-    expect(before.find(task => task.status === 'ai').work).toBeGreaterThan(before.find(task => task.status === 'assistant').work * 4);
+    expect(before.find(task => task.status === 'ai').work).toBeGreaterThan(0);
+    await expect(page.locator('[data-assistant]')).toContainText('Lunch');
     await page.screenshot({ path: `test-results/human-ai-comparison-${width}.png`, fullPage: true });
     await page.locator('.upgrade-card').filter({ hasText: 'Second AI Subscription' }).getByRole('button').click();
     await page.clock.runFor(200);
     await expect(page.locator('[data-assistant]')).toHaveCount(0);
     await expect(page.locator('#team-heading')).toHaveText('Agents');
     await expect(page.locator('#section-agents .name')).toHaveText(['You', 'AI 2000 Basic', 'AI 2000 Pro']);
-    const after = await page.evaluate(() => GAME.state.tasks.map(task => ({ id: task.id, status: task.status, work: task.workDone })));
-    for (const task of before.filter(task => task.status.startsWith('assistant'))) {
-      const released = after.find(item => item.id === task.id);
-      expect(released.status).toBe('available'); expect(released.work).toBe(task.work);
-    }
+    expect(await page.evaluate(() => GAME.state.assistant.breakRemaining)).toBe(0);
     await page.reload();
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
     await expect(page.locator('#team-heading')).toHaveText('Agents');
@@ -92,15 +99,15 @@ for (const width of [1440, 390]) {
 test('Multitasking opens a second manual slot and the assistant cannot be dismissed', async ({ page }) => {
   await openTeam(page, 1440);
   await page.evaluate(() => { for (const task of GAME.state.tasks) task.workRequired = 100; });
-  await page.locator('[data-assistant]').getByRole('button', { name: 'Assign work' }).click();
+  await page.clock.runFor(100);
   await page.locator('#btn-do-task').click();
   await page.clock.runFor(200);
   await expect(page.locator('#btn-do-task')).toBeDisabled();
-  await page.evaluate(() => { GAME.state.totalTasksDone = 35; GAME.buy('ai_hint'); });
+  await page.evaluate(() => { GAME.state.totalTasksDone = 35; GAME.buy('assistant_settling'); GAME.buy('assistant_routine'); GAME.buy('ai_hint'); });
   await page.clock.runFor(200);
   await page.locator('.upgrade-card').filter({ hasText: 'Multitasking' }).getByRole('button').click();
   await page.clock.runFor(200);
-  await expect(page.locator('[data-assistant]')).toContainText('4 working');
+  await expect(page.locator('[data-assistant]')).toBeVisible();
   await page.evaluate(() => GAME.setPhase(2));
   await page.clock.runFor(200);
   await expect(page.getByRole('button', { name: 'Dismiss assistant' })).toHaveCount(0);
@@ -119,20 +126,15 @@ test('Multitasking opens a second manual slot and the assistant cannot be dismis
 });
 
 for (const width of [1440, 390]) {
-  test(`You and assistant share button styling and Multitasking assigns a pair in one click at ${width}px`, async ({ page }) => {
+  test(`Assistant has no controls and Multitasking assigns a pair in one click at ${width}px`, async ({ page }) => {
     await openTeam(page, width);
     await page.evaluate(() => {
       for (const task of GAME.state.tasks) task.workRequired = 100;
-      GAME.state.totalTasksDone = 35; GAME.buy('ai_hint'); GAME.buy('multitasking');
+      GAME.state.totalTasksDone = 35; GAME.buy('assistant_settling'); GAME.buy('assistant_routine'); GAME.buy('ai_hint'); GAME.buy('multitasking');
     });
     await page.clock.runFor(200);
     const you = page.locator('#btn-do-task');
-    const assistant = page.locator('[data-assistant]').getByRole('button', { name: 'Assign work' });
-    const style = element => {
-      const css = getComputedStyle(element);
-      return ['width', 'height', 'padding', 'fontSize', 'fontWeight', 'borderRadius', 'backgroundColor', 'color'].map(key => css[key]);
-    };
-    expect(await you.evaluate(style)).toEqual(await assistant.evaluate(style));
+    await expect(page.locator('[data-assistant] button')).toHaveCount(0);
     await expect(page.locator('#you-delivered')).toHaveText('0 tasks delivered');
     const before = await page.evaluate(() => GAME.state.totalClicks);
     await you.click(); await page.clock.runFor(200);
