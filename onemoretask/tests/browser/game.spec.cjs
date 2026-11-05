@@ -336,6 +336,7 @@ for (const width of [1440, 390]) {
     await expect(parachute).toHaveText('$5.00B');
     await expect(page.locator('.upgrade-cost')).toHaveCount(0);
     await parachute.click();
+    await page.clock.runFor(2800);
     await expect(page.getByRole('heading', { name: 'You retired early!' })).toBeVisible();
     await expect.poll(() => page.evaluate(() => window.testAudioPlayers.some(player => player.src.endsWith('/soundtrack-loop.mp3') && !player.paused))).toBe(true);
     expect(await page.evaluate(() => window.testAudioPlayers.filter(player => !player.src.endsWith('/soundtrack-loop.mp3')).every(player => player.paused))).toBe(true);
@@ -692,7 +693,7 @@ test('100-node view has no internal controls and remains responsive',async({page
   if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();
   await expect(page.locator('.network-grid div.cluster-card:not(.planning-card)')).toHaveCount(100);await expect(page.locator('.network-grid div.cluster-card:not(.planning-card) button')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.locator('.network-grid').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/network-100-mobile.png',fullPage:true});expect(errors).toEqual([]);
+  await page.locator('.neocloud-list').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/network-100-mobile.png',fullPage:true});expect(errors).toEqual([]);
 });
 test('clusters build hardware and management before slots provision agents',async({page})=>{
   await page.clock.install();const raw=fixture(9);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');

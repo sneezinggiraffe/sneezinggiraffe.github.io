@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 function play(seed=17,actionEveryMs=500) {
   const actionSteps=actionEveryMs/100;
-  const h=harness(undefined,{seed});const g=h.fresh();const milestones=[];const offers=[];const purchases=[];const offered=new Set();
+  const h=harness(undefined,{seed});const g=h.fresh();const milestones=[];const offers=[];const purchases=[];const offered=new Set();const purchasesLogged=new Set();
   let lastPhase=0;
   for(let step=0;step<108000;step++) {
     h.advance(100);h.dismiss();
@@ -12,7 +12,21 @@ function play(seed=17,actionEveryMs=500) {
       else {const task=g.tasks.find(t=>t.status==='available');if(task)h.api.clickTask(task.id);}
       if(g.phase>=2 && g.aiWorkerTokenTank<1)h.api.topUpAiWorker();
       if(g.phase<7)for(const inc of g.incidents.filter(i=>!i.resolved))h.api.resolveIncident(inc.id,'manual');
-      if(g.uiRevealed.upgrades)for(const u of h.api.UPGRADES)if(u.oneTime&&!g.purchasedUpgrades.includes(u.id)){if(h.api.upgradeVisible(u)&&!offered.has(u.id)){offered.add(u.id);offers.push({id:u.id,tasks:g.totalTasksDone,cash:Math.round(g.cash),cost:h.api.getUpgradeCost(u),seconds:step/10});}const phase=g.phase;const cash=g.cash;const cost=h.api.getUpgradeCost(u);h.api.purchaseUpgrade(u.id);if(g.purchasedUpgrades.includes(u.id))purchases.push({id:u.id,phase,tasks:g.totalTasksDone,cash:Math.round(cash),cost,seconds:step/10});if(g.phase!==phase)break;}
+      if (g.uiRevealed.upgrades) for (const u of h.api.UPGRADES) if (u.oneTime && !g.purchasedUpgrades.includes(u.id)) {
+        if (h.api.upgradeVisible(u) && !offered.has(u.id)) {
+          offered.add(u.id);
+          offers.push({id:u.id,tasks:g.totalTasksDone,cash:Math.round(g.cash),cost:h.api.getUpgradeCost(u),seconds:step/10});
+        }
+        const phase = g.phase;
+        const cash = g.cash;
+        const cost = h.api.getUpgradeCost(u);
+        h.api.purchaseUpgrade(u.id);
+        if (!purchasesLogged.has(u.id) && (g.purchasedUpgrades.includes(u.id) || g.salePreparation.upgradeId === u.id)) {
+          purchasesLogged.add(u.id);
+          purchases.push({id:u.id,phase,tasks:g.totalTasksDone,cash:Math.round(cash),cost,seconds:step/10});
+        }
+        if (g.phase !== phase) break;
+      }
       if(g.phase>=3&&g.tokens<50)h.api.purchaseUpgrade('token_pack_1');
       if(g.phase>=3)for(const agent of g.agents)if(agent.tokenTank<1)h.api.topUpAgent(agent.id);
       if(g.phase>=4){

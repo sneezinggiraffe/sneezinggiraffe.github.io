@@ -520,7 +520,7 @@ test('agent installation capacity stays global across clusters and refills indep
   }
 });
 
-test('planning waits for a stable random threshold of nine to twelve online agents', () => {
+test('planning waits for staffing before autonomy and stays visible from Phase 12', () => {
   const h = harness();
   try {
     for (const clusterId of ['a', 'b', 'c', 'd']) {
@@ -547,12 +547,12 @@ test('planning waits for a stable random threshold of nine to twelve online agen
       cluster.workerAgentIds = [];
       g.agents = [];
       cluster.workforce = threshold - 1;
-      assert.equal(h.api.canPlanNextCluster(), false);
+      assert.equal(h.api.canPlanNextCluster(), true);
       cluster.workforce++;
       assert.equal(h.api.canPlanNextCluster(), true);
       cluster.buildDuration = 1;
       cluster.buildRemaining = 0.5;
-      assert.equal(h.api.canPlanNextCluster(), false);
+      assert.equal(h.api.canPlanNextCluster(), true);
     }
   } finally {
     h.close();
@@ -1331,7 +1331,7 @@ scenario('Scale Mode builds automatically through Phase 12 and replication excee
   h.advance(6100);h.api.tickConstruction(6.1);h.api.tickAiCeo();assert.equal(c.workforce,16);const spent=g.cash;h.api.tickAiCeo();assert.ok(g.cash<spent);assert.equal(g.clusters.length,3);
   g.phase=13;for(let i=0;i<1100;i++){h.advance(2000);h.api.tickConstruction(2);h.api.tickAiCeo();}assert.ok(g.clusters.length>200);assert.equal(h.api.validSave(g),true);
   g.phase=14;h.api.checkMilestones();h.dismiss();h.api.renderAll();assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card:not(.planning-card)').length,g.clusters.length);assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card button').length,0);
-  assert.equal(h.window.document.querySelector('.network-grid .cluster-card').textContent,'C1');assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
+  assert.equal(h.window.document.querySelector('.network-grid [data-cluster-id] strong').textContent,'C'+g.clusters.length);assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
 });
 scenario('DevOps resolves critical incidents more slowly without final approval', (h) => {
   const g=h.fresh(7);h.worker('devops');
@@ -1450,6 +1450,11 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
     assert.equal(result.offers.find(offer => offer.id === 'pro_model').cost, 2000);
     const growth = result.purchases.find(purchase => purchase.id === 'ops_flywheel');
     assert.equal(growth.cost, 1000000);
+    const sale = ['retire_unlock', 'sale_advisor', 'sale_buyout', 'sale_diligence', 'sale_terms', 'fusion'].map(id => result.purchases.find(purchase => purchase.id === id));
+    assert.equal(sale[0].cost, 90000);
+    for (let index = 1; index < sale.length; index++) {
+      assert.ok(sale[index].seconds - sale[index - 1].seconds >= [8, 10, 12, 18, 10][index - 1], 'Each sale step must complete before the next starts');
+    }
     for (const id of ['compute_2', 'compute_1', 'delivery_pipeline', 'premium_contracts']) {
       const purchase = result.purchases.find(item => item.id === id);
       assert.ok(purchase.tasks >= ({ compute_2: 45000, compute_1: 65000, delivery_pipeline: 90000, premium_contracts: 115000 })[id]);
@@ -1650,7 +1655,7 @@ scenario('node production consumes real tokens and stops when empty', (h) => {
   h.advance(2000);h.api.tickTokenManager();assert.equal(c.tank,500);const before=g.cash;h.api.tickNetwork(1);assert.equal(g.cash,before+50);
   g.phase=14;c.workforce=c.workerSlotsMax;g.cash=1e10;g.totalTasksDone=10000;h.prepareUpgrade('retire_unlock');h.api.purchaseUpgrade('retire_unlock');assert.equal(g.phase,14);
   while(g.clusters.length<100){const item=h.api.addClusterWithNextName();item.managerAssigned=true;item.tokenManagerAssigned=true;item.workforce=item.workerSlotsMax;}
-  h.api.purchaseUpgrade('retire_unlock');assert.equal(g.phase,15);assert.equal(h.api.validSave(g),true);
+  h.api.purchaseUpgrade('retire_unlock');h.api.tickSalePreparation(8);assert.equal(g.phase,15);assert.equal(h.api.validSave(g),true);
 });
 scenario('cluster construction and node upgrades enforce stage, capacity and funds', (h) => {
   const g=h.fresh(9);g.cash=0;h.api.openCluster();assert.equal(g.clusters.length,0);
@@ -2170,7 +2175,7 @@ scenario('phase cheats preserve their requested savings goals and prepare valid 
       }
     } else assert.ok(g.cash >= upgrade.cost);
     if(stage>=13){assert.equal(g.clusters.length,upgrade.reqNodes-1);h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,checkpoint?.tasks ?? upgrade.reqTasks-3);if(g.totalTasksDone<upgrade.reqTasks)h.window.GAME.addTasks(3);}
-    h.api.purchaseUpgrade(upgrade.id);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
+    h.api.purchaseUpgrade(upgrade.id);h.api.tickSalePreparation(upgrade.saleDuration || 0);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
   }
   h.window.GAME.state.retired=true;h.window.chPh6();assert.equal(h.window.GAME.state.phase,5);assert.equal(h.window.GAME.state.totalTasksDone,4997);assert.equal(new Set(h.window.GAME.state.agents.map(agent=>agent.roleId)).size,5);assert.equal(h.window.GAME.state.retired,false);
 });

@@ -90,7 +90,11 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
-  const SAVE_VERSION = 9;
+  const SAVE_VERSION = 10;
+  const NEOCLOUD_SIZE = 25;
+  const SALE_FADE_OUT_MS = 1000;
+  const SALE_BLACK_PAUSE_MS = 400;
+  const SALE_FADE_IN_MS = 1200;
 
   const CLUSTER_COST = 50000;
   const CLUSTER_AGENT_NAMES = [
@@ -296,7 +300,7 @@
     { id: "ceo_parallel_clusters", name: "Parallel Cluster Builds", desc: "Build two clusters at once.", cost: 150000000, currency: "cash", phase: 10, requires: "ceo_quad_batch", oneTime: true },
     { id: "ceo_fast_builds", name: "Preassembled Server Racks", desc: "Halve cluster construction time.", cost: 200000000, currency: "cash", phase: 10, requires: "server_1", oneTime: true },
     { id: "server_2", name: "Autonomous Expansion Desk", desc: "Refine expansion workflows. Task pay increases by 20%.", cost: 2500000, currency: "cash", phase: 10, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1440 },
-    { id: "retire_unlock", name: "Prepare Company Sale", desc: "Reach 100 managed nodes and prepare your exit.", cost: 2000000000, currency: "cash", phase: 14, reqNodes: 100, unlockPhase: 15, effect: {}, oneTime: true, reqTasks: 1520 },
+    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, reqNodes: 100, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
 
     { id: "ceo_course", name: "AI Expansion Optimisation", desc: "Halve cluster construction time again. The AI CEO coordinates twice as often.", cost: 300000000, currency: "cash", phase: 10, requires: "server_1", unlockPhase: 11, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
     { id: "ceo_full_fit", name: "Fully Fitted Racks", desc: "Install all 16 agents during construction. Agent costs are included in the cluster price.", cost: 400000000, currency: "cash", phase: 11, requires: "ceo_course", oneTime: true },
@@ -307,7 +311,11 @@
 
     // Phase 11 (retirement)
     // Retirement now follows the four new network stages, in Phase 15.
-    { id: "fusion", name: "Golden Parachute", desc: "Sell the company, play golf and finally look after your health. Requires debt below 10, no incidents and income above twice expenses.", cost: 5000000000, currency: "cash", phase: 15, reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
+    { id: "sale_advisor", name: "Appoint a Sale Advisor", desc: "Commission a valuation and prepare the company for potential buyers.", cost: 5000000, currency: "cash", phase: 15, requires: "retire_unlock", saleDuration: 10, saleActivity: "Preparing the valuation and buyer briefing", saleOutcome: "The advisor has prepared a valuation. Your AI management team would like a word.", oneTime: true },
+    { id: "sale_buyout", name: "Discuss a Management Buyout", desc: "Your AI management team has put together a proposal. Apparently it can run things without you.", cost: 20000000, currency: "cash", phase: 15, requires: "sale_advisor", saleDuration: 12, saleActivity: "Reviewing the management team's proposal", saleOutcome: "Management has made an offer. The buyers want a closer look at the business.", oneTime: true },
+    { id: "sale_diligence", name: "Complete Due Diligence", desc: "Open the books and review the company's operations, finances and outstanding issues.", cost: 100000000, currency: "cash", phase: 15, requires: "sale_buyout", saleDuration: 18, saleActivity: "Reviewing finances, contracts and operations", saleOutcome: "Due diligence is complete. The lawyers are ready to agree the final terms.", oneTime: true },
+    { id: "sale_terms", name: "Agree Sale Terms", desc: "Settle the final offer, sign the agreements and prepare your handover.", cost: 250000000, currency: "cash", phase: 15, requires: "sale_diligence", saleDuration: 10, saleActivity: "Negotiating the final offer and agreements", saleOutcome: "The agreements are signed. One last decision, then your time belongs to you.", oneTime: true },
+    { id: "fusion", name: "Complete Company Sale", desc: "Take your golden parachute. Hand over the company and begin your next chapter.", cost: 5000000000, currency: "cash", phase: 15, requires: "sale_terms", reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
 
     // Repeatable
     { id: "token_pack_2", name: "Token Pack (500)", desc: "Get 500 tokens.", cost: 300, currency: "cash", phase: 3, effect: { giveTokens: 500 }, oneTime: false },
@@ -361,6 +369,7 @@
       retirementFinal: false,
       retiredAt: 0,
       retirementValue: 0,
+      salePreparation: { upgradeId: "", remaining: 0 },
       lastCeoAction: 0,
       cash: 0,
       tokens: 0,
@@ -484,6 +493,8 @@
     if (state.retirementFinal && !state.retired) return false;
     if (!Number.isInteger(state.phase) || state.phase < 1 || state.phase > FINAL_PHASE) return false;
     if (!["off", "manage", "scale"].includes(state.ceoMode) || !["off", "on", "layered"].includes(state.musicMode)) return false;
+    const saleStep = UPGRADES.find((upgrade) => upgrade.id === state.salePreparation.upgradeId && upgrade.saleDuration);
+    if (state.salePreparation.upgradeId ? !saleStep || state.retired || saleStep.phase !== state.phase || state.salePreparation.remaining <= 0 || state.salePreparation.remaining > saleStep.saleDuration || state.purchasedUpgrades.includes(saleStep.id) || (saleStep.requires && !state.purchasedUpgrades.includes(saleStep.requires)) : state.salePreparation.remaining !== 0) return false;
     const taskShape = { batchSize: 1, id: "", typeId: "", name: "", icon: "", client: "", workRequired: 1, workDone: 0, pay: 0, tokenCost: 0, failChance: 0, assignedAgent: null, status: "", createdAt: 0 };
     const agentShape = { id: "", name: "", olderModel: false, slotIndex: 0, roleId: "", roleName: "", icon: "", color: "", specialty: [], traitId: "", traitName: "", traitDesc: "", speed: 1, quality: 1, reliability: 1, tokenCost: 1, tokenTank: 0, status: "", autoAssign: true, currentTask: null, tasksCompleted: 0, hired: 0, tokenStarved: false, errorTime: null, provisionRemaining: 0, provisionDuration: 0 };
     const incidentShape = { id: "", templateId: "", name: "", desc: "", sev: "", cashCost: 0, tokenCost: 0, fixProgress: 0, createdAt: 0, resolved: false };
@@ -502,7 +513,7 @@
     if (!state.log.every((entry) => ["", "good", "bad", "warn", "info"].includes(entry.type))) return false;
     const assigned = state.clusters.flatMap((cluster) => cluster.workerAgentIds);
     if (new Set(assigned).size !== assigned.length) return false;
-    if (!state.clusters.every((cluster) => [8, 9, 16].includes(cluster.workerSlotsMax) && Number.isInteger(cluster.workforce) && cluster.workforce <= cluster.workerSlotsMax && cluster.managerAssigned === cluster.tokenManagerAssigned && cluster.workerAgentIds.length <= cluster.workerSlotsMax && cluster.workerAgentIds.every((id) => state.agents.some((agent) => agent.id === id && !UTILITY_ROLES.includes(agent.roleId))))) return false;
+    if (!state.clusters.every((cluster) => /^Cluster [1-9]\d*$/.test(cluster.name) && Number(cluster.name.slice(8)) <= state.clustersProvisioned && [8, 9, 16].includes(cluster.workerSlotsMax) && Number.isInteger(cluster.workforce) && cluster.workforce <= cluster.workerSlotsMax && cluster.managerAssigned === cluster.tokenManagerAssigned && cluster.workerAgentIds.length <= cluster.workerSlotsMax && cluster.workerAgentIds.every((id) => state.agents.some((agent) => agent.id === id && !UTILITY_ROLES.includes(agent.roleId))))) return false;
     return state.agents.every((agent) => agent.currentTask === null || state.tasks.some((task) => task.id === agent.currentTask && task.assignedAgent === agent.id && task.status === "agent")) &&
       state.tasks.every((task) => task.assignedAgent === null || state.agents.some((agent) => agent.id === task.assignedAgent)) &&
       (state.aiWorkerCurrentTaskId === null || state.tasks.some((task) => task.id === state.aiWorkerCurrentTaskId));
@@ -1703,6 +1714,7 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
+    if (upgrade.saleDuration && G.salePreparation.upgradeId && G.salePreparation.upgradeId !== upgrade.id) return false;
     if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
@@ -1732,6 +1744,7 @@
   function purchaseUpgrade(upgradeId) {
     const upg = UPGRADES.find((u) => u.id === upgradeId);
     if (!upg || G.retired || !upgradeVisible(upg)) return;
+    if (upg.saleDuration && G.salePreparation.upgradeId) return;
     if (upg.id.startsWith("token_pack_")) { buyTokenPacks(upg, 1); return; }
     if (upgradeId === "fusion" && !canSellCompany()) return;
     if (!upgradeStaffingReady(upg)) return;
@@ -1755,6 +1768,27 @@
       G.tokens -= upg.cost;
     }
 
+    if (upg.saleDuration) {
+      G.salePreparation = { upgradeId: upg.id, remaining: upg.saleDuration };
+      log(upg.saleActivity + ".", "info");
+      save();
+      return;
+    }
+    completeUpgradePurchase(upg);
+  }
+
+  function tickSalePreparation(dtSec) {
+    if (!G.salePreparation.upgradeId || G.retired) return;
+    G.salePreparation.remaining = Math.max(0, G.salePreparation.remaining - dtSec);
+    if (G.salePreparation.remaining > 0) return;
+    const upgrade = UPGRADES.find((item) => item.id === G.salePreparation.upgradeId);
+    G.salePreparation = { upgradeId: "", remaining: 0 };
+    completeUpgradePurchase(upgrade);
+    save();
+  }
+
+  function completeUpgradePurchase(upg) {
+    const upgradeId = upg.id;
     if (upg.oneTime) G.purchasedUpgrades.push(upgradeId);
     if (upgradeId === "ceo_recruitment" || upgradeId === "ceo_deploy_speed") {
       const speed = upgradeId === "ceo_recruitment" ? 2 : 1.5;
@@ -1928,7 +1962,7 @@
 
   function canSellCompany() {
     return !G.retired && G.phase >= FINAL_PHASE && G.techDebt < 10 &&
-      G.incidents.every((incident) => incident.resolved) && getIncomeRate() > getExpenseRate() * 2 && managedNodeCount() >= 100;
+      G.purchasedUpgrades.includes("sale_terms") && G.incidents.every((incident) => incident.resolved) && getIncomeRate() > getExpenseRate() * 2 && managedNodeCount() >= 100;
   }
 
   function sellCompany() {
@@ -2070,9 +2104,10 @@
 
   function canPlanNextCluster() {
     if (G.ceoMode !== "scale" || G.clusters.length === 0) return false;
+    if (G.phase >= 12) return true;
     const cluster = G.clusters.at(-1);
     const target = 9 + parseInt(cluster.id, 36) % 4;
-    const ready = G.phase >= 12 ? cluster.workforce : cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
+    const ready = cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
     return cluster.buildRemaining === 0 && ready >= target;
   }
 
@@ -2183,9 +2218,13 @@
     }
   }
 
+  function clusterIncomeRate(cluster) {
+    return cluster.managerAssigned && cluster.tank > 0 ? cluster.workforce * 15 * G.payMult : 0;
+  }
+
   function networkIncomeRate() {
     if (G.phase < 12) return 0;
-    return G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned && cluster.tank > 0 ? cluster.workforce * 15 * G.payMult : 0), 0);
+    return G.clusters.reduce((total, cluster) => total + clusterIncomeRate(cluster), 0);
   }
 
   function tickNetwork(dtSec) {
@@ -2684,6 +2723,34 @@
     }, MUSIC_FADE_STEP_MS);
   }
 
+  function saleTransitionElapsed() {
+    if (!G.retired || G.retirementFinal || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    const elapsed = Math.max(0, Date.now() - G.retiredAt);
+    return elapsed < SALE_FADE_OUT_MS + SALE_BLACK_PAUSE_MS + SALE_FADE_IN_MS ? elapsed : null;
+  }
+
+  function syncSaleMusic(elapsed, soundtrackPath) {
+    clearMusicFadeTimerIfAny();
+    clearDrumFadeTimerIfAny();
+    clearDrumCrossfadeTimerIfAny();
+    clearSynthFadeTimerIfAny();
+    ensureSoundtrackSource(soundtrackPath);
+    hasDoneInitialMusicFadeIn = true;
+    playAudioIfUnlocked(musicPlayer, "soundtrack");
+    if (elapsed < SALE_FADE_OUT_MS) {
+      const volume = 1 - elapsed / SALE_FADE_OUT_MS;
+      musicPlayer.volume = MUSIC_TARGET_VOLUME * volume;
+      for (const player of [drumPlayer, outgoingDrumPlayer]) {
+        if (player) player.volume = DRUM_TARGET_VOLUME * volume;
+      }
+      if (synthPlayer) synthPlayer.volume = SYNTH_TARGET_VOLUME * volume;
+    } else {
+      stopDrumPlayback();
+      stopSynthPlayback();
+      musicPlayer.volume = MUSIC_TARGET_VOLUME * clamp((elapsed - SALE_FADE_OUT_MS - SALE_BLACK_PAUSE_MS) / SALE_FADE_IN_MS, 0, 1);
+    }
+  }
+
   function syncMusicPlayback() {
     if (!musicPlayer) return;
     var mode = getCurrentMusicMode();
@@ -2696,6 +2763,12 @@
       activeSoundtrackPath = null;
       stopDrumPlayback();
       stopSynthPlayback();
+      return;
+    }
+
+    const saleElapsed = saleTransitionElapsed();
+    if (saleElapsed !== null && nextSoundtrackPath) {
+      syncSaleMusic(saleElapsed, nextSoundtrackPath);
       return;
     }
 
@@ -2862,6 +2935,7 @@
     tickDebt(dtSec);
     tickStress(dtSec);
     tickAiCeo();
+    tickSalePreparation(dtSec);
 
     pruneTasks(now);
 
@@ -3104,6 +3178,33 @@
     updateHTML(list, html);
   }
 
+  function renderSaleStatus(upgrade) {
+    if (!upgrade.saleDuration && upgrade.id !== "fusion") return "";
+    const steps = UPGRADES.filter((item) => item.saleDuration || item.id === "fusion");
+    const previous = steps.filter((item) => G.purchasedUpgrades.includes(item.id)).at(-1);
+    let html = "<p class='sale-step-label'>Company sale · Step " + (steps.indexOf(upgrade) + 1) + " of " + steps.length + "</p>";
+    if (previous) html += "<p class='sale-story'>" + previous.saleOutcome + "</p>";
+    if (G.salePreparation.upgradeId === upgrade.id) {
+      const progress = 100 * (1 - G.salePreparation.remaining / upgrade.saleDuration);
+      return html + "<p class='sale-activity' role='status'>" + upgrade.saleActivity + " · " + Math.ceil(G.salePreparation.remaining) + "s remaining</p><div class='task-bar sale-progress' role='progressbar' aria-label='Sale preparation' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + Math.round(progress) + "'><div class='task-bar-fill' style='width:" + progress + "%'></div></div>";
+    }
+    const nodes = completedClusterCount();
+    if (upgrade.reqNodes) html += "<p class='sale-size'>" + (nodes >= upgrade.reqNodes ? "Company size requirement met: " + nodes + " online" : "Company size: " + nodes + " / " + upgrade.reqNodes + " online") + "</p>";
+    if (upgrade.id === "fusion") {
+      const incidents = G.incidents.filter((incident) => !incident.resolved).length;
+      const income = getIncomeRate();
+      const expenses = getExpenseRate();
+      const checks = [
+        [G.cash >= upgrade.cost, "Cash: " + fmtCash(G.cash) + " / " + fmtCash(upgrade.cost)],
+        [G.techDebt < 10, "Technical debt: " + Math.round(G.techDebt) + " / below 10"],
+        [incidents === 0, incidents + " unresolved incidents"],
+        [income > expenses * 2, "Income $" + fmtTokens(income) + "/s must exceed twice expenses ($" + fmtTokens(expenses * 2) + "/s)"],
+      ];
+      html += "<ul class='sale-readiness' aria-label='Sale readiness'>" + checks.map(([ready, label]) => "<li class='" + (ready ? "ready" : "waiting") + "'>" + (ready ? "✓ " : "○ ") + label + "</li>").join("") + "</ul>";
+    }
+    return html;
+  }
+
   function renderUpgradeSection() {
     var section = $("#section-upgrades");
     if (!G.uiRevealed.upgrades) { section.style.display = "none"; return; }
@@ -3142,14 +3243,16 @@
       var cost = getUpgradeCost(u);
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       var requiredNodes = nodeRequirement(u);
+      var preparing = G.salePreparation.upgradeId === u.id;
       var requirementsMet = upgradeStaffingReady(u) && (!u.requires || G.purchasedUpgrades.includes(u.requires)) && (!u.reqTasks || G.totalTasksDone >= u.reqTasks) && (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
-      html += "<div class='card upgrade-card'>" +
+      html += "<div class='card upgrade-card" + (u.saleDuration || u.id === "fusion" ? " sale-card" : "") + "'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
         "<div class='desc'>" + u.desc + "</div>" +
+        renderSaleStatus(u) +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford || !requirementsMet ? "disabled" : "") + ">" + (u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
+        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (preparing || !canAfford || !requirementsMet ? "disabled" : "") + ">" + (preparing ? "In progress" : u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>" +
         "</div>";
     }
@@ -3284,18 +3387,83 @@
     return "<span class='capacity-slot " + (filled ? "filled" : "empty") + "' title='" + identity + (filled ? " online" : " vacant") + "'>" + (filled ? label : "+") + "</span>";
   }
 
+  function renderClusterCard(cluster) {
+    const compact = G.phase >= 12;
+    const minimal = G.phase >= 14;
+    const delegated = G.phase >= 10 && G.ceoMode !== "off";
+    const count = compact ? cluster.workforce : cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
+    const title = cluster.name + ": " + count + "/" + cluster.workerSlotsMax + " agents, " + fmtTokens(cluster.tank) + " tokens";
+    let html = "<div class='cluster-card' data-cluster-id='" + cluster.id + "' title='" + title + "'>";
+    if (minimal) html += "<strong>" + cluster.name.replace("Cluster ", "C") + "</strong>";
+    else {
+      html += "<div class='cluster-hdr'><strong>" + cluster.name + "</strong>";
+      if (!compact && count === cluster.workerSlotsMax && G.clusters.length > 1) html += "<button class='btn btn-outline btn-sm cluster-sell' onclick=\"GAME.sellCluster('" + cluster.id + "')\">Sell</button>";
+      html += "</div>";
+    }
+    if (cluster.buildRemaining > 0) {
+      const progress = clamp(100 * (1 - cluster.buildRemaining / cluster.buildDuration), 0, 100);
+      const stage = ["Procuring GPUs", "Racking hardware", "Installing software", "Final checks"][Math.min(3, Math.floor(progress / 25))];
+      return html + "<p class='text-sm'>" + stage + "</p><div class='task-bar' role='progressbar' aria-label='Cluster construction' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + Math.round(progress) + "'><div class='task-bar-fill' style='width:" + progress + "%'></div></div></div>";
+    }
+    if (!minimal) {
+      const installing = cluster.workerAgentIds.some((id) => G.agents.find((agent) => agent.id === id).status === "provisioning");
+      const status = count < cluster.workerSlotsMax ? (count > 0 ? "Partially Operational" : installing ? "Installing agents" : "Needs Agents") : cluster.tank > 0 ? "Operating" : "Awaiting tokens";
+      html += "<p class='text-sm cluster-status" + (status === "Needs Agents" ? " needs-agents" : "") + "'>" + status + "</p><div class='cluster-capacity' style='--cluster-columns:" + (compact ? 8 : cluster.workerSlotsMax === 9 ? 3 : 4) + "' aria-label='" + count + " of " + cluster.workerSlotsMax + " agents online'>";
+      for (let index = 0; index < cluster.workerSlotsMax; index++) html += renderClusterSlot(cluster, index, delegated);
+      html += "</div>";
+    }
+    return html + "</div>";
+  }
+
+  function renderPlanningCard() {
+    const funding = G.cash < expansionFundingTarget();
+    const stage = funding ? "Securing " + fmtCash(provisionCost() * 2) + " funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
+    return "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + (G.phase >= 14 ? "C" : "Cluster ") + (G.clustersProvisioned + 1) + "</strong><span>Planning</span><small>" + stage + "</small></div>";
+  }
+
+  function neocloudGroups(planning) {
+    const groups = new Map();
+    for (const cluster of G.clusters.slice().reverse()) {
+      const number = Math.ceil(Number(cluster.name.slice(8)) / NEOCLOUD_SIZE);
+      if (!groups.has(number)) groups.set(number, { number: number, clusters: [], planning: false });
+      groups.get(number).clusters.push(cluster);
+    }
+    if (planning) {
+      const number = Math.ceil((G.clustersProvisioned + 1) / NEOCLOUD_SIZE);
+      if (!groups.has(number)) groups.set(number, { number: number, clusters: [], planning: false });
+      groups.get(number).planning = true;
+    }
+    return [...groups.values()].sort((a, b) => b.number - a.number);
+  }
+
+  function renderNeoclouds(planning) {
+    const groups = neocloudGroups(planning);
+    let html = "<div class='neocloud-list'>";
+    for (const group of groups) {
+      const online = group.clusters.filter(clusterOnline).length;
+      const building = group.clusters.filter((cluster) => cluster.buildRemaining > 0).length;
+      const income = group.clusters.reduce((total, cluster) => total + clusterIncomeRate(cluster), 0);
+      const active = group === groups[0] || building > 0;
+      html += "<section class='neocloud" + (active ? " active" : "") + "' data-neocloud='" + group.number + "' aria-label='Neocloud " + group.number + "'><div class='neocloud-header'><strong>Neocloud " + group.number + "</strong><span>" + online + " online" + (building ? " · " + building + " building" : "") + "</span></div><p class='neocloud-summary'>C" + ((group.number - 1) * NEOCLOUD_SIZE + 1) + "–C" + group.number * NEOCLOUD_SIZE + " · $" + fmtTokens(income) + "/s</p><div class='network-grid'>";
+      if (group.planning) html += renderPlanningCard();
+      for (const cluster of group.clusters) html += renderClusterCard(cluster);
+      html += "</div></section>";
+    }
+    return html + "</div>";
+  }
+
   function renderClusterSection() {
     const section = $("#section-clusters");
     section.style.display = G.uiRevealed.clusters ? "" : "none";
     if (!G.uiRevealed.clusters) return;
     const compact = G.phase >= 12;
     const minimal = G.phase >= 14;
-    const delegated = G.phase >= 10 && G.ceoMode !== "off";
     const planning = canPlanNextCluster();
     const tiles = G.clusters.length + (canManuallyProvisionCluster() || planning ? 1 : 0);
     const density = Math.max(0, tiles - 3);
     const overview = !compact && density > 0;
     $("#cluster-count").textContent = managedNodeCount() + " online / " + G.clusters.length + " clusters";
+    $("#cluster-heading").textContent = minimal ? "Neoclouds" : "Clusters";
     let html = "";
     if (G.phase >= 10) {
       const purchase = deliveryMetrics().purchase;
@@ -3304,39 +3472,15 @@
       else html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🧠</span><div><strong>AI CEO</strong><p class='ceo-status'>" + (G.ceoMode === "manage" ? "Adding agents to existing clusters" : "Adding agents and expanding") + "</p></div></div>";
       html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🪙</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
     }
-    html += "<div class='" + (minimal ? "network-grid" : compact ? "node-grid" : "node-grid agent-grid") + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(152, 180 - density * 6) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
-    for (const cluster of G.clusters) {
-      const count = compact ? cluster.workforce : cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
-      const title = cluster.name + ": " + count + "/" + cluster.workerSlotsMax + " agents, " + fmtTokens(cluster.tank) + " tokens";
-      html += "<div class='cluster-card' title='" + title + "'>";
-      if (minimal) html += "<strong>" + cluster.name.replace("Cluster ", "C") + "</strong>";
-      else {
-        html += "<div class='cluster-hdr'><strong>" + cluster.name + "</strong>";
-        if (!compact && count === cluster.workerSlotsMax && G.clusters.length > 1) html += "<button class='btn btn-outline btn-sm cluster-sell' onclick=\"GAME.sellCluster('" + cluster.id + "')\">Sell</button>";
-        html += "</div>";
-      }
-      if (cluster.buildRemaining > 0) {
-        const progress = clamp(100 * (1 - cluster.buildRemaining / cluster.buildDuration), 0, 100);
-        const stage = ["Procuring GPUs", "Racking hardware", "Installing software", "Final checks"][Math.min(3, Math.floor(progress / 25))];
-        html += "<p class='text-sm'>" + stage + "</p><div class='task-bar' role='progressbar' aria-label='Cluster construction' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + Math.round(progress) + "'><div class='task-bar-fill' style='width:" + progress + "%'></div></div></div>";
-        continue;
-      }
-      if (!minimal) {
-        const installing = cluster.workerAgentIds.some((id) => G.agents.find((agent) => agent.id === id).status === "provisioning");
-        const status = count < cluster.workerSlotsMax ? (count > 0 ? "Partially Operational" : installing ? "Installing agents" : "Needs Agents") : cluster.tank > 0 ? "Operating" : "Awaiting tokens";
-        html += "<p class='text-sm cluster-status" + (status === "Needs Agents" ? " needs-agents" : "") + "'>" + status + "</p><div class='cluster-capacity' style='--cluster-columns:" + (compact ? 8 : cluster.workerSlotsMax === 9 ? 3 : 4) + "' aria-label='" + count + " of " + cluster.workerSlotsMax + " agents online'>";
-        for (let index = 0; index < cluster.workerSlotsMax; index++) html += renderClusterSlot(cluster, index, delegated);
-        html += "</div>";
-      }
+    if (minimal) html += renderNeoclouds(planning);
+    else {
+      html += "<div class='" + (compact ? "node-grid" : "node-grid agent-grid") + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(152, 180 - density * 6) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
+      if (compact && planning) html += renderPlanningCard();
+      for (const cluster of compact ? G.clusters.slice().reverse() : G.clusters) html += renderClusterCard(cluster);
+      if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
+      if (!compact && planning) html += renderPlanningCard();
       html += "</div>";
     }
-    if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
-    if (planning) {
-      const funding = G.cash < expansionFundingTarget();
-      const stage = funding ? "Securing " + fmtCash(provisionCost() * 2) + " funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
-      html += "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + (minimal ? "C" : "Cluster ") + (G.clustersProvisioned + 1) + "</strong><span>Planning</span><small>" + stage + "</small></div>";
-    }
-    html += "</div>";
     updateHTML($("#cluster-list"), html);
   }
 
@@ -3418,14 +3562,20 @@
   }
 
   function renderEnding() {
-    $("#ending-overlay").hidden = !G.retired;
-    $("#game-container").hidden = G.retired;
-    $("#top-bar").hidden = G.retired;
+    const elapsed = saleTransitionElapsed();
+    const transitioning = elapsed !== null;
+    const companyHidden = G.retired && (!transitioning || elapsed >= SALE_FADE_OUT_MS);
+    $("#sale-transition").hidden = !transitioning;
+    if (transitioning) $("#sale-transition").style.opacity = elapsed < SALE_FADE_OUT_MS ? elapsed / SALE_FADE_OUT_MS : 1 - clamp((elapsed - SALE_FADE_OUT_MS - SALE_BLACK_PAUSE_MS) / SALE_FADE_IN_MS, 0, 1);
+    $("#ending-overlay").hidden = !G.retired || (transitioning && elapsed < SALE_FADE_OUT_MS + SALE_BLACK_PAUSE_MS);
+    $("#game-container").hidden = companyHidden;
+    $("#top-bar").hidden = companyHidden;
     $("#ending-title").textContent = G.retirementFinal ? "No more tasks." : "You retired early!";
     $("#ending-story").textContent = G.retirementFinal ? "You leave the laptop closed. The next model can wait. Your time belongs to you." : "A Tuesday morning on the golf course. A proper night's sleep. That health check you kept putting off. For once, your time belongs to you.";
     $("#ending-summary").textContent = "You completed " + fmt(G.totalTasksDone) + " tasks and walked away with " + fmtCash(G.retirementValue) + ".";
     $("#ending-choices").hidden = !G.retired || G.retirementFinal;
     $("#btn-ending-reset").hidden = !G.retirementFinal;
+    if (G.retired) syncMusicPlayback();
   }
 
   function renderLogSection() {
@@ -3463,8 +3613,8 @@
 
   function syncDialogFocus() {
     const dialog = document.querySelector("#ending-overlay:not([hidden])") || document.querySelector("#intro-overlay:not(.hidden)") || document.querySelector("#settings-popup.show, #milestone-popup.show, #offline-popup.show, #rotate-overlay.show");
-    $("#game-container").inert = !!dialog;
-    $("#top-bar").inert = !!dialog;
+    $("#game-container").inert = !!dialog || G.retired;
+    $("#top-bar").inert = !!dialog || G.retired;
     if (dialog !== activeDialog) {
       if (dialog) {
         if (!activeDialog) previousFocus = document.activeElement;
@@ -3496,6 +3646,10 @@
   function renderAll() {
     const focusedAction = document.activeElement.getAttribute("onclick");
     renderEnding();
+    if (G.retired) {
+      syncDialogFocus();
+      return;
+    }
     $("#game-container").inert = G.retired;
     renderLayout();
     renderTopBar();
@@ -3682,7 +3836,10 @@
     while (changed) {
       const before = G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
       fillCheatCompany(requiredClusters);
-      for (const upgrade of preceding) purchaseUpgrade(upgrade.id);
+      for (const upgrade of preceding) {
+        purchaseUpgrade(upgrade.id);
+        if (G.salePreparation.upgradeId) tickSalePreparation(G.salePreparation.remaining);
+      }
       changed = before !== G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
     }
     fillCheatCompany(requiredClusters);
@@ -3691,6 +3848,7 @@
     G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
     G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
+    if (target && target.reqNodes) G.cash = Math.max(G.cash, provisionCost() * 2 + getUpgradeCost(target));
     if (number === 3) G.cash = 1900;
     if (number === 4) G.cash = 1300;
     G.tokens = phase >= 9 ? Math.max(100000, G.clusters.length * 12000) : phase >= 6 ? 50000 : phase >= 3 ? 10000 : 0;

@@ -17,8 +17,8 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 11 | 28M–32M | $1.1M–$6.2M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
 | 12 | 46M–51M | $1.3M–$4.9M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
 | 13 | 120M–125M | $11.2M–$16.0M | Global Expansion $2B at 40 completed nodes |
-| 14 | 228M–232M | $19.7M–$26.3M | Reach 100 completed nodes and prepare the sale for $2B |
-| 15 | 470M–475M | $2.7M–$14.1M | Buy Golden Parachute for $5B while expansion continues; sampled retirement is around 1.20B–1.22B completed tasks |
+| 14 | 228M–232M | $19.7M–$26.3M | Neoclouds of 25 clusters; Host Investor Talks for $90K with 100 completed nodes and eight seconds of preparation |
+| 15 | 297M–302M | $617.5M–$620.9M | Advisor $5M, management buyout discussion $20M, due diligence $100M, terms $250M, then Complete Company Sale for $5B; sampled retirement is around 981M–988M completed tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
 
@@ -53,8 +53,8 @@ These task milestones control visibility in the background. Existing staffing re
 - `chPh10()` loads late Phase 9 at 4.6M tasks, $30M and 3 fully staffed clusters, leaving $5M to earn for AI CEO Readiness.
 - `chPh11()` loads late Phase 10 at 27M tasks, $280M and 18 fully staffed clusters, with $20M left to earn for AI Expansion Optimisation.
 - Other `chPhN()` shortcuts likewise prepare the transition into that numbered phase. Their injected cash and purchased upgrades are not balance measurements.
-- `chRetire()` loads an immediately purchasable Golden Parachute.
+- `chRetire()` loads an immediately purchasable Complete Company Sale action, with every preparation step complete.
 
 ## Expansion funding
 
-CEO expansion keeps cash equal to twice the next cluster price before opening a new project. Funding pauses are expected and automatically end when sufficient cash is available. There is no hard cluster-count limit. The Planning card shows only the cluster funding amount. There is no additional $5B exit reserve in Phase 15; expanding clusters can spend that cash until the player buys Golden Parachute. Eventually, the rising price of new clusters creates longer opportunities to buy the exit.
+CEO expansion keeps cash equal to twice the next cluster price before opening a new project. Funding pauses are expected and automatically end when sufficient cash is available. There is no hard cluster-count limit. The Planning card shows only the cluster funding amount. There is no additional $5B exit reserve in Phase 15; expanding clusters can spend that cash until the player completes the company sale. Preparation takes 58 active seconds across five purchases, keeping the process visible while the company grows. The sampled journeys finish with 309–311 clusters, retaining the target of roughly one billion tasks at retirement.

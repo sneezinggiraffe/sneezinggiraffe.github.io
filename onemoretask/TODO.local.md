@@ -1,5 +1,5 @@
 # Deferred work
 
-- [ ] Give Prepare Company Sale a meaningful effect instead of an empty upgrade.
-- [ ] Improve ending.
-- [ ] Revisit large-fleet presentation: pinned construction, earlier compaction, or grouped clusters. The current view uses the main control-panel scrollbar.
+- [x] Replace Prepare Company Sale with investor talks, an advisor, a management buyout discussion, due diligence, terms and completion.
+- [x] Fade the company and music to black, then reveal retirement.
+- [x] Keep autonomous clusters newest first and introduce neoclouds of 25 clusters at Phase 14.

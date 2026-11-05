@@ -251,6 +251,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 #save-notice{position:fixed;bottom:0;left:0;right:0;z-index:3000;background:var(--bg2);border:2px solid var(--yellow);padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 #ending-overlay{position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px;overflow:auto}
+#sale-transition{position:fixed;inset:0;z-index:2600;background:#000;transition:opacity .2s linear;pointer-events:auto}
 .ending-box{max-width:560px;text-align:center;line-height:1.7}
 .ending-box h1{font-size:2.5rem;color:var(--green)}
 .ending-box p{margin:24px 0}
@@ -280,6 +281,9 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 .company-leadership{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}.leadership-agent{display:flex;gap:8px;align-items:flex-start;margin:0;padding:10px;min-width:0}.leadership-agent .agent-icon{font-size:1.3rem;flex:0 0 28px;width:28px;height:28px}.leadership-agent p{font-size:.72rem;margin:5px 0 0;overflow-wrap:anywhere}.leadership-agent .token-purchase{color:var(--text3)}
 .provision-card{border:2px dashed var(--accent2);background:transparent;color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:115px;font-size:.8rem}.provision-card:hover:not(:disabled){background:var(--bg3);border-color:var(--accent)}.provision-icon{font-size:1.7rem;line-height:1}.provision-card:disabled{opacity:.45;cursor:not-allowed}.network-grid .provision-card{grid-column:span 2;min-height:60px;font-size:.65rem;gap:4px}.network-grid .provision-icon{font-size:1rem}
 .planning-card{border:2px dashed var(--accent2);background:transparent;color:var(--text2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;min-height:115px;overflow-wrap:anywhere}.planning-card small{font-size:.65rem}.network-grid .planning-card{grid-column:span 2;min-height:60px;font-size:.65rem}
+.neocloud-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.neocloud{min-width:0;padding:10px;border:1px solid var(--bg4);border-radius:var(--radius);background:var(--bg)}.neocloud.active{grid-column:1/-1;border-color:var(--accent2);background:var(--bg2)}.neocloud-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.neocloud-header strong{font-size:.85rem;color:var(--accent)}.neocloud-header span,.neocloud-summary{font-size:.68rem;color:var(--text2);font-variant-numeric:tabular-nums}.neocloud .neocloud-summary{margin:5px 0 9px}.neocloud:not(.active) .network-grid{grid-template-columns:repeat(auto-fill,minmax(30px,1fr));gap:3px}.neocloud:not(.active) .cluster-card{padding:5px 1px;font-size:.6rem}.neocloud .network-grid .cluster-card{min-width:0;overflow-wrap:anywhere}.neocloud .network-grid .task-bar{margin-top:6px}.neocloud .network-grid p{font-size:.6rem;margin:5px 0 0}
+.sale-card{border-color:#40516a}.sale-card .upgrade-info{min-width:0}.sale-step-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:10px 0 6px}.sale-story,.sale-activity,.sale-size{font-size:.74rem;line-height:1.5;color:var(--text2);margin:7px 0}.sale-activity{color:var(--accent)}.sale-progress{margin:8px 0 0}.sale-readiness{list-style:none;margin:8px 0 0;padding:0;font-size:.7rem;line-height:1.7;overflow-wrap:anywhere}.sale-readiness .ready{color:var(--green)}.sale-readiness .waiting{color:var(--yellow)}
+@media(max-width:480px){.neocloud-list{grid-template-columns:1fr}}
 .delivery-metrics{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr));gap:12px;align-items:center;margin:12px 0;color:var(--text2);font-variant-numeric:tabular-nums}.delivery-metrics>*{min-width:0;overflow-wrap:anywhere}.delivery-metrics>span{font-size:.8rem}.delivery-metrics strong{font-size:clamp(1rem,2.3vw,1.5rem);color:var(--accent)}.delivery-metrics small{display:block;font-size:.7rem;font-weight:400}.recent-deliveries{list-style:none;color:var(--text2);font-size:.78rem;margin:10px 0;padding:0}.recent-deliveries li{margin:5px 0}.recent-deliveries:empty{display:none}
 @media(max-width:420px){.company-leadership{grid-template-columns:1fr}}
 .hire-slot{border:2px dashed var(--accent2);display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;color:var(--text2);width:100%;min-height:76px}.hire-slot:not(.management-agent){background:transparent}.hire-slot:disabled{opacity:.45;cursor:not-allowed}.hire-slot:hover:not(:disabled){border-color:var(--accent)}
@@ -296,6 +300,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
   <button id="btn-save-retry" class="btn btn-outline">Retry save</button>
   <button id="btn-save-reset" class="btn btn-red">Reset saved progress</button>
 </div>
+<div id="sale-transition" aria-hidden="true" hidden></div>
 <div id="ending-overlay" role="dialog" aria-modal="true" aria-labelledby="ending-title" hidden>
   <div class="ending-box">
     <div class="retirement-scene" aria-hidden="true">⛳</div>
@@ -380,7 +385,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
     <div id="section-clusters" class="cp-section" style="display:none">
       <div class="card">
         <div class="section-hdr" style="margin-bottom:8px">
-          <h3 style="margin-bottom:0">Clusters</h3>
+          <h3 id="cluster-heading" style="margin-bottom:0">Clusters</h3>
           <span class="sub" id="cluster-count"></span>
         </div>
         <div id="cluster-list"></div>

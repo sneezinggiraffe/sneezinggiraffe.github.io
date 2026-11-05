@@ -16,6 +16,7 @@ function harness(saved, options = {}) {
   let seed = options.seed || 17;
   const timers = [];
   window.Date.now = () => now;
+  window.matchMedia = () => ({ matches: options.reducedMotion !== false });
   window.Math.random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const audioPlayers=[];
   window.Audio = class extends window.EventTarget { constructor() { super(); this.paused = true; this.currentTime = 0; audioPlayers.push(this); } pause() { this.paused = true; } play() { this.paused = false; return Promise.resolve(); } load() {} removeAttribute() {} };
