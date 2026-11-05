@@ -1,21 +1,28 @@
 const { test, expect } = require('@playwright/test');
 
-for (const width of [1440, 390, 320]) {
-  test(`central opening leads to a working inbox task and a lone introductory upgrade at ${width}px`, async ({ page }) => {
+for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], [844, 390]]) {
+  test(`central opening leads to a working inbox task and a lone introductory upgrade at ${width}x${height}px`, async ({ page }) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.setViewportSize({width, height: 900});
+    await page.setViewportSize({width, height});
     const start = Date.now();
     await page.clock.install({time: new Date(start)});
     await page.clock.pauseAt(new Date(start + 1000));
     await page.goto('/');
     await expect(page.locator('#intro-overlay')).toBeVisible();
-    await page.getByRole('button', {name: 'Find Work', exact: true}).click();
+    await expect(page.locator('#intro-overlay h2')).toBeInViewport();
+    const findWork = page.getByRole('button', {name: 'Find Work', exact: true});
+    const initialButton = await findWork.boundingBox();
+    const clickPosition = {x: initialButton.x + initialButton.width / 2, y: initialButton.y + initialButton.height / 2};
+    await page.mouse.click(clickPosition.x, clickPosition.y);
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
     for (let index = 0; index < 5; index++) {
       const work = page.getByRole('button', {name: 'Do Task', exact: true});
       await expect(work).toBeVisible();
-      await work.click();
+      const taskButton = await work.boundingBox();
+      expect(taskButton.x + taskButton.width / 2).toBeCloseTo(clickPosition.x, 0);
+      expect(taskButton.y + taskButton.height / 2).toBeCloseTo(clickPosition.y, 0);
+      await page.mouse.click(clickPosition.x, clickPosition.y);
       await page.clock.runFor(1000);
     }
     await expect(page.locator('#early-task-section')).toBeHidden();

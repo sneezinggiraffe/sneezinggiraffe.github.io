@@ -14,6 +14,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
   --accent:#06b6d4;--accent2:#0891b2;--green:#10b981;--red:#ef4444;
   --orange:#fb923c;--yellow:#f59e0b;--purple:#8b5cf6;--pink:#ec4899;
   --cash:#22c55e;--token:#06b6d4;--debt:#ef4444;
+  --opening-action-y:clamp(300px,60dvh,calc(100dvh - 40px));--opening-action-height:64px;
   --radius:8px;--shadow:0 2px 8px rgba(0,0,0,.4);
 }
 html{font-size:14px}
@@ -64,9 +65,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* Early task section (stages 0-2) */
 #early-task-section{text-align:center;padding:80px 20px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh}
-#early-task-display{margin-bottom:20px;width:100%;max-width:400px;min-height:70px}
+#early-task-display{position:fixed;left:50%;translate:-50% 0;bottom:calc(100dvh - var(--opening-action-y) + var(--opening-action-height)/2 + 20px);padding:0 20px;width:100%;max-width:400px;min-height:70px}
 #early-task-icon-name{font-size:1.3rem;font-weight:700;margin-bottom:12px}
-#btn-do-task{padding:20px 50px;font-size:1.3rem;background:var(--accent);color:#000;border-radius:12px;font-weight:700;transition:transform .1s,background .15s}
+#btn-do-task{position:fixed;left:50%;top:var(--opening-action-y);translate:-50% -50%;height:var(--opening-action-height);padding:20px 50px;font-size:1.3rem;background:var(--accent);color:#000;border-radius:12px;font-weight:700;transition:transform .1s,background .15s}
 #btn-do-task:hover{background:var(--accent2)}
 #btn-do-task:active{transform:scale(.95)}
 
@@ -212,7 +213,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
 /* Intro / tutorial overlay */
 #intro-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:2000;display:flex;align-items:center;justify-content:center}
 #intro-overlay.hidden{display:none}
-#intro-overlay .intro-box{background:var(--bg2);border:1px solid var(--accent);border-radius:12px;padding:30px;max-width:500px;width:90%;text-align:center}
+#intro-overlay .intro-box{position:absolute;bottom:calc(100dvh - var(--opening-action-y) - var(--opening-action-height)/2 - 31px);background:var(--bg2);border:1px solid var(--accent);border-radius:12px;padding:30px;max-width:500px;width:90%;text-align:center}
+#btn-start-game{height:var(--opening-action-height);padding:10px 30px;font-size:1rem}
 #intro-overlay h2{color:var(--accent);margin-bottom:12px;font-size:1.4rem}
 #intro-overlay p{color:var(--text2);margin-bottom:16px;line-height:1.5;font-size:.9rem}
 
@@ -487,7 +489,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
     <h2>One More Task</h2>
     <p id="intro-story">You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
     <p id="intro-hint" style="font-size:.8rem;color:var(--text3)">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</p>
-    <button class="btn btn-primary" id="btn-start-game" style="padding:10px 30px;font-size:1rem">Find Work</button>
+    <button class="btn btn-primary" id="btn-start-game">Find Work</button>
   </div>
 </div>
 
