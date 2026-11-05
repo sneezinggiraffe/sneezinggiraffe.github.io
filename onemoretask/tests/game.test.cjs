@@ -1599,6 +1599,17 @@ scenario('reset cannot be undone by the pagehide autosave', (h) => {
   h.fresh();h.api.save();h.api.performFullReset();h.window.dispatchEvent(new h.window.Event('pagehide'));
   assert.equal(h.window.localStorage.getItem('ai_empire_save'),null);assert.equal(h.api.save(),false);
 });
+scenario('chPh0 clears saved progress even after retirement and prevents autosave restoring it', (h) => {
+  const g = h.fresh();
+  g.cash = 12345;
+  g.retired = true;
+  h.api.save();
+  assert.notEqual(h.window.localStorage.getItem('ai_empire_save'), null);
+  h.window.chPh0();
+  h.window.dispatchEvent(new h.window.Event('pagehide'));
+  assert.equal(h.window.localStorage.getItem('ai_empire_save'), null);
+  assert.equal(h.api.save(), false);
+});
 scenario('token top-up stays enabled even when the reserve is empty', (h) => {
   const g=h.fresh(4);g.tokens=0;g.uiRevealed.agents=true;const a=h.worker();a.tokenTank=5;h.api.renderAgentSection();
   const button=h.window.document.querySelector('[onclick="GAME.topUpAgent(\''+a.id+'\')"]');assert.equal(button.disabled,false);
