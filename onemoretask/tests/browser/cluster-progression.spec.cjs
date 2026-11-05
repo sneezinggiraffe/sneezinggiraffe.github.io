@@ -83,7 +83,44 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 
-  test(`Phase 14 builds two neoclouds together and delays investor talks until 500 completed clusters at ${width}px`, async ({ page }) => {
+  test(`Factory-Direct Hardware is a separate cost upgrade before Dedicated Hardware Supply at ${width}px`, async ({ page }) => {
+    const h = harness();
+    const g = h.fresh(14);
+    g.cash = 2e9;
+    g.tokens = 1e9;
+    g.totalTasksDone = 1e9;
+    g.aiWorkerShutdown = true;
+    h.prepareUpgrade('factory_direct');
+    for (let index = 0; index < 400; index++) h.fullCluster().tank = 4000;
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({width, height: 900});
+    await page.clock.install();
+    await page.addInitScript(value => {
+      localStorage.setItem('ai_empire_save', value);
+      sessionStorage.setItem('rotate_dismissed', '1');
+    }, raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const factory = page.locator('[onclick="GAME.buy(\'factory_direct\')"]');
+    const supply = page.locator('[onclick="GAME.buy(\'neocloud_supply_chain\')"]');
+    await expect(factory.locator('xpath=ancestor::div[contains(@class,"upgrade-card")]')).toContainText('Factory-Direct Hardware');
+    await expect(factory).toHaveText('$2.00B');
+    await expect(supply).toHaveCount(0);
+    await factory.click();
+    await page.clock.runFor(200);
+    await expect(factory).toHaveCount(0);
+    await expect(supply).toBeDisabled();
+    expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('factory_direct'))).toBe(true);
+    await page.locator('#section-upgrades').screenshot({path: `test-results/factory-direct-${width}.png`});
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+
+  test(`Phase 14 builds two neoclouds together and requires all upgrades before investor talks at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh(14);
     g.ceoMode = 'scale';
@@ -93,7 +130,7 @@ for (const width of [1440, 390]) {
     g.aiWorkerShutdown = true;
     g.incidentsExplained = true;
     h.prepareUpgrade('parallel_neoclouds');
-    for (let index = 0; index < 400; index++) h.fullCluster().tank = 4000;
+    for (let index = 0; index < 500; index++) h.fullCluster().tank = 4000;
     h.api.checkMilestones();
     h.dismiss();
     g.lastTick = Date.now();
@@ -120,21 +157,21 @@ for (const width of [1440, 390]) {
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(50);
     await expect(page.locator('.neocloud:has([aria-label="Cluster construction"])')).toHaveCount(2);
     const order = await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.querySelector('strong').textContent));
-    expect(order).toEqual(Array.from({length: 450}, (_, index) => 'C' + (450 - index)));
-    await page.locator('[data-neocloud="18"]').scrollIntoViewIfNeeded();
+    expect(order).toEqual(Array.from({length: 550}, (_, index) => 'C' + (550 - index)));
+    await page.locator('[data-neocloud="22"]').scrollIntoViewIfNeeded();
     await page.screenshot({path: `test-results/parallel-neoclouds-${width}.png`, animations: 'disabled'});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const remaining = await page.evaluate(() => {
       GAME.state.cash = 0;
       window.dispatchEvent(new Event('pagehide'));
-      return GAME.state.clusters.slice(400).map(cluster => cluster.buildRemaining);
+      return GAME.state.clusters.slice(500).map(cluster => cluster.buildRemaining);
     });
     await page.reload();
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    expect(await page.evaluate(() => GAME.state.clusters.slice(400).map(cluster => cluster.buildRemaining))).toEqual(remaining);
+    expect(await page.evaluate(() => GAME.state.clusters.slice(500).map(cluster => cluster.buildRemaining))).toEqual(remaining);
     await page.clock.runFor(300);
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
-    await expect(talks).toHaveCount(0);
+    await expect(talks).toBeDisabled();
     expect(await page.evaluate(() => GAME.state.phase)).toBe(14);
     await page.evaluate(() => GAME.addCash(1e10));
     await page.clock.runFor(500);

@@ -1,0 +1,76 @@
+const { test, expect } = require('@playwright/test');
+
+for (const width of [1440, 390, 320]) {
+  test(`central opening leads to a working inbox task and a lone introductory upgrade at ${width}px`, async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.setViewportSize({width, height: 900});
+    const start = Date.now();
+    await page.clock.install({time: new Date(start)});
+    await page.clock.pauseAt(new Date(start + 1000));
+    await page.goto('/');
+    await expect(page.locator('#intro-overlay')).toBeVisible();
+    await page.getByRole('button', {name: 'Find Work', exact: true}).click();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    for (let index = 0; index < 5; index++) {
+      const work = page.getByRole('button', {name: 'Do Task', exact: true});
+      await expect(work).toBeVisible();
+      await work.click();
+      await page.clock.runFor(1000);
+    }
+    await expect(page.locator('#early-task-section')).toBeHidden();
+    await expect(page.locator('#task-list .task-card')).toHaveCount(1);
+    await expect(page.locator('#task-list')).toContainText('Set Up Your Inbox');
+    await expect(page.locator('#task-list')).toContainText('Pay: $0');
+    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(5);
+    await expect(page.locator('#milestone-popup')).toBeHidden();
+    await page.clock.runFor(5000);
+    await expect(page.locator('#task-list .task-card')).toHaveCount(1);
+    await page.screenshot({path: `test-results/inbox-waiting-${width}.png`, fullPage: true});
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(page.locator('#task-list .task-card')).toHaveCount(1);
+    await page.getByRole('button', {name: 'Work', exact: true}).focus();
+    await page.keyboard.press('Enter');
+    await page.clock.runFor(400);
+    await expect(page.locator('#task-list .task-card')).toHaveCount(3);
+    const inbox = page.locator('#task-list .task-card').filter({hasText: 'Set Up Your Inbox'});
+    await expect(inbox.getByRole('button', {name: 'Working...', exact: true})).toBeVisible();
+    const progress = await inbox.locator('.task-bar-fill').evaluate(element => parseFloat(element.style.width));
+    expect(progress).toBeGreaterThan(0);
+    expect(progress).toBeLessThan(100);
+    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(5);
+    const cash = await page.evaluate(() => GAME.state.cash);
+    await page.screenshot({path: `test-results/inbox-working-${width}.png`, fullPage: true});
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(inbox.getByRole('button', {name: 'Working...', exact: true})).toBeVisible();
+    await page.clock.runFor(2000);
+    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(6);
+    expect(await page.evaluate(() => GAME.state.cash)).toBe(cash);
+    await expect(inbox).toHaveCount(0);
+    await page.locator('#task-list').getByRole('button', {name: 'Work', exact: true}).first().click();
+    await page.clock.runFor(1500);
+    const intro = page.locator('#upgrade-list .upgrade-card');
+    await expect(intro).toHaveCount(1);
+    await expect(intro).toContainText('Tools of the Trade');
+    await expect(page.locator('#milestone-popup')).toBeHidden();
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(intro).toHaveCount(1);
+    await expect(intro).toContainText('Tools of the Trade');
+    await page.screenshot({path: `test-results/tools-alone-${width}.png`, fullPage: true});
+    const beforeFree = await page.evaluate(() => GAME.state.cash);
+    await intro.getByRole('button', {name: 'Free', exact: true}).click();
+    await page.clock.runFor(200);
+    expect(await page.evaluate(() => GAME.state.cash)).toBe(beforeFree);
+    await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(3);
+    await expect(page.locator('#upgrade-list')).not.toContainText('Tools of the Trade');
+    await page.reload();
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(3);
+    await expect(page.locator('#upgrade-list')).not.toContainText('Tools of the Trade');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(errors).toEqual([]);
+  });
+}

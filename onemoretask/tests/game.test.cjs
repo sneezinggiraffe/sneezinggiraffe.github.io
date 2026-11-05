@@ -339,7 +339,7 @@ test('forming Cluster 1 gives existing agents the same short names in cards and 
     h.api.renderClusterSection();
     h.api.renderTaskQueue();
     assert.equal(h.window.document.querySelector('.capacity-slot.filled').textContent, agent.name);
-    assert.equal(h.window.document.querySelector('.task-action-btn').textContent, agent.name);
+    assert.equal(h.window.document.querySelector('#task-list .task-action-btn').textContent, agent.name);
     assert.equal(h.api.validSave(g), true);
   } finally {
     h.close();
@@ -365,12 +365,12 @@ test('short hexadecimal agent IDs are unique and match task labels', () => {
     task.assignedAgent = agent.id;
     task.workDone = task.workRequired / 2;
     h.api.renderTaskQueue();
-    const button = h.window.document.querySelector('.task-action-btn');
+    const button = h.window.document.querySelector('#task-list .task-action-btn');
     assert.equal(button.textContent, agent.name);
     assert.doesNotMatch(button.textContent, /%/);
     task.status = 'ai';
     h.api.renderTaskQueue();
-    assert.equal(h.window.document.querySelector('.task-action-btn').textContent, 'AI 2000 Basic');
+    assert.equal(h.window.document.querySelector('#task-list .task-action-btn').textContent, 'AI 2000 Basic');
   } finally {
     h.close();
   }
@@ -1083,6 +1083,7 @@ scenario('Basic stays slow with 40 tokens while licensed Pro scales with ordinar
   const pro = g.agents[0];
   pro.reliability = 2;
   assert.equal(h.api.workerTokenCapacity(pro), 100);
+  h.task().workRequired = 1e9;
   h.api.topUpAiWorker();
   h.api.topUpAgent(pro.id);
   assert.equal(g.aiWorkerTokenTank, 40);
@@ -1475,7 +1476,7 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
     const expansionTime = investorTalks.seconds - globalExpansion.seconds;
     assert.ok(expansionTime >= 90 && expansionTime <= 180, 'Phase 14 leaves time to develop the neocloud network before investor talks appear');
     assert.ok(investorTalks.nodes >= 500);
-    for (const id of ['neocloud_pipeline', 'standardised_construction', 'neocloud_batch', 'bulk_hardware', 'neocloud_supply_chain', 'parallel_neoclouds']) {
+    for (const id of ['neocloud_pipeline', 'standardised_construction', 'neocloud_batch', 'bulk_hardware', 'factory_direct', 'neocloud_supply_chain', 'parallel_neoclouds']) {
       const offer = result.offers.find(item => item.id === id);
       const purchase = result.purchases.find(item => item.id === id);
       assert.ok(offer.cash < offer.cost, id + ' must remain a savings goal');
@@ -1896,7 +1897,7 @@ scenario('prestige stops music and restores the introduction and first manual ta
   h.window.document.querySelector('#btn-start-game').click();assert.equal(next.gameStarted,true);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);assert.equal(next.uiRevealed.taskQueue,false);
 });
 scenario('ordinary upgrades appear in affordable and aspirational groups while transitions stay gated', (h) => {
-  const g=h.fresh();g.totalTasksDone=15;g.cash=40;g.uiRevealed.upgrades=true;h.api.renderUpgradeSection();
+  const g=h.fresh();g.purchasedUpgrades.push('tools_of_trade');g.totalTasksDone=15;g.cash=40;g.uiRevealed.upgrades=true;h.api.renderUpgradeSection();
   const cards=[...h.window.document.querySelectorAll('#upgrade-list .upgrade-card')];assert.equal(cards.length,3);assert.equal(cards.filter(card=>card.querySelector('button').disabled).length,2);
   g.totalTasksDone=50;assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u=>u.id==='free_ai')),false);h.prepareUpgrade('free_ai');assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u=>u.id==='free_ai')),true);
   g.totalTasksDone=0;g.purchasedUpgrades.push('free_ai');h.api.renderUpgradeSection();h.api.renderTaskQueue();assert.equal(h.window.document.querySelector('#upgrade-list').textContent,'');assert.equal(h.window.document.querySelector('#no-tasks').textContent,'');assert.ok(h.window.document.querySelector('.upgrade-space'));
@@ -2184,7 +2185,7 @@ scenario('phase cheats preserve their requested savings goals and prepare valid 
         assert.equal(h.api.completedClusterCount(), checkpoint.clusters);
       }
     } else assert.ok(g.cash >= upgrade.cost);
-    if(stage>=13){assert.equal(g.clusters.length,upgrade.reqNodes-1);h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,checkpoint?.tasks ?? upgrade.reqTasks-3);if(g.totalTasksDone<upgrade.reqTasks)h.window.GAME.addTasks(3);}
+    if(stage>=13){assert.equal(g.clusters.length,Math.max(upgrade.reqNodes-1,...h.api.UPGRADES.filter(item=>g.purchasedUpgrades.includes(item.id)).map(item=>item.reqNodes||0)));h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,checkpoint?.tasks ?? upgrade.reqTasks-3);if(g.totalTasksDone<upgrade.reqTasks)h.window.GAME.addTasks(3);}
     h.api.purchaseUpgrade(upgrade.id);h.api.tickSalePreparation(upgrade.saleDuration || 0);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
   }
   h.window.GAME.state.retired=true;h.window.chPh6();assert.equal(h.window.GAME.state.phase,5);assert.equal(h.window.GAME.state.totalTasksDone,4997);assert.equal(new Set(h.window.GAME.state.agents.map(agent=>agent.roleId)).size,5);assert.equal(h.window.GAME.state.retired,false);
@@ -2269,8 +2270,13 @@ scenario('the first paid tools appear at seven tasks and free AI reveals without
   h.api.checkMilestones();
   h.api.renderUpgradeSection();
   assert.equal(g.uiRevealed.upgrades, true);
+  assert.equal(h.window.document.querySelectorAll('.upgrade-card').length, 1);
+  assert.equal(h.window.document.querySelector('.upgrade-card button').textContent, 'Free');
+  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'post_it_notes\')"]'), null);
+  h.api.purchaseUpgrade('tools_of_trade');
+  h.api.renderUpgradeSection();
   assert.equal(h.window.document.querySelectorAll('.upgrade-card').length, 3);
-  assert.equal(h.window.document.querySelector('.upgrade-card button').textContent, '$43');
+  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'post_it_notes\')"]').textContent, '$43');
   assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'post_it_notes').cost, 43);
   h.dismiss();
   g.totalTasksDone = 105;
@@ -2403,7 +2409,7 @@ scenario('Inference Tuning improves both subscriptions before the licence can ap
   h.api.purchaseUpgrade('inference_tuning');
   assert.equal(g.cash, 0);
   assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.15);
-  assert.equal(h.api.workerSpeed(task, pro), proSpeed * 1.15);
+  assert.ok(Math.abs(h.api.workerSpeed(task, pro) - proSpeed * 1.15) < 1e-10);
   assert.equal(h.api.workerTokenRate(), tokenRate);
   assert.equal(h.api.upgradeVisible(licence), false);
   g.totalTasksDone = 1000;
@@ -2491,7 +2497,7 @@ scenario('two inexpensive modest upgrades are required while the licence stays v
   h.api.purchaseUpgrade(refinement.id);
   assert.equal(g.cash, 0);
   assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.05);
-  assert.equal(h.api.workerSpeed(task, pro), proSpeed * 1.05);
+  assert.ok(Math.abs(h.api.workerSpeed(task, pro) - proSpeed * 1.05) < 1e-10);
   h.api.purchaseUpgrade(refinement.id);
   assert.equal(h.api.originalAiWorkRate(), basicSpeed * 1.05);
   const efficiency = g.tokenEfficiency;

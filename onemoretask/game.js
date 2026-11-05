@@ -177,6 +177,7 @@
   const UPGRADES = [
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
+    { id: "tools_of_trade", name: "Tools of the Trade", desc: "Maybe some better tools would help you keep up...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 7 },
     { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 7 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
@@ -292,8 +293,9 @@
     { id: "standardised_construction", name: "Standardised Construction", desc: "Use repeatable cluster designs. Halve cluster construction costs.", cost: 1000000000, currency: "cash", phase: 14, requires: "neocloud_pipeline", reqNodes: 125, oneTime: true },
     { id: "neocloud_batch", name: "Neocloud Construction", desc: "Build 25 clusters at once to fill a whole neocloud.", cost: 2000000000, currency: "cash", phase: 14, requires: "standardised_construction", reqNodes: 150, oneTime: true },
     { id: "bulk_hardware", name: "Bulk Hardware Contracts", desc: "Buy hardware across the network. Halve cluster construction costs again.", cost: 1500000000, currency: "cash", phase: 14, requires: "neocloud_batch", reqNodes: 200, oneTime: true },
-    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 2500000000, currency: "cash", phase: 14, requires: "bulk_hardware", reqNodes: 250, oneTime: true },
-    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 3000000000, currency: "cash", phase: 14, requires: "neocloud_supply_chain", reqNodes: 300, oneTime: true },
+    { id: "factory_direct", name: "Factory-Direct Hardware", desc: "Buy directly from manufacturers. Lower hardware costs and keep future price increases linear.", cost: 2000000000, currency: "cash", phase: 14, requires: "bulk_hardware", reqNodes: 400, oneTime: true },
+    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 2500000000, currency: "cash", phase: 14, requires: "factory_direct", reqNodes: 450, oneTime: true },
+    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 3000000000, currency: "cash", phase: 14, requires: "neocloud_supply_chain", reqNodes: 500, oneTime: true },
     { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, requires: "parallel_neoclouds", reqNodes: 500, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
 
     // Phase 11 (retirement)
@@ -331,9 +333,9 @@
   const MILESTONES = [
     // Task-count based
     { id: "first_task", reqTasks: 3, reveals: ["topBar", "cash"] },
-    { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], popup: { title: "Incoming...", msg: "More gigs are coming in. Your inbox is filling up." }, spawnOnTrigger: 2 },
+    { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], inboxTask: true },
     { id: "stress_unlock", reqTasks: 12, reveals: ["stress"] },
-    { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true }, popup: { title: "Tools of the Trade", msg: "Maybe some better tools would help you keep up..." } },
+    { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true } },
     { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true }, popup: { title: "Reality Check", msg: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash." } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
     { id: "ai_hint", reqTasks: 35, popup: { title: "There Must Be a Better Way", msg: "You are getting faster, but the work never stops. Maybe there is a smarter way..." } },
@@ -625,6 +627,7 @@
     var base;
     {
       if (!G.uiRevealed.taskQueue) return Infinity; // No auto-spawn before task queue
+      if (G.tasks.some((task) => task.id === "setup_inbox" && task.status === "available")) return Infinity;
       if (G.phase === 2 || G.phase === 3) return (G.phase === 2 ? 4000 : 3500) / 7.5 * G.taskSpawnDelay / Math.max(1, G.taskSpawnMult);
       if (G.totalTasksDone < 10) base = 2000;
       else if (G.totalTasksDone < 15) base = 1600;
@@ -647,6 +650,7 @@
   // ---------- EARLY GAME: DO TASK BUTTON ----------
   function doEarlyTask(evt) {
     // In early game (< 3 tasks done), the big button creates + works on tasks
+    if (G.uiRevealed.taskQueue) return;
     let task = G.tasks.find((t) => t.status === "active");
     if (!task) {
       task = generateEarlyTask();
@@ -662,6 +666,12 @@
     clickTask(task.id, evt);
   }
 
+  function generateInboxTask() {
+    // The opening button now sets up the inbox before paid gigs arrive.
+    // Inbox setup follows the central opening and uses the normal task progress.
+    return { ...generateTask(), id: "setup_inbox", typeId: "email", name: "Set Up Your Inbox", icon: "📥", client: "", pay: 0, workRequired: 10, batchSize: 1 };
+  }
+
   // ---------- CLICKING / TASK WORK ----------
   function getManualQueueSize() {
     if (G.phase >= 4) return 1;
@@ -675,6 +685,11 @@
 
     task.status = "active";
     G.activeTaskId = taskId;
+    if (task.id === "setup_inbox") {
+      G.lastTaskSpawn = Date.now();
+      spawnTask();
+      spawnTask();
+    }
     const queued = G.tasks.filter((t) => t.status === "available").slice(0, getManualQueueSize() - 1);
     for (const next of queued) next.status = "active";
     G.totalClicks++;
@@ -1705,6 +1720,7 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
+    if (G.phase === 1 && !upgrade.introductory && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
     if (upgrade.saleDuration && G.salePreparation.upgradeId && G.salePreparation.upgradeId !== upgrade.id) return false;
     if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
@@ -1713,7 +1729,7 @@
     if (upgrade.requires && !upgrade.showBeforeRequires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
     if (upgrade.requiresRole && !G.agents.some((agent) => agent.roleId === upgrade.requiresRole)) return false;
     if (!upgrade.oneTime) return true;
-    const prior = UPGRADES.filter((item) => item.oneTime && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
+    const prior = UPGRADES.filter((item) => item.oneTime && !item.introductory && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
     if (prior.some((item) => ["agent_slot_3", "agent_slot_5"].includes(item.id) && !G.purchasedUpgrades.includes(item.id))) return false;
     if (upgrade.unlockPhase || upgrade.id === "second_ai") {
       if (prior.some((item) => !(upgrade.showBeforeRequires && item.id === upgrade.requires) && !G.purchasedUpgrades.includes(item.id))) return false;
@@ -2082,7 +2098,9 @@
   }
 
   function nodeCost(provisioned = G.clustersProvisioned) {
-    return Math.ceil(1000000 * Math.pow(1 + provisioned * 0.025, 2) * (G.phase >= 13 ? 0.65 : 1) * (G.phase >= 14 ? 0.6 : 1));
+    const scale = 1 + provisioned * 0.025;
+    const hardware = G.purchasedUpgrades.includes("factory_direct") ? scale * 10 : scale * scale;
+    return Math.ceil(1000000 * hardware * (G.phase >= 13 ? 0.65 : 1) * (G.phase >= 14 ? 0.6 : 1));
   }
 
   function provisionCost(provisioned = G.clustersProvisioned) {
@@ -2342,10 +2360,9 @@
       }
 
       // Spawn tasks on trigger
-      if (m.spawnOnTrigger) {
-        for (let i = 0; i < m.spawnOnTrigger; i++) {
-          spawnTask();
-        }
+      if (m.inboxTask && G.totalTasksDone === m.reqTasks && G.phase === 1) {
+        G.tasks.push(generateInboxTask());
+        renderWorkStream();
       }
 
       // Show popup
@@ -3061,6 +3078,8 @@
 
     if (!G.uiRevealed.taskQueue) {
       // Early game: show big Do Task button
+      // The first card now offers inbox setup in the same position as normal tasks.
+      // The central opening precedes that first queued card.
       earlySection.style.display = "";
       queueSection.style.display = "none";
       renderEarlyTask();
@@ -3260,7 +3279,7 @@
         renderSaleStatus(u) +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (preparing || !canAfford || !requirementsMet ? "disabled" : "") + ">" + (preparing ? "In progress" : u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
+        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (preparing || !canAfford || !requirementsMet ? "disabled" : "") + ">" + (preparing ? "In progress" : u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? (cost === 0 ? "Free" : fmtCash(cost)) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>" +
         "</div>";
     }
@@ -3706,6 +3725,8 @@
     log(G.prestigeCount > 0 ? "Back for one more task." : "You start your freelance grind from the backseat of your car.", "info");
     log("Click 'Do Task' to find gigs and earn cash.", "info");
     // No tasks spawned on start -- player creates them via Do Task button
+    // Inbox setup now introduces the first gigs.
+    renderAll();
     save();
   }
 
@@ -3836,7 +3857,7 @@
     G.totalIncidents = 3;
     G.incidentsExplained = true;
     G.cash = 1e15;
-    const preceding = UPGRADES.filter((upgrade, index) => upgrade !== target && (stage !== "3_1" || index < UPGRADES.indexOf(target)) && upgrade.oneTime && (!Object.hasOwn(early, stage) || upgrade.reqTasks < early[stage]) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
+    const preceding = UPGRADES.filter((upgrade, index) => upgrade !== target && (stage !== "3_1" || index < UPGRADES.indexOf(target)) && upgrade.oneTime && (!Object.hasOwn(early, stage) || (upgrade.reqTasks < early[stage] || (upgrade.introductory && upgrade.reqTasks === early[stage]))) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
     const requiredClusters = Math.max(checkpoint?.clusters || 0, phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
@@ -3875,6 +3896,7 @@
     for (const cluster of G.clusters) cluster.tank = MANAGER_TOKEN_TANK_MAX;
     G.log = [];
     G.milestonesReached = [];
+    G.uiRevealed.taskQueue = G.totalTasksDone > 0;
     checkMilestones();
     G.lastTick = Date.now();
     G.lastTaskSpawn = Date.now();

@@ -135,8 +135,9 @@ test('Phase 14 upgrades require completed clusters and cash, then unlock speed, 
       ['standardised_construction', 125, 1000000000, 4, false, true],
       ['neocloud_batch', 150, 2000000000, 25, false, false],
       ['bulk_hardware', 200, 1500000000, 25, false, true],
-      ['neocloud_supply_chain', 250, 2500000000, 25, true, false],
-      ['parallel_neoclouds', 300, 3000000000, 50, false, false],
+      ['factory_direct', 400, 2000000000, 25, false, false],
+      ['neocloud_supply_chain', 450, 2500000000, 25, true, false],
+      ['parallel_neoclouds', 500, 3000000000, 50, false, false],
     ]) {
       while (g.clusters.length < nodes - 1) h.fullCluster();
       const upgrade = h.api.UPGRADES.find(item => item.id === id);
@@ -157,7 +158,8 @@ test('Phase 14 upgrades require completed clusters and cash, then unlock speed, 
       assert.equal(g.purchasedUpgrades.includes(id), true);
       assert.equal(h.api.clusterBuildConcurrency(), concurrency);
       assert.equal(h.api.clusterBuildDuration(), faster ? duration / 2 : duration);
-      assert.equal(h.api.provisionCost(), cheaper ? Math.ceil(price / 2) : price);
+      if (id === 'factory_direct') assert.ok(h.api.provisionCost() < price);
+      else assert.equal(h.api.provisionCost(), cheaper ? Math.ceil(price / 2) : price);
       h.api.purchaseUpgrade(id);
       assert.equal(g.cash, 0);
       assert.equal(g.purchasedUpgrades.filter(item => item === id).length, 1);
@@ -206,6 +208,63 @@ test('construction discounts halve every rising price and funding target, surviv
     assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
   } finally {
     if (restored) restored.close();
+    h.close();
+  }
+});
+
+test('Factory-Direct Hardware lowers costs, makes price increases linear and persists without changing speed or investments', () => {
+  const h = expansionCompany(14, 400);
+  let restored;
+  try {
+    const g = h.window.GAME.state;
+    h.prepareUpgrade('factory_direct');
+    g.clusters[0].invested = 35000000;
+    const before = h.api.provisionCost();
+    const investments = g.clusters.map(cluster => cluster.invested);
+    const duration = h.api.clusterBuildDuration();
+    h.api.purchaseUpgrade('factory_direct');
+    assert.ok(h.api.provisionCost() < before);
+    assert.equal(h.api.nodeCost(), 42900000);
+    const prices = [400, 800, 1200].map(count => h.api.provisionCost(count));
+    assert.equal(prices[2] - prices[1], prices[1] - prices[0]);
+    assert.equal(h.api.clusterBuildDuration(), duration);
+    assert.deepEqual(g.clusters.map(cluster => cluster.invested), investments);
+    assert.equal(h.api.expansionFundingTarget(), Array.from({length: 25}, (_, index) => h.api.provisionCost(400 + index)).reduce((sum, price) => sum + price, 0) * 2);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.equal(restored.api.provisionCost(), prices[0]);
+    restored.window.GAME.state.phase = 15;
+    assert.equal(restored.api.provisionCost(), prices[0]);
+    assert.equal(restored.api.validSave(restored.window.GAME.state), true);
+  } finally {
+    if (restored) restored.close();
+    h.close();
+  }
+});
+
+test('the final Phase 14 company funds approximately one neocloud per second from its own income', () => {
+  const h = harness();
+  try {
+    h.window.chRetire();
+    const g = h.window.GAME.state;
+    g.phase = 14;
+    g.cash = 0;
+    const samples = [];
+    for (let second = 0; second < 30; second++) {
+      for (let tick = 0; tick < 10; tick++) {
+        h.advance(100);
+        h.api.tick();
+        assert.ok(g.cash >= 0);
+      }
+      samples.push(h.api.completedClusterCount());
+    }
+    const rate = (samples.at(-1) - samples[9]) / 20;
+    assert.ok(rate >= 20 && rate <= 30, 'completed clusters per second: ' + rate);
+    for (let index = 12; index < samples.length; index++) {
+      assert.ok(samples[index] > samples[index - 3], 'construction resumes within three seconds throughout the steady run');
+    }
+    assert.equal(h.api.validSave(g), true);
+  } finally {
     h.close();
   }
 });

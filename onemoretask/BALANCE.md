@@ -5,20 +5,20 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | Phase | Approximate tasks on entry | Approximate cash left on entry | Main savings goals in that phase |
 | --- | ---: | ---: | --- |
 | 1 | 0 | $0 | First tools: $34–$51 |
-| 2 | 106 | $26–$51 | Prompt Library $150, Gig Alerts $250, Prompting $450, Marketing $650, Basic subscription $2,000 |
-| 3 | 371–385 | $0–$6 | Client Outreach $4,500, Second subscription $18K, Inference Tuning $6K, Prompt Refinement $1.5K, Context Pruning $2.5K, Multi-Agent Licence $25K |
-| 4 | 1,350–1,415 | $138–$414 | Slots and speed, then Tool Use SDK $12K |
-| 5 | 1,595–1,710 | $262–$14.1K | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
-| 6 | 5,000–5,035 | $57K–$107K | Token Manager unlock $40K |
-| 7 | 30,145–30,400 | $130K–$209K | Operations upgrades, then Ralph-loops $1M |
-| 8 | 318,000–369,000 | $5.9K–$9.2K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
-| 9 | 1.002M–1.006M | $597K–$2.11M | Blueprint $1.5M, Second Permit $2.5M, Third Permit $12M, operations upgrades, then CEO Readiness $35M |
-| 10 | 3.83M–4.33M | $3.8K–$153K | AI CEO $1M, Pipeline $25M, ninth slots $30M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
-| 11 | 11.9M–13.9M | $233K–$1.58M | Four-Agent Provisioning $100M, Parallel Builds $150M, Preassembled Racks $200M, Rapid Cluster Deployment $300M, Fully Fitted Racks $400M, Autonomous Operating Model $760M |
-| 12 | 43M–48.2M | $152K–$6.49M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
-| 13 | 117M–123M | $14.1M–$18.2M | Four concurrent builds, then Global Expansion $2B at 40 completed nodes |
-| 14 | 258M–263M | $1.4M–$5.71M | Neocloud speed upgrades $2B and $2.5B, cost reductions $1B and $1.5B, 25 concurrent builds $2B, 50 concurrent builds $3B, then investor talks after all six upgrades and 500 completed clusters |
-| 15 | 3.83B–3.862B | $5.011B–$5.054B | Advisor $5M, buyout discussion $20M, due diligence $100M, terms $250M, final sale $5B; sampled retirement at 7.253B–7.292B tasks |
+| 2 | 105–106 | $2–$18 | Prompt Library $150, Gig Alerts $250, Prompting $450, Marketing $650, Basic subscription $2,000 |
+| 3 | 384–388 | $15–$31 | Client Outreach $4,500, Second subscription $18K, Inference Tuning $6K, Prompt Refinement $1.5K, Context Pruning $2.5K, Multi-Agent Licence $25K |
+| 4 | 1,392–1,408 | $9–$492 | Slots and speed, then Tool Use SDK $12K |
+| 5 | 1,708–1,724 | $51–$452 | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
+| 6 | 5,008–5,033 | $36.2K–$61.3K | Token Manager unlock $40K |
+| 7 | 30,150–30,289 | $86.4K–$120K | Operations upgrades, then Ralph-loops $1M |
+| 8 | 409,000–430,000 | $1.24K–$5.54K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
+| 9 | 1.023M–1.097M | $13K–$62.1K | Blueprint $1.5M, Second Permit $2.5M, Third Permit $12M, operations upgrades, then CEO Readiness $35M |
+| 10 | 4.37M–4.71M | $56K–$250K | AI CEO $1M, Pipeline $25M, ninth slots $30M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
+| 11 | 13.99M–15.14M | $501K–$1.07M | Four-Agent Provisioning $100M, Parallel Builds $150M, Preassembled Racks $200M, Rapid Cluster Deployment $300M, Fully Fitted Racks $400M, Autonomous Operating Model $760M |
+| 12 | 48.57M–50.49M | $5.63M–$6.34M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
+| 13 | 122.80M–124.62M | $14.5M–$17.9M | Four concurrent builds, then Global Expansion $2B at 40 completed nodes |
+| 14 | 263M–265M | $2.35M–$5.3M | Neocloud speed upgrades $2B and $2.5B, cost reductions $1B and $1.5B, linear hardware pricing $2B, 25 concurrent builds $2B, 50 concurrent builds $3B, then investor talks after all seven upgrades and 500 completed clusters |
+| 15 | 10.823B–11.916B | $6.108B–$6.369B | Advisor $5M, buyout discussion $20M, due diligence $100M, terms $250M, final sale $5B; sampled retirement at 20.504B–22.040B tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
 
@@ -58,4 +58,4 @@ These task milestones control visibility in the background. Existing staffing re
 
 ## Expansion funding
 
-Ordinary CEO expansion requires twice the next cluster price. After Neocloud Construction or Parallel Neoclouds, a construction run requires twice the combined rising prices of the next 25 or 50 clusters. The CEO pays each cluster price individually, respects its concurrency limit and resumes when funding recovers. This budget is the same in Phases 14 and 15; no separate exit reserve is added. Planning shows the current funding target. Sale preparation takes 58 active seconds across five purchases while the company keeps growing. Standardised Construction and Bulk Hardware Contracts each halve every cluster price, including its staffing cost, and the funding target uses those discounted prices. The three sampled journeys spend 115.5–116 seconds in Phase 14 before investor talks appear, enter Phase 15 after 123.5–124 seconds with 965–968 completed clusters, and retire with 1,365–1,368 clusters and 7.253B–7.292B completed tasks.
+Ordinary CEO expansion requires twice the next cluster price. After Neocloud Construction or Parallel Neoclouds, a construction run requires twice the combined rising prices of the next 25 or 50 clusters. The CEO pays each cluster price individually, respects its concurrency limit and resumes when funding recovers. This budget is the same in Phases 14 and 15; no separate exit reserve is added. Planning shows the current funding target. Sale preparation takes 58 active seconds across five purchases while the company keeps growing. Standardised Construction and Bulk Hardware Contracts each halve every cluster price, including its staffing cost, and the funding target uses those discounted prices. Factory-Direct Hardware ($2B, after Bulk Hardware Contracts and 400 completed clusters) lowers hardware prices by replacing the squared scale factor with ten times the scale factor. Costs then grow linearly. Dedicated Hardware Supply follows at 450 completed clusters; Parallel Neoclouds follows at 500. The three sampled journeys spend 171–178.5 seconds in Phase 14 before investor talks appear, enter Phase 15 after 179–186.5 seconds with 2,692–2,845 completed clusters, and retire with 3,892–4,045 clusters and 20.504B–22.040B completed tasks. A separate fully upgraded company starts with 500 clusters and zero cash, pays all expansion and operating costs from income, and sustains 22.5 completed clusters per second over a twenty-second steady period after ten seconds of startup. That is approximately one 25-cluster neocloud per second.

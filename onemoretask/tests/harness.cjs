@@ -40,6 +40,8 @@ function harness(saved, options = {}) {
     api.reset();
     const state = window.GAME.state;
     state.phase = phase;
+    state.uiRevealed.taskQueue = phase > 1;
+    if (phase > 1) state.milestonesReached.push('backlog_start');
     state.gameStarted = true;
     window.document.querySelector('#intro-overlay').classList.add('hidden');
     for (const el of window.document.querySelectorAll('.show')) el.classList.remove('show');

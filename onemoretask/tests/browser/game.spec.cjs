@@ -1220,7 +1220,8 @@ for (const width of [1440, 390]) {
     await expect(second).toHaveText('$18.0K');
     await expect(second).toBeDisabled();
     expect(await page.evaluate(() => ({phase: GAME.state.phase, tasks: GAME.state.totalTasksDone, cash: GAME.state.cash, agents: GAME.state.agents.length}))).toEqual({phase: 3, tasks: 870, cash: 14000, agents: 0});
-    await page.evaluate(() => GAME.addCash(4000));
+    // Leave room for living costs during the next render tick.
+    await page.evaluate(() => GAME.addCash(4001));
     await page.clock.runFor(200);
     await second.click();
     await page.clock.runFor(200);
