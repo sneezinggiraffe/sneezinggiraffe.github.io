@@ -3254,7 +3254,7 @@
     var repeatables = [];
     var oneTime = [];
     for (var i = 0; i < available.length; i++) {
-      if (available[i].id === "ai_ceo") continue;
+      if (available[i].id === "ai_ceo" || (G.phase >= 10 && available[i].id.startsWith("token_pack_"))) continue;
       if (available[i].oneTime) oneTime.push(available[i]);
       else repeatables.push(available[i]);
     }
