@@ -90,7 +90,7 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
-  const SAVE_VERSION = 11;
+  const SAVE_VERSION = 12;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
@@ -403,6 +403,7 @@
       totalCashEarned: 0,
       totalTasksDone: 0,
       totalClicks: 0,
+      realityCheckClicksRemaining: 0,
       totalIncidents: 0,
       activeTaskId: null,
       // Prestige
@@ -480,6 +481,7 @@
 
   function validSave(state) {
     if (!validShape(state, defaultState()) || state.saveVersion !== SAVE_VERSION) return false;
+    if (!Number.isInteger(state.realityCheckClicksRemaining) || state.realityCheckClicksRemaining < 0 || state.realityCheckClicksRemaining > 2) return false;
     if (!Number.isInteger(state.batchSize) || state.batchSize < 1) return false;
     if (state.retirementFinal && !state.retired) return false;
     if (!Number.isInteger(state.phase) || state.phase < 1 || state.phase > FINAL_PHASE) return false;
@@ -695,6 +697,7 @@
     const queued = G.tasks.filter((t) => t.status === "available").slice(0, getManualQueueSize() - 1);
     for (const next of queued) next.status = "active";
     G.totalClicks++;
+    if (G.realityCheckClicksRemaining > 0) G.realityCheckClicksRemaining--;
     showClickReward(G.clickPower, evt);
   }
 
@@ -1724,6 +1727,7 @@
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
     if (G.phase === 1 && upgrade.id !== "tools_of_trade" && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
     if (G.phase === 1 && upgrade.reqTasks >= 35 && upgrade.id !== "ai_hint" && !G.purchasedUpgrades.includes("ai_hint")) return false;
+    if (upgrade.id === "free_ai" && G.realityCheckClicksRemaining > 0) return false;
     if (upgrade.saleDuration && G.salePreparation.upgradeId && G.salePreparation.upgradeId !== upgrade.id) return false;
     if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
@@ -1734,7 +1738,7 @@
     if (!upgrade.oneTime) return true;
     const prior = UPGRADES.filter((item) => item.oneTime && !item.introductory && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
     if (prior.some((item) => ["agent_slot_3", "agent_slot_5"].includes(item.id) && !G.purchasedUpgrades.includes(item.id))) return false;
-    if (upgrade.unlockPhase || upgrade.id === "second_ai") {
+    if (upgrade.unlockPhase || upgrade.id === "second_ai" || upgrade.id === "reality_check") {
       if (prior.some((item) => !(upgrade.showBeforeRequires && item.id === upgrade.requires) && !G.purchasedUpgrades.includes(item.id))) return false;
     } else {
       const waiting = prior.filter((item) => item.phase === upgrade.phase && !G.purchasedUpgrades.includes(item.id));
@@ -1801,6 +1805,7 @@
   function completeUpgradePurchase(upg) {
     const upgradeId = upg.id;
     if (upg.oneTime) G.purchasedUpgrades.push(upgradeId);
+    if (upgradeId === "reality_check") G.realityCheckClicksRemaining = 2;
     if (upgradeId === "ceo_recruitment" || upgradeId === "ceo_deploy_speed") {
       const speed = upgradeId === "ceo_recruitment" ? 2 : 1.5;
       for (const agent of G.agents) {
@@ -2870,11 +2875,13 @@
   }
 
   function performFullReset() {
+    const newState = defaultState();
+    newState.musicMode = G.musicMode;
     try {
-      localStorage.removeItem("ai_empire_save");
+      localStorage.setItem("ai_empire_save", JSON.stringify(newState));
     } catch (error) {
-      if (!(error instanceof DOMException) || error.name !== "SecurityError") throw error;
-      storageMessage("Reset failed because browser storage is blocked. Allow storage and try again.");
+      if (!(error instanceof DOMException) || !["SecurityError", "QuotaExceededError"].includes(error.name)) throw error;
+      storageMessage("Reset failed because browser storage is unavailable. Allow storage or free space and try again.");
       return;
     }
     saveBlocked = true;
@@ -3842,14 +3849,16 @@
   }
 
   function loadCheatStage(stage) {
-    const early = { "0_1": 0, "0_2": 7, "0_": 35, "0_4": 100, "1": 89 };
+    const early = { "0_1": 0, "0_2": 7, "0_": 35, "0_4": 100, "1": 50 };
     const startPhase8 = stage === "start8";
     const number = startPhase8 ? 8 : Number(stage);
     const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
     const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 180000000, clusters: 5 }, "12": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
+    const musicMode = G.musicMode;
     G = defaultState();
+    G.musicMode = musicMode;
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];
     G.totalIncidents = 3;
@@ -3863,10 +3872,12 @@
       fillCheatCompany(requiredClusters);
       for (const upgrade of preceding) {
         purchaseUpgrade(upgrade.id);
+        if (upgrade.id === "reality_check") G.realityCheckClicksRemaining = 0;
         if (G.salePreparation.upgradeId) tickSalePreparation(G.salePreparation.remaining);
       }
       changed = before !== G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
     }
+    if (number === 1) purchaseUpgrade("focus_timer");
     fillCheatCompany(requiredClusters);
     tickConstruction(12.1);
     if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - (stage === "retire" ? 0 : 1)));

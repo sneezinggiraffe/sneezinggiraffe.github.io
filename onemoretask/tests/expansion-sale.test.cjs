@@ -278,11 +278,11 @@ test('sale timers pause with dialogs and offline gaps and resume with the game t
   }
 });
 
-test('save format 11 rejects invalid sale timers and preserves older saves for explicit reset', () => {
+test('save format 12 rejects invalid sale timers and preserves older saves for explicit reset', () => {
   const h = company();
   try {
     const g = h.window.GAME.state;
-    assert.equal(g.saveVersion, 11);
+    assert.equal(g.saveVersion, 12);
     assert.equal(h.api.validSave(g), true);
     for (const preparation of [
       { upgradeId: 'missing', remaining: 1 },

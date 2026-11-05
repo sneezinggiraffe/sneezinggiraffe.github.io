@@ -229,9 +229,15 @@ test('Reality Check replaces its modal at 90 tasks and gates free AI without cha
     const before = JSON.parse(JSON.stringify(g));
     h.window.GAME.buy('reality_check');
     before.purchasedUpgrades.push('reality_check');
+    before.realityCheckClicksRemaining = 2;
     before.log = JSON.parse(JSON.stringify(g.log));
     assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
     assert.equal(h.api.queue().length, 0);
+    assert.equal(h.api.upgradeVisible(upgrade('free_ai')), false);
+    h.api.clickTask(h.task().id);
+    h.api.tickManualWork(10);
+    assert.equal(h.api.upgradeVisible(upgrade('free_ai')), false);
+    h.api.clickTask(h.task().id);
     assert.equal(h.api.upgradeVisible(upgrade('free_ai')), true);
     h.window.GAME.buy('free_ai');
     assert.equal(g.phase, 1);
@@ -241,6 +247,79 @@ test('Reality Check replaces its modal at 90 tasks and gates free AI without cha
     restored.window.GAME.state.totalTasksDone = 105;
     restored.window.GAME.buy('free_ai');
     assert.equal(restored.window.GAME.state.phase, 2);
+  } finally {
+    if (restored) restored.close();
+    h.close();
+  }
+});
+
+
+test('Reality Check requires every preceding upgrade even above its task threshold', () => {
+  const h = harness();
+  try {
+    const g = h.fresh();
+    h.prepareUpgrade('reality_check');
+    g.totalTasksDone = 105;
+    const reality = h.api.UPGRADES.find(upgrade => upgrade.id === 'reality_check');
+    const purchased = [...g.purchasedUpgrades];
+    for (const missing of purchased) {
+      g.purchasedUpgrades = purchased.filter(id => id !== missing);
+      assert.equal(h.api.upgradeVisible(reality), false, missing);
+      h.api.purchaseUpgrade('reality_check');
+      assert.equal(g.purchasedUpgrades.includes('reality_check'), false, missing);
+    }
+    g.purchasedUpgrades = purchased;
+    assert.equal(h.api.upgradeVisible(reality), true);
+    h.api.purchaseUpgrade('reality_check');
+    assert.equal(g.purchasedUpgrades.includes('reality_check'), true);
+  } finally {
+    h.close();
+  }
+});
+
+
+test('the two-click AI reveal survives reload and counts only accepted manual work starts', () => {
+  const h = harness();
+  let restored;
+  try {
+    const g = h.fresh();
+    h.prepareUpgrade('reality_check');
+    g.totalTasksDone = 150;
+    g.totalClicks = 100;
+    h.api.purchaseUpgrade('reality_check');
+    const ai = h.api.UPGRADES.find(item => item.id === 'free_ai');
+    h.api.purchaseUpgrade('free_ai');
+    assert.equal(g.phase, 1);
+    h.api.clickTask('missing');
+    assert.equal(g.realityCheckClicksRemaining, 2);
+    const first = h.task();
+    const second = h.task();
+    h.api.clickTask(first.id);
+    h.api.clickTask(first.id);
+    h.api.clickTask(h.task().id);
+    assert.equal(g.realityCheckClicksRemaining, 1);
+    assert.equal(h.api.upgradeVisible(ai), false);
+    h.api.tickManualWork(10);
+    assert.equal(second.status, 'done');
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    const state = restored.window.GAME.state;
+    assert.equal(state.realityCheckClicksRemaining, 1);
+    assert.equal(restored.api.upgradeVisible(ai), false);
+    restored.api.clickTask(restored.task().id);
+    assert.equal(state.realityCheckClicksRemaining, 0);
+    assert.equal(restored.api.upgradeVisible(ai), true);
+    restored.api.tickManualWork(10);
+    restored.api.clickTask(restored.task().id);
+    assert.equal(state.realityCheckClicksRemaining, 0);
+    restored.api.purchaseUpgrade('free_ai');
+    assert.equal(state.phase, 2);
+    for (const value of [-1, 3, 0.5]) {
+      state.realityCheckClicksRemaining = value;
+      assert.equal(restored.api.validSave(state), false);
+    }
+    state.realityCheckClicksRemaining = 0;
+    assert.equal(restored.api.validSave(state), true);
   } finally {
     if (restored) restored.close();
     h.close();
