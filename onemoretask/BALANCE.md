@@ -14,11 +14,11 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 8 | 318,000–369,000 | $5.9K–$9.2K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
 | 9 | 1.002M–1.006M | $597K–$2.11M | Blueprint $1.5M, Second Permit $2.5M, Third Permit $12M, operations upgrades, then CEO Readiness $35M |
 | 10 | 3.83M–4.33M | $3.8K–$153K | AI CEO $1M, Pipeline $25M, ninth slots $30M, Faster Provisioning $40M, sixteen slots $50M, Dual Provisioning $75M, Scale Mode $200M |
-| 11 | 28M–32M | $1.1M–$6.2M | Fully Fitted Racks $400M, Autonomous Operating Model $760M |
-| 12 | 46M–51M | $1.3M–$4.9M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
-| 13 | 120M–125M | $11.2M–$16.0M | Global Expansion $2B at 40 completed nodes |
-| 14 | 228M–232M | $19.7M–$26.3M | Neoclouds of 25 clusters; Host Investor Talks for $90K with 100 completed nodes and eight seconds of preparation |
-| 15 | 297M–302M | $617.5M–$620.9M | Advisor $5M, management buyout discussion $20M, due diligence $100M, terms $250M, then Complete Company Sale for $5B; sampled retirement is around 981M–988M completed tasks |
+| 11 | 11.9M–13.9M | $233K–$1.58M | Four-Agent Provisioning $100M, Parallel Builds $150M, Preassembled Racks $200M, Rapid Cluster Deployment $300M, Fully Fitted Racks $400M, Autonomous Operating Model $760M |
+| 12 | 43M–48.2M | $152K–$6.49M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
+| 13 | 117M–123M | $14.1M–$18.2M | Four concurrent builds, then Global Expansion $2B at 40 completed nodes |
+| 14 | 258M–263M | $1.4M–$5.71M | Neocloud speed upgrades $350M and $750M, 25 concurrent builds $500M, 50 concurrent builds $1B, then investor talks at 200 completed clusters |
+| 15 | 674M–680M | $1.309B–$1.314B | Advisor $5M, buyout discussion $20M, due diligence $100M, terms $250M, final sale $5B; sampled retirement at 1.705B–1.713B tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
 
@@ -51,10 +51,10 @@ These task milestones control visibility in the background. Existing staffing re
 - `chPh8()` loads Phase 7 at 390,000 tasks and $800,000, leaving $200,000 to earn before buying Ralph-loops.
 - `chPh9()` loads late Phase 8 at 1M tasks and $1.2M, with ordinary upgrades already purchased and $300K left to earn for the acquisition.
 - `chPh10()` loads late Phase 9 at 4.6M tasks, $30M and 3 fully staffed clusters, leaving $5M to earn for AI CEO Readiness.
-- `chPh11()` loads late Phase 10 at 27M tasks, $280M and 18 fully staffed clusters, with $20M left to earn for AI Expansion Optimisation.
+- `chPh11()` loads late Phase 10 at 27M tasks, $180M and 5 fully staffed clusters, with $20M left to earn for Scale Mode and Phase 11.
 - Other `chPhN()` shortcuts likewise prepare the transition into that numbered phase. Their injected cash and purchased upgrades are not balance measurements.
 - `chRetire()` loads an immediately purchasable Complete Company Sale action, with every preparation step complete.
 
 ## Expansion funding
 
-CEO expansion keeps cash equal to twice the next cluster price before opening a new project. Funding pauses are expected and automatically end when sufficient cash is available. There is no hard cluster-count limit. The Planning card shows only the cluster funding amount. There is no additional $5B exit reserve in Phase 15; expanding clusters can spend that cash until the player completes the company sale. Preparation takes 58 active seconds across five purchases, keeping the process visible while the company grows. The sampled journeys finish with 309–311 clusters, retaining the target of roughly one billion tasks at retirement.
+Ordinary CEO expansion requires twice the next cluster price. After Neocloud Construction or Parallel Neoclouds, a construction run requires twice the combined rising prices of the next 25 or 50 clusters. The CEO pays each cluster price individually, respects its concurrency limit and resumes when funding recovers. This budget is the same in Phases 14 and 15; no separate exit reserve is added. Planning shows the current funding target. Sale preparation takes 58 active seconds across five purchases while the company keeps growing. The three sampled journeys retire with 441–442 clusters and 1.705B–1.713B completed tasks.

@@ -14,7 +14,7 @@ function expansionFixture(phase, count) {
   for (let index = 0; index < count; index++) h.fullCluster().tank = 4000;
   h.api.openCluster();
   h.api.openCluster();
-  h.api.tickConstruction(0.2);
+  h.api.tickConstruction(g.clusters.at(-2).buildDuration / 4);
   g.cash = 0;
   h.api.checkMilestones();
   h.dismiss();
@@ -27,7 +27,7 @@ function expansionFixture(phase, count) {
 
 for (const width of [1440, 390, 320]) {
   for (const phase of [12, 14]) {
-    test(`Phase ${phase} keeps new clusters visible and preserves their order at ${width}px`, async ({ page }) => {
+    test(`Phase ${phase} appends new clusters left to right and preserves their order at ${width}px`, async ({ page }) => {
       const count = phase === 12 ? 45 : 260;
       const raw = expansionFixture(phase, count);
       const state = JSON.parse(raw);
@@ -45,26 +45,30 @@ for (const width of [1440, 390, 320]) {
       await planning.scrollIntoViewIfNeeded();
       await expect(planning).toBeInViewport();
       await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(2);
-      for (const build of await page.locator('[aria-label="Cluster construction"]').all()) await expect(build).toBeInViewport();
-      const topGrid = page.locator(phase === 12 ? '#cluster-list .node-grid' : '.neocloud.active .network-grid').first();
-      await expect(topGrid.locator(':scope > .cluster-card').first()).toHaveClass(/planning-card/);
-      await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);
+      const topGrid = page.locator(phase === 12 ? '#cluster-list .node-grid' : '[data-neocloud="11"] .network-grid');
+      await expect(topGrid.locator(':scope > .cluster-card').last()).toHaveClass(/planning-card/);
+      await expect(topGrid.locator('[data-cluster-id]').last()).toHaveAttribute('data-cluster-id', newest.id);
       await expect(page.locator('[data-cluster-id]')).toHaveCount(count + 2);
+      expect(await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.dataset.clusterId))).toEqual(state.clusters.map(cluster => cluster.id));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const overflowing = await page.locator('#cluster-list').evaluate(element => [...element.querySelectorAll('.cluster-card,.neocloud')].filter(card => card.scrollWidth > card.clientWidth + 1).map(card => card.textContent));
       expect(overflowing).toEqual([]);
       if (phase === 12) {
         await expect(page.locator('.neocloud')).toHaveCount(0);
         await expect(page.locator('.cluster-capacity')).toHaveCount(count);
+        const slots = await page.locator('.autonomous-capacity .capacity-slot').evaluateAll(elements => elements.map(element => ({width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height, label: element.textContent})));
+        expect(slots.every(slot => Math.abs(slot.width - slot.height) < 1 && slot.label === '')).toBe(true);
       } else {
         await expect(page.locator('.neocloud')).toHaveCount(11);
         await expect(page.locator('.cluster-capacity')).toHaveCount(0);
         await expect(page.locator('[data-neocloud="10"] [data-cluster-id]')).toHaveCount(25);
       }
+      const gaps = await page.locator('.cluster-construction-progress').evaluateAll(bars => bars.map(bar => bar.getBoundingClientRect().top - bar.previousElementSibling.getBoundingClientRect().bottom));
+      expect(gaps.every(gap => gap >= 6 && gap <= 7)).toBe(true);
       await page.screenshot({path: `test-results/new-phase${phase}-${width}.png`, animations: 'disabled'});
       await page.clock.runFor(3500);
       await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
-      await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);
+      await expect(topGrid.locator('[data-cluster-id]').last()).toHaveAttribute('data-cluster-id', newest.id);
       if (phase === 14) await expect(page.locator('[data-cluster-id="' + newest.id + '"]').locator('xpath=ancestor::section')).toHaveAttribute('data-neocloud', '11');
     });
   }

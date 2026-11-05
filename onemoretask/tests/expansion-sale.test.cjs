@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
-function company(phase = 14, count = 100, options = {}) {
+function company(phase = 14, count = 200, options = {}) {
   const h = harness(undefined, options);
   const g = h.fresh(phase);
   g.ceoMode = 'scale';
@@ -22,7 +22,7 @@ function saleButton(h, id) {
   return h.window.document.querySelector('[onclick="GAME.buy(\'' + id + '\')"]');
 }
 
-test('Phases 12 and 13 keep detailed clusters newest first throughout construction', () => {
+test('Phases 12 and 13 keep detailed clusters in creation order throughout construction', () => {
   for (const phase of [12, 13]) {
     const h = company(phase, 3);
     try {
@@ -32,19 +32,19 @@ test('Phases 12 and 13 keep detailed clusters newest first throughout constructi
       const building = g.clusters.at(-1);
       h.api.renderClusterSection();
       const grid = h.window.document.querySelector('#cluster-list .node-grid');
-      assert.equal(grid.firstElementChild.querySelector('strong').textContent, 'Cluster 5');
-      assert.equal(grid.children[1].dataset.clusterId, building.id);
+      assert.equal(grid.lastElementChild.querySelector('strong').textContent, 'Cluster 5');
+      assert.equal(grid.querySelectorAll('[data-cluster-id]')[3].dataset.clusterId, building.id);
       assert.equal(grid.querySelectorAll('.cluster-capacity').length, 3);
       assert.equal(grid.querySelectorAll('[aria-label="Cluster construction"]').length, 1);
       assert.equal(h.window.document.querySelector('.neocloud'), null);
       h.api.tickConstruction(building.buildRemaining);
       h.api.renderClusterSection();
-      assert.equal(grid.children[1].dataset.clusterId, building.id);
+      assert.equal(grid.querySelectorAll('[data-cluster-id]')[3].dataset.clusterId, building.id);
       assert.equal(grid.querySelectorAll('.cluster-capacity').length, 4);
       h.api.openCluster();
       h.api.renderClusterSection();
-      assert.equal(grid.firstElementChild.querySelector('strong').textContent, 'Cluster 6');
-      assert.deepEqual([...grid.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
+      assert.equal(grid.lastElementChild.querySelector('strong').textContent, 'Cluster 6');
+      assert.deepEqual([...grid.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].map(cluster => cluster.id));
       assert.deepEqual(g.clusters.slice(0, 3).map(cluster => cluster.id), originalOrder);
       assert.equal(h.api.validSave(g), true);
     } finally {
@@ -60,19 +60,19 @@ test('Phase 14 groups every cluster into permanent neoclouds of twenty-five', ()
     h.api.renderClusterSection();
     const document = h.window.document;
     assert.equal(document.querySelector('#cluster-heading').textContent, 'Neoclouds');
-    assert.deepEqual([...document.querySelectorAll('.neocloud')].map(group => Number(group.dataset.neocloud)), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
-    assert.match(document.querySelector('.neocloud').textContent, /Neocloud 11.*C251.*Planning/);
+    assert.deepEqual([...document.querySelectorAll('.neocloud')].map(group => Number(group.dataset.neocloud)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    assert.match(document.querySelector('[data-neocloud="11"]').textContent, /Neocloud 11.*C251.*Planning/);
     const last = g.clusters.at(-1);
     assert.equal(document.querySelector('[data-cluster-id="' + last.id + '"]').closest('.neocloud').dataset.neocloud, '10');
     assert.equal(document.querySelectorAll('[data-neocloud="10"] [data-cluster-id]').length, 25);
-    assert.equal(document.querySelector('[data-neocloud="10"] [data-cluster-id] strong').textContent, 'C250');
+    assert.equal(document.querySelector('[data-neocloud="10"] [data-cluster-id] strong').textContent, 'C226');
     assert.match(document.querySelector('[data-neocloud="10"] .neocloud-summary').textContent, /C226–C250 · \$6,000\/s/);
     assert.equal(document.querySelectorAll('.cluster-capacity').length, 0);
     assert.equal(document.querySelectorAll('[data-cluster-id]').length, 250);
     h.api.openCluster();
     const next = g.clusters.at(-1);
     h.api.renderClusterSection();
-    assert.equal(document.querySelector('[data-neocloud="11"] .network-grid').firstElementChild.querySelector('strong').textContent, 'C252');
+    assert.equal(document.querySelector('[data-neocloud="11"] .network-grid').lastElementChild.querySelector('strong').textContent, 'C252');
     assert.equal(document.querySelector('[data-neocloud="11"] [data-cluster-id]').dataset.clusterId, next.id);
     h.api.tickConstruction(next.buildRemaining);
     h.api.renderClusterSection();
@@ -118,12 +118,12 @@ test('neocloud boundaries retain both simultaneous builds and count only real ou
 });
 
 test('investor talks charge $90k once, show progress and unlock Phase 15 on completion', () => {
-  const h = company(14, 99);
+  const h = company(14, 199);
   try {
     const g = h.window.GAME.state;
     g.cash = 90000;
     h.api.renderUpgradeSection();
-    assert.match(saleButton(h, 'retire_unlock').closest('.card').textContent, /Company size: 99 \/ 100 online/);
+    assert.equal(saleButton(h, 'retire_unlock'), null);
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(g.salePreparation.upgradeId, '');
     h.fullCluster();
@@ -132,7 +132,7 @@ test('investor talks charge $90k once, show progress and unlock Phase 15 on comp
     assert.equal(g.cash, 89999);
     g.cash++;
     h.api.renderUpgradeSection();
-    assert.match(saleButton(h, 'retire_unlock').closest('.card').textContent, /Company size requirement met: 100 online/);
+    assert.match(saleButton(h, 'retire_unlock').closest('.card').textContent, /Company size requirement met: 200 online/);
     assert.equal(saleButton(h, 'retire_unlock').textContent, '$90.0K');
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(g.cash, 0);
@@ -234,11 +234,11 @@ test('sale timers pause with dialogs and offline gaps and resume with the game t
   }
 });
 
-test('save format 10 rejects invalid sale timers and preserves older saves for explicit reset', () => {
+test('save format 11 rejects invalid sale timers and preserves older saves for explicit reset', () => {
   const h = company();
   try {
     const g = h.window.GAME.state;
-    assert.equal(g.saveVersion, 10);
+    assert.equal(g.saveVersion, 11);
     assert.equal(h.api.validSave(g), true);
     for (const preparation of [
       { upgradeId: 'missing', remaining: 1 },
@@ -255,7 +255,7 @@ test('save format 10 rejects invalid sale timers and preserves older saves for e
     assert.equal(h.api.validSave({...g, purchasedUpgrades: [...g.purchasedUpgrades, 'retire_unlock']}), false);
     h.api.tickSalePreparation(8);
     assert.equal(h.api.validSave({...g, salePreparation: {upgradeId: 'sale_terms', remaining: 1}}), false);
-    const raw = JSON.stringify({...g, saveVersion: 9});
+    const raw = JSON.stringify({...g, saveVersion: 10});
     const restored = harness(raw);
     try {
       assert.equal(restored.window.GAME.state.phase, 1);

@@ -90,32 +90,13 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
-  const SAVE_VERSION = 10;
+  const SAVE_VERSION = 11;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
   const SALE_FADE_IN_MS = 1200;
 
   const CLUSTER_COST = 50000;
-  const CLUSTER_AGENT_NAMES = [
-    "Nova", "Echo", "Byte", "Flux", "Luma", "Pico", "Mira", "Juno", "Orion", "Vega", "Arlo", "Iris", "Remy", "Zeta", "Kira", "Axel",
-    "Ada", "Alba", "Alec", "Alma", "Amir", "Anya", "Aria", "Ansel", "Asa", "Asha", "Atlas", "Ava", "Avery", "Basil", "Beau", "Bela",
-    "Benji", "Bess", "Bex", "Blair", "Blake", "Bodhi", "Bram", "Briar", "Bruno", "Brynn", "Cai", "Cleo", "Cora", "Cove", "Cruz", "Cyra",
-    "Dara", "Dax", "Dean", "Delta", "Dex", "Dina", "Dion", "Dora", "Drew", "Eden", "Eira", "Elio", "Ella", "Elsa", "Ember", "Enzo",
-    "Esme", "Etta", "Ezra", "Faye", "Felix", "Fern", "Finn", "Flora", "Flynn", "Fox", "Freya", "Gael", "Gia", "Glen", "Greta", "Hana",
-    "Hazel", "Heath", "Hera", "Hope", "Hugo", "Ida", "Iggy", "Ilia", "Indie", "Inez", "Iona", "Isla", "Ivan", "Ivo", "Ivy", "Jace",
-    "Jade", "Jai", "Jax", "Jazz", "Jem", "Jett", "Joan", "Joel", "Joss", "Jude", "Jules", "Kai", "Kato", "Keir", "Kian", "Koa",
-    "Kora", "Lana", "Lark", "Leif", "Lena", "Leo", "Lex", "Liam", "Lila", "Lin", "Liv", "Lois", "Loki", "Lola", "Lou", "Luca",
-    "Luna", "Lyra", "Mae", "Mali", "Mara", "Mars", "Maya", "Milo", "Mina", "Moss", "Nala", "Nash", "Nell", "Neo", "Nia", "Nico",
-    "Nina", "Noa", "Noel", "Noor", "Nora", "Oak", "Odin", "Olive", "Oona", "Opal", "Otis", "Otto", "Oz", "Pax", "Pearl", "Penn",
-    "Pia", "Pip", "Pixel", "Pluto", "Poe", "Polly", "Quinn", "Rae", "Rain", "Ravi", "Reed", "Rei", "Rhea", "Rio", "River", "Robin",
-    "Romy", "Rory", "Rosa", "Rowan", "Rue", "Rumi", "Rune", "Sage", "Sal", "Sami", "Scout", "Sean", "Shay", "Skye", "Sol", "Sora",
-    "Stan", "Starr", "Suki", "Sunny", "Tali", "Tara", "Tate", "Teal", "Tess", "Theo", "Tia", "Toby", "Tori", "Tova", "Troy", "Una",
-    "Vale", "Vera", "Via", "Vida", "Vik", "Violet", "Wade", "Wes", "Willa", "Wren", "Xavi", "Xena", "Yara", "Yuri", "Zane", "Zara",
-    "Zed", "Zeke", "Zia", "Ziggy", "Zoe", "Zora", "Aiko", "Akira", "Ari", "Aster", "Bora", "Cedar", "Dune", "Elva", "Fenna", "Hollis",
-    "Egon", "Hale", "Jory", "Ilan", "Kent", "Lars", "Mika", "Oren", "Paolo", "Rafi", "Seth", "Timo", "Ugo", "Vito", "Yael", "Zola",
-    "Andi", "Beni", "Ciro", "Demi", "Ewan", "Gabi", "Hiro", "Inga", "Joey", "Kimi", "Ludo", "Nils", "Omar", "Perri", "Rico", "Silas",
-  ];
   const MAJOR_PHASE_POPUPS = [3, 9, 10, 12, 13, 14, 15];
 
   const TASK_TYPES = [
@@ -293,21 +274,25 @@
     { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 25000000, currency: "cash", phase: 10, requires: "ai_ceo", oneTime: true },
     { id: "network_density", name: "Re-architect Network", desc: "Increase cluster density. Add one agent slot per cluster.", cost: 30000000, currency: "cash", phase: 10, requires: "ai_ceo", effect: { clusterSlots: 9 }, oneTime: true },
     { id: "ceo_deploy_speed", name: "Faster AI Provisioning", desc: "Provision agents 50% faster.", cost: 40000000, currency: "cash", phase: 10, requires: "network_density", oneTime: true },
-    { id: "cluster_capacity_16", name: "High-Density Clusters", desc: "Expand every cluster from 9 to 16 agent slots.", cost: 50000000, currency: "cash", phase: 10, requires: "ceo_deploy_speed", effect: { clusterSlots: 16 }, oneTime: true },
+    { id: "cluster_capacity_16", name: "High-Density Clusters", desc: "Optimise cluster space for more agent slots.", cost: 50000000, currency: "cash", phase: 10, requires: "ceo_deploy_speed", effect: { clusterSlots: 16 }, oneTime: true },
     { id: "ceo_batch", name: "Dual Agent Provisioning", desc: "Provision two agents at once.", cost: 75000000, currency: "cash", phase: 10, requires: "cluster_capacity_16", oneTime: true },
-    { id: "server_1", name: "AI CEO Scale Mode", desc: "AI CEO can now scale cluster output aggressively.", cost: 200000000, currency: "cash", phase: 10, requires: "ceo_batch", effect: { ceoScale: true, agentSpeedMult: 1.5, payMult: 1.3, serviceSlots: 5 }, oneTime: true, reqTasks: 1400 },
-    { id: "ceo_quad_batch", name: "Four-Agent Provisioning", desc: "Provision four agents at once.", cost: 100000000, currency: "cash", phase: 10, requires: "server_1", oneTime: true },
-    { id: "ceo_parallel_clusters", name: "Parallel Cluster Builds", desc: "Build two clusters at once.", cost: 150000000, currency: "cash", phase: 10, requires: "ceo_quad_batch", oneTime: true },
-    { id: "ceo_fast_builds", name: "Preassembled Server Racks", desc: "Halve cluster construction time.", cost: 200000000, currency: "cash", phase: 10, requires: "server_1", oneTime: true },
-    { id: "server_2", name: "Autonomous Expansion Desk", desc: "Refine expansion workflows. Task pay increases by 20%.", cost: 2500000, currency: "cash", phase: 10, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1440 },
-    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, reqNodes: 100, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
+    { id: "server_1", name: "AI CEO Scale Mode", desc: "Let the AI CEO create and staff new clusters automatically.", cost: 200000000, currency: "cash", phase: 10, requires: "ceo_batch", unlockPhase: 11, effect: { ceoScale: true, agentSpeedMult: 1.5, payMult: 1.3, serviceSlots: 5 }, oneTime: true, reqTasks: 1400 },
+    { id: "ceo_quad_batch", name: "Four-Agent Provisioning", desc: "Provision four agents at once.", cost: 100000000, currency: "cash", phase: 11, requires: "server_1", oneTime: true },
+    { id: "ceo_parallel_clusters", name: "Parallel Cluster Builds", desc: "Build two clusters at once.", cost: 150000000, currency: "cash", phase: 11, requires: "ceo_quad_batch", oneTime: true },
+    { id: "ceo_fast_builds", name: "Preassembled Server Racks", desc: "Halve cluster construction time.", cost: 200000000, currency: "cash", phase: 11, requires: "server_1", oneTime: true },
+    { id: "server_2", name: "Autonomous Expansion Desk", desc: "Refine expansion workflows. Task pay increases by 20%.", cost: 2500000, currency: "cash", phase: 11, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1440 },
 
-    { id: "ceo_course", name: "AI Expansion Optimisation", desc: "Halve cluster construction time again. The AI CEO coordinates twice as often.", cost: 300000000, currency: "cash", phase: 10, requires: "server_1", unlockPhase: 11, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
+    { id: "ceo_course", name: "Rapid Cluster Deployment", desc: "Halve cluster build time and double CEO coordination speed.", cost: 300000000, currency: "cash", phase: 11, requires: "ceo_fast_builds", effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
     { id: "ceo_full_fit", name: "Fully Fitted Racks", desc: "Install all 16 agents during construction. Agent costs are included in the cluster price.", cost: 400000000, currency: "cash", phase: 11, requires: "ceo_course", oneTime: true },
     { id: "autonomous_nodes", name: "Autonomous Operating Model", desc: "Compact infrastructure for a larger autonomous company.", cost: 760000000, currency: "cash", phase: 11, unlockPhase: 12, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 2000000 },
     { id: "ceo_continuous", name: "Continuous Deployment", desc: "Improve deployment speed by 50%.", cost: 150000000, currency: "cash", phase: 12, requires: "ceo_full_fit", oneTime: true },
-    { id: "replication", name: "Node Replication", desc: "Standardize node replication. Reduce cluster costs by 35%.", cost: 1500000000, currency: "cash", phase: 12, reqNodes: 20, unlockPhase: 13, effect: { payMult: 1.15 }, oneTime: true },
+    { id: "replication", name: "Node Replication", desc: "Build four clusters at once. Reduce cluster costs by 35%.", cost: 1500000000, currency: "cash", phase: 12, reqNodes: 20, unlockPhase: 13, effect: { payMult: 1.15 }, oneTime: true },
     { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 2000000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
+    { id: "neocloud_pipeline", name: "Neocloud Deployment Pipeline", desc: "Halve cluster construction time.", cost: 350000000, currency: "cash", phase: 14, requires: "global_network", reqNodes: 50, oneTime: true },
+    { id: "neocloud_batch", name: "Neocloud Construction", desc: "Build 25 clusters at once to fill a whole neocloud.", cost: 500000000, currency: "cash", phase: 14, requires: "neocloud_pipeline", reqNodes: 60, oneTime: true },
+    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 750000000, currency: "cash", phase: 14, requires: "neocloud_batch", reqNodes: 100, oneTime: true },
+    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 1000000000, currency: "cash", phase: 14, requires: "neocloud_supply_chain", reqNodes: 125, oneTime: true },
+    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, requires: "parallel_neoclouds", reqNodes: 200, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
 
     // Phase 11 (retirement)
     // Retirement now follows the four new network stages, in Phase 15.
@@ -1070,8 +1055,12 @@
   // ---------- AGENT SYSTEM ----------
   function newClusterAgentName() {
     const used = new Set(G.agents.map((agent) => agent.name));
-    const available = CLUSTER_AGENT_NAMES.filter((name) => !used.has(name));
-    return pick(available.length > 0 ? available : CLUSTER_AGENT_NAMES);
+    const start = Math.floor(Math.random() * 0x10000);
+    for (let offset = 0; offset < 0x10000; offset++) {
+      const name = ((start + offset) % 0x10000).toString(16).padStart(4, "0");
+      if (!used.has(name)) return name;
+    }
+    throw new RangeError("All four-character agent IDs are in use.");
   }
 
   function nextWorkerSlot() {
@@ -1732,6 +1721,7 @@
     }
     if (upgrade.id === "server_1" && (G.clusters.length < 5 || !clustersFull())) return false;
     if (upgrade.id === "replication") return G.clusters.length >= 20;
+    if (upgrade.id === "retire_unlock" && completedClusterCount() < upgrade.reqNodes) return false;
     if (upgrade.id === "cluster_capacity_3" && G.clusters.length < 2) return false;
     if (upgrade.id === "ceo_readiness" && G.clusters.length < 3) return false;
     return true;
@@ -2089,17 +2079,21 @@
     return G.purchasedUpgrades.includes("cluster_capacity_3") ? 3 : G.purchasedUpgrades.includes("cluster_capacity_2") ? 2 : 1;
   }
 
-  function nodeCost() {
-    return Math.ceil(1000000 * Math.pow(1 + G.clustersProvisioned * 0.025, 2) * (G.phase >= 13 ? 0.65 : 1) * (G.phase >= 14 ? 0.6 : 1));
+  function nodeCost(provisioned = G.clustersProvisioned) {
+    return Math.ceil(1000000 * Math.pow(1 + provisioned * 0.025, 2) * (G.phase >= 13 ? 0.65 : 1) * (G.phase >= 14 ? 0.6 : 1));
   }
 
-  function provisionCost() {
-    return 12000 + (G.purchasedUpgrades.includes("ceo_full_fit") ? 40000 : 0) + (G.phase >= 12 ? nodeCost() : Math.ceil(CLUSTER_COST * Math.pow(1.6, Math.max(0, G.clustersProvisioned - 1))));
+  function provisionCost(provisioned = G.clustersProvisioned) {
+    return 12000 + (G.purchasedUpgrades.includes("ceo_full_fit") ? 40000 : 0) + (G.phase >= 12 ? nodeCost(provisioned) : Math.ceil(CLUSTER_COST * Math.pow(1.6, Math.max(0, provisioned - 1))));
   }
 
 
   function expansionFundingTarget() {
-    return provisionCost() * 2;
+    const concurrency = clusterBuildConcurrency();
+    const batch = concurrency >= NEOCLOUD_SIZE ? concurrency : 1;
+    let budget = 0;
+    for (let index = 0; index < batch; index++) budget += provisionCost(G.clustersProvisioned + index);
+    return budget * 2;
   }
 
   function canPlanNextCluster() {
@@ -2112,29 +2106,33 @@
   }
 
   function clusterBuildDuration() {
-    if (G.purchasedUpgrades.includes("ceo_continuous")) return 2 / expansionSpeed();
-    const base = G.phase >= 14 ? 2 : G.phase >= 13 ? 3 : G.phase >= 11 ? 6 : 12;
-    return base / (G.purchasedUpgrades.includes("ceo_fast_builds") ? 2 : 1) / expansionSpeed();
+    const neocloudSpeed = (G.purchasedUpgrades.includes("neocloud_pipeline") ? 2 : 1) * (G.purchasedUpgrades.includes("neocloud_supply_chain") ? 2 : 1);
+    if (G.purchasedUpgrades.includes("ceo_continuous")) return 2 / expansionSpeed() / neocloudSpeed;
+    const base = G.phase >= 14 ? 2 : G.phase >= 13 ? 3 : 12;
+    return base / (G.purchasedUpgrades.includes("ceo_fast_builds") ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_course") ? 2 : 1) / expansionSpeed() / neocloudSpeed;
   }
 
   function expansionSpeed() {
     return G.phase < 14 ? 1 : clamp(1 + (completedClusterCount() - 40) / 20, 1, 4);
   }
 
-  function staggeredStartDelay(jobs, remaining, duration) {
+  function staggeredStartDelay(jobs, remaining, duration, spacing = 1) {
     if (jobs.length === 0) return 0;
     const latestStart = Math.max(...jobs.map((job) => job[remaining] - job[duration]));
-    return Math.max(0, latestStart + rand(0.3, 0.4));
+    return Math.max(0, latestStart + rand(0.3, 0.4) / spacing);
   }
 
   function openCluster() {
     const cost = provisionCost();
     if (G.phase < 9 || G.clusters.length >= clusterCapacity() || G.cash < cost) return;
     G.cash -= cost;
-    const delay = staggeredStartDelay(G.clusters.filter((cluster) => cluster.buildRemaining > 0), "buildRemaining", "buildDuration");
+    const duration = clusterBuildDuration();
+    const concurrency = clusterBuildConcurrency();
+    const spacing = concurrency >= NEOCLOUD_SIZE ? Math.max(1, concurrency * 0.8 / duration) : 1;
+    const delay = staggeredStartDelay(G.clusters.filter((cluster) => cluster.buildRemaining > 0), "buildRemaining", "buildDuration", spacing);
     const cluster = addClusterWithNextName();
     cluster.invested = cost;
-    cluster.buildDuration = clusterBuildDuration();
+    cluster.buildDuration = duration;
     cluster.buildRemaining = cluster.buildDuration + delay;
     if (G.purchasedUpgrades.includes("ceo_full_fit")) {
       if (G.phase >= 12) cluster.workforce = cluster.workerSlotsMax;
@@ -2267,8 +2265,8 @@
     if (G.ceoMode === "off") return;
     tickAgentProvisioning();
     tickClusterProvisioning();
-    const baseInterval = G.phase >= 14 ? 1000 : G.phase >= 13 ? 2000 : G.phase >= 11 ? 2500 : 5000;
-    const interval = baseInterval / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.ceoMode === "scale" ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1) / expansionSpeed();
+    const baseInterval = G.phase >= 14 ? 1000 : G.phase >= 13 ? 2000 : 5000;
+    const interval = baseInterval / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.ceoMode === "scale" ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1) / (G.purchasedUpgrades.includes("ceo_course") ? 2 : 1) / expansionSpeed();
     if (Date.now() - G.lastCeoAction < interval) return;
     G.lastCeoAction = Date.now();
     if (G.phase >= 12) {
@@ -2299,12 +2297,19 @@
 
   function tickClusterProvisioning() {
     if (G.ceoMode !== "scale" || G.clusters.length === 0) return;
-    const concurrent = G.purchasedUpgrades.includes("ceo_parallel_clusters") ? 2 : 1;
+    if (G.cash < expansionFundingTarget()) return;
+    const concurrent = clusterBuildConcurrency();
     const pending = G.clusters.filter((cluster) => !clusterOnline(cluster)).length;
     for (let index = pending; index < concurrent; index++) {
-      if (G.cash < expansionFundingTarget()) break;
+      if (G.cash < provisionCost() * 2) break;
       openCluster();
     }
+  }
+
+  function clusterBuildConcurrency() {
+    if (G.phase >= 14 && G.purchasedUpgrades.includes("parallel_neoclouds")) return NEOCLOUD_SIZE * 2;
+    if (G.phase >= 14 && G.purchasedUpgrades.includes("neocloud_batch")) return NEOCLOUD_SIZE;
+    return G.phase >= 13 ? 4 : G.purchasedUpgrades.includes("ceo_parallel_clusters") ? 2 : 1;
   }
 
   function checkMilestones() {
@@ -3403,12 +3408,12 @@
     if (cluster.buildRemaining > 0) {
       const progress = clamp(100 * (1 - cluster.buildRemaining / cluster.buildDuration), 0, 100);
       const stage = ["Procuring GPUs", "Racking hardware", "Installing software", "Final checks"][Math.min(3, Math.floor(progress / 25))];
-      return html + "<p class='text-sm'>" + stage + "</p><div class='task-bar' role='progressbar' aria-label='Cluster construction' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + Math.round(progress) + "'><div class='task-bar-fill' style='width:" + progress + "%'></div></div></div>";
+      return html + "<p class='text-sm'>" + stage + "</p><div class='task-bar cluster-construction-progress' role='progressbar' aria-label='Cluster construction' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + Math.round(progress) + "'><div class='task-bar-fill' style='width:" + progress + "%'></div></div></div>";
     }
     if (!minimal) {
       const installing = cluster.workerAgentIds.some((id) => G.agents.find((agent) => agent.id === id).status === "provisioning");
       const status = count < cluster.workerSlotsMax ? (count > 0 ? "Partially Operational" : installing ? "Installing agents" : "Needs Agents") : cluster.tank > 0 ? "Operating" : "Awaiting tokens";
-      html += "<p class='text-sm cluster-status" + (status === "Needs Agents" ? " needs-agents" : "") + "'>" + status + "</p><div class='cluster-capacity' style='--cluster-columns:" + (compact ? 8 : cluster.workerSlotsMax === 9 ? 3 : 4) + "' aria-label='" + count + " of " + cluster.workerSlotsMax + " agents online'>";
+      html += "<p class='text-sm cluster-status" + (status === "Needs Agents" ? " needs-agents" : "") + "'>" + status + "</p><div class='cluster-capacity" + (compact ? " autonomous-capacity" : "") + "' style='--cluster-columns:" + (cluster.workerSlotsMax === 9 ? 3 : 4) + "' aria-label='" + count + " of " + cluster.workerSlotsMax + " agents online'>";
       for (let index = 0; index < cluster.workerSlotsMax; index++) html += renderClusterSlot(cluster, index, delegated);
       html += "</div>";
     }
@@ -3417,13 +3422,13 @@
 
   function renderPlanningCard() {
     const funding = G.cash < expansionFundingTarget();
-    const stage = funding ? "Securing " + fmtCash(provisionCost() * 2) + " funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
+    const stage = funding ? "Securing " + fmtCash(expansionFundingTarget()) + " funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
     return "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + (G.phase >= 14 ? "C" : "Cluster ") + (G.clustersProvisioned + 1) + "</strong><span>Planning</span><small>" + stage + "</small></div>";
   }
 
   function neocloudGroups(planning) {
     const groups = new Map();
-    for (const cluster of G.clusters.slice().reverse()) {
+    for (const cluster of G.clusters) {
       const number = Math.ceil(Number(cluster.name.slice(8)) / NEOCLOUD_SIZE);
       if (!groups.has(number)) groups.set(number, { number: number, clusters: [], planning: false });
       groups.get(number).clusters.push(cluster);
@@ -3433,7 +3438,7 @@
       if (!groups.has(number)) groups.set(number, { number: number, clusters: [], planning: false });
       groups.get(number).planning = true;
     }
-    return [...groups.values()].sort((a, b) => b.number - a.number);
+    return [...groups.values()].sort((a, b) => a.number - b.number);
   }
 
   function renderNeoclouds(planning) {
@@ -3443,10 +3448,10 @@
       const online = group.clusters.filter(clusterOnline).length;
       const building = group.clusters.filter((cluster) => cluster.buildRemaining > 0).length;
       const income = group.clusters.reduce((total, cluster) => total + clusterIncomeRate(cluster), 0);
-      const active = group === groups[0] || building > 0;
+      const active = group === groups.at(-1) || building > 0;
       html += "<section class='neocloud" + (active ? " active" : "") + "' data-neocloud='" + group.number + "' aria-label='Neocloud " + group.number + "'><div class='neocloud-header'><strong>Neocloud " + group.number + "</strong><span>" + online + " online" + (building ? " · " + building + " building" : "") + "</span></div><p class='neocloud-summary'>C" + ((group.number - 1) * NEOCLOUD_SIZE + 1) + "–C" + group.number * NEOCLOUD_SIZE + " · $" + fmtTokens(income) + "/s</p><div class='network-grid'>";
-      if (group.planning) html += renderPlanningCard();
       for (const cluster of group.clusters) html += renderClusterCard(cluster);
+      if (group.planning) html += renderPlanningCard();
       html += "</div></section>";
     }
     return html + "</div>";
@@ -3475,10 +3480,9 @@
     if (minimal) html += renderNeoclouds(planning);
     else {
       html += "<div class='" + (compact ? "node-grid" : "node-grid agent-grid") + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(152, 180 - density * 6) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
-      if (compact && planning) html += renderPlanningCard();
-      for (const cluster of compact ? G.clusters.slice().reverse() : G.clusters) html += renderClusterCard(cluster);
+      for (const cluster of G.clusters) html += renderClusterCard(cluster);
       if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
-      if (!compact && planning) html += renderPlanningCard();
+      if (planning) html += renderPlanningCard();
       html += "</div>";
     }
     updateHTML($("#cluster-list"), html);
@@ -3823,7 +3827,7 @@
     const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
-    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 280000000, clusters: 18 } }[stage];
+    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 180000000, clusters: 5 } }[stage];
     G = defaultState();
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];

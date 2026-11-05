@@ -81,7 +81,7 @@ for (const [phase, capacity] of [[10, 2], [10, 4], [12, 2]]) {
   });
 }
 
-test('Ralph-loops and AI expansion skip modals and the operating model uses the new price and copy', async ({page}) => {
+test('Ralph-loops and Scale Mode skip modals and the operating model uses the new price and copy', async ({page}) => {
   await page.clock.install();
   await page.goto('/');
   await page.evaluate(() => { chPh8(); GAME.addCash(200000); });
@@ -95,17 +95,20 @@ test('Ralph-loops and AI expansion skip modals and the operating model uses the 
   expect(await page.evaluate(() => {
     chPh11();
     return { cash: GAME.state.cash, tasks: GAME.state.totalTasksDone, clusters: GAME.state.clusters.length };
-  })).toEqual({ cash: 280000000, tasks: 27000000, clusters: 18 });
+  })).toEqual({ cash: 180000000, tasks: 27000000, clusters: 5 });
   await page.clock.runFor(200);
-  await expect(page.locator('[onclick="GAME.buy(\'ceo_course\')"]')).toBeDisabled();
+  await expect(page.locator('[onclick="GAME.buy(\'server_1\')"]')).toBeDisabled();
   await page.evaluate(() => GAME.addCash(20000000));
   await page.clock.runFor(200);
-  await page.locator('[onclick="GAME.buy(\'ceo_course\')"]').click();
+  await page.locator('[onclick="GAME.buy(\'server_1\')"]').click();
   expect(await page.evaluate(() => GAME.state.phase)).toBe(11);
   await expect(page.locator('#milestone-popup')).toBeHidden();
   await page.evaluate(() => { GAME.addCash(2e9); GAME.addTasks(2e6); });
   await page.clock.runFor(200);
-  await page.locator('[onclick="GAME.buy(\'ceo_full_fit\')"]').click();
+  for (const id of ['ceo_quad_batch', 'ceo_parallel_clusters', 'ceo_fast_builds', 'server_2', 'ceo_course', 'ceo_full_fit']) {
+    await page.locator('[onclick="GAME.buy(\'' + id + '\')"]').click();
+    await page.clock.runFor(200);
+  }
   await page.clock.runFor(200);
   const model = page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]');
   await expect(model).toHaveText('$760.00M');
@@ -792,7 +795,7 @@ test('an existing twelve-node company must provision and staff nine more nodes b
   await page.clock.pauseAt(new Date(g.lastTick + 1000));
   await page.addInitScript(value=>{if(!sessionStorage.getItem('replication_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('replication_seeded','1')}},raw);await page.goto('/');
   await page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]').click();await page.clock.runFor(200);await page.locator('#btn-dismiss-popup').click();const buy=page.locator('[onclick="GAME.buy(\'replication\')"]');await expect(buy).toHaveCount(0);
-  await page.locator('[onclick="GAME.buy(\'ceo_continuous\')"]').click();await page.clock.runFor(8500);await expect(buy).toBeDisabled();await expect(buy.locator('..').locator('..').locator('.desc')).toHaveText('Standardize node replication. Reduce cluster costs by 35%.');await page.evaluate(()=>GAME.state.lastSave=0);await page.clock.runFor(200);await page.reload();expect(await page.evaluate(()=>GAME.state.replicationTarget)).toBe(21);
+  await page.locator('[onclick="GAME.buy(\'ceo_continuous\')"]').click();await page.clock.runFor(8500);await expect(buy).toBeDisabled();await expect(buy.locator('..').locator('..').locator('.desc')).toHaveText('Build four clusters at once. Reduce cluster costs by 35%.');await page.evaluate(()=>GAME.state.lastSave=0);await page.clock.runFor(200);await page.reload();expect(await page.evaluate(()=>GAME.state.replicationTarget)).toBe(21);
   await page.clock.runFor(5000);await expect(buy).toBeEnabled();await buy.click();await page.clock.runFor(200);expect(await page.evaluate(()=>GAME.state.phase)).toBe(13);
 });
 
