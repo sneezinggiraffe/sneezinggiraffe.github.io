@@ -142,3 +142,107 @@ test('Tools of the Trade appears alone and dismissing it reveals the paid upgrad
     h.close();
   }
 });
+
+test('better way is a free upgrade at 35 tasks that gates later upgrades and persists across reloads', () => {
+  const h = harness();
+  let restored;
+  try {
+    const g = h.fresh();
+    h.prepareUpgrade('ai_hint');
+    const intro = h.api.UPGRADES.find(upgrade => upgrade.id === 'ai_hint');
+    g.totalTasksDone = 34;
+    h.api.checkMilestones();
+    assert.equal(h.api.upgradeVisible(intro), false);
+    g.totalTasksDone = 35;
+    h.api.checkMilestones();
+    h.api.renderAll();
+    assert.equal(h.api.queue().length, 0);
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    const card = h.window.document.querySelector('#upgrade-list .upgrade-card');
+    assert.match(card.textContent, /There Must Be a Better Way/);
+    assert.equal(card.querySelector('button').textContent, 'Free');
+    assert.equal(card.querySelector('button').disabled, false);
+    g.totalTasksDone = 105;
+    g.cash = 1000;
+    for (const id of ['side_hustle', 'focus_timer', 'free_ai']) h.api.purchaseUpgrade(id);
+    assert.equal(g.cash, 1000);
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    restored.close();
+    restored = undefined;
+    g.totalTasksDone = 35;
+    g.cash = 0;
+    const before = JSON.parse(JSON.stringify(g));
+    // The harness does not execute inline handlers, so use the same public action.
+    h.window.GAME.buy('ai_hint');
+    before.purchasedUpgrades.push('ai_hint');
+    before.log = JSON.parse(JSON.stringify(g.log));
+    assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
+    assert.equal(h.api.queue().length, 0);
+    const later = ['side_hustle', 'inbox_zero', 'gtd_workflow'];
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), later);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), later);
+  } finally {
+    if (restored) restored.close();
+    h.close();
+  }
+});
+
+test('Reality Check replaces its modal at 90 tasks and gates free AI without changing expenses', () => {
+  const h = harness();
+  let restored;
+  try {
+    const g = h.fresh();
+    h.prepareUpgrade('reality_check');
+    const upgrade = id => h.api.UPGRADES.find(item => item.id === id);
+    g.totalTasksDone = 89;
+    h.api.checkMilestones();
+    assert.equal(g.expensesRevealed, false);
+    assert.equal(h.api.upgradeVisible(upgrade('reality_check')), false);
+    assert.equal(h.api.upgradeVisible(upgrade('free_ai')), false);
+    g.totalTasksDone = 90;
+    h.api.checkMilestones();
+    h.api.renderAll();
+    assert.equal(g.expensesRevealed, true);
+    assert.equal(g.uiRevealed.expenseCard, true);
+    assert.equal(g.uiRevealed.expenses, true);
+    assert.equal(h.api.queue().length, 0);
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), item => item.id), ['reality_check']);
+    const card = h.window.document.querySelector('#upgrade-list .upgrade-card');
+    assert.match(card.textContent, /Reality Check/);
+    assert.match(card.textContent, /Bills are now draining your cash/);
+    assert.equal(card.querySelector('button').textContent, 'Free');
+    assert.equal(card.querySelector('button').disabled, false);
+    g.totalTasksDone = 105;
+    h.window.GAME.buy('free_ai');
+    assert.equal(g.phase, 1);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), item => item.id), ['reality_check']);
+    restored.close();
+    restored = undefined;
+    g.totalTasksDone = 90;
+    const before = JSON.parse(JSON.stringify(g));
+    h.window.GAME.buy('reality_check');
+    before.purchasedUpgrades.push('reality_check');
+    before.log = JSON.parse(JSON.stringify(g.log));
+    assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
+    assert.equal(h.api.queue().length, 0);
+    assert.equal(h.api.upgradeVisible(upgrade('free_ai')), true);
+    h.window.GAME.buy('free_ai');
+    assert.equal(g.phase, 1);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), item => item.id), ['free_ai']);
+    restored.window.GAME.state.totalTasksDone = 105;
+    restored.window.GAME.buy('free_ai');
+    assert.equal(restored.window.GAME.state.phase, 2);
+  } finally {
+    if (restored) restored.close();
+    h.close();
+  }
+});

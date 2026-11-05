@@ -181,6 +181,7 @@
     { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 7 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
+    { id: "ai_hint", name: "There Must Be a Better Way", desc: "You are getting faster, but the work never stops. Maybe there is a smarter way...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 35 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 35 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 35 },
     { id: "gtd_workflow", name: "GTD Workflow", desc: "Work on 5 tasks at once with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 35 },
@@ -189,7 +190,8 @@
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
     { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
-    { id: "free_ai", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 105 },
+    { id: "reality_check", name: "Reality Check", desc: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash.", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 90 },
+    { id: "free_ai", requires: "reality_check", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 105 },
 
     // Phase 2 -> 3
     { id: "prompt_library", name: "Prompt Library", desc: "Reuse successful prompts. AI completes 10% more work per prompt.", cost: 150, currency: "cash", phase: 2, effect: { aiPowerMult: 1.1 }, oneTime: true, reqTasks: 115 },
@@ -336,9 +338,9 @@
     { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], inboxTask: true },
     { id: "stress_unlock", reqTasks: 12, reveals: ["stress"] },
     { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true } },
-    { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true }, popup: { title: "Reality Check", msg: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash." } },
+    { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
-    { id: "ai_hint", reqTasks: 35, popup: { title: "There Must Be a Better Way", msg: "You are getting faster, but the work never stops. Maybe there is a smarter way..." } },
+    { id: "ai_hint", reqTasks: 35 },
     // Phase-based
     { id: "tokens_unlock", reqPhase: 3, reveals: ["tokens"] },
     { id: "agents_unlock", reqPhase: 2, reveals: ["agents"] },
@@ -1720,7 +1722,8 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
-    if (G.phase === 1 && !upgrade.introductory && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
+    if (G.phase === 1 && upgrade.id !== "tools_of_trade" && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
+    if (G.phase === 1 && upgrade.reqTasks >= 35 && upgrade.id !== "ai_hint" && !G.purchasedUpgrades.includes("ai_hint")) return false;
     if (upgrade.saleDuration && G.salePreparation.upgradeId && G.salePreparation.upgradeId !== upgrade.id) return false;
     if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
