@@ -436,7 +436,7 @@
       batchSize: 1,
       workReduction: 0,
       taskDetails: false,
-      musicMode: "layered", // off | on | layered
+      musicMode: "on", // off | on (full layered soundtrack)
       uiRevealed: {
         topBar: false,
         cash: false,
@@ -481,7 +481,7 @@
     if (!Number.isInteger(state.batchSize) || state.batchSize < 1) return false;
     if (state.retirementFinal && !state.retired) return false;
     if (!Number.isInteger(state.phase) || state.phase < 1 || state.phase > FINAL_PHASE) return false;
-    if (!["off", "manage", "scale"].includes(state.ceoMode) || !["off", "on", "layered"].includes(state.musicMode)) return false;
+    if (!["off", "manage", "scale"].includes(state.ceoMode) || !["off", "on"].includes(state.musicMode)) return false;
     const saleStep = UPGRADES.find((upgrade) => upgrade.id === state.salePreparation.upgradeId && upgrade.saleDuration);
     if (state.salePreparation.upgradeId ? !saleStep || state.retired || saleStep.phase !== state.phase || state.salePreparation.remaining <= 0 || state.salePreparation.remaining > saleStep.saleDuration || state.purchasedUpgrades.includes(saleStep.id) || (saleStep.requires && !state.purchasedUpgrades.includes(saleStep.requires)) : state.salePreparation.remaining !== 0) return false;
     const taskShape = { batchSize: 1, id: "", typeId: "", name: "", icon: "", client: "", workRequired: 1, workDone: 0, pay: 0, tokenCost: 0, failChance: 0, assignedAgent: null, status: "", createdAt: 0 };
@@ -2446,15 +2446,12 @@
   }
 
   function getCurrentMusicMode() {
-    if (G.musicMode === "off" || G.musicMode === "on" || G.musicMode === "layered") {
-      return G.musicMode;
-    }
-    return "layered";
+    return G.musicMode;
   }
 
   function updateMusicToggleLabel() {
     var mode = getCurrentMusicMode();
-    var label = mode === "layered" ? "Layered" : mode === "off" ? "Off" : "On";
+    var label = mode === "off" ? "Off" : "On";
     $("#btn-settings-music").textContent = "Music: " + label;
   }
 
@@ -2798,7 +2795,7 @@
     }
 
     syncBaseSoundtrack(nextSoundtrackPath);
-    if (!nextSoundtrackPath || mode !== "layered" || G.retired) {
+    if (!nextSoundtrackPath || G.retired) {
       stopDrumPlayback();
       stopSynthPlayback();
       return;
@@ -2838,9 +2835,7 @@
 
   function toggleMusicSetting() {
     var mode = getCurrentMusicMode();
-    if (mode === "off") G.musicMode = "on";
-    else if (mode === "on") G.musicMode = "layered";
-    else G.musicMode = "off";
+    G.musicMode = mode === "off" ? "on" : "off";
     updateMusicToggleLabel();
     syncMusicPlayback();
     save();

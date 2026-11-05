@@ -487,8 +487,14 @@ test('Phase 5 adds two D4 and F4 phrases per bar with quiet chorus and reverb', 
 
   await expect(page.locator('#milestone-popup')).toBeHidden();
   await page.locator('#btn-settings').click();
-  await page.locator('#btn-settings-music').click();
+  const musicButton = page.locator('#btn-settings-music');
+  await expect(musicButton).toHaveText('Music: On');
+  await musicButton.click();
+  await expect(musicButton).toHaveText('Music: Off');
   expect(await page.evaluate(() => window.testAudioPlayers.every(player => player.paused))).toBe(true);
+  await musicButton.click();
+  await expect(musicButton).toHaveText('Music: On');
+  expect(await page.evaluate(() => window.testAudioPlayers.filter(player => !player.paused).length)).toBe(3);
 });
 
 test('DnB uses the original fast drums with a broad hook in one seamless premix', async ({page}) => {

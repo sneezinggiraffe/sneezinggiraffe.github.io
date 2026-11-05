@@ -748,13 +748,13 @@ test('the quiet Phase 5 synth waits for interaction, fades in and survives the d
     h.api.syncMusicPlayback();
     advanceFades(1000);
     assert.ok(synth.volume > 0 && synth.volume < 0.0729);
-    g.musicMode = 'on';
+    g.musicMode = 'off';
     h.api.syncMusicPlayback();
     advanceFades(10000);
     assert.equal(synth.paused, true);
     assert.equal(synth.volume, 0);
-    assert.ok(h.audioPlayers.some(player => player.src === 'soundtrack-loop.mp3' && !player.paused));
-    g.musicMode = 'layered';
+    assert.ok(h.audioPlayers.every(player => player.paused));
+    g.musicMode = 'on';
     h.api.syncMusicPlayback();
     advanceFades(8000);
     assert.equal(synth.volume, 0.0729);
@@ -764,7 +764,7 @@ test('the quiet Phase 5 synth waits for interaction, fades in and survives the d
       assert.equal(synth.paused, true);
       assert.equal(synth.currentTime, 0);
       assert.equal(synth.volume, 0);
-      g.musicMode = 'layered'; g.totalTasksDone = 12; g.gameStarted = true; g.retired = false;
+      g.musicMode = 'on'; g.totalTasksDone = 12; g.gameStarted = true; g.retired = false;
       h.api.syncMusicPlayback();
       assert.equal(synth.paused, false);
       advanceFades(1000);
@@ -874,7 +874,7 @@ test('DnB waits for a downbeat and hands the standalone hook to the premixed tra
     advanceFades(5000);
     assert.ok(h.audioPlayers.every(player => player.paused));
     assert.ok(h.audioPlayers.filter(player => player.src !== 'soundtrack-loop.mp3').every(player => player.volume === 0));
-    g.musicMode = 'layered';
+    g.musicMode = 'on';
     h.api.syncMusicPlayback();
     stoppedKick.currentTime = 1.3;
     g.phase = 8;
@@ -897,12 +897,12 @@ test('DnB waits for a downbeat and hands the standalone hook to the premixed tra
     g.musicMode = 'off';
     h.api.syncMusicPlayback();
     assert.equal(cancelledDnb.paused, true);
-    g.musicMode = 'layered';
+    g.musicMode = 'on';
     h.api.syncMusicPlayback();
     const resumedTimers = nextInterval;
     h.advance(2200);
     assert.equal(nextInterval, resumedTimers);
-    g.musicMode = 'layered';
+    g.musicMode = 'on';
     g.phase = 7;
     h.api.syncMusicPlayback();
     h.audioPlayers[h.audioPlayers.length - 1].currentTime = 1.7;
@@ -917,6 +917,30 @@ test('DnB waits for a downbeat and hands the standalone hook to the premixed tra
   } finally {
     h.close();
   }
+});
+
+scenario('music toggles only between full layered On and silent Off and saves the choice', (h) => {
+  const g = h.fresh(5);
+  g.totalTasksDone = 12;
+  h.api.unlockMusicPlayback();
+  const button = h.window.document.querySelector('#btn-settings-music');
+  assert.equal(g.musicMode, 'on');
+  assert.equal(button.textContent, 'Music: On');
+  for (const mode of ['off', 'on', 'off', 'on']) {
+    button.click();
+    assert.equal(g.musicMode, mode);
+    assert.equal(button.textContent, mode === 'on' ? 'Music: On' : 'Music: Off');
+    assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).musicMode, mode);
+    assert.equal(h.api.validSave(g), true);
+    if (mode === 'off') assert.ok(h.audioPlayers.every(player => player.paused));
+    else {
+      for (const src of ['soundtrack-loop.mp3', 'synth_d4_loop.mp3']) {
+        assert.ok(h.audioPlayers.some(player => player.src === src && !player.paused));
+      }
+      assert.ok(h.audioPlayers.filter(player => !player.paused).length >= 3);
+    }
+  }
+  assert.equal(h.api.validSave({...g, musicMode: 'layered'}), false);
 });
 
 scenario('onboarding, manual work, keyboard action and rendering', (h) => {
@@ -3075,7 +3099,7 @@ scenario('chRetire prepares an immediate Golden Parachute and retirement restore
   g.musicMode = 'off';
   h.api.syncMusicPlayback();
   assert.ok(h.audioPlayers.every(player => player.paused));
-  g.musicMode = 'layered';
+  g.musicMode = 'on';
   h.api.save();
   const restored = harness(h.window.localStorage.getItem('ai_empire_save'), {seed: 8675309});
   try {
