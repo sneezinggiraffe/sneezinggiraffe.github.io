@@ -1363,3 +1363,35 @@ test('provisioning improvements bracket sixteen slots and stay available during 
   await expect(page.locator('#upgrade-list')).toContainText('Preassembled Server Racks');
   await page.locator('#upgrade-list').screenshot({path:'test-results/scaling-upgrades.png'});
 });
+
+for (const width of [1440, 390]) {
+  test(`work buttons allow concurrent tasks before upgrades at ${width}px`, async ({ page }) => {
+    const h = harness();
+    const g = h.fresh();
+    g.totalTasksDone = 6;
+    for (let i = 0; i < 3; i++) h.task().workRequired = 40;
+    h.api.checkMilestones();
+    h.dismiss();
+    g.lastTick = Date.now();
+    g.lastTaskSpawn = g.lastTick + 1e9;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({ width, height: 900 });
+    await page.clock.install({ time: new Date(g.lastTick) });
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const available = page.locator('#task-list').getByRole('button', { name: 'Work', exact: true });
+    for (let count = 1; count <= 3; count++) {
+      await expect(available.first()).toBeEnabled();
+      await available.first().click();
+      await page.clock.runFor(200);
+      await expect(page.locator('#task-list').getByRole('button', { name: 'Working...', exact: true })).toHaveCount(count);
+    }
+    expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(3);
+    expect(await page.evaluate(() => GAME.state.tasks.every(task => task.workDone > 0))).toBe(true);
+    await page.clock.runFor(6500);
+    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(9);
+  });
+}

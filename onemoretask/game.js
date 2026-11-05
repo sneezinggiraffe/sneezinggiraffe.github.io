@@ -683,7 +683,6 @@
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
     if (!task || task.status !== "available") return;
-    if (G.phase < 4 && G.tasks.some((t) => t.status === "active")) return;
 
     task.status = "active";
     G.activeTaskId = taskId;
@@ -3135,7 +3134,6 @@
     var noTasks = $("#no-tasks");
     var tasks = G.tasks.filter((task) => task.status !== "done");
     var queueSize = Math.min(getManualQueueSize(), tasks.filter((task) => task.status === "available").length);
-    var manualBusy = G.phase < 4 && tasks.some((task) => task.status === "active");
 
     $("#task-count").textContent = tasks.length + " tasks";
 
@@ -3154,7 +3152,7 @@
 
       var actions = "";
       if (t.status === "available") {
-        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\" " + (manualBusy ? "disabled" : "") + ">" + (queueSize > 1 ? "Work on " + queueSize : "Work") + "</button>";
+        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\">" + (queueSize > 1 ? "Work on " + queueSize : "Work") + "</button>";
         actions += clickBtn;
       }
       if (t.status === "active") {

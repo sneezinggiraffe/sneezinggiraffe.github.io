@@ -984,6 +984,36 @@ scenario('free AI requires prior purchases and shows its task requirement inside
   assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(upgrade => upgrade.id === 'free_ai')), false);
 });
 
+for (const phase of [1, 2, 3, 4]) {
+  for (const upgrade of [null, 'post_it_notes', 'gtd_workflow']) {
+    scenario(`Phase ${phase} allows successive work clicks with ${upgrade || 'no upgrades'}`, (h) => {
+      const g = h.fresh(phase);
+      if (upgrade) g.purchasedUpgrades.push(upgrade);
+      const groupSize = h.api.getManualQueueSize();
+      for (let i = 0; i < groupSize * 2 + 1; i++) {
+        const task = h.task();
+        task.workRequired = 10;
+        task.pay = 10;
+      }
+      h.window.GAME.clickTask(g.tasks[0].id);
+      h.api.tickManualWork(0.3);
+      h.api.renderTaskQueue();
+      const available = [...h.window.document.querySelectorAll('#task-list button')].filter(button => !button.disabled);
+      assert.equal(available.length, groupSize + 1);
+      h.window.eval(available[0].getAttribute('onclick'));
+      assert.equal(g.totalClicks, 2);
+      assert.equal(g.tasks.filter(task => task.status === 'active').length, groupSize * 2);
+      assert.equal(g.tasks[0].workDone, 2);
+      h.api.renderTaskQueue();
+      assert.equal(h.window.document.querySelectorAll('#task-list button:not(:disabled)').length, 1);
+      h.api.tickManualWork(2);
+      assert.equal(g.totalTasksDone, groupSize * 2);
+      assert.equal(g.cash, groupSize * 20);
+      assert.equal(g.tasks.at(-1).status, 'available');
+    });
+  }
+}
+
 scenario('Post-It Notes work on two jobs in parallel, preserve pay and survive a reload', (h) => {
   const g = h.fresh();
   g.purchasedUpgrades.push('post_it_notes');
@@ -996,7 +1026,7 @@ scenario('Post-It Notes work on two jobs in parallel, preserve pay and survive a
   h.api.clickTask(selected.id);
   assert.equal(g.totalClicks, 1);
   assert.equal(waiting.status, 'available');
-  h.api.clickTask(waiting.id);
+  h.api.clickTask(selected.id);
   h.api.clickTask('missing');
   assert.equal(g.totalClicks, 1);
   h.api.tickManualWork(0);
@@ -1008,7 +1038,7 @@ scenario('Post-It Notes work on two jobs in parallel, preserve pay and survive a
   h.api.renderTaskQueue();
   const buttons = [...h.window.document.querySelectorAll('#task-list button')];
   assert.deepEqual(buttons.map(button => button.textContent), ['Working...', 'Working...', 'Work']);
-  assert.ok(buttons.every(button => button.disabled));
+  assert.deepEqual(buttons.map(button => button.disabled), [true, true, false]);
   g.taskExpiryEnabled = true;
   h.advance(31000);
   h.api.pruneTasks(h.window.Date.now());
@@ -1033,7 +1063,7 @@ scenario('Post-It Notes work on two jobs in parallel, preserve pay and survive a
   }
 });
 
-scenario('manual work stops at five tasks and Headphones reduce work for manual and AI jobs', (h) => {
+scenario('manual clicks start up to five tasks and Headphones reduce work for manual and AI jobs', (h) => {
   const g = h.fresh();
   g.cash = 10000;
   g.totalTasksDone = 50;
@@ -1309,7 +1339,7 @@ for (const buyUpgrades of [false, true]) {
     assert.equal(g.phase, buyUpgrades ? 2 : 1);
     assert.ok(g.totalTasksDone >= 50);
     if (buyUpgrades) {
-      assert.ok(g.totalClicks > 50 && g.totalClicks <= 100, 'work clicks: ' + g.totalClicks);
+      assert.ok(g.totalClicks > 50 && g.totalClicks <= g.totalTasksDone + g.tasks.filter(task => task.status === 'active').length, 'work clicks: ' + g.totalClicks);
       assert.ok(h.api.UPGRADES.filter(upgrade => upgrade.phase === 1).every(upgrade => g.purchasedUpgrades.includes(upgrade.id)));
     } else assert.equal(g.purchasedUpgrades.length, 0);
     assert.equal(h.api.validSave(g), true);
@@ -1469,7 +1499,7 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
     assert.equal(result.stalled, undefined);
     assert.equal(result.phases.length, 15);
     const freeAi = result.phases.find(phase => phase.phase === 2);
-    assert.ok(freeAi.clicks > 50 && freeAi.clicks <= 100);
+    assert.ok(freeAi.clicks > 50 && freeAi.clicks <= 120);
     assert.equal(result.offers.find(offer => offer.id === 'free_ai').cost, 0);
     assert.equal(result.offers.find(offer => offer.id === 'pro_model').cost, 2000);
     const growth = result.purchases.find(purchase => purchase.id === 'ops_flywheel');
