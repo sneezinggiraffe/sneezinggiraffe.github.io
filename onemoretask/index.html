@@ -132,6 +132,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 /* Upgrade cards */
 .upgrade-card{position:relative;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:68px}
+.upgrade-card:has(.upgrade-action:enabled),.upgrade-repeatable:has(.upgrade-action:enabled){--bg2:#263140;--bg3:#506078;border-color:#506078}
 .upgrade-action{background:transparent;color:var(--green);padding:4px 10px;font-size:.72rem;font-weight:600;white-space:nowrap}
 .upgrade-action::after{content:"";position:absolute;inset:0;border-radius:var(--radius)}
 .upgrade-action:hover:not(:disabled)::after{background:rgba(255,255,255,.04)}
