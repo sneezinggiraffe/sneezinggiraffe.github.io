@@ -7,8 +7,8 @@
 - [x] Use “Optimise cluster space for more agent slots.” for High-Density Clusters.
 - [x] Make Scale Mode enter Phase 11 and unlock automatic expansion.
 - [x] Keep the expansion speed upgrade inside Phase 11 with explicit effects.
-- [x] Use square unnamed agent tiles from Phase 12 and add construction progress spacing.
+- [x] Keep Phase 11's smaller agent tiles from Phase 12, hide names and add construction progress spacing.
 - [x] Unlock four concurrent cluster builds in Phase 13.
-- [x] Add Phase 14 speed upgrades, 25 and 50 concurrent builds, and investor talks at 200 completed clusters.
+- [x] Add Phase 14 speed and cost upgrades, 25 and 50 concurrent builds, and investor talks after all six upgrades and 500 completed clusters.
 - [x] Give cluster agents unique four-character lowercase hexadecimal IDs.
 - [x] Rename AI Expansion Optimisation to Rapid Cluster Deployment.

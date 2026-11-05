@@ -1470,7 +1470,18 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
       const purchase = result.purchases.find(item => item.id === id);
       assert.ok(purchase.seconds - offer.seconds >= 10, id + ' must leave time to save');
     }
-    assert.ok(result.tasks >= 900000000 && result.tasks < 2000000000, 'Retirement should arrive around one billion tasks');
+    const globalExpansion = result.phases.find(phase => phase.phase === 14);
+    const investorTalks = result.offers.find(offer => offer.id === 'retire_unlock');
+    const expansionTime = investorTalks.seconds - globalExpansion.seconds;
+    assert.ok(expansionTime >= 90 && expansionTime <= 180, 'Phase 14 leaves time to develop the neocloud network before investor talks appear');
+    assert.ok(investorTalks.nodes >= 500);
+    for (const id of ['neocloud_pipeline', 'standardised_construction', 'neocloud_batch', 'bulk_hardware', 'neocloud_supply_chain', 'parallel_neoclouds']) {
+      const offer = result.offers.find(item => item.id === id);
+      const purchase = result.purchases.find(item => item.id === id);
+      assert.ok(offer.cash < offer.cost, id + ' must remain a savings goal');
+      assert.ok(purchase.seconds - offer.seconds >= 8, id + ' leaves time to save');
+    }
+    assert.ok(result.tasks > result.phases.find(phase => phase.phase === 15).tasks, 'The company keeps delivering throughout sale preparation');
     assert.ok(result.offers.find(o => o.id === 'ceo_parallel_clusters').seconds > result.offers.find(o => o.id === 'ceo_deploy_speed').seconds, 'Scaling upgrades reveal across the expansion phase');
     assert.ok(result.offers.find(o => o.id === 'ceo_quad_batch').cash < result.offers.find(o => o.id === 'ceo_quad_batch').cost, 'Four-agent provisioning is a savings goal');
     for (const id of ['pro_model', 'second_ai', 'multi_bot']) {
@@ -1653,7 +1664,7 @@ scenario('node production consumes real tokens and stops when empty', (h) => {
   h.api.tickNetwork(2);assert.equal(g.cash,100120);h.api.tickTokenManager();assert.equal(g.tokens,49750);assert.match(g.log[0].msg,/Purchased/);
   h.advance(2000);h.api.tickTokenManager();assert.equal(c.tank,500);const before=g.cash;h.api.tickNetwork(1);assert.equal(g.cash,before+50);
   g.phase=14;c.workforce=c.workerSlotsMax;g.cash=1e10;g.totalTasksDone=10000;h.prepareUpgrade('retire_unlock');h.api.purchaseUpgrade('retire_unlock');assert.equal(g.phase,14);
-  while(g.clusters.length<200){const item=h.api.addClusterWithNextName();item.managerAssigned=true;item.tokenManagerAssigned=true;item.workforce=item.workerSlotsMax;}
+  while(g.clusters.length<500){const item=h.api.addClusterWithNextName();item.managerAssigned=true;item.tokenManagerAssigned=true;item.workforce=item.workerSlotsMax;}
   h.api.purchaseUpgrade('retire_unlock');h.api.tickSalePreparation(8);assert.equal(g.phase,15);assert.equal(h.api.validSave(g),true);
 });
 scenario('cluster construction and node upgrades enforce stage, capacity and funds', (h) => {
@@ -2157,7 +2168,7 @@ scenario('dashed hiring cards reserve management roles and disable unaffordable 
   h.api.fireAgent(g.agents[0].id);g.cash=0;h.api.renderAgentSection();assert.equal(h.window.document.querySelectorAll('.agent-vacancy').length,1);assert.equal(h.window.document.querySelector('.agent-vacancy button').disabled,true);assert.equal(h.window.document.querySelectorAll('.agent-vacancy button').length,5);
 });
 scenario('phase cheats preserve their requested savings goals and prepare valid transitions', (h) => {
-  const checkpoints = { 3: { cash: 1900 }, 4: { cash: 1300 }, 8: { tasks: 390000, cash: 800000 }, 9: { tasks: 1000000, cash: 1200000 }, 10: { tasks: 4600000, cash: 30000000, clusters: 3 }, 11: { tasks: 27000000, cash: 180000000, clusters: 5 } };
+  const checkpoints = { 3: { cash: 1900 }, 4: { cash: 1300 }, 8: { tasks: 390000, cash: 800000 }, 9: { tasks: 1000000, cash: 1200000 }, 10: { tasks: 4600000, cash: 30000000, clusters: 3 }, 11: { tasks: 27000000, cash: 180000000, clusters: 5 }, 12: { tasks: 63000000, cash: 600000000, clusters: 21 } };
   for(const stage of ['0_1','0_2','0_3','0_4',1]){h.window['chPh'+stage]();assert.equal(h.window.GAME.state.phase,1);assert.equal(h.api.validSave(h.window.GAME.state),true);}
   for(let stage=2;stage<=15;stage++){
     h.window['chPh'+stage]();const g=h.window.GAME.state;const upgrade=h.api.UPGRADES.find(item=>item.unlockPhase===stage);assert.equal(g.phase,stage-1,'chPh'+stage);assert.equal(h.api.validSave(g),true);
@@ -3030,7 +3041,7 @@ scenario('chRetire prepares an immediate Golden Parachute and retirement restore
   assert.equal(g.phase, 15);
   assert.equal(g.retired, false);
   assert.equal(g.totalTasksDone, 1e9);
-  assert.equal(h.api.completedClusterCount(), 200);
+  assert.equal(h.api.completedClusterCount(), 500);
   assert.equal(h.api.canSellCompany(), true);
   assert.equal(h.api.validSave(g), true);
   const button = h.window.document.querySelector('[onclick="GAME.buy(\'fusion\')"]');

@@ -15,7 +15,7 @@ function play(seed=17,actionEveryMs=500) {
       if (g.uiRevealed.upgrades) for (const u of h.api.UPGRADES) if (u.oneTime && !g.purchasedUpgrades.includes(u.id)) {
         if (h.api.upgradeVisible(u) && !offered.has(u.id)) {
           offered.add(u.id);
-          offers.push({id:u.id,tasks:g.totalTasksDone,cash:Math.round(g.cash),cost:h.api.getUpgradeCost(u),seconds:step/10});
+          offers.push({id:u.id,tasks:g.totalTasksDone,cash:Math.round(g.cash),cost:h.api.getUpgradeCost(u),seconds:step/10,nodes:h.api.completedClusterCount()});
         }
         const phase = g.phase;
         const cash = g.cash;
@@ -23,7 +23,7 @@ function play(seed=17,actionEveryMs=500) {
         h.api.purchaseUpgrade(u.id);
         if (!purchasesLogged.has(u.id) && (g.purchasedUpgrades.includes(u.id) || g.salePreparation.upgradeId === u.id)) {
           purchasesLogged.add(u.id);
-          purchases.push({id:u.id,phase,tasks:g.totalTasksDone,cash:Math.round(cash),cost,seconds:step/10});
+          purchases.push({id:u.id,phase,tasks:g.totalTasksDone,cash:Math.round(cash),cost,seconds:step/10,nodes:h.api.completedClusterCount()});
         }
         if (g.phase !== phase) break;
       }
@@ -41,7 +41,7 @@ function play(seed=17,actionEveryMs=500) {
       if(g.phase<10)for(const c of g.clusters){h.api.buyNextClusterWorker(c.id);}
     }
     h.api.tick();
-    if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,clicks:g.totalClicks,cash:Math.round(g.cash)});lastPhase=g.phase;}
+    if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,clicks:g.totalClicks,cash:Math.round(g.cash),nodes:h.api.completedClusterCount()});lastPhase=g.phase;}
     if(h.api.canTrueRetire()){
       h.window.GAME.trueRetire();assert.equal(g.retired,true);assert.equal(h.api.validSave(g),true);
       const result={seed,actionEveryMs,minutes:Math.round(step/600),tasks:g.totalTasksDone,nodes:g.clusters.length,phases:milestones,offers,purchases};h.close();return result;

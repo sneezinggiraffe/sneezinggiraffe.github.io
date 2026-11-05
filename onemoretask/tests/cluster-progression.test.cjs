@@ -126,18 +126,21 @@ test('replication expands two concurrent builds to four and pays for independent
   }
 });
 
-test('Phase 14 upgrades require completed clusters and cash, then unlock speed and whole neoclouds', () => {
-  const h = expansionCompany(14, 49);
+test('Phase 14 upgrades require completed clusters and cash, then unlock speed, cost reductions and whole neoclouds', () => {
+  const h = expansionCompany(14, 99);
   try {
     const g = h.window.GAME.state;
-    for (const [id, nodes, concurrency, faster] of [
-      ['neocloud_pipeline', 50, 4, true],
-      ['neocloud_batch', 60, 25, false],
-      ['neocloud_supply_chain', 100, 25, true],
-      ['parallel_neoclouds', 125, 50, false],
+    for (const [id, nodes, cost, concurrency, faster, cheaper] of [
+      ['neocloud_pipeline', 100, 2000000000, 4, true, false],
+      ['standardised_construction', 125, 1000000000, 4, false, true],
+      ['neocloud_batch', 150, 2000000000, 25, false, false],
+      ['bulk_hardware', 200, 1500000000, 25, false, true],
+      ['neocloud_supply_chain', 250, 2500000000, 25, true, false],
+      ['parallel_neoclouds', 300, 3000000000, 50, false, false],
     ]) {
       while (g.clusters.length < nodes - 1) h.fullCluster();
       const upgrade = h.api.UPGRADES.find(item => item.id === id);
+      assert.equal(upgrade.cost, cost);
       assert.equal(h.api.upgradeVisible(upgrade), true);
       g.cash = upgrade.cost;
       h.api.purchaseUpgrade(id);
@@ -147,12 +150,14 @@ test('Phase 14 upgrades require completed clusters and cash, then unlock speed a
       h.api.purchaseUpgrade(id);
       assert.equal(g.purchasedUpgrades.includes(id), false);
       const duration = h.api.clusterBuildDuration();
+      const price = h.api.provisionCost();
       g.cash = upgrade.cost;
       h.api.purchaseUpgrade(id);
       assert.equal(g.cash, 0);
       assert.equal(g.purchasedUpgrades.includes(id), true);
       assert.equal(h.api.clusterBuildConcurrency(), concurrency);
       assert.equal(h.api.clusterBuildDuration(), faster ? duration / 2 : duration);
+      assert.equal(h.api.provisionCost(), cheaper ? Math.ceil(price / 2) : price);
       h.api.purchaseUpgrade(id);
       assert.equal(g.cash, 0);
       assert.equal(g.purchasedUpgrades.filter(item => item === id).length, 1);
@@ -162,6 +167,45 @@ test('Phase 14 upgrades require completed clusters and cash, then unlock speed a
     assert.ok(h.api.clusterBuildDuration() < duration);
     assert.equal(h.api.validSave(g), true);
   } finally {
+    h.close();
+  }
+});
+
+test('construction discounts halve every rising price and funding target, survive reload and remain active in Phase 15', () => {
+  const h = expansionCompany(14, 300);
+  let restored;
+  try {
+    const g = h.window.GAME.state;
+    h.prepareUpgrade('retire_unlock');
+    g.purchasedUpgrades = g.purchasedUpgrades.filter(id => !['standardised_construction', 'bulk_hardware'].includes(id));
+    const originalPrices = Array.from({length: 50}, (_, index) => h.api.provisionCost(g.clustersProvisioned + index));
+    const investments = g.clusters.map(cluster => cluster.invested);
+    const duration = h.api.clusterBuildDuration();
+    const income = h.api.networkIncomeRate();
+    for (const [id, discount] of [['standardised_construction', 0.5], ['bulk_hardware', 0.25]]) {
+      h.api.purchaseUpgrade(id);
+      const prices = originalPrices.map(price => Math.ceil(price * discount));
+      assert.deepEqual(Array.from({length: 50}, (_, index) => h.api.provisionCost(g.clustersProvisioned + index)), prices);
+      assert.equal(h.api.expansionFundingTarget(), prices.reduce((sum, price) => sum + price, 0) * 2);
+      assert.deepEqual(g.clusters.map(cluster => cluster.invested), investments);
+      assert.equal(h.api.clusterBuildDuration(), duration);
+      assert.equal(h.api.networkIncomeRate(), income);
+    }
+    g.cash = h.api.expansionFundingTarget();
+    const cash = g.cash;
+    h.api.tickAiCeo();
+    assert.deepEqual([...g.clusters.slice(300)].map(cluster => cluster.invested), originalPrices.map(price => Math.ceil(price / 4)));
+    assert.equal(g.cash, cash / 2);
+    assert.equal(h.api.validSave(g), true);
+    assert.equal(h.api.save(), true);
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.equal(restored.api.provisionCost(), h.api.provisionCost());
+    assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
+    restored.window.GAME.state.phase = 15;
+    assert.equal(restored.api.provisionCost(), h.api.provisionCost());
+    assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
+  } finally {
+    if (restored) restored.close();
     h.close();
   }
 });

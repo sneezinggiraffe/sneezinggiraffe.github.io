@@ -20,6 +20,7 @@ for (const width of [1440, 390]) {
     const raw = JSON.stringify(g);
     h.close();
     await page.setViewportSize({width, height: 900});
+    await page.emulateMedia({reducedMotion: 'reduce'});
     await page.clock.install({time: new Date(g.lastTick)});
     await page.clock.pauseAt(new Date(g.lastTick + 1000));
     await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
@@ -41,17 +42,58 @@ for (const width of [1440, 390]) {
     await page.screenshot({path: `test-results/hex-agent-ids-${width}.png`, animations: 'disabled'});
   });
 
-  test(`Phase 14 builds two neoclouds together and delays investor talks until 200 completed clusters at ${width}px`, async ({ page }) => {
+  test(`Phase 12 keeps Phase 11 agent-box dimensions at ${width}px`, async ({ page }) => {
+    const h = harness();
+    h.window.chPh12();
+    const g = h.window.GAME.state;
+    expect(g.totalTasksDone).toBe(63000000);
+    expect(g.cash).toBe(600000000);
+    expect(h.api.completedClusterCount()).toBe(21);
+    g.cash = 760000000;
+    g.lastTick = Date.now();
+    g.lastSave = g.lastTick;
+    g.lastCeoAction = g.lastTick + 1000000;
+    const raw = JSON.stringify(g);
+    h.close();
+    await page.setViewportSize({width, height: 900});
+    await page.emulateMedia({reducedMotion: 'reduce'});
+    await page.clock.install({time: new Date(g.lastTick)});
+    await page.clock.pauseAt(new Date(g.lastTick + 1000));
+    await page.addInitScript(value => {
+      localStorage.setItem('ai_empire_save', value);
+      sessionStorage.setItem('rotate_dismissed', '1');
+    }, raw);
+    await page.goto('/');
+    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+    const slot = page.locator('.capacity-slot.filled').first();
+    await expect(slot).toHaveText(/^[0-9a-f]{4}$/);
+    const before = await slot.boundingBox();
+    await page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]').click();
+    await page.clock.runFor(200);
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(12);
+    await expect(page.locator('.capacity-slot.filled')).toHaveCount(21 * 16);
+    await expect(slot).toBeEmpty();
+    const after = await slot.boundingBox();
+    expect(after.width).toBeCloseTo(before.width, 1);
+    expect(after.height).toBeCloseTo(before.height, 1);
+    expect(after.height).toBe(16);
+    await page.locator('#btn-dismiss-popup').click();
+    await page.locator('#section-clusters').scrollIntoViewIfNeeded();
+    await page.screenshot({path: `test-results/phase12-agent-boxes-${width}.png`, animations: 'disabled'});
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+
+  test(`Phase 14 builds two neoclouds together and delays investor talks until 500 completed clusters at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh(14);
     g.ceoMode = 'scale';
-    g.cash = 1e9;
+    g.cash = 3e9;
     g.tokens = 1e9;
     g.totalTasksDone = 1e9;
     g.aiWorkerShutdown = true;
     g.incidentsExplained = true;
     h.prepareUpgrade('parallel_neoclouds');
-    for (let index = 0; index < 125; index++) h.fullCluster().tank = 4000;
+    for (let index = 0; index < 400; index++) h.fullCluster().tank = 4000;
     h.api.checkMilestones();
     h.dismiss();
     g.lastTick = Date.now();
@@ -78,25 +120,25 @@ for (const width of [1440, 390]) {
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(50);
     await expect(page.locator('.neocloud:has([aria-label="Cluster construction"])')).toHaveCount(2);
     const order = await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.querySelector('strong').textContent));
-    expect(order).toEqual(Array.from({length: 175}, (_, index) => 'C' + (175 - index)));
-    await page.locator('[data-neocloud="6"]').scrollIntoViewIfNeeded();
+    expect(order).toEqual(Array.from({length: 450}, (_, index) => 'C' + (450 - index)));
+    await page.locator('[data-neocloud="18"]').scrollIntoViewIfNeeded();
     await page.screenshot({path: `test-results/parallel-neoclouds-${width}.png`, animations: 'disabled'});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const remaining = await page.evaluate(() => {
       GAME.state.cash = 0;
       window.dispatchEvent(new Event('pagehide'));
-      return GAME.state.clusters.slice(125).map(cluster => cluster.buildRemaining);
+      return GAME.state.clusters.slice(400).map(cluster => cluster.buildRemaining);
     });
     await page.reload();
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    expect(await page.evaluate(() => GAME.state.clusters.slice(125).map(cluster => cluster.buildRemaining))).toEqual(remaining);
+    expect(await page.evaluate(() => GAME.state.clusters.slice(400).map(cluster => cluster.buildRemaining))).toEqual(remaining);
     await page.clock.runFor(300);
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
     await expect(talks).toHaveCount(0);
     expect(await page.evaluate(() => GAME.state.phase)).toBe(14);
     await page.evaluate(() => GAME.addCash(1e10));
     await page.clock.runFor(500);
-    expect(await page.evaluate(() => GAME.state.clusters.filter(cluster => cluster.buildRemaining === 0 && cluster.managerAssigned).length)).toBeGreaterThanOrEqual(200);
+    expect(await page.evaluate(() => GAME.state.clusters.filter(cluster => cluster.buildRemaining === 0 && cluster.managerAssigned).length)).toBeGreaterThanOrEqual(500);
     await expect(talks).toBeEnabled();
     await talks.click();
     await page.clock.runFor(8100);

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
-function company(phase = 14, count = 200, options = {}) {
+function company(phase = 14, count = 500, options = {}) {
   const h = harness(undefined, options);
   const g = h.fresh(phase);
   g.ceoMode = 'scale';
@@ -161,8 +161,8 @@ test('neocloud boundaries retain both simultaneous builds and count only real ou
   }
 });
 
-test('investor talks charge $90k once, show progress and unlock Phase 15 on completion', () => {
-  const h = company(14, 199);
+test('investor talks wait for 500 completed clusters, charge $90k once and unlock Phase 15 on completion', () => {
+  const h = company(14, 499);
   try {
     const g = h.window.GAME.state;
     g.cash = 90000;
@@ -176,7 +176,7 @@ test('investor talks charge $90k once, show progress and unlock Phase 15 on comp
     assert.equal(g.cash, 89999);
     g.cash++;
     h.api.renderUpgradeSection();
-    assert.match(saleButton(h, 'retire_unlock').closest('.card').textContent, /Company size requirement met: 200 online/);
+    assert.match(saleButton(h, 'retire_unlock').closest('.card').textContent, /Company size requirement met: 500 online/);
     assert.equal(saleButton(h, 'retire_unlock').textContent, '$90.0K');
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(g.cash, 0);

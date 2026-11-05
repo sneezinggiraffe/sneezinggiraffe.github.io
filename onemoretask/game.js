@@ -288,11 +288,13 @@
     { id: "ceo_continuous", name: "Continuous Deployment", desc: "Improve deployment speed by 50%.", cost: 150000000, currency: "cash", phase: 12, requires: "ceo_full_fit", oneTime: true },
     { id: "replication", name: "Node Replication", desc: "Build four clusters at once. Reduce cluster costs by 35%.", cost: 1500000000, currency: "cash", phase: 12, reqNodes: 20, unlockPhase: 13, effect: { payMult: 1.15 }, oneTime: true },
     { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 2000000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
-    { id: "neocloud_pipeline", name: "Neocloud Deployment Pipeline", desc: "Halve cluster construction time.", cost: 350000000, currency: "cash", phase: 14, requires: "global_network", reqNodes: 50, oneTime: true },
-    { id: "neocloud_batch", name: "Neocloud Construction", desc: "Build 25 clusters at once to fill a whole neocloud.", cost: 500000000, currency: "cash", phase: 14, requires: "neocloud_pipeline", reqNodes: 60, oneTime: true },
-    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 750000000, currency: "cash", phase: 14, requires: "neocloud_batch", reqNodes: 100, oneTime: true },
-    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 1000000000, currency: "cash", phase: 14, requires: "neocloud_supply_chain", reqNodes: 125, oneTime: true },
-    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, requires: "parallel_neoclouds", reqNodes: 200, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
+    { id: "neocloud_pipeline", name: "Neocloud Deployment Pipeline", desc: "Halve cluster construction time.", cost: 2000000000, currency: "cash", phase: 14, requires: "global_network", reqNodes: 100, oneTime: true },
+    { id: "standardised_construction", name: "Standardised Construction", desc: "Use repeatable cluster designs. Halve cluster construction costs.", cost: 1000000000, currency: "cash", phase: 14, requires: "neocloud_pipeline", reqNodes: 125, oneTime: true },
+    { id: "neocloud_batch", name: "Neocloud Construction", desc: "Build 25 clusters at once to fill a whole neocloud.", cost: 2000000000, currency: "cash", phase: 14, requires: "standardised_construction", reqNodes: 150, oneTime: true },
+    { id: "bulk_hardware", name: "Bulk Hardware Contracts", desc: "Buy hardware across the network. Halve cluster construction costs again.", cost: 1500000000, currency: "cash", phase: 14, requires: "neocloud_batch", reqNodes: 200, oneTime: true },
+    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 2500000000, currency: "cash", phase: 14, requires: "bulk_hardware", reqNodes: 250, oneTime: true },
+    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 3000000000, currency: "cash", phase: 14, requires: "neocloud_supply_chain", reqNodes: 300, oneTime: true },
+    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, requires: "parallel_neoclouds", reqNodes: 500, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
 
     // Phase 11 (retirement)
     // Retirement now follows the four new network stages, in Phase 15.
@@ -2084,7 +2086,8 @@
   }
 
   function provisionCost(provisioned = G.clustersProvisioned) {
-    return 12000 + (G.purchasedUpgrades.includes("ceo_full_fit") ? 40000 : 0) + (G.phase >= 12 ? nodeCost(provisioned) : Math.ceil(CLUSTER_COST * Math.pow(1.6, Math.max(0, provisioned - 1))));
+    const constructionDiscount = (G.purchasedUpgrades.includes("standardised_construction") ? 0.5 : 1) * (G.purchasedUpgrades.includes("bulk_hardware") ? 0.5 : 1);
+    return Math.ceil((12000 + (G.purchasedUpgrades.includes("ceo_full_fit") ? 40000 : 0) + (G.phase >= 12 ? nodeCost(provisioned) : Math.ceil(CLUSTER_COST * Math.pow(1.6, Math.max(0, provisioned - 1))))) * constructionDiscount);
   }
 
 
@@ -3461,12 +3464,11 @@
     const section = $("#section-clusters");
     section.style.display = G.uiRevealed.clusters ? "" : "none";
     if (!G.uiRevealed.clusters) return;
-    const compact = G.phase >= 12;
     const minimal = G.phase >= 14;
     const planning = canPlanNextCluster();
     const tiles = G.clusters.length + (canManuallyProvisionCluster() || planning ? 1 : 0);
     const density = Math.max(0, tiles - 3);
-    const overview = !compact && density > 0;
+    const overview = density > 0;
     $("#cluster-count").textContent = managedNodeCount() + " online / " + G.clusters.length + " clusters";
     $("#cluster-heading").textContent = minimal ? "Neoclouds" : "Clusters";
     let html = "";
@@ -3479,7 +3481,7 @@
     }
     if (minimal) html += renderNeoclouds(planning);
     else {
-      html += "<div class='" + (compact ? "node-grid" : "node-grid agent-grid") + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(152, 180 - density * 6) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
+      html += "<div class='node-grid agent-grid" + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(152, 180 - density * 6) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
       if (planning) html += renderPlanningCard();
       if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
       for (const cluster of G.clusters.slice().reverse()) html += renderClusterCard(cluster);
@@ -3827,7 +3829,7 @@
     const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
-    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 180000000, clusters: 5 } }[stage];
+    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 180000000, clusters: 5 }, "12": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
     G = defaultState();
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];

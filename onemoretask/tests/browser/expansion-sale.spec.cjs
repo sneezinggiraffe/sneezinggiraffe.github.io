@@ -134,7 +134,9 @@ for (const width of [1440, 390, 320]) {
         await expect(page.locator('.neocloud')).toHaveCount(0);
         await expect(page.locator('.cluster-capacity')).toHaveCount(count);
         const slots = await page.locator('.autonomous-capacity .capacity-slot').evaluateAll(elements => elements.map(element => ({width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height, label: element.textContent})));
-        expect(slots.every(slot => Math.abs(slot.width - slot.height) < 1 && slot.label === '')).toBe(true);
+        expect(slots.every(slot => Math.abs(slot.height - 16) < 0.01)).toBe(true);
+        expect(slots.every(slot => slot.label === '')).toBe(true);
+        await expect(topGrid).toHaveClass(/agent-grid cluster-overview/);
       } else {
         await expect(page.locator('.neocloud')).toHaveCount(11);
         await expect(page.locator('.cluster-capacity')).toHaveCount(0);

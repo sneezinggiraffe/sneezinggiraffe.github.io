@@ -17,8 +17,8 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 11 | 11.9M–13.9M | $233K–$1.58M | Four-Agent Provisioning $100M, Parallel Builds $150M, Preassembled Racks $200M, Rapid Cluster Deployment $300M, Fully Fitted Racks $400M, Autonomous Operating Model $760M |
 | 12 | 43M–48.2M | $152K–$6.49M | Continuous Deployment $150M, then Node Replication $1.5B at 20 or more completed nodes |
 | 13 | 117M–123M | $14.1M–$18.2M | Four concurrent builds, then Global Expansion $2B at 40 completed nodes |
-| 14 | 258M–263M | $1.4M–$5.71M | Neocloud speed upgrades $350M and $750M, 25 concurrent builds $500M, 50 concurrent builds $1B, then investor talks at 200 completed clusters |
-| 15 | 674M–680M | $1.309B–$1.314B | Advisor $5M, buyout discussion $20M, due diligence $100M, terms $250M, final sale $5B; sampled retirement at 1.705B–1.713B tasks |
+| 14 | 258M–263M | $1.4M–$5.71M | Neocloud speed upgrades $2B and $2.5B, cost reductions $1B and $1.5B, 25 concurrent builds $2B, 50 concurrent builds $3B, then investor talks after all six upgrades and 500 completed clusters |
+| 15 | 3.83B–3.862B | $5.011B–$5.054B | Advisor $5M, buyout discussion $20M, due diligence $100M, terms $250M, final sale $5B; sampled retirement at 7.253B–7.292B tasks |
 
 The earliest allowed entry can be substantially below these task counts. For example, Phase 8 requires 150,000 tasks, but the sampled players reach that threshold before they can afford all preceding purchases. `chStart8()` uses this minimum; other checkpoint helpers use the task and cash values described below.
 
@@ -52,9 +52,10 @@ These task milestones control visibility in the background. Existing staffing re
 - `chPh9()` loads late Phase 8 at 1M tasks and $1.2M, with ordinary upgrades already purchased and $300K left to earn for the acquisition.
 - `chPh10()` loads late Phase 9 at 4.6M tasks, $30M and 3 fully staffed clusters, leaving $5M to earn for AI CEO Readiness.
 - `chPh11()` loads late Phase 10 at 27M tasks, $180M and 5 fully staffed clusters, with $20M left to earn for Scale Mode and Phase 11.
+- `chPh12()` loads late Phase 11 at 63M tasks, $600M and 21 fully staffed clusters, with $160M left to earn for Autonomous Operating Model.
 - Other `chPhN()` shortcuts likewise prepare the transition into that numbered phase. Their injected cash and purchased upgrades are not balance measurements.
 - `chRetire()` loads an immediately purchasable Complete Company Sale action, with every preparation step complete.
 
 ## Expansion funding
 
-Ordinary CEO expansion requires twice the next cluster price. After Neocloud Construction or Parallel Neoclouds, a construction run requires twice the combined rising prices of the next 25 or 50 clusters. The CEO pays each cluster price individually, respects its concurrency limit and resumes when funding recovers. This budget is the same in Phases 14 and 15; no separate exit reserve is added. Planning shows the current funding target. Sale preparation takes 58 active seconds across five purchases while the company keeps growing. The three sampled journeys retire with 441–442 clusters and 1.705B–1.713B completed tasks.
+Ordinary CEO expansion requires twice the next cluster price. After Neocloud Construction or Parallel Neoclouds, a construction run requires twice the combined rising prices of the next 25 or 50 clusters. The CEO pays each cluster price individually, respects its concurrency limit and resumes when funding recovers. This budget is the same in Phases 14 and 15; no separate exit reserve is added. Planning shows the current funding target. Sale preparation takes 58 active seconds across five purchases while the company keeps growing. Standardised Construction and Bulk Hardware Contracts each halve every cluster price, including its staffing cost, and the funding target uses those discounted prices. The three sampled journeys spend 115.5–116 seconds in Phase 14 before investor talks appear, enter Phase 15 after 123.5–124 seconds with 965–968 completed clusters, and retire with 1,365–1,368 clusters and 7.253B–7.292B completed tasks.
