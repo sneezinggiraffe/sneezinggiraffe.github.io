@@ -64,12 +64,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #game-container.cp-late #work-stream .task-card{padding:10px}
 
 /* Early task section (stages 0-2) */
-#early-task-section{text-align:center;padding:80px 20px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh}
-#early-task-display{position:fixed;left:50%;translate:-50% 0;bottom:calc(100dvh - var(--opening-action-y) + var(--opening-action-height)/2 + 20px);padding:0 20px;width:100%;max-width:400px;min-height:70px}
-#early-task-icon-name{font-size:1.3rem;font-weight:700;margin-bottom:12px}
-#btn-do-task{position:fixed;left:50%;top:var(--opening-action-y);translate:-50% -50%;height:var(--opening-action-height);padding:20px 50px;font-size:1.3rem;background:var(--accent);color:#000;border-radius:12px;font-weight:700;transition:transform .1s,background .15s}
-#btn-do-task:hover{background:var(--accent2)}
-#btn-do-task:active{transform:scale(.95)}
 
 /* Fade out at bottom of work stream */
 #work-stream::after{display:none;content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:10}
@@ -97,16 +91,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .task-expiry{position:absolute;top:8px;right:10px;font-size:.68rem;color:var(--red);font-weight:600}
 .btn{padding:6px 14px;font-weight:600;font-size:.8rem}
 .btn-primary{background:var(--accent);color:#000}.btn-primary:hover:not(:disabled){background:var(--accent2)}
-.btn-work-phase2{background:#0e7490;color:#fff}.btn-work-phase2:hover:not(:disabled){filter:brightness(1.08)}
-.btn-work-phase3{background:#0c6b85;color:#fff}.btn-work-phase3:hover:not(:disabled){filter:brightness(1.08)}
-.btn-work-phase4{background:#0a6178;color:#fff}.btn-work-phase4:hover:not(:disabled){filter:brightness(1.08)}
 .btn-green{background:var(--green);color:#000}.btn-green:hover:not(:disabled){filter:brightness(1.1)}
 .btn-red{background:var(--red);color:#000}.btn-red:hover:not(:disabled){filter:brightness(1.1)}
 .btn-yellow{background:var(--yellow);color:#000}.btn-yellow:hover:not(:disabled){filter:brightness(1.1)}
 .btn-purple{background:var(--purple);color:#000}.btn-purple:hover:not(:disabled){filter:brightness(1.1)}
 .btn-outline{background:none;border:1px solid var(--bg4);color:var(--text2)}.btn-outline:hover:not(:disabled){border-color:var(--text3);color:var(--text)}
 .btn-sm{padding:4px 10px;font-size:.72rem}
-.task-action-btn{width:132px;min-width:132px;text-align:center}
 
 /* Agent cards */
 .agent-card{display:flex;gap:8px;align-items:flex-start;padding:8px!important}
@@ -250,8 +240,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
   #work-stream,#game-container.cp-visible #work-stream,#game-container.cp-late #work-stream{flex:none!important;width:100%;overflow:visible;min-height:auto}
   #work-stream::after{display:none}
   #control-panel,#game-container.cp-visible #control-panel,#game-container.cp-late #control-panel{flex:none!important;width:100%;max-height:none;position:static}
-  #early-task-section{padding:40px 10px;min-height:40vh}
-  #btn-do-task{padding:16px 36px;font-size:1.1rem}
+  #game-container:not(.cp-late) #control-panel{display:contents}
+  #game-container:not(.cp-late) #section-agents{order:-1}
   .grid-2{grid-template-columns:1fr}
 }
 /* Accessible controls, dialogs, and compact screens */
@@ -301,6 +291,16 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 .capacity-slot.provision-agent{background:var(--bg2);padding:0;cursor:pointer;border:1px dashed var(--text3);color:var(--text2);font-size:1rem}.capacity-slot.provision-agent:disabled{cursor:default;opacity:.4}.capacity-slot.provisioning{background:linear-gradient(to right,rgba(139,92,246,.6) var(--progress),rgba(139,92,246,.12) var(--progress));font-size:.55rem;color:var(--text);display:flex;align-items:center;justify-content:center}.cluster-capacity .capacity-slot{min-height:24px;display:flex;align-items:center;justify-content:center;font-size:.65rem;line-height:1;color:var(--text);min-width:0;white-space:nowrap}.ceo-slot{justify-content:center}
 .agent-grid{grid-template-columns:repeat(auto-fill,minmax(min(180px,100%),1fr))}.agent-grid .cluster-capacity{grid-template-columns:repeat(var(--cluster-columns,4),minmax(0,1fr))}.agent-grid .capacity-slot{min-height:32px}.capacity-slot.provision-agent:hover:not(:disabled){background:var(--bg4);border-color:var(--accent)}
 .cluster-card .cluster-construction-progress{margin-top:6px}
+#you-controls > .btn,[data-assistant] .btn-primary{padding:6px 12px;font-size:.85rem}
+#prelude-section{text-align:center;min-height:60vh}
+#prelude-details{position:fixed;left:50%;translate:-50% 0;bottom:calc(100dvh - var(--opening-action-y) + var(--opening-action-height)/2 + 20px);padding:0 20px;width:100%;max-width:440px}
+#prelude-task{margin-bottom:12px;font-size:1.3rem}
+#prelude-status{margin-top:12px}
+#prelude-controls #btn-do-task{position:fixed;left:50%;top:var(--opening-action-y);translate:-50% -50%;height:var(--opening-action-height);padding:16px 36px;font-size:1.3rem;border-radius:12px}
+.task-assignee{display:inline-block;color:var(--text2);font-size:.8rem;font-weight:600;padding:4px 0}
+.task-assignee[data-assignment="active"]{color:var(--accent)}
+.task-assignee[data-assignment="assistant"],.task-assignee[data-assignment="assistant_queued"]{color:var(--green)}
+.task-assignee[data-assignment="ai"],.task-assignee[data-assignment="agent"]{color:var(--purple)}
 </style>
 </head>
 <body>
@@ -344,15 +344,12 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
   <div id="work-stream">
 
     <!-- Early game: centered Do Task button (stages 0-2) -->
-    <div id="early-task-section">
-      <div id="early-task-display" style="visibility:hidden">
-        <div id="early-task-icon-name"></div>
-        <div class="task-bar" style="max-width:400px;margin:0 auto 12px">
-          <div class="task-bar-fill" id="early-task-bar" style="width:0%"></div>
-        </div>
-        <div id="early-task-reward" class="text-sm"></div>
+    <div id="prelude-section" hidden>
+      <div id="prelude-details" hidden><h2 id="prelude-task"></h2>
+        <div class="task-bar" id="prelude-progress" role="progressbar" aria-label="Current gig" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><div class="task-bar-fill" id="prelude-bar"></div></div>
+        <p id="prelude-status" class="text-sm"></p>
       </div>
-      <button class="btn btn-primary" id="btn-do-task">Do Task</button>
+      <div id="prelude-controls"></div>
     </div>
 
     <!-- Task queue (stage 2+) -->
@@ -382,9 +379,10 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
     <!-- Agents -->
     <div id="section-agents" class="cp-section" style="display:none">
       <div class="card">
-        <div class="section-hdr" style="margin-bottom:8px">
-          <h3 style="margin-bottom:0">Agents</h3>
+        <div class="section-hdr" id="team-header" style="margin-bottom:8px" hidden>
+          <h3 id="team-heading" style="margin-bottom:0"></h3>
         </div>
+        <div class="card agent-card" id="you-card"><div class="agent-info"><div class="name">You</div><div id="you-status" class="text-sm">Ready to work</div><small id="you-delivered">0 tasks delivered</small></div><div id="you-controls" class="agent-action-col"><button class="btn btn-primary btn-sm" id="btn-do-task">Do work</button></div></div>
         <div id="agent-hire-section"></div>
         <div id="agent-list"></div>
       </div>

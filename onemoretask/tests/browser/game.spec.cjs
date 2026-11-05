@@ -162,9 +162,9 @@ for (const width of [1440, 390]) {
     await page.clock.install();
     await page.goto('/');
     const groups = [
-      ['0_2', 7, ['Post-It Notes', 'Gas Station Coffee', 'A Box Of Paperclips']],
-      ['0_', 35, ['Side Hustle Optimization', 'Inbox Zero Method', 'GTD Workflow']],
-      ['0_4', 100, ['Discover Free-Tier AI']],
+      ['0_2', 7, ['Hire a Part-Time Assistant', 'Gas Station Coffee', 'A Box Of Paperclips']],
+      ['0_', 35, ['Side Hustle Optimization', 'Multitasking', 'Inbox Zero Method']],
+      ['0_4', 100, []],
     ];
     for (const [stage, tasks, names] of groups) {
       await page.evaluate(value => GAME.cheat(value), stage);
@@ -176,7 +176,7 @@ for (const width of [1440, 390]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
     const freeAi = page.getByRole('button', { name: '105 tasks', exact: true });
-    await expect(freeAi).toBeDisabled();
+    await expect(freeAi).toHaveCount(0);
     await page.screenshot({ path: `test-results/free-ai-checkpoint-${width}.png`, fullPage: true });
     await page.evaluate(() => GAME.addTasks(5));
     await page.clock.runFor(200);
@@ -185,7 +185,7 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => GAME.state.phase)).toBe(2);
   });
 
-  test(`Client Outreach and Second AI Subscription stay visible together at ${width}px`, async ({ page }) => {
+  test(`Client Outreach and Replace Your Assistant with AI stay visible together at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh(3);
     g.totalTasksDone = 650;
@@ -719,7 +719,7 @@ test('Phase 8 workers are managed and refill only at ten percent', async ({ page
     chStart8();
     GAME.state.aiFailMult = 0;
     GAME.state.tasks = [];
-    GAME.state.uiRevealed.taskQueue = false;
+    GAME.state.lastTaskSpawn = Date.now() + 1e9;
     GAME.state.agents.filter(agent => !['manager', 'token_mgr', 'devops'].includes(agent.roleId)).forEach(agent => { agent.tokenTank = agent.olderModel ? 20 : 750; });
   });
   await page.clock.runFor(200);
@@ -745,7 +745,9 @@ test('Phase 8 workers are managed and refill only at ten percent', async ({ page
   await page.screenshot({ path: 'test-results/phase8-simple.png', fullPage: true });
 });
 test('Scale Mode continues automatic construction and staffing in Phase 12',async({page})=>{
-  await page.clock.install();const raw=fixture(12);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
+  const raw = fixture(12); const now = JSON.parse(raw).lastTick;
+  await page.clock.install({ time: new Date(now) }); await page.clock.pauseAt(new Date(now + 1000));
+  await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw); await page.goto('/');
   await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)')).toHaveCount(100);await expect(page.locator('.provision-card')).toHaveCount(0);await page.clock.runFor(1000);await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)')).toHaveCount(102);
   const buildingId = await page.evaluate(() => GAME.state.clusters.at(-1).id);
   await page.clock.runFor(2200);
@@ -821,60 +823,10 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
 test('early upgrade visibility follows task milestones and prior purchases',async({page})=>{
   const h=harness();const g=h.fresh();g.cash=0;g.totalTasksDone=104;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();g.lastTick=Date.now();g.lastSave=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toBeDisabled();await expect(buy('free_ai')).toHaveText('105 tasks');await expect(buy('free_ai').locator('..')).toContainText('105 tasks');
+  const buy=id=>page.locator('[onclick="GAME.buy(\''+id+'\')"]');await expect(buy('free_ai')).toHaveCount(0);
   await page.evaluate(()=>GAME.addTasks(1));await expect(buy('free_ai')).toBeEnabled();await buy('free_ai').click();expect(await page.evaluate(()=>GAME.state.cash)).toBe(0);await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('pro_model')).toHaveCount(0);
   await page.evaluate(()=>GAME.addTasks(69));await expect(buy('prompt_basics')).toHaveCount(0);await page.evaluate(()=>GAME.addTasks(1));await expect(buy('prompt_basics')).toHaveCount(0);await expect(buy('prompt_examples')).toBeVisible();
 });
-
-for (const width of [1440, 390]) {
-  test(`manual groups work in parallel, survive reload and need one work click at ${width}px`, async ({ page }) => {
-    const h = harness();
-    const g = h.fresh();
-    g.cash = 10000;
-    g.totalTasksDone = 35;
-    h.prepareUpgrade('gtd_workflow');
-    h.api.purchaseUpgrade('gtd_workflow');
-    g.tasks = [];
-    for (let i = 0; i < 5; i++) h.task().workRequired = 40;
-    h.api.checkMilestones();
-    h.dismiss();
-    g.lastTick = Date.now();
-    g.lastSave = g.lastTick;
-    g.lastTaskSpawn = g.lastTick;
-    for (const task of g.tasks) task.createdAt = g.lastTick;
-    for (const entry of g.log) entry.t = g.lastTick;
-    const raw = JSON.stringify(g);
-    h.close();
-    await page.setViewportSize({ width, height: 900 });
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.clock.install({ time: new Date(g.lastTick) });
-    await page.clock.pauseAt(new Date(g.lastTick + 1000));
-    await page.addInitScript(value => {
-      if (!sessionStorage.getItem('seeded')) {
-        localStorage.setItem('ai_empire_save', value);
-        sessionStorage.setItem('seeded', '1');
-      }
-    }, raw);
-    await page.goto('/');
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    await expect(page.locator('#task-list .task-card')).toHaveCount(5);
-    await page.getByRole('button', { name: 'Work on 5', exact: true }).first().click();
-    await page.clock.runFor(500);
-    await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(5);
-    expect(await page.evaluate(() => GAME.state.tasks.filter(task => task.status === 'active').every(task => task.workDone > 0))).toBe(true);
-    expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.screenshot({ path: `test-results/manual-queue-${width}.png`, fullPage: true });
-    await page.evaluate(() => { GAME.state.lastSave = 0; });
-    await page.clock.runFor(200);
-    await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    await expect(page.getByRole('button', { name: 'Working...', exact: true })).toHaveCount(5);
-    await page.clock.runFor(6500);
-    expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(40);
-    expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(1);
-  });
-}
 
 for(const width of [1440,390]) {
   test(`AI subscriptions keep matching bars and buttons through licensing at ${width}px`,async({page})=>{
@@ -909,7 +861,7 @@ for (const width of [1440, 390]) {
   test(`buying the last upgrade preserves the exact empty panel height at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh();
-    g.totalTasksDone = 104;
+    g.totalTasksDone = 105;
     h.prepareUpgrade('free_ai');
     h.api.checkMilestones();
     h.dismiss();
@@ -1173,7 +1125,7 @@ for (const width of [1440, 390]) {
 }
 for(const width of [1440,390]){
   test(`Manager and agent hiring placeholders work at ${width}px`,async({page})=>{
-    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh6();GAME.addTasks(3);GAME.buy('manager_agent');});
+    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh6();GAME.dismissAssistant();GAME.addTasks(3);GAME.buy('manager_agent');});
     if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();if(await page.locator('#milestone-popup').isVisible())await page.locator('#btn-dismiss-popup').click();
     const manager=page.locator('.manager-slot');await expect(manager).toBeVisible();await expect(manager).toContainText('$20.0K');expect(await manager.evaluate(el=>el===el.parentElement.firstElementChild)).toBe(true);await manager.screenshot({path:`test-results/manager-slot-${width}.png`});await manager.click();await expect(manager).toHaveCount(0);await expect(page.locator('#agent-list .agent-card').first()).toContainText('Manager');
     const sell=page.locator('#agent-list .agent-card').nth(1).getByRole('button',{name:'Sell',exact:true});await sell.click();const vacancy=page.locator('.agent-vacancy');await expect(vacancy).toHaveCount(1);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeDisabled();await page.evaluate(()=>GAME.addCash(10000));await expect(vacancy.locator('select')).toHaveCount(0);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeEnabled();await vacancy.getByRole('button',{name:'Buy Coder',exact:true}).focus();await page.waitForTimeout(300);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeFocused();await page.screenshot({path:`test-results/hiring-${width}.png`,fullPage:true,animations:'disabled'});await vacancy.getByRole('button',{name:'Buy Coder',exact:true}).click();await expect(vacancy).toHaveCount(0);expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(7);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -1185,14 +1137,14 @@ test('Phase 2 AI income appears and the Basic purchase changes model and lifesty
   await page.evaluate(() => { chPh3(); GAME.addTasks(3); });
   await page.clock.runFor(1000);
   await expect.poll(() => page.locator('#income-rate').textContent()).not.toBe('+$0/s');
-  await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Free');
+  await expect(page.locator('#agent-list [data-agent-slot="0"] .name')).toHaveText('AI 2000 Free');
   await page.evaluate(() => GAME.addCash(2000 - GAME.state.cash));
   await page.clock.runFor(200);
   await page.locator('[onclick="GAME.buy(\'pro_model\')"]').click();
   await page.clock.runFor(200);
   await page.locator('#btn-dismiss-popup').click();
   await page.clock.runFor(200);
-  await expect(page.locator('#agent-list .name')).toHaveText('AI 2000 Basic');
+  await expect(page.locator('#agent-list [data-agent-slot="0"] .name')).toHaveText('AI 2000 Basic');
   await expect(page.locator('#expense-tier-label')).toHaveText('Coffee Shop Regular');
   await expect(page.locator('[onclick="GAME.buy(\'prompt_basics\')"]')).toHaveCount(0);
   await page.screenshot({path:'test-results/basic-tier.png',fullPage:true,animations:'disabled'});
@@ -1365,7 +1317,7 @@ test('provisioning improvements bracket sixteen slots and stay available during 
 });
 
 for (const width of [1440, 390]) {
-  test(`work buttons allow concurrent tasks before upgrades at ${width}px`, async ({ page }) => {
+  test(`central work control limits concurrent tasks before upgrades at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh();
     g.totalTasksDone = 6;
@@ -1373,6 +1325,7 @@ for (const width of [1440, 390]) {
     h.api.checkMilestones();
     h.dismiss();
     g.lastTick = Date.now();
+    for (const task of g.tasks) task.createdAt = g.lastTick;
     g.lastTaskSpawn = g.lastTick + 1e9;
     const raw = JSON.stringify(g);
     h.close();
@@ -1382,16 +1335,15 @@ for (const width of [1440, 390]) {
     await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
     await page.goto('/');
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    const available = page.locator('#task-list').getByRole('button', { name: 'Work', exact: true });
+    const available = page.locator('#btn-do-task');
     for (let count = 1; count <= 3; count++) {
-      await expect(available.first()).toBeEnabled();
-      await available.first().click();
-      await page.clock.runFor(200);
-      await expect(page.locator('#task-list').getByRole('button', { name: 'Working...', exact: true })).toHaveCount(count);
+      await expect(available).toBeEnabled();
+      await available.click(); await page.clock.runFor(200);
+      await expect(available).toBeDisabled();
+      await expect(page.locator('#task-list [data-assignment="active"]')).toHaveCount(1);
+      await page.clock.runFor(6500);
     }
     expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(3);
-    expect(await page.evaluate(() => GAME.state.tasks.every(task => task.workDone > 0))).toBe(true);
-    await page.clock.runFor(6500);
     expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(9);
   });
 }

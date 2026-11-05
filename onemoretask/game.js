@@ -90,7 +90,7 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
-  const SAVE_VERSION = 11;
+  const SAVE_VERSION = 15;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
@@ -178,13 +178,13 @@
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
     { id: "tools_of_trade", name: "Tools of the Trade", desc: "Maybe some better tools would help you keep up...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 7 },
-    { id: "post_it_notes", name: "Post-It Notes", desc: "Work on 2 tasks at once with one click.", cost: 43, currency: "cash", phase: 1, effect: { manualQueueSize: 2 }, oneTime: true, reqTasks: 7 },
+    { id: "hire_assistant", name: "Hire a Part-Time Assistant", desc: "Assign up to three queued tasks. Your assistant completes each one, keeps 15% of its payment, then waits for more work.", cost: 43, currency: "cash", phase: 1, oneTime: true, reqTasks: 7 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
     { id: "ai_hint", name: "There Must Be a Better Way", desc: "You are getting faster, but the work never stops. Maybe there is a smarter way...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 35 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 35 },
+    { id: "multitasking", name: "Multitasking", desc: "Do work starts two tasks together. Your assistant also works on two assigned tasks at once.", cost: 61, currency: "cash", phase: 1, requires: "hire_assistant", optional: true, oneTime: true, reqTasks: 35 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 35 },
-    { id: "gtd_workflow", name: "GTD Workflow", desc: "Work on 5 tasks at once with one click.", cost: 61, currency: "cash", phase: 1, effect: { manualQueueSize: 5 }, oneTime: true, reqTasks: 35 },
     { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 79, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 50 },
 
     // Phase 1 -> 2
@@ -197,7 +197,7 @@
     { id: "prompt_library", name: "Prompt Library", desc: "Reuse successful prompts. AI completes 10% more work per prompt.", cost: 150, currency: "cash", phase: 2, effect: { aiPowerMult: 1.1 }, oneTime: true, reqTasks: 115 },
     { id: "gig_alerts", name: "Gig Alerts", desc: "Find new work sooner. Tasks arrive 25% faster.", cost: 250, currency: "cash", phase: 2, effect: { taskSpawnMult: 1.25 }, oneTime: true, reqTasks: 145 },
     { id: "prompt_examples", name: "Few-Shot Prompting", desc: "30% more work per prompt", cost: 450, currency: "cash", phase: 2, effect: { aiPowerMult: 1.3 }, oneTime: true, reqTasks: 175 },
-    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 650, currency: "cash", phase: 2, effect: { payMult: 1.6, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 225 },
+    { id: "marketing_campaign", name: "Marketing Campaign", desc: "Your first marketing campaign. Tasks arrive 75% faster.", cost: 400, currency: "cash", phase: 2, effect: { payMult: 1.6, taskSpawnMult: 1.75 }, oneTime: true, reqTasks: 200 },
     { id: "pro_model", name: "Upgrade to AI 2000 Basic", desc: "A larger token allowance for longer sessions.", cost: 2000, currency: "cash", phase: 2, unlockPhase: 3, oneTime: true, reqTasks: 300 },
 
     // Phase 3 -> 4
@@ -207,11 +207,11 @@
     { id: "token_compressor", name: "Prompt Compression", desc: "Shorter prompts reduce AI token use by 25%.", cost: 1500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.75 }, oneTime: true, reqTasks: 350 },
     { id: "premium_support", name: "Premium Support", desc: "Priority response times. Clients are thrilled.", cost: 800, currency: "cash", phase: 3, effect: { payMult: 1.05 }, oneTime: true, reqTasks: 425 },
     { id: "token_distiller", name: "Model Distillation", desc: "Reduces token use by 33%.", cost: 1500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.67 }, oneTime: true, reqTasks: 425 },
-    { id: "batch_processing", name: "Batch Processing", desc: "Queue and process work in batches. 2x click power.", cost: 1200, currency: "cash", phase: 3, effect: { clickPower: 2 }, oneTime: true, reqTasks: 425 },
+    { id: "faster_inference", name: "Faster Inference", desc: "Your AI subscription completes tasks twice as fast.", cost: 1200, currency: "cash", phase: 3, effect: { aiPowerMult: 2 }, oneTime: true, reqTasks: 425 },
     { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 2500, currency: "cash", phase: 3, effect: { payMult: 2.0 }, oneTime: true, reqTasks: 500 },
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 35% more valuable.", cost: 3000, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 500 },
     { id: "client_outreach", name: "Client Outreach", desc: "Build a steady pipeline for both subscriptions. Tasks arrive twice as often.", cost: 4500, currency: "cash", phase: 3, effect: { taskSpawnMult: 2 }, oneTime: true, reqTasks: 650 },
-    { id: "second_ai", requires: "client_outreach", showBeforeRequires: true, name: "Second AI Subscription", desc: "A second AI subscription with its own token allowance.", cost: 18000, currency: "cash", phase: 3, oneTime: true, reqTasks: 650 },
+    { id: "second_ai", requires: "client_outreach", showBeforeRequires: true, name: "Replace Your Assistant with AI", desc: "Hire AI 2000 Pro alongside Basic and end your assistant’s employment. Any unfinished tasks return to the queue.", cost: 18000, currency: "cash", phase: 3, oneTime: true, reqTasks: 650 },
     { id: "inference_tuning", requires: "second_ai", name: "Inference Tuning", desc: "Tune both subscriptions to work 15% faster.", cost: 6000, currency: "cash", phase: 3, effect: { aiPowerMult: 1.15, agentSpeedMult: 1.15 }, oneTime: true, reqTasks: 900 },
     { id: "prompt_refinement", requires: "inference_tuning", name: "Prompt Refinement", desc: "Polish reusable prompts. Both subscriptions work 5% faster.", cost: 1500, currency: "cash", phase: 3, effect: { aiPowerMult: 1.05, agentSpeedMult: 1.05 }, oneTime: true, reqTasks: 925 },
     { id: "context_pruning", requires: "prompt_refinement", name: "Context Pruning", desc: "Trim unnecessary context. Both subscriptions use 5% fewer tokens.", cost: 2500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.95 }, oneTime: true, reqTasks: 950 },
@@ -335,7 +335,7 @@
   const MILESTONES = [
     // Task-count based
     { id: "first_task", reqTasks: 3, reveals: ["topBar", "cash"] },
-    { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], inboxTask: true },
+    { id: "backlog_start", reqTasks: 3, reveals: ["taskQueue"], inboxTask: true },
     { id: "stress_unlock", reqTasks: 12, reveals: ["stress"] },
     { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true } },
     { id: "expenses_unlock", reqTasks: 85, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true } },
@@ -402,9 +402,11 @@
       log: [],
       totalCashEarned: 0,
       totalTasksDone: 0,
+      manualTasksCompleted: 0,
       totalClicks: 0,
       totalIncidents: 0,
       activeTaskId: null,
+      assistant: { taskIds: [], dismissed: false, tasksCompleted: 0 },
       // Prestige
       prestigeCount: 0,
       prestigeBonusClick: 0,
@@ -492,10 +494,18 @@
     const clusterShape = { id: "", name: "", invested: 0, buildRemaining: 0, buildDuration: 0, workforce: 0, tank: 0, progress: 0, workerSlotsMax: 8, workerAgentIds: [], managerAssigned: false, tokenManagerAssigned: false, active: true };
     const collections = [[state.tasks, taskShape], [state.agents, agentShape], [state.incidents, incidentShape], [state.clusters, clusterShape], [state.services, { id: "", name: "", incomeRate: 0, active: true }], [state.log, { msg: "", type: "", t: 0 }]];
     if (!collections.every(([items, shape]) => items.every((item) => validShape(item, shape)))) return false;
+    const assistantTasks = state.tasks.filter((task) => ["assistant", "assistant_queued"].includes(task.status));
+    const taskIds = state.assistant.taskIds;
+    const slots = state.purchasedUpgrades.includes("multitasking") ? 2 : 1;
+    if (taskIds.length > 3 || new Set(taskIds).size !== taskIds.length || taskIds.length !== assistantTasks.length) return false;
+    if (taskIds.length && (state.assistant.dismissed || !state.purchasedUpgrades.includes("hire_assistant"))) return false;
+    if (!taskIds.every((id) => assistantTasks.some((task) => task.id === id))) return false;
+    if (assistantTasks.filter((task) => task.status === "assistant").length !== Math.min(slots, taskIds.length)) return false;
+    if (state.tasks.filter((task) => task.status === "active").length > slots) return false;
     const entities = [...state.tasks, ...state.agents, ...state.clusters, ...state.services, ...state.incidents];
     if (!entities.every((item) => /^[a-z0-9_]+$/.test(item.id) && !/["'&]/.test(item.name))) return false;
     if (new Set(entities.map((item) => item.id)).size !== entities.length) return false;
-    if (!state.tasks.every((task) => TASK_TYPES.some((type) => type.id === task.typeId) && Number.isInteger(task.batchSize) && task.batchSize > 0 && task.workRequired > 0 && task.workDone <= task.workRequired && ["available", "active", "ai", "agent", "done"].includes(task.status))) return false;
+    if (!state.tasks.every((task) => TASK_TYPES.some((type) => type.id === task.typeId) && Number.isInteger(task.batchSize) && task.batchSize > 0 && task.workRequired > 0 && task.workDone <= task.workRequired && ["available", "active", "ai", "agent", "assistant", "assistant_queued", "done"].includes(task.status))) return false;
     if (!state.agents.every((agent) => AGENT_ROLES.some((role) => role.id === agent.roleId) && /^#[0-9a-f]{6}$/i.test(agent.color) && agent.speed > 0 && agent.tokenCost > 0 && agent.specialty.every((id) => TASK_TYPES.some((type) => type.id === id)) && ["idle", "working", "error", "provisioning"].includes(agent.status) && (agent.status !== "provisioning" || (agent.provisionRemaining > 0 && agent.provisionDuration > 0)))) return false;
     const workers = state.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId));
     if (state.taskSpawnDelay <= 0 || !workers.every((agent) => Number.isInteger(agent.slotIndex)) || new Set(workers.map((agent) => agent.slotIndex)).size !== workers.length) return false;
@@ -618,6 +628,7 @@
   function getMaxTasks() {
     if (G.phase >= 9) return Math.max(MAX_TASKS, managedNodeCount() * 12);
     if (G.phase === 2 || G.phase === 3) return MAX_TASKS;
+    if (G.phase === 1 && G.purchasedUpgrades.includes("hire_assistant")) return G.totalTasksDone < 100 ? 8 : MAX_TASKS;
     if (G.totalTasksDone < 10) return 3;
     if (G.totalTasksDone < 20) return 5;
     if (G.totalTasksDone < 50) return 6;
@@ -640,6 +651,7 @@
     }
 
     var spawnMult = Math.max(0.1, G.taskSpawnMult || 1);
+    if (G.phase === 1 && G.purchasedUpgrades.includes("hire_assistant")) spawnMult *= 3;
     return Math.max(120, base / spawnMult);
   }
 
@@ -658,12 +670,6 @@
       task = generateEarlyTask();
       G.tasks.push(task);
       G.activeTaskId = task.id;
-      $("#early-task-display").style.visibility = "visible";
-      $("#early-task-icon-name").textContent = task.icon + " " + task.name;
-      $("#early-task-bar").style.width = "0%";
-      $("#early-task-reward").innerHTML = "<span style='color:var(--cash)'>" + fmtCash(getTaskCashPayout(task, "manual", null)) + "</span> reward &bull; 0% done";
-      $("#btn-do-task").textContent = "Working...";
-      $("#btn-do-task").style.cursor = "wait";
     }
     clickTask(task.id, evt);
   }
@@ -675,26 +681,25 @@
   }
 
   // ---------- CLICKING / TASK WORK ----------
-  function getManualQueueSize() {
-    if (G.phase >= 4) return 1;
-    return UPGRADES.reduce((size, upgrade) => G.purchasedUpgrades.includes(upgrade.id) && upgrade.effect && upgrade.effect.manualQueueSize ? Math.max(size, upgrade.effect.manualQueueSize) : size, 1);
-  }
-
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
-    if (!task || task.status !== "available") return;
+    if (!task || task.status !== "available" || G.tasks.filter((item) => item.status === "active").length >= humanWorkSlots()) return;
 
-    task.status = "active";
-    G.activeTaskId = taskId;
-    if (task.id === "setup_inbox") {
-      G.lastTaskSpawn = Date.now();
-      spawnTask();
-      spawnTask();
+    startManualTasks([task], evt);
+  }
+
+  function startManualTasks(tasks, evt) {
+    for (const task of tasks) {
+      task.status = "active";
+      G.activeTaskId = task.id;
+      if (task.id === "setup_inbox") {
+        G.lastTaskSpawn = Date.now();
+        spawnTask();
+        spawnTask();
+      }
     }
-    const queued = G.tasks.filter((t) => t.status === "available").slice(0, getManualQueueSize() - 1);
-    for (const next of queued) next.status = "active";
     G.totalClicks++;
-    showClickReward(G.clickPower, evt);
+    showClickReward(G.clickPower * tasks.length, evt);
   }
 
   function tickManualWork(dtSec) {
@@ -712,6 +717,87 @@
     }
     if (!G.activeTaskId) G.activeTaskId = (G.tasks.find((t) => t.status === "active") || {}).id || null;
     G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * activeTasks.length, 0, 100);
+  }
+
+  function humanWorkSlots() {
+    return G.purchasedUpgrades.includes("multitasking") ? 2 : 1;
+  }
+
+  function assistantAvailable() {
+    return G.purchasedUpgrades.includes("hire_assistant") && !G.assistant.dismissed;
+  }
+
+  function startAssistantTasks() {
+    const tasks = G.assistant.taskIds.map((id) => G.tasks.find((task) => task.id === id));
+    for (let index = 0; index < tasks.length; index++) tasks[index].status = index < humanWorkSlots() ? "assistant" : "assistant_queued";
+  }
+
+  function assignAssistantWork() {
+    if (!G.gameStarted || G.retired || !assistantAvailable() || G.assistant.taskIds.length) return;
+    const tasks = G.tasks.filter((task) => task.status === "available").slice(0, 3);
+    if (!tasks.length) return;
+    G.assistant.taskIds = tasks.map((task) => task.id);
+    startAssistantTasks();
+    G.totalClicks++;
+    save();
+  }
+
+  function tickAssistant(dtSec) {
+    const tasks = G.tasks.filter((task) => task.status === "assistant");
+    for (const task of tasks) {
+      task.workDone = Math.min(task.workRequired, task.workDone + 4 * dtSec);
+      if (task.workDone < task.workRequired) continue;
+      G.assistant.tasksCompleted += task.batchSize;
+      G.assistant.taskIds = G.assistant.taskIds.filter((id) => id !== task.id);
+      completeTask(task, "assistant");
+    }
+    startAssistantTasks();
+  }
+
+  function dismissAssistant() {
+    if (G.retired || G.phase < 2 || !assistantAvailable()) return;
+    for (const id of G.assistant.taskIds) {
+      const task = G.tasks.find((item) => item.id === id);
+      task.status = "available";
+      task.createdAt = Date.now();
+    }
+    G.assistant.taskIds = [];
+    G.assistant.dismissed = true;
+    log("Assistant dismissed. Any unfinished tasks are ready for you or AI to finish.", "info");
+    save();
+  }
+
+  function doWork(evt) {
+    if (!G.gameStarted || G.retired) return;
+    if (!G.uiRevealed.taskQueue) { doEarlyTask(evt); return; }
+    const slots = humanWorkSlots() - G.tasks.filter((task) => task.status === "active").length;
+    const tasks = G.tasks.filter((task) => task.status === "available").slice(0, slots);
+    if (tasks.length) startManualTasks(tasks, evt);
+  }
+
+  function renderYouCard() {
+    const working = G.tasks.filter((task) => task.status === "active");
+    $("#you-status").textContent = working.length ? "Working on " + working.length + (working.length === 1 ? " task" : " tasks") : "Ready to work";
+    $("#you-delivered").textContent = deliveredTasksLabel(G.manualTasksCompleted);
+    const button = $("#btn-do-task");
+    button.textContent = G.uiRevealed.taskQueue ? "Do work" : "Do Task";
+    const parent = G.uiRevealed.taskQueue ? $("#you-controls") : $("#prelude-controls");
+    if (button.parentElement !== parent) parent.appendChild(button);
+    button.disabled = working.length >= humanWorkSlots() || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
+    button.style.cursor = button.disabled ? "default" : "pointer";
+  }
+
+  function deliveredTasksLabel(count) {
+    return count + (count === 1 ? " task delivered" : " tasks delivered");
+  }
+
+  function renderAssistantCard() {
+    if (!assistantAvailable()) return "";
+    const count = G.assistant.taskIds.length;
+    const active = G.tasks.filter((task) => task.status === "assistant").length;
+    const status = count ? active + " working · " + (count - active) + " queued" : "Waiting for work · 15% task fee";
+    const disabled = count || !G.tasks.some((task) => task.status === "available");
+    return "<div class='card agent-card' data-assistant><div class='agent-info'><div class='name'>Assistant <span class='role'>Part-time</span></div><div class='text-sm'>" + status + "</div><small>" + deliveredTasksLabel(G.assistant.tasksCompleted) + "</small></div><div class='agent-action-col'><button class='btn btn-primary btn-sm' onclick='GAME.assignAssistantWork()' " + (disabled ? "disabled" : "") + ">" + (count ? "Working..." : "Assign work") + "</button>" + (G.phase >= 2 ? "<button class='btn btn-outline btn-sm' onclick='GAME.dismissAssistant()'>Dismiss assistant</button>" : "") + "</div></div>";
   }
 
   function getCurrentAiWorkerTask() {
@@ -891,7 +977,7 @@
     task.workDone = Math.min(task.workRequired, task.workDone + originalAiWorkRate() * effectiveDt);
 
     if (task.workDone >= task.workRequired) {
-      G.aiWorkerTasksCompleted++;
+      G.aiWorkerTasksCompleted += task.batchSize;
       G.aiWorkerCurrentTaskId = null;
       completeTask(task, "ai_assist");
     }
@@ -1024,7 +1110,7 @@
   function getTaskCashPayout(task, method, agent) {
     var taskMult = 1;
     if (method === "agent" && agent) taskMult = workerQuality(task, agent);
-    return task.pay * taskMult * G.payMult;
+    return task.pay * taskMult * G.payMult * (method === "assistant" ? 0.85 : 1);
   }
 
   function completeTask(task, method) {
@@ -1052,6 +1138,7 @@
     G.cash += pay;
     G.totalCashEarned += pay;
     G.totalTasksDone += task.batchSize;
+    if (method === "manual") G.manualTasksCompleted += task.batchSize;
     if (G.phase >= 9) {
       const metrics = deliveryMetrics();
       metrics.recent.unshift(task.name);
@@ -1681,6 +1768,9 @@
   function getIncomeRate() {
     // Passive growth income (Phase 4+)
     let rate = networkIncomeRate() + getAgentRevenueRate() + getMarketingRevenueRate();
+    for (const task of G.tasks.filter((item) => item.status === "assistant")) {
+      rate += getTaskCashPayout(task, "assistant", null) * 4 / task.workRequired;
+    }
     const originalTask = getCurrentAiWorkerTask();
     if (originalTask && G.aiWorkerTokenTank > 0) rate += getTaskCashPayout(originalTask, "ai_assist", null) * originalAiWorkRate() / originalTask.workRequired;
     // From working agents
@@ -1730,8 +1820,8 @@
     if (upgrade.visibleAfter) return G.purchasedUpgrades.includes(upgrade.visibleAfter);
     if (upgrade.requires && !upgrade.showBeforeRequires && !G.purchasedUpgrades.includes(upgrade.requires)) return false;
     if (upgrade.requiresRole && !G.agents.some((agent) => agent.roleId === upgrade.requiresRole)) return false;
-    if (!upgrade.oneTime) return true;
-    const prior = UPGRADES.filter((item) => item.oneTime && !item.introductory && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
+    if (!upgrade.oneTime || upgrade.optional) return true;
+    const prior = UPGRADES.filter((item) => item.oneTime && !item.introductory && !item.optional && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
     if (prior.some((item) => ["agent_slot_3", "agent_slot_5"].includes(item.id) && !G.purchasedUpgrades.includes(item.id))) return false;
     if (upgrade.unlockPhase || upgrade.id === "second_ai" || upgrade.id === "reality_check") {
       if (prior.some((item) => !(upgrade.showBeforeRequires && item.id === upgrade.requires) && !G.purchasedUpgrades.includes(item.id))) return false;
@@ -1799,7 +1889,10 @@
 
   function completeUpgradePurchase(upg) {
     const upgradeId = upg.id;
+    if (upgradeId === "free_ai") G.aiWorkerTokenTank = 10;
+    if (upgradeId === "hire_assistant") G.uiRevealed.agents = true;
     if (upg.oneTime) G.purchasedUpgrades.push(upgradeId);
+    if (upgradeId === "multitasking") startAssistantTasks();
     if (upgradeId === "ceo_recruitment" || upgradeId === "ceo_deploy_speed") {
       const speed = upgradeId === "ceo_recruitment" ? 2 : 1.5;
       for (const agent of G.agents) {
@@ -1812,7 +1905,6 @@
 
     // Apply effects
     if (upg.effect) {
-      if (upg.effect.clickPower) G.clickPower *= upg.effect.clickPower;
       if (upg.effect.aiFailMult) G.aiFailMult *= upg.effect.aiFailMult;
       if (upg.effect.aiPowerMult) G.aiPowerMult *= upg.effect.aiPowerMult;
       if (upg.effect.giveTokens) { const amount = upg.id.startsWith("token_pack_") ? tokenPackAmount(upg) : upg.effect.giveTokens; G.tokens += amount; log(upg.name + ": +" + amount + " tokens.", "info"); }
@@ -1851,6 +1943,7 @@
     }
 
     if (upgradeId === "second_ai") {
+      dismissAssistant();
       const second = createAgent("researcher");
       second.name = "AI 2000 Pro";
       second.icon = "🤖";
@@ -2942,6 +3035,7 @@
     if (G.phase < 12) tickTaskSpawn();
     tickNetwork(dtSec);
     tickManualWork(dtSec);
+    tickAssistant(dtSec);
     tickAiWorker(dtSec);
     tickManager();
     tickAgents(dtSec);
@@ -3056,11 +3150,22 @@
   }
 
   function renderWorkStream() {
+    const prelude = G.gameStarted && !G.uiRevealed.taskQueue;
+    $("#prelude-section").hidden = !prelude;
+    renderYouCard();
+    if (prelude) {
+      const task = G.tasks.find((item) => item.status === "active");
+      $("#prelude-details").hidden = !task;
+      $("#prelude-task").textContent = task ? task.icon + " " + task.name : "";
+      const progress = task ? Math.floor(task.workDone / task.workRequired * 100) : 0;
+      $("#prelude-bar").style.width = progress + "%";
+      $("#prelude-progress").setAttribute("aria-valuenow", progress);
+      $("#prelude-status").textContent = task ? fmtCash(getTaskCashPayout(task, "manual", null)) + " reward · " + progress + "% done" : "";
+    }
     const compact = G.phase >= 10 || (G.phase === 9 && G.clusters.length >= 2);
     $("#delivery-summary").hidden = !compact;
     $("#task-list").hidden = compact && (G.phase >= 12 || !deliveryMetrics().showTasks);
     if (compact) {
-      $("#early-task-section").style.display = "none";
       $("#task-queue-section").style.display = "block";
       $("#tasks-complete-count").textContent = fmtTokens(G.totalTasksDone);
       renderDeliverySummary();
@@ -3070,53 +3175,14 @@
       $("#no-tasks").style.display = "none";
       return;
     }
-    var earlySection = $("#early-task-section");
-    var queueSection = $("#task-queue-section");
-
+    // Early game: show big Do Task button
+    // The first card now offers inbox setup in the same position as normal tasks.
+    // The central opening precedes that first queued card.
+    // Normal game: show task queue
+    // Work controls now live in Agents throughout the opening; cards show assignments.
+    $("#task-queue-section").style.display = G.gameStarted && G.uiRevealed.taskQueue ? "block" : "none";
     $("#tasks-complete-count").textContent = fmtTokens(G.totalTasksDone);
-
-    if (!G.uiRevealed.taskQueue) {
-      // Early game: show big Do Task button
-      // The first card now offers inbox setup in the same position as normal tasks.
-      // The central opening precedes that first queued card.
-      earlySection.style.display = "";
-      queueSection.style.display = "none";
-      renderEarlyTask();
-    } else {
-      // Normal game: show task queue
-      earlySection.style.display = "none";
-      queueSection.style.display = "block";
-      renderTaskQueue();
-    }
-  }
-
-  function renderEarlyTask() {
-    var display = $("#early-task-display");
-    var btn = $("#btn-do-task");
-    var activeTask = G.tasks.find((t) => t.status === "active");
-    if (activeTask) {
-      display.style.visibility = "visible";
-      $("#early-task-icon-name").textContent = activeTask.icon + " " + activeTask.name;
-      var pct = Math.floor((activeTask.workDone / activeTask.workRequired) * 100);
-      var displayedPay = getTaskCashPayout(activeTask, "manual", null);
-      $("#early-task-bar").style.width = pct + "%";
-      $("#early-task-reward").innerHTML = "<span style='color:var(--cash)'>" + fmtCash(displayedPay) + "</span> reward &bull; " + pct + "% done";
-      btn.textContent = "Working...";
-      btn.style.cursor = "wait";
-    } else {
-      display.style.visibility = "hidden";
-      $("#early-task-bar").style.width = "0%";
-      $("#early-task-reward").textContent = "";
-      btn.textContent = "Do Task";
-      btn.style.cursor = "pointer";
-    }
-  }
-
-  function getWorkTaskButtonClass() {
-    if (G.phase >= 4) return "btn btn-work-phase4 btn-sm task-action-btn";
-    if (G.phase >= 3) return "btn btn-work-phase3 btn-sm task-action-btn";
-    if (G.phase >= 2) return "btn btn-work-phase2 btn-sm task-action-btn";
-    return "btn btn-primary btn-sm task-action-btn";
+    renderTaskQueue();
   }
 
   function getAiWorkerDisplayName() {
@@ -3133,7 +3199,6 @@
     var list = $("#task-list");
     var noTasks = $("#no-tasks");
     var tasks = G.tasks.filter((task) => task.status !== "done");
-    var queueSize = Math.min(getManualQueueSize(), tasks.filter((task) => task.status === "available").length);
 
     $("#task-count").textContent = tasks.length + " tasks";
 
@@ -3150,26 +3215,13 @@
       var pct = Math.floor((t.workDone / t.workRequired) * 100);
       var agent = t.assignedAgent ? G.agents.find(function (a) { return a.id === t.assignedAgent; }) : null;
 
-      var actions = "";
-      if (t.status === "available") {
-        var clickBtn = "<button class='" + getWorkTaskButtonClass() + "' onclick=\"GAME.clickTask('" + t.id + "', event)\">" + (queueSize > 1 ? "Work on " + queueSize : "Work") + "</button>";
-        actions += clickBtn;
-      }
-      if (t.status === "active") {
-        actions = "<button class='" + getWorkTaskButtonClass() + "' disabled style='cursor:wait'>Working...</button>";
-      }
-      if (t.status === "ai") {
-        actions = "<button class='btn btn-purple btn-sm task-action-btn' disabled style='cursor:wait'>" + getAiWorkerDisplayName() + "</button>";
-      }
-      if (t.status === "agent" && agent) {
-        var agentWorkBtnClass = G.phase >= 4 ? "btn btn-purple btn-sm task-action-btn" : getWorkTaskButtonClass();
-        actions = "<button class='" + agentWorkBtnClass + "' disabled style='cursor:wait' title='" + agent.name + "'>" + getAgentTaskLabel(agent.name) + "</button>";
-      }
-      var displayedPay = getTaskCashPayout(t, t.status === "agent" ? "agent" : "manual", agent);
+      const owner = t.status === "available" ? "Unassigned" : t.status === "active" ? "You" : t.status === "assistant" ? "Assistant" : t.status === "assistant_queued" ? "Assistant · queued" : t.status === "ai" ? getAiWorkerDisplayName() : getAgentTaskLabel(agent.name);
+      const actions = "<span class='task-assignee' title='" + (agent ? agent.name : owner) + "' data-assignment='" + t.status + "'>" + owner + "</span>";
+      var displayedPay = getTaskCashPayout(t, t.status === "agent" ? "agent" : ["assistant", "assistant_queued"].includes(t.status) ? "assistant" : "manual", agent);
 
       // Task expiry countdown
       var expiryHtml = "";
-      if (G.taskExpiryEnabled) {
+      if (G.taskExpiryEnabled && t.status === "available") {
         var timeLeft = Math.max(0, TASK_EXPIRY_MS / 1000 - (Date.now() - t.createdAt) / 1000);
         if (timeLeft < 15) {
           expiryHtml = "<div class='task-expiry'>" + Math.ceil(timeLeft) + "s</div>";
@@ -3331,6 +3383,7 @@
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
     let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 8 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 4 ? "" : agent.roleName) + "</span></div>";
+    if (original) html += "<small>" + G.aiWorkerTasksCompleted + " tasks delivered · Automatically takes the next task</small>";
     if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
     else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
@@ -3342,10 +3395,14 @@
 
   function renderAgentSection() {
     const section = $("#section-agents");
-    section.style.display = G.uiRevealed.agents && !G.uiRevealed.clusters ? "" : "none";
-    if (!G.uiRevealed.agents || G.uiRevealed.clusters) return;
+    section.style.display = G.gameStarted && G.uiRevealed.taskQueue && !G.uiRevealed.clusters ? "" : "none";
+    if (!G.gameStarted || !G.uiRevealed.taskQueue || G.uiRevealed.clusters) return;
     updateHTML($("#agent-hire-section"), "");
-    let html = "";
+    renderYouCard();
+    const title = G.purchasedUpgrades.includes("second_ai") ? "Agents" : G.purchasedUpgrades.includes("hire_assistant") ? "Team" : "";
+    $("#team-heading").textContent = title;
+    $("#team-header").hidden = !title;
+    let html = renderAssistantCard();
     const cost = getAgentHireCost(G.agents.length);
     const reserved = reservedHireRoles();
     for (const roleId of ["manager", "token_mgr"]) {
@@ -3620,7 +3677,7 @@
     var container = $("#game-container");
 
     // Check if control panel has any visible children
-    var cpVisible = G.uiRevealed.upgrades || G.uiRevealed.agents || G.uiRevealed.clusters ||
+    var cpVisible = (G.gameStarted && G.uiRevealed.taskQueue) || G.uiRevealed.upgrades || G.uiRevealed.agents || G.uiRevealed.clusters ||
       G.uiRevealed.incidents || G.uiRevealed.dashboard || G.uiRevealed.prestige ||
       G.uiRevealed.log;
 
@@ -3797,7 +3854,7 @@
     // Do Task button (early game)
     $("#btn-do-task").addEventListener("click", function (evt) {
       if (!G.gameStarted || G.retired) return;
-      doEarlyTask(evt);
+      doWork(evt);
     });
 
     // Intro
@@ -3887,6 +3944,7 @@
     G.incidentsExplained = phase >= 3;
     G.incidents = [];
     G.tasks = [];
+    G.assistant.taskIds = [];
     G.activeTaskId = null;
     G.aiWorkerCurrentTaskId = null;
     for (const agent of G.agents) {
@@ -3936,6 +3994,9 @@
 
   // ---------- PUBLIC API (for onclick handlers) ----------
   window.GAME = {
+    assignAssistantWork: assignAssistantWork,
+    dismissAssistant: dismissAssistant,
+    doWork: doWork,
     clickTask: function (id, evt) { clickTask(id, evt); },
     aiAssist: function (id, evt) { aiAssistTask(id, evt); },
     toggleAiAutopilot: toggleAiAutopilot,

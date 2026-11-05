@@ -8,7 +8,7 @@ for (const width of [1440, 390]) {
     await page.evaluate(() => {
       GAME.cheat('0_2');
       GAME.state.cash = 1000;
-      for (const id of ['post_it_notes', 'gas_station_coffee', 'sticky_note_system']) GAME.buy(id);
+      for (const id of ['hire_assistant', 'gas_station_coffee', 'sticky_note_system']) GAME.buy(id);
       GAME.addTasks(27);
     });
     await page.clock.runFor(200);
@@ -24,7 +24,7 @@ for (const width of [1440, 390]) {
     await card.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     await expect(card).toHaveCount(3);
-    for (const name of ['Side Hustle Optimization', 'Inbox Zero Method', 'GTD Workflow']) {
+    for (const name of ['Side Hustle Optimization', 'Multitasking', 'Inbox Zero Method']) {
       await expect(page.locator('#upgrade-list')).toContainText(name);
     }
     await expect(page.locator('#milestone-popup')).toBeHidden();

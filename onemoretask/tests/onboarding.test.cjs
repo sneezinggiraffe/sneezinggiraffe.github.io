@@ -2,94 +2,45 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
-test('five central gigs precede the lone inbox task, which starts normal work and arrivals when clicked', () => {
+test('You starts three gigs before inbox setup opens normal arrivals', () => {
   const h = harness();
-  let restored;
   try {
     const g = h.window.GAME.state;
-    assert.equal(g.gameStarted, false);
-    assert.equal(h.window.document.querySelector('#intro-overlay').classList.contains('hidden'), false);
-    h.window.document.querySelector('#btn-do-task').click();
-    assert.equal(g.tasks.length, 0);
     h.window.document.querySelector('#btn-start-game').click();
-    g.retired = true;
-    h.window.document.querySelector('#btn-do-task').click();
-    assert.equal(g.tasks.length, 0);
-    g.retired = false;
-    for (let index = 0; index < 5; index++) {
-      assert.equal(g.uiRevealed.taskQueue, false);
-      h.api.renderAll();
-      assert.equal(h.window.document.querySelector('#early-task-section').style.display, '');
-      assert.equal(h.window.document.querySelector('#btn-do-task').textContent, 'Do Task');
+    assert.equal(h.window.document.querySelector('#prelude-section').hidden, false);
+    assert.equal(h.window.document.querySelector('#prelude-details').hidden, true);
+    assert.equal(h.window.document.querySelector('#btn-do-task').textContent, 'Do Task');
+    assert.equal(h.window.document.querySelector('#btn-do-task').parentElement.id, 'prelude-controls');
+    assert.equal(h.window.document.querySelector('#section-agents').style.display, 'none');
+    assert.equal(h.window.document.querySelector('#task-queue-section').style.display, 'none');
+    for (let index = 0; index < 3; index++) {
       h.window.document.querySelector('#btn-do-task').click();
-      h.api.doEarlyTask();
-      h.api.tickManualWork(0.1);
-      h.api.renderAll();
-      assert.equal(h.window.document.querySelector('#btn-do-task').textContent, 'Working...');
-      assert.notEqual(h.window.document.querySelector('#early-task-bar').style.width, '0%');
-      h.api.tickManualWork(10);
-      h.api.pruneTasks(h.window.Date.now());
+      h.api.tickManualWork(0.1); h.api.renderAll();
+      assert.equal(h.window.document.querySelector('#btn-do-task').disabled, true);
+      assert.match(h.window.document.querySelector('#prelude-task').textContent, new RegExp(g.tasks.find(task => task.status === 'active').name));
+      const progress = Number(h.window.document.querySelector('#prelude-progress').getAttribute('aria-valuenow'));
+      assert.ok(progress > 0 && progress < 100);
+      h.api.tickManualWork(10); h.api.pruneTasks(h.window.Date.now()); h.api.renderAll();
     }
-    assert.equal(h.window.document.querySelector('#early-task-section').style.display, 'none');
-    h.api.doEarlyTask();
-    h.api.renderAll();
-    assert.equal(g.totalTasksDone, 5);
-    assert.equal(g.uiRevealed.taskQueue, true);
-    assert.equal(h.window.document.querySelector('#early-task-section').style.display, 'none');
-    assert.equal(h.window.document.querySelectorAll('#task-list .task-card').length, 1);
-    const inbox = g.tasks[0];
-    assert.equal(inbox.id, 'setup_inbox');
-    assert.equal(inbox.name, 'Set Up Your Inbox');
-    assert.equal(inbox.status, 'available');
-    assert.equal(inbox.pay, 0);
-    assert.match(h.window.document.querySelector('#task-list').textContent, /Pay: \$0/);
-    assert.equal(h.api.queue().length, 0);
-    assert.equal(h.api.getSpawnInterval(), Infinity);
-    h.advance(60000);
-    h.api.tickTaskSpawn();
+    assert.equal(g.totalTasksDone, 3);
+    assert.equal(g.manualTasksCompleted, 3);
+    assert.equal(h.window.document.querySelector('#you-delivered').textContent, '3 tasks delivered');
+    assert.equal(h.window.document.querySelector('#btn-do-task').textContent, 'Do work');
+    assert.equal(h.window.document.querySelector('#prelude-section').hidden, true);
+    assert.equal(h.window.document.querySelector('#btn-do-task').parentElement.id, 'you-controls');
+    assert.equal(h.window.document.querySelector('#team-heading').textContent, '');
     assert.equal(g.tasks.length, 1);
-    h.api.save();
-    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-    assert.equal(restored.api.getSpawnInterval(), Infinity);
-    assert.equal(restored.window.GAME.state.tasks.length, 1);
-    restored.close();
-    restored = undefined;
-
-    const cash = g.cash;
-    h.window.GAME.clickTask(inbox.id);
-    h.api.renderAll();
-    assert.equal(inbox.status, 'active');
-    assert.equal(inbox.workDone, 0);
+    assert.equal(g.tasks[0].id, 'setup_inbox');
+    assert.equal(h.api.getSpawnInterval(), Infinity);
+    assert.equal(h.window.document.querySelector('#task-list button'), null);
+    assert.equal(h.window.document.querySelector('.task-assignee').textContent, 'Unassigned');
+    h.window.document.querySelector('#btn-do-task').click(); h.api.renderAll();
     assert.equal(g.tasks.length, 3);
-    assert.equal(g.cash, cash);
-    assert.equal(g.totalTasksDone, 5);
-    assert.ok(Number.isFinite(h.api.getSpawnInterval()));
-    assert.equal(h.window.document.querySelectorAll('#task-list .task-card').length, 3);
-    assert.equal(h.window.document.querySelector('#task-list button').textContent, 'Working...');
-    h.api.tickManualWork(0.5);
-    assert.ok(inbox.workDone > 0 && inbox.workDone < inbox.workRequired);
-    assert.equal(g.totalTasksDone, 5);
-    h.window.GAME.clickTask(inbox.id);
-    assert.equal(g.tasks.length, 3);
-    assert.equal(g.totalClicks, 6);
-    h.api.save();
-    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-    const loaded = restored.window.GAME.state;
-    assert.equal(loaded.tasks[0].workDone, inbox.workDone);
-    assert.ok(Number.isFinite(restored.api.getSpawnInterval()));
-    restored.api.tickManualWork(2);
-    assert.equal(loaded.tasks[0].status, 'done');
-    assert.equal(loaded.cash, cash);
-    assert.equal(loaded.totalTasksDone, 6);
-    restored.api.pruneTasks(restored.window.Date.now());
-    restored.advance(g.lastTaskSpawn - restored.window.Date.now() + 2000);
-    restored.api.tickTaskSpawn();
-    assert.equal(loaded.tasks.length, 3);
-    assert.equal(restored.api.validSave(loaded), true);
-  } finally {
-    if (restored) restored.close();
-    h.close();
-  }
+    assert.equal(h.window.document.querySelector('.task-assignee').textContent, 'You');
+    h.api.tickManualWork(10);
+    assert.equal(g.totalTasksDone, 4);
+    assert.equal(h.api.validSave(g), true);
+  } finally { h.close(); }
 });
 
 test('Tools of the Trade appears alone and dismissing it reveals the paid upgrades without a gameplay bonus', () => {
@@ -114,7 +65,7 @@ test('Tools of the Trade appears alone and dismissing it reveals the paid upgrad
     assert.equal(first.querySelector('button').textContent, '');
     assert.equal(first.querySelector('button').disabled, false);
     g.cash = 1000;
-    h.api.purchaseUpgrade('post_it_notes');
+    h.api.purchaseUpgrade('hire_assistant');
     assert.equal(g.cash, 1000);
     assert.equal(g.purchasedUpgrades.length, 0);
     h.api.save();
@@ -131,7 +82,7 @@ test('Tools of the Trade appears alone and dismissing it reveals the paid upgrad
     before.purchasedUpgrades.push('tools_of_trade');
     before.log = JSON.parse(JSON.stringify(g.log));
     assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
-    const paid = ['post_it_notes', 'gas_station_coffee', 'sticky_note_system'];
+    const paid = ['hire_assistant', 'gas_station_coffee', 'sticky_note_system'];
     assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), paid);
     assert.equal(h.window.document.querySelectorAll('#upgrade-list .upgrade-card').length, 3);
     h.api.save();
@@ -181,7 +132,7 @@ test('better way is a free upgrade at 35 tasks that gates later upgrades and per
     before.log = JSON.parse(JSON.stringify(g.log));
     assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
     assert.equal(h.api.queue().length, 0);
-    const later = ['side_hustle', 'inbox_zero', 'gtd_workflow'];
+    const later = ['side_hustle', 'multitasking', 'inbox_zero'];
     assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), later);
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
@@ -259,7 +210,7 @@ test('Reality Check requires every preceding upgrade even above its task thresho
     g.totalTasksDone = 105;
     const reality = h.api.UPGRADES.find(upgrade => upgrade.id === 'reality_check');
     const purchased = [...g.purchasedUpgrades];
-    for (const missing of purchased) {
+    for (const missing of purchased.filter(id => !h.api.UPGRADES.find(item => item.id === id).optional)) {
       g.purchasedUpgrades = purchased.filter(id => id !== missing);
       assert.equal(h.api.upgradeVisible(reality), false, missing);
       h.api.purchaseUpgrade('reality_check');

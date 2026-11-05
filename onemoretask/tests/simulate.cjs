@@ -1,18 +1,19 @@
 const { harness } = require('./harness.cjs');
 const assert = require('node:assert/strict');
 
-function play(seed=17,actionEveryMs=500) {
+function play(seed=17,actionEveryMs=500,delegateOpening=false) {
   const actionSteps=actionEveryMs/100;
   const h=harness(undefined,{seed});const g=h.fresh();const milestones=[];const offers=[];const purchases=[];const offered=new Set();const purchasesLogged=new Set();
   let lastPhase=0;
   for(let step=0;step<108000;step++) {
     h.advance(100);h.dismiss();
     if(step%actionSteps===0){
+      h.api.assignAssistantWork();
       if(!g.uiRevealed.taskQueue)h.api.doEarlyTask();
-      else {const task=g.tasks.find(t=>t.status==='available');if(task)h.api.clickTask(task.id);}
+      else if (!(delegateOpening && g.phase === 1 && h.api.assistantAvailable())) h.api.doWork();
       if(g.phase>=2 && g.aiWorkerTokenTank<1)h.api.topUpAiWorker();
       if(g.phase<7)for(const inc of g.incidents.filter(i=>!i.resolved))h.api.resolveIncident(inc.id,'manual');
-      if (g.uiRevealed.upgrades) for (const u of h.api.UPGRADES) if (u.oneTime && !g.purchasedUpgrades.includes(u.id)) {
+      if (g.uiRevealed.upgrades) for (const u of h.api.UPGRADES) if (u.oneTime && (!u.optional || u.id === "multitasking") && !g.purchasedUpgrades.includes(u.id)) {
         if (h.api.upgradeVisible(u) && !offered.has(u.id)) {
           offered.add(u.id);
           offers.push({id:u.id,tasks:g.totalTasksDone,cash:Math.round(g.cash),cost:h.api.getUpgradeCost(u),seconds:step/10,nodes:h.api.completedClusterCount()});

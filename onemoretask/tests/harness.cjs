@@ -53,6 +53,7 @@ function harness(saved, options = {}) {
   function prepareUpgrade(id) {
     const upgrade=api.UPGRADES.find(item=>item.id===id);
     const state=window.GAME.state;
+    if (upgrade.phase >= 2) state.assistant.dismissed = true;
     for(const item of api.UPGRADES) {
       if(item.oneTime && (item.phase<upgrade.phase || (item.phase===upgrade.phase && api.UPGRADES.indexOf(item)<api.UPGRADES.indexOf(upgrade))) && !state.purchasedUpgrades.includes(item.id))state.purchasedUpgrades.push(item.id);
     }

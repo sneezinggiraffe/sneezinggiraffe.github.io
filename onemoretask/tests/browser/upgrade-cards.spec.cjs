@@ -11,13 +11,13 @@ for (const width of [1440, 390]) {
     });
     await page.clock.runFor(200);
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    const card = page.locator('.upgrade-card').filter({ hasText: 'Post-It Notes' });
+    const card = page.locator('.upgrade-card').filter({ hasText: 'Hire a Part-Time Assistant' });
     const action = card.locator('button');
     await expect(action).toBeDisabled();
     await expect(card).toHaveCSS('background-color', 'rgb(17, 24, 39)');
     await expect(card).toHaveCSS('border-top-color', 'rgb(30, 41, 59)');
     await card.click({ position: { x: 5, y: 5 } });
-    expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('post_it_notes'))).toBe(false);
+    expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('hire_assistant'))).toBe(false);
     await page.evaluate(() => { GAME.state.cash = 1000; });
     await page.clock.runFor(200);
     await expect(action).toBeEnabled();
@@ -26,7 +26,7 @@ for (const width of [1440, 390]) {
     await expect(action).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(action).toHaveText('$43');
     await card.click({ position: { x: 5, y: 5 } });
-    expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('post_it_notes'))).toBe(true);
+    expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('hire_assistant'))).toBe(true);
     expect(await page.evaluate(() => GAME.state.cash)).toBe(957);
     await page.clock.runFor(200);
     const next = page.locator('.upgrade-card').filter({ hasText: 'Gas Station Coffee' }).locator('button');
