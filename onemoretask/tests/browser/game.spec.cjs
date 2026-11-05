@@ -244,7 +244,7 @@ for (const width of [1440, 390]) {
     await expect(upgrade).toBeVisible();
     await expect(upgrade).toBeDisabled();
     await page.clock.runFor(12200);
-    const cluster = page.locator('.cluster-card:not(.provision-card)').nth(1);
+    const cluster = page.locator('.cluster-card:not(.provision-card)').first();
     const slots = cluster.locator('.capacity-slot');
     await expect(slots).toHaveCount(8);
     await expect(slots.last()).toHaveText('+');
@@ -288,7 +288,7 @@ for (const width of [1440, 390]) {
     await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
     await page.goto('/');
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
-    const card = page.locator('.cluster-card:not(.provision-card)').first();
+    const card = page.locator('[data-cluster-id="' + g.clusters[0].id + '"]');
     await expect(card.locator('.capacity-slot')).toHaveCount(8);
     await expect(page.locator('[onclick="GAME.buy(\'network_density\')"]')).toHaveCount(0);
     await page.locator('.ceo-slot').click();
@@ -700,7 +700,7 @@ test('100-node view has no internal controls and remains responsive',async({page
 });
 test('clusters build hardware and management before slots provision agents',async({page})=>{
   await page.clock.install();const raw=fixture(9);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  await page.getByRole('button',{name:/Bring cluster online/}).click();const second=page.locator('div.cluster-card:not(.planning-card)').nth(1);const firstBox=await page.locator('div.cluster-card:not(.planning-card)').first().boundingBox();const secondBox=await second.boundingBox();expect(secondBox.x).toBeGreaterThan(firstBox.x);expect(secondBox.y).toBe(firstBox.y);
+  await page.getByRole('button',{name:/Bring cluster online/}).click();const second=page.locator('div.cluster-card:not(.planning-card)').first();await expect(second.locator('.cluster-hdr strong')).toHaveText('Cluster 2');const firstBox=await page.locator('div.cluster-card:not(.planning-card)').nth(1).boundingBox();const secondBox=await second.boundingBox();expect(secondBox.x).toBeLessThan(firstBox.x);expect(secondBox.y).toBe(firstBox.y);
   for(const stage of ['Procuring GPUs','Racking hardware','Installing software','Final checks']){await page.clock.runFor(100);await expect(second).toContainText(stage);await expect(second.getByRole('progressbar')).toBeVisible();await page.clock.runFor(2900);}
   await page.clock.runFor(300);await expect(second.getByRole('button',{name:'Provision agent for $2,500',exact:true})).toHaveCount(8);await expect(second.locator('.cluster-status')).toHaveText('Needs Agents');await expect(second.locator('.cluster-agents-label')).toHaveCount(0);
   await expect(second.locator('.cluster-status')).toHaveCSS('color', 'rgb(251, 146, 60)');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);expect(await second.locator('.capacity-slot.filled').textContent()).toBe(await page.evaluate(() => GAME.state.agents.find(agent => agent.id === GAME.state.clusters[1].workerAgentIds[0]).name));await expect(second.locator('.cluster-status')).toHaveText('Partially Operational');
@@ -740,8 +740,10 @@ test('Phase 8 workers are managed and refill only at ten percent', async ({ page
 });
 test('Scale Mode continues automatic construction and staffing in Phase 12',async({page})=>{
   await page.clock.install();const raw=fixture(12);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)')).toHaveCount(100);await expect(page.locator('.provision-card')).toHaveCount(0);await page.clock.runFor(1000);await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)')).toHaveCount(102);await page.clock.runFor(2200);
-  await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)').nth(100).locator('.capacity-slot.filled')).toHaveCount(16);await expect(page.locator('.node-grid div.cluster-card:not(.planning-card) button')).toHaveCount(0);
+  await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)')).toHaveCount(100);await expect(page.locator('.provision-card')).toHaveCount(0);await page.clock.runFor(1000);await expect(page.locator('.node-grid div.cluster-card:not(.planning-card)')).toHaveCount(102);
+  const buildingId = await page.evaluate(() => GAME.state.clusters.at(-1).id);
+  await page.clock.runFor(2200);
+  await expect(page.locator('[data-cluster-id="' + buildingId + '"] .capacity-slot.filled')).toHaveCount(16);await expect(page.locator('.node-grid div.cluster-card:not(.planning-card) button')).toHaveCount(0);
 });
 
 test('Phase 3 requires two cheap upgrades while keeping the multi-agent licence visible',async({page})=>{
@@ -972,7 +974,7 @@ test('Phase 7 keeps reveal milestones hidden and offers DevOps first', async ({ 
 test('CEO scaling displays filled and vacant slots alongside hiring upgrades',async({page})=>{
   const h=harness(fixture(10));const g=h.window.GAME.state;g.clusters[2].workerAgentIds.splice(4);g.purchasedUpgrades=g.purchasedUpgrades.filter(id=>!['ceo_recruitment','ceo_batch'].includes(id));g.lastTick=Date.now();g.lastCeoAction=g.lastTick;const raw=JSON.stringify(g);h.close();
   await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
-  const cluster=page.locator('div.cluster-card:not(.planning-card)').nth(2);await expect(cluster.locator('.cluster-status')).toHaveText('Partially Operational');await expect(cluster.locator('.capacity-slot.filled')).toHaveCount(4);await expect(cluster.locator('.capacity-slot.empty')).toHaveCount(12);await expect(cluster).not.toContainText('4/8');
+  const cluster=page.locator('div.cluster-card:not(.planning-card)').first();await expect(cluster.locator('.cluster-hdr strong')).toHaveText('Cluster 3');await expect(cluster.locator('.cluster-status')).toHaveText('Partially Operational');await expect(cluster.locator('.capacity-slot.filled')).toHaveCount(4);await expect(cluster.locator('.capacity-slot.empty')).toHaveCount(12);await expect(cluster).not.toContainText('4/8');
   await expect(page.locator('[onclick="GAME.buy(\'ceo_recruitment\')"]')).toBeVisible();await page.screenshot({path:'test-results/ceo-scaling.png',fullPage:true,animations:'disabled'});
 });
 
@@ -1151,7 +1153,7 @@ for (const width of [1440, 390]) {
     }
     await expect(overview.locator('details')).toHaveCount(0);
     expect(await overview.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBeGreaterThanOrEqual(2);
-    const firstCard = overview.locator('div.cluster-card:not(.planning-card)').first();
+    const firstCard = overview.locator('div.cluster-card:not(.planning-card)').last();
     const cardBounds = await firstCard.boundingBox();
     const lastAgent = await firstCard.locator('.capacity-slot').last().boundingBox();
     expect(lastAgent.y + lastAgent.height).toBeLessThanOrEqual(cardBounds.y + cardBounds.height);

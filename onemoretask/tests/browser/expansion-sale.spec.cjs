@@ -25,9 +25,85 @@ function expansionFixture(phase, count) {
   return raw;
 }
 
+function earlyClusterFixture(phase) {
+  const h = harness();
+  const g = h.fresh(phase);
+  g.ceoMode = phase === 10 ? 'manage' : 'scale';
+  g.cash = 0;
+  g.tokens = 1e9;
+  g.totalTasksDone = 1e9;
+  g.aiWorkerShutdown = true;
+  g.incidentsExplained = true;
+  h.prepareUpgrade(phase === 10 ? 'server_1' : 'autonomous_nodes');
+  for (let index = 0; index < 3; index++) h.fullCluster().tank = 4000;
+  h.api.checkMilestones();
+  h.dismiss();
+  g.lastTick = Date.now();
+  g.lastSave = g.lastTick;
+  const raw = JSON.stringify(g);
+  h.close();
+  return raw;
+}
+
+function clusterCardPositions(grid) {
+  const origin = grid.getBoundingClientRect();
+  return [...grid.children].map(card => {
+    const bounds = card.getBoundingClientRect();
+    return {x: bounds.x - origin.x, y: bounds.y - origin.y};
+  });
+}
+
 for (const width of [1440, 390, 320]) {
+  for (const phase of [10, 11]) {
+    test(`Phase ${phase} puts the placeholder and newest cluster at the top left at ${width}px`, async ({ page }) => {
+      const raw = earlyClusterFixture(phase);
+      const state = JSON.parse(raw);
+      await page.setViewportSize({width, height: 900});
+      await page.clock.install({time: new Date(state.lastTick)});
+      await page.clock.pauseAt(new Date(state.lastTick + 1000));
+      await page.addInitScript(value => {
+        if (!sessionStorage.getItem('cluster_order_seeded')) {
+          localStorage.setItem('ai_empire_save', value);
+          sessionStorage.setItem('cluster_order_seeded', '1');
+        }
+      }, raw);
+      await page.goto('/');
+      if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+      const grid = page.locator('#cluster-list .node-grid');
+      const placeholder = grid.locator(phase === 10 ? '.provision-card' : '.planning-card');
+      await expect(grid.locator(':scope > .cluster-card').first()).toHaveClass(phase === 10 ? /provision-card/ : /planning-card/);
+      const [placeholderBounds, previousBounds] = await grid.evaluate(clusterCardPositions);
+      if (Math.abs(placeholderBounds.y - previousBounds.y) < 1) expect(placeholderBounds.x).toBeLessThan(previousBounds.x);
+      else expect(placeholderBounds.y).toBeLessThan(previousBounds.y);
+      await page.evaluate(() => GAME.addCash(1e10));
+      await page.clock.runFor(200);
+      if (phase === 10) {
+        await placeholder.click();
+        await page.clock.runFor(200);
+      }
+      const ids = await page.evaluate(() => {
+        GAME.state.cash = 0;
+        window.dispatchEvent(new Event('pagehide'));
+        return GAME.state.clusters.map(cluster => cluster.id);
+      });
+      await expect(grid.locator(':scope > .cluster-card').first()).toHaveAttribute('data-cluster-id', ids.at(-1));
+      expect(await grid.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.dataset.clusterId))).toEqual(ids.slice().reverse());
+      const [newestBounds] = await grid.evaluate(clusterCardPositions);
+      expect(newestBounds.x).toBeCloseTo(placeholderBounds.x, 0);
+      expect(newestBounds.y).toBeCloseTo(placeholderBounds.y, 0);
+      await page.reload();
+      if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+      await expect(grid.locator(':scope > .cluster-card').first()).toHaveAttribute('data-cluster-id', ids.at(-1));
+      await page.clock.runFor(13000);
+      await expect(grid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', ids.at(-1));
+      if (phase === 11) await expect(grid.locator(':scope > .cluster-card').first()).toHaveClass(/planning-card/);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await grid.screenshot({path: `test-results/newest-first-phase${phase}-${width}.png`, animations: 'disabled'});
+    });
+  }
+
   for (const phase of [12, 14]) {
-    test(`Phase ${phase} appends new clusters left to right and preserves their order at ${width}px`, async ({ page }) => {
+    test(`Phase ${phase} prepends planning and new clusters at the top left and preserves their order at ${width}px`, async ({ page }) => {
       const count = phase === 12 ? 45 : 260;
       const raw = expansionFixture(phase, count);
       const state = JSON.parse(raw);
@@ -45,11 +121,12 @@ for (const width of [1440, 390, 320]) {
       await planning.scrollIntoViewIfNeeded();
       await expect(planning).toBeInViewport();
       await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(2);
+      for (const build of await page.locator('[aria-label="Cluster construction"]').all()) await expect(build).toBeInViewport();
       const topGrid = page.locator(phase === 12 ? '#cluster-list .node-grid' : '[data-neocloud="11"] .network-grid');
-      await expect(topGrid.locator(':scope > .cluster-card').last()).toHaveClass(/planning-card/);
-      await expect(topGrid.locator('[data-cluster-id]').last()).toHaveAttribute('data-cluster-id', newest.id);
+      await expect(topGrid.locator(':scope > .cluster-card').first()).toHaveClass(/planning-card/);
+      await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);
       await expect(page.locator('[data-cluster-id]')).toHaveCount(count + 2);
-      expect(await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.dataset.clusterId))).toEqual(state.clusters.map(cluster => cluster.id));
+      expect(await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.dataset.clusterId))).toEqual(state.clusters.slice().reverse().map(cluster => cluster.id));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const overflowing = await page.locator('#cluster-list').evaluate(element => [...element.querySelectorAll('.cluster-card,.neocloud')].filter(card => card.scrollWidth > card.clientWidth + 1).map(card => card.textContent));
       expect(overflowing).toEqual([]);
@@ -68,7 +145,7 @@ for (const width of [1440, 390, 320]) {
       await page.screenshot({path: `test-results/new-phase${phase}-${width}.png`, animations: 'disabled'});
       await page.clock.runFor(3500);
       await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
-      await expect(topGrid.locator('[data-cluster-id]').last()).toHaveAttribute('data-cluster-id', newest.id);
+      await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);
       if (phase === 14) await expect(page.locator('[data-cluster-id="' + newest.id + '"]').locator('xpath=ancestor::section')).toHaveAttribute('data-neocloud', '11');
     });
   }

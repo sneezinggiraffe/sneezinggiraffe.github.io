@@ -3428,7 +3428,7 @@
 
   function neocloudGroups(planning) {
     const groups = new Map();
-    for (const cluster of G.clusters) {
+    for (const cluster of G.clusters.slice().reverse()) {
       const number = Math.ceil(Number(cluster.name.slice(8)) / NEOCLOUD_SIZE);
       if (!groups.has(number)) groups.set(number, { number: number, clusters: [], planning: false });
       groups.get(number).clusters.push(cluster);
@@ -3438,7 +3438,7 @@
       if (!groups.has(number)) groups.set(number, { number: number, clusters: [], planning: false });
       groups.get(number).planning = true;
     }
-    return [...groups.values()].sort((a, b) => a.number - b.number);
+    return [...groups.values()].sort((a, b) => b.number - a.number);
   }
 
   function renderNeoclouds(planning) {
@@ -3448,10 +3448,10 @@
       const online = group.clusters.filter(clusterOnline).length;
       const building = group.clusters.filter((cluster) => cluster.buildRemaining > 0).length;
       const income = group.clusters.reduce((total, cluster) => total + clusterIncomeRate(cluster), 0);
-      const active = group === groups.at(-1) || building > 0;
+      const active = group === groups[0] || building > 0;
       html += "<section class='neocloud" + (active ? " active" : "") + "' data-neocloud='" + group.number + "' aria-label='Neocloud " + group.number + "'><div class='neocloud-header'><strong>Neocloud " + group.number + "</strong><span>" + online + " online" + (building ? " · " + building + " building" : "") + "</span></div><p class='neocloud-summary'>C" + ((group.number - 1) * NEOCLOUD_SIZE + 1) + "–C" + group.number * NEOCLOUD_SIZE + " · $" + fmtTokens(income) + "/s</p><div class='network-grid'>";
-      for (const cluster of group.clusters) html += renderClusterCard(cluster);
       if (group.planning) html += renderPlanningCard();
+      for (const cluster of group.clusters) html += renderClusterCard(cluster);
       html += "</div></section>";
     }
     return html + "</div>";
@@ -3480,9 +3480,9 @@
     if (minimal) html += renderNeoclouds(planning);
     else {
       html += "<div class='" + (compact ? "node-grid" : "node-grid agent-grid") + (overview ? " cluster-overview" : "") + "' style='--cluster-card-min:" + Math.max(152, 180 - density * 6) + "px;--cluster-card-padding:" + Math.max(5, 10 - density * 0.7) + "px;--cluster-card-gap:" + Math.max(3, 8 - density * 0.4) + "px;--cluster-slot-height:" + Math.max(16, 24 - density) + "px'>";
-      for (const cluster of G.clusters) html += renderClusterCard(cluster);
-      if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
       if (planning) html += renderPlanningCard();
+      if (canManuallyProvisionCluster()) html += "<button class='cluster-card provision-card' onclick='GAME.openCluster()' aria-label='Bring cluster online (" + fmtCash(provisionCost()) + ")' " + (G.cash < provisionCost() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Bring cluster online</strong><span>" + fmtCash(provisionCost()) + "</span></button>";
+      for (const cluster of G.clusters.slice().reverse()) html += renderClusterCard(cluster);
       html += "</div>";
     }
     updateHTML($("#cluster-list"), html);

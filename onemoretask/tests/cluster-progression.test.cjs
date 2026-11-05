@@ -186,7 +186,7 @@ for (const concurrency of [25, 50]) {
       assert.ok(builds.at(-1).invested > builds[0].invested);
       h.api.renderClusterSection();
       const document = h.window.document;
-      assert.deepEqual([...document.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].map(cluster => cluster.id));
+      assert.deepEqual([...document.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
       assert.equal(document.querySelectorAll('.neocloud:has([aria-label="Cluster construction"])').length, concurrency / 25);
       assert.equal(h.api.completedClusterCount(), count);
       g.cash = 0;

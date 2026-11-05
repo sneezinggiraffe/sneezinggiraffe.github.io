@@ -22,8 +22,45 @@ function saleButton(h, id) {
   return h.window.document.querySelector('[onclick="GAME.buy(\'' + id + '\')"]');
 }
 
-test('Phases 12 and 13 keep detailed clusters in creation order throughout construction', () => {
-  for (const phase of [12, 13]) {
+test('manual provisioning placeholders and newly built clusters take the first position in Phases 9 and 10', () => {
+  for (const phase of [9, 10]) {
+    const h = harness();
+    try {
+      const g = h.fresh(phase);
+      g.cash = 1e9;
+      g.totalTasksDone = 1e9;
+      g.ceoMode = phase === 10 ? 'manage' : 'off';
+      g.purchasedUpgrades.push('cluster_capacity_2', 'cluster_capacity_3');
+      const original = h.fullCluster();
+      h.api.checkMilestones();
+      h.dismiss();
+      h.api.renderClusterSection();
+      const grid = h.window.document.querySelector('#cluster-list .node-grid');
+      assert.equal(grid.firstElementChild.classList.contains('provision-card'), true);
+      assert.equal(grid.children[1].dataset.clusterId, original.id);
+      h.window.GAME.openCluster();
+      const newest = g.clusters.at(-1);
+      h.api.renderClusterSection();
+      assert.equal(grid.firstElementChild.dataset.clusterId, newest.id);
+      assert.equal(grid.children[1].dataset.clusterId, original.id);
+      assert.equal(grid.querySelector('.provision-card'), null);
+      h.api.tickConstruction(newest.buildRemaining);
+      while (newest.workerAgentIds.length < newest.workerSlotsMax) h.api.buyNextClusterWorker(newest.id);
+      h.api.tickConstruction(Math.max(...g.agents.map(agent => agent.provisionRemaining)));
+      h.api.renderClusterSection();
+      assert.equal(grid.firstElementChild.classList.contains('provision-card'), true);
+      assert.equal(grid.children[1].dataset.clusterId, newest.id);
+      assert.equal(grid.children[2].dataset.clusterId, original.id);
+      assert.equal(g.clusters[0].id, original.id);
+      assert.equal(h.api.validSave(g), true);
+    } finally {
+      h.close();
+    }
+  }
+});
+
+test('Phases 11 through 13 put planning and newest clusters first throughout construction', () => {
+  for (const phase of [11, 12, 13]) {
     const h = company(phase, 3);
     try {
       const g = h.window.GAME.state;
@@ -32,21 +69,28 @@ test('Phases 12 and 13 keep detailed clusters in creation order throughout const
       const building = g.clusters.at(-1);
       h.api.renderClusterSection();
       const grid = h.window.document.querySelector('#cluster-list .node-grid');
-      assert.equal(grid.lastElementChild.querySelector('strong').textContent, 'Cluster 5');
-      assert.equal(grid.querySelectorAll('[data-cluster-id]')[3].dataset.clusterId, building.id);
+      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 11 ? 'Cluster 4' : 'Cluster 5');
+      assert.equal(grid.querySelector('[data-cluster-id]').dataset.clusterId, building.id);
       assert.equal(grid.querySelectorAll('.cluster-capacity').length, 3);
       assert.equal(grid.querySelectorAll('[aria-label="Cluster construction"]').length, 1);
       assert.equal(h.window.document.querySelector('.neocloud'), null);
       h.api.tickConstruction(building.buildRemaining);
       h.api.renderClusterSection();
-      assert.equal(grid.querySelectorAll('[data-cluster-id]')[3].dataset.clusterId, building.id);
+      assert.equal(grid.querySelector('[data-cluster-id]').dataset.clusterId, building.id);
       assert.equal(grid.querySelectorAll('.cluster-capacity').length, 4);
+      assert.equal(grid.firstElementChild.classList.contains('planning-card'), true);
       h.api.openCluster();
       h.api.renderClusterSection();
-      assert.equal(grid.lastElementChild.querySelector('strong').textContent, 'Cluster 6');
-      assert.deepEqual([...grid.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].map(cluster => cluster.id));
+      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 11 ? 'Cluster 5' : 'Cluster 6');
+      assert.deepEqual([...grid.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
       assert.deepEqual(g.clusters.slice(0, 3).map(cluster => cluster.id), originalOrder);
       assert.equal(h.api.validSave(g), true);
+      const restored = harness(JSON.stringify(g));
+      try {
+        assert.deepEqual([...restored.window.document.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
+      } finally {
+        restored.close();
+      }
     } finally {
       h.close();
     }
@@ -60,19 +104,19 @@ test('Phase 14 groups every cluster into permanent neoclouds of twenty-five', ()
     h.api.renderClusterSection();
     const document = h.window.document;
     assert.equal(document.querySelector('#cluster-heading').textContent, 'Neoclouds');
-    assert.deepEqual([...document.querySelectorAll('.neocloud')].map(group => Number(group.dataset.neocloud)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    assert.deepEqual([...document.querySelectorAll('.neocloud')].map(group => Number(group.dataset.neocloud)), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     assert.match(document.querySelector('[data-neocloud="11"]').textContent, /Neocloud 11.*C251.*Planning/);
     const last = g.clusters.at(-1);
     assert.equal(document.querySelector('[data-cluster-id="' + last.id + '"]').closest('.neocloud').dataset.neocloud, '10');
     assert.equal(document.querySelectorAll('[data-neocloud="10"] [data-cluster-id]').length, 25);
-    assert.equal(document.querySelector('[data-neocloud="10"] [data-cluster-id] strong').textContent, 'C226');
+    assert.equal(document.querySelector('[data-neocloud="10"] [data-cluster-id] strong').textContent, 'C250');
     assert.match(document.querySelector('[data-neocloud="10"] .neocloud-summary').textContent, /C226–C250 · \$6,000\/s/);
     assert.equal(document.querySelectorAll('.cluster-capacity').length, 0);
     assert.equal(document.querySelectorAll('[data-cluster-id]').length, 250);
     h.api.openCluster();
     const next = g.clusters.at(-1);
     h.api.renderClusterSection();
-    assert.equal(document.querySelector('[data-neocloud="11"] .network-grid').lastElementChild.querySelector('strong').textContent, 'C252');
+    assert.equal(document.querySelector('[data-neocloud="11"] .network-grid').firstElementChild.querySelector('strong').textContent, 'C252');
     assert.equal(document.querySelector('[data-neocloud="11"] [data-cluster-id]').dataset.clusterId, next.id);
     h.api.tickConstruction(next.buildRemaining);
     h.api.renderClusterSection();

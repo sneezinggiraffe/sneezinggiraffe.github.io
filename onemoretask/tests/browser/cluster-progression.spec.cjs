@@ -78,7 +78,7 @@ for (const width of [1440, 390]) {
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(50);
     await expect(page.locator('.neocloud:has([aria-label="Cluster construction"])')).toHaveCount(2);
     const order = await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.querySelector('strong').textContent));
-    expect(order).toEqual(Array.from({length: 175}, (_, index) => 'C' + (index + 1)));
+    expect(order).toEqual(Array.from({length: 175}, (_, index) => 'C' + (175 - index)));
     await page.locator('[data-neocloud="6"]').scrollIntoViewIfNeeded();
     await page.screenshot({path: `test-results/parallel-neoclouds-${width}.png`, animations: 'disabled'});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

@@ -2,7 +2,7 @@
 
 - [x] Replace Prepare Company Sale with investor talks, an advisor, a management buyout discussion, due diligence, terms and completion.
 - [x] Fade the company and music to black, then reveal retirement.
-- [x] Keep clusters in ascending creation order through all phases and introduce neoclouds of 25 clusters at Phase 14.
+- [x] Keep placeholders first and clusters newest first from Phase 9 onward and introduce neoclouds of 25 clusters at Phase 14.
 
 - [x] Use “Optimise cluster space for more agent slots.” for High-Density Clusters.
 - [x] Make Scale Mode enter Phase 11 and unlock automatic expansion.

@@ -1330,7 +1330,7 @@ scenario('Scale Mode builds automatically through Phase 12 and replication excee
   h.advance(12100);h.api.tickConstruction(12.1);h.api.tickAiCeo();assert.equal(c.workforce,16);const spent=g.cash;h.api.tickAiCeo();assert.ok(g.cash<spent);assert.equal(g.clusters.length,3);
   g.phase=13;for(let i=0;i<1100;i++){h.advance(2000);h.api.tickConstruction(2);h.api.tickAiCeo();}assert.ok(g.clusters.length>200);assert.equal(h.api.validSave(g),true);
   g.phase=14;h.api.checkMilestones();h.dismiss();h.api.renderAll();assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card:not(.planning-card)').length,g.clusters.length);assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card button').length,0);
-  assert.equal(h.window.document.querySelector('.network-grid [data-cluster-id] strong').textContent,'C1');assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
+  assert.equal(h.window.document.querySelector('.network-grid [data-cluster-id] strong').textContent,'C'+g.clusters.length);assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
 });
 scenario('DevOps resolves critical incidents more slowly without final approval', (h) => {
   const g=h.fresh(7);h.worker('devops');
@@ -2120,9 +2120,9 @@ scenario('cluster overview becomes denser as clusters and the next purchase tile
   assert.equal(overview.querySelectorAll('.cluster-agents-label').length, 0);
   assert.equal(overview.querySelectorAll('details').length, 0);
 });
-scenario('provisioning occupies the next grid slot and respects unlocks capacity and cash', (h) => {
+scenario('provisioning occupies the first grid slot and respects unlocks capacity and cash', (h) => {
   const g=h.fresh(9);g.uiRevealed.clusters=true;h.fullCluster();h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);
-  g.purchasedUpgrades.push('cluster_capacity_2');h.api.renderClusterSection();let card=h.window.document.querySelector('.provision-card');assert.ok(card);assert.ok(card.parentElement.classList.contains('node-grid'));assert.equal(card.disabled,true);assert.equal(card.previousElementSibling.tagName,'DIV');
+  g.purchasedUpgrades.push('cluster_capacity_2');h.api.renderClusterSection();let card=h.window.document.querySelector('.provision-card');assert.ok(card);assert.ok(card.parentElement.classList.contains('node-grid'));assert.equal(card.disabled,true);assert.equal(card.parentElement.firstElementChild,card);
   g.cash=1e6;h.api.renderClusterSection();assert.equal(card.disabled,false);h.api.openCluster();h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);
   h.api.tickConstruction(12.1);for(let i=0;i<8;i++)h.api.buyNextClusterWorker(g.clusters[1].id,'coder');h.api.renderClusterSection();assert.ok([...h.window.document.querySelectorAll('.cluster-card button')].every(button=>button.textContent==='Sell'));
   g.phase=10;g.ceoMode='scale';h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);assert.equal(h.window.document.querySelectorAll('.leadership-agent').length,2);
