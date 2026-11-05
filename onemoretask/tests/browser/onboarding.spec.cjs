@@ -22,6 +22,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
       await expect(page.locator('#section-agents')).toBeHidden();
       await expect(page.locator('#prelude-details')).toBeHidden();
       await work.click();
+      await expect(page.locator('.click-reward')).toHaveCount(0);
       await page.clock.runFor(300);
       expect(Number(await page.locator('#prelude-progress').getAttribute('aria-valuenow'))).toBeGreaterThan(0);
       if (index === 0) await page.screenshot({ path: `test-results/prelude-${width}-${height}.png`, fullPage: true, animations: 'disabled' });
@@ -69,17 +70,20 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     const intro = page.locator('#upgrade-list .upgrade-card');
     await expect(intro).toHaveCount(1);
     await expect(intro).toContainText('Tools of the Trade');
+    await expect(page.locator('#section-log')).toBeHidden();
     await expect(page.locator('#milestone-popup')).toBeHidden();
     await page.reload();
     if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
     await expect(intro).toHaveCount(1);
     await expect(intro).toContainText('Tools of the Trade');
+    await expect(page.locator('#section-log')).toBeHidden();
     await page.screenshot({path: `test-results/tools-alone-${width}.png`, fullPage: true});
     const beforeFree = await page.evaluate(() => GAME.state.cash);
     await expect(intro.locator('button')).toHaveText('');
     await intro.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     expect(await page.evaluate(() => GAME.state.cash)).toBe(beforeFree);
+    await expect(page.locator('#section-log')).toBeVisible();
     await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(3);
     await expect(page.locator('#upgrade-list')).not.toContainText('Tools of the Trade');
     await page.reload();

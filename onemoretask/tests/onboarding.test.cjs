@@ -56,7 +56,8 @@ test('Tools of the Trade appears alone and dismissing it reveals the paid upgrad
     h.api.renderAll();
     assert.equal(h.api.queue().length, 0);
     assert.equal(g.uiRevealed.upgrades, true);
-    assert.equal(g.uiRevealed.log, true);
+    assert.equal(g.uiRevealed.log, false);
+    assert.equal(h.window.document.querySelector("#section-log").style.display, "none");
     assert.equal(g.taskExpiryEnabled, true);
     assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['tools_of_trade']);
     assert.equal(h.window.document.querySelectorAll('#upgrade-list .upgrade-card').length, 1);
@@ -80,6 +81,8 @@ test('Tools of the Trade appears alone and dismissing it reveals the paid upgrad
     assert.doesNotMatch(h.window.document.querySelector('#upgrade-list').textContent, /Tools of the Trade/);
     assert.equal(h.api.queue().length, 0);
     before.purchasedUpgrades.push('tools_of_trade');
+    before.uiRevealed.log = true;
+    assert.equal(h.window.document.querySelector('#section-log').style.display, '');
     before.log = JSON.parse(JSON.stringify(g.log));
     assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
     const paid = ['hire_assistant', 'gas_station_coffee', 'sticky_note_system'];
@@ -117,10 +120,10 @@ test('better way is a free upgrade at 35 tasks that gates later upgrades and per
     g.cash = 1000;
     for (const id of ['side_hustle', 'focus_timer', 'free_ai']) h.api.purchaseUpgrade(id);
     assert.equal(g.cash, 1000);
-    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint', 'reality_check']);
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint', 'reality_check']);
     restored.close();
     restored = undefined;
     g.totalTasksDone = 35;
@@ -202,19 +205,22 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
 });
 
 
-test('Reality Check requires every preceding upgrade even above its task threshold', () => {
+test('Reality Check appears at 85 even with earlier purchases missing; free AI still requires them', () => {
   const h = harness();
   try {
     const g = h.fresh();
     h.prepareUpgrade('reality_check');
-    g.totalTasksDone = 105;
+    g.totalTasksDone = 85;
     const reality = h.api.UPGRADES.find(upgrade => upgrade.id === 'reality_check');
     const purchased = [...g.purchasedUpgrades];
     for (const missing of purchased.filter(id => !h.api.UPGRADES.find(item => item.id === id).optional)) {
       g.purchasedUpgrades = purchased.filter(id => id !== missing);
-      assert.equal(h.api.upgradeVisible(reality), false, missing);
+      assert.equal(h.api.upgradeVisible(reality), true, missing);
       h.api.purchaseUpgrade('reality_check');
-      assert.equal(g.purchasedUpgrades.includes('reality_check'), false, missing);
+      assert.equal(g.purchasedUpgrades.includes('reality_check'), true, missing);
+      g.totalTasksDone = 105;
+      assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(item => item.id === 'free_ai')), false, missing);
+      g.totalTasksDone = 85;
     }
     g.purchasedUpgrades = purchased;
     assert.equal(h.api.upgradeVisible(reality), true);

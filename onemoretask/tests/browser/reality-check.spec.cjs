@@ -13,7 +13,7 @@ for (const width of [1440, 390]) {
     await page.evaluate(() => { GAME.addTasks(35); GAME.addCash(1000); });
     await page.clock.runFor(200);
     for (const name of ['Dual Monitors', 'Noise-Cancelling Headphones']) {
-      await expect(page.locator('#upgrade-list')).not.toContainText('Reality Check');
+      await expect(page.locator('#upgrade-list')).toContainText('Reality Check');
       await cards.filter({ hasText: name }).locator('button').click();
       await page.clock.runFor(200);
     }

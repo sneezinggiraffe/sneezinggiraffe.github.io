@@ -9,35 +9,35 @@ function hire(h, multitasking = false) {
   if (multitasking) { h.api.purchaseUpgrade('ai_hint'); h.api.purchaseUpgrade('multitasking'); }
   return g;
 }
-function tasks(h, count = 4) {
+function tasks(h, count = 5) {
   return Array.from({ length: count }, () => {
     h.advance(1); const task = h.task(); task.workRequired = 8; task.pay = 10; return task;
   });
 }
 
-test('one assignment reserves three individual tasks, pays each completion and then waits', () => {
+test('one assignment reserves four concurrent tasks, pays each completion and then waits', () => {
   const h = harness(); let restored;
   try {
     const g = hire(h); const jobs = tasks(h); const cash = g.cash;
     h.api.renderAll(); assert.equal(h.window.document.querySelector('#task-list button'), null);
     assert.equal(h.window.document.querySelector('#team-heading').textContent, 'Team');
     h.window.GAME.assignAssistantWork(); h.api.assignAssistantWork();
-    assert.equal(g.totalClicks, 1); assert.equal(g.tasks.length, 4);
-    assert.deepEqual(Array.from(g.assistant.taskIds), jobs.slice(0, 3).map(job => job.id));
+    assert.equal(g.totalClicks, 1); assert.equal(g.tasks.length, 5);
+    assert.deepEqual(Array.from(g.assistant.taskIds), jobs.slice(0, 4).map(job => job.id));
     h.api.renderAll();
-    assert.deepEqual(Array.from(h.window.document.querySelectorAll('.task-assignee'), el => el.textContent), ['Assistant', 'Assistant · queued', 'Assistant · queued', 'Unassigned']);
-    assert.equal(h.api.getIncomeRate(), 8.5 * 4 / 8);
-    h.api.tickAssistant(1); assert.equal(jobs[0].workDone, 4); assert.equal(jobs[1].workDone, 0);
+    assert.deepEqual(Array.from(h.window.document.querySelectorAll('.task-assignee'), el => el.textContent), ['Assistant', 'Assistant', 'Assistant', 'Assistant', 'Unassigned']);
+    assert.equal(h.api.getIncomeRate(), 4 * 8.5 * 4 / 8);
+    h.api.tickAssistant(1); assert.equal(jobs[0].workDone, 4); assert.equal(jobs[1].workDone, 4);
     assert.equal(g.cash, cash); assert.equal(h.api.validSave(g), true);
     g.taskExpiryEnabled = true; h.advance(31000); h.api.pruneTasks(h.window.Date.now());
-    assert.equal(g.tasks.length, 3);
+    assert.equal(g.tasks.length, 4);
     restored = harness(JSON.stringify(g)); const loaded = restored.window.GAME.state;
     restored.api.tickAssistant(1);
-    assert.equal(loaded.totalTasksDone, 8); assert.equal(loaded.cash, cash + 8.5);
-    assert.equal(loaded.tasks[1].status, 'assistant');
+    assert.equal(loaded.totalTasksDone, 11); assert.equal(loaded.cash, cash + 34);
+    assert.equal(loaded.tasks[1].status, 'done');
     restored.api.tickAssistant(2); restored.api.tickAssistant(2);
-    assert.equal(loaded.totalTasksDone, 10); assert.equal(loaded.cash, cash + 25.5);
-    assert.equal(loaded.assistant.tasksCompleted, 3); assert.equal(loaded.assistant.taskIds.length, 0);
+    assert.equal(loaded.totalTasksDone, 11); assert.equal(loaded.cash, cash + 34);
+    assert.equal(loaded.assistant.tasksCompleted, 4); assert.equal(loaded.assistant.taskIds.length, 0);
     restored.api.pruneTasks(restored.window.Date.now());
     const unassigned = restored.task(); restored.api.tickAssistant(100);
     assert.equal(unassigned.status, 'available');
@@ -47,26 +47,26 @@ test('one assignment reserves three individual tasks, pays each completion and t
   } finally { if (restored) restored.close(); h.close(); }
 });
 
-test('manual work has one slot; Multitasking opens two slots for each person without increasing per-task speed', () => {
+test('manual work has one slot; Multitasking opens a second manual slot while the assistant keeps four without increasing per-task speed', () => {
   const h = harness();
   try {
     const g = hire(h); const jobs = tasks(h, 7);
     h.api.assignAssistantWork(); h.window.GAME.doWork(); h.window.GAME.doWork();
-    assert.equal(jobs[3].status, 'active'); assert.equal(jobs[4].status, 'available');
+    assert.equal(jobs[4].status, 'active'); assert.equal(jobs[5].status, 'available');
     assert.equal(g.totalClicks, 2); h.api.renderAll();
     assert.equal(h.window.document.querySelector('#btn-do-task').disabled, true);
     assert.equal(h.window.document.querySelector('#you-status').textContent, 'Working on 1 task');
     g.totalTasksDone = 35; h.api.purchaseUpgrade('ai_hint'); h.api.purchaseUpgrade('multitasking');
-    assert.equal(jobs[1].status, 'assistant'); assert.equal(jobs[2].status, 'assistant_queued');
+    assert.equal(jobs[1].status, 'assistant'); assert.equal(jobs[2].status, 'assistant');
     h.api.renderAll(); assert.equal(h.window.document.querySelector('#btn-do-task').disabled, false);
     h.window.GAME.doWork(); h.window.GAME.doWork();
-    assert.equal(jobs[4].status, 'active'); assert.equal(jobs[5].status, 'available');
+    assert.equal(jobs[5].status, 'active'); assert.equal(jobs[6].status, 'available');
     h.api.renderAll(); assert.equal(h.window.document.querySelector('#you-status').textContent, 'Working on 2 tasks');
     h.api.tickAssistant(1); h.api.tickManualWork(0.6);
     assert.equal(jobs[0].workDone, 4); assert.equal(jobs[1].workDone, 4);
-    assert.equal(jobs[2].workDone, 0); assert.equal(jobs[3].workDone, 4); assert.equal(jobs[4].workDone, 4);
-    h.api.tickAssistant(1); assert.equal(jobs[2].status, 'assistant');
-    assert.equal(g.assistant.tasksCompleted, 2);
+    assert.equal(jobs[2].workDone, 4); assert.equal(jobs[4].workDone, 4); assert.equal(jobs[5].workDone, 4);
+    h.api.tickAssistant(1); assert.equal(jobs[2].status, 'done');
+    assert.equal(g.assistant.tasksCompleted, 4);
     h.api.tickManualWork(1); h.api.renderAll(); assert.equal(h.window.document.querySelector('#btn-do-task').disabled, false);
     assert.equal(h.api.validSave(g), true);
   } finally { h.close(); }
@@ -80,7 +80,7 @@ test('AI and assistant work together; Pro replaces the assistant and preserves u
     h.api.assignAssistantWork();
     g.phase = 2; g.aiFailMult = 0; g.incidentsExplained = true;
     h.api.topUpAiWorker(); h.api.tickAssistant(1); h.api.tickAiWorker(1);
-    assert.ok(jobs[3].workDone > jobs[0].workDone * 4);
+    assert.ok(jobs[4].workDone > jobs[0].workDone * 4);
     h.api.renderAll();
     assert.deepEqual(Array.from(h.window.document.querySelectorAll('#section-agents .name'), el => el.textContent.trim()), ['You', 'Assistant Part-time', 'AI 2000 Free']);
     assert.equal(h.window.document.querySelector('#team-heading').textContent, 'Team');
@@ -115,7 +115,7 @@ test('Faster Inference improves AI speed without changing manual or assistant sp
     h.api.purchaseUpgrade('faster_inference');
     assert.equal(h.api.originalAiWorkRate(), aiSpeed * 2); assert.equal(g.clickPower, manualPower);
     h.api.tickAssistant(1); h.api.tickManualWork(0.6);
-    assert.equal(jobs[0].workDone, 4); assert.equal(jobs[3].workDone, 4);
+    assert.equal(jobs[0].workDone, 4); assert.equal(jobs[4].workDone, 4);
     assert.equal(h.api.UPGRADES.some(upgrade => ['step_back', 'hire_second_assistant', 'batch_processing'].includes(upgrade.id)), false);
   } finally { h.close(); }
 });
@@ -136,12 +136,14 @@ test('assignment guards and invalid reservations protect ownership; dismissal re
       s => { s.assistant.taskIds = []; }, s => { s.assistant.taskIds[0] = 'missing'; },
       s => { s.assistant.dismissed = true; }, s => { s.purchasedUpgrades = []; },
       s => { s.assistant.taskIds[1] = s.assistant.taskIds[0]; },
-      s => { s.assistant.taskIds.push(s.tasks[3].id); s.tasks[3].status = 'assistant_queued'; },
-      s => { s.tasks[1].status = 'assistant'; }, s => { s.tasks[0].status = 'assistant_queued'; },
-      s => { s.tasks[3].status = 'assistant'; },
+      s => { s.assistant.taskIds.push(s.tasks[4].id); s.tasks[4].status = 'assistant_queued'; },
+      s => { s.tasks[1].status = 'available'; }, s => { s.tasks[0].status = 'assistant_queued'; },
+      s => { s.tasks[4].status = 'assistant'; },
       s => { s.assistant.taskIds = []; for (const task of s.tasks) task.status = 'active'; }
     ]) { const invalid = JSON.parse(valid); mutate(invalid); assert.equal(h.api.validSave(invalid), false); }
-    g.phase = 2; h.api.dismissAssistant(); h.api.dismissAssistant();
+    g.phase = 2; h.api.dismissAssistant(); assert.equal(g.assistant.dismissed, false);
+    assert.equal(h.window.GAME.dismissAssistant, undefined);
+    g.purchasedUpgrades.push("second_ai"); h.api.dismissAssistant(); h.api.dismissAssistant();
     assert.equal(g.assistant.dismissed, true); assert.equal(g.assistant.taskIds.length, 0);
     assert.ok(g.tasks.every(task => task.status === 'available'));
     assert.equal(h.api.validSave(g), true);
@@ -171,13 +173,13 @@ test('one Multitasking click starts two unassigned jobs and counts completed man
     const clicks = g.totalClicks;
     h.window.GAME.doWork();
     assert.equal(g.totalClicks, clicks + 1);
-    assert.deepEqual(Array.from(g.tasks.filter(task => task.status === 'active'), task => task.id), jobs.slice(3, 5).map(task => task.id));
+    assert.deepEqual(Array.from(g.tasks.filter(task => task.status === 'active'), task => task.id), jobs.slice(4, 6).map(task => task.id));
     h.window.GAME.doWork(); assert.equal(g.totalClicks, clicks + 1);
-    assert.equal(jobs[5].status, 'available'); assert.equal(jobs[0].status, 'assistant');
+    assert.equal(jobs[6].status, 'available'); assert.equal(jobs[0].status, 'assistant');
     assert.equal(g.manualTasksCompleted, 0);
     h.api.tickManualWork(2);
     assert.equal(g.manualTasksCompleted, 2);
-    h.api.completeTask(jobs[3], 'manual'); assert.equal(g.manualTasksCompleted, 2);
+    h.api.completeTask(jobs[4], 'manual'); assert.equal(g.manualTasksCompleted, 2);
     h.api.tickAssistant(2); assert.equal(g.manualTasksCompleted, 2);
     h.api.renderAll(); assert.equal(h.window.document.querySelector('#you-delivered').textContent, '2 tasks delivered');
     restored = harness(JSON.stringify(g));
@@ -215,5 +217,60 @@ test('Marketing Campaign arrives at 200 tasks for $400 and increases demand befo
     assert.equal(g.cash, 0); assert.equal(g.taskSpawnMult, 1.75);
     assert.equal(h.api.getSpawnInterval(), delay / 1.75);
     assert.equal(g.phase, 2); assert.equal(g.payMult, 1.6);
+  } finally { h.close(); }
+});
+
+test('human icons and all AI top-ups share the primary action style without dismissal controls', () => {
+  const h = harness();
+  try {
+    const g = hire(h);
+    for (const phase of [2, 3, 4, 6]) {
+      g.phase = phase;
+      h.api.renderAll();
+      for (const selector of ['#you-card', '[data-assistant]']) {
+        assert.ok(h.window.document.querySelector(selector + ' > .agent-icon').textContent);
+        assert.equal(h.window.document.querySelector(selector + ' > .agent-icon').getAttribute('aria-hidden'), 'true');
+      }
+      const worker = h.worker('researcher');
+      const manager = h.worker('manager');
+      for (const html of [h.api.renderAiWorkerCard(), h.api.renderAgentCard(worker), h.api.renderAgentCard(manager)]) {
+        assert.match(html, /btn btn-primary btn-sm/);
+        assert.doesNotMatch(html, /btn-purple/);
+      }
+      assert.doesNotMatch(h.window.document.querySelector('[data-assistant]').textContent, /Dismiss/);
+      g.agents = [];
+    }
+  } finally { h.close(); }
+});
+
+test('Billboard costs exactly $2,000 and the Pro subscription restores its original title', () => {
+  const h = harness();
+  try {
+    const g = h.fresh(3); h.prepareUpgrade('billboard_campaign'); g.totalTasksDone = 500;
+    g.cash = 1999; h.api.purchaseUpgrade('billboard_campaign');
+    assert.equal(g.purchasedUpgrades.includes('billboard_campaign'), false);
+    g.cash = 2000; const pay = g.payMult; h.api.purchaseUpgrade('billboard_campaign');
+    assert.equal(g.cash, 0); assert.equal(g.payMult, pay * 2);
+    const pro = h.api.UPGRADES.find(upgrade => upgrade.id === 'second_ai');
+    assert.equal(pro.name, 'Second AI Subscription');
+    assert.equal(pro.desc, 'Replace your assistant with AI 2000 Pro');
+  } finally { h.close(); }
+});
+
+test('opening, manual work and AI assist never create floating click rewards', () => {
+  const h = harness();
+  try {
+    const g = h.fresh();
+    const event = { clientX: 100, clientY: 100 };
+    h.api.doWork(event);
+    assert.equal(h.window.document.querySelector('.click-reward'), null);
+    h.api.tickManualWork(10);
+    g.uiRevealed.taskQueue = true;
+    const task = h.task(); task.workRequired = 100;
+    h.api.clickTask(task.id, event);
+    assert.equal(h.window.document.querySelector('.click-reward'), null);
+    g.phase = 2;
+    h.api.aiAssistTask(task.id, event);
+    assert.equal(h.window.document.querySelector('.click-reward'), null);
   } finally { h.close(); }
 });

@@ -185,7 +185,7 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => GAME.state.phase)).toBe(2);
   });
 
-  test(`Client Outreach and Replace Your Assistant with AI stay visible together at ${width}px`, async ({ page }) => {
+  test(`Client Outreach and Second AI Subscription stay visible together at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh(3);
     g.totalTasksDone = 650;
@@ -351,6 +351,7 @@ for (const width of [1440, 390]) {
 
 function fixture(phase) {
   const h=harness();const g=h.fresh(phase);g.cash=1e11;g.tokens=50000;g.totalTasksDone=2000000;g.managerTokenTank=4000;g.managerUnlock=true;g.aiWorkerShutdown=phase>=4;g.payMult=10;
+  h.api.purchaseUpgrade('tools_of_trade');
   g.purchasedUpgrades=h.api.UPGRADES.filter(u=>u.oneTime&&u.phase<=phase&&(!u.unlockPhase||u.unlockPhase<=phase)&&u.id!=='fusion').map(u=>u.id);
   g.ceoMode=phase>=11?'scale':phase>=10?'manage':'off';
   if(phase>=9)for(let n=0;n<(phase>=12?100:phase>=10?3:1);n++){const c=h.fullCluster();c.tank=4000;}
@@ -1125,7 +1126,7 @@ for (const width of [1440, 390]) {
 }
 for(const width of [1440,390]){
   test(`Manager and agent hiring placeholders work at ${width}px`,async({page})=>{
-    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh6();GAME.dismissAssistant();GAME.addTasks(3);GAME.buy('manager_agent');});
+    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');await page.evaluate(()=>{chPh6();GAME.addTasks(3);GAME.buy('manager_agent');});
     if(await page.locator('#rotate-overlay').isVisible())await page.locator('#btn-rotate-continue').click();if(await page.locator('#milestone-popup').isVisible())await page.locator('#btn-dismiss-popup').click();
     const manager=page.locator('.manager-slot');await expect(manager).toBeVisible();await expect(manager).toContainText('$20.0K');expect(await manager.evaluate(el=>el===el.parentElement.firstElementChild)).toBe(true);await manager.screenshot({path:`test-results/manager-slot-${width}.png`});await manager.click();await expect(manager).toHaveCount(0);await expect(page.locator('#agent-list .agent-card').first()).toContainText('Manager');
     const sell=page.locator('#agent-list .agent-card').nth(1).getByRole('button',{name:'Sell',exact:true});await sell.click();const vacancy=page.locator('.agent-vacancy');await expect(vacancy).toHaveCount(1);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeDisabled();await page.evaluate(()=>GAME.addCash(10000));await expect(vacancy.locator('select')).toHaveCount(0);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeEnabled();await vacancy.getByRole('button',{name:'Buy Coder',exact:true}).focus();await page.waitForTimeout(300);await expect(vacancy.getByRole('button',{name:'Buy Coder',exact:true})).toBeFocused();await page.screenshot({path:`test-results/hiring-${width}.png`,fullPage:true,animations:'disabled'});await vacancy.getByRole('button',{name:'Buy Coder',exact:true}).click();await expect(vacancy).toHaveCount(0);expect(await page.evaluate(()=>GAME.state.agents.length)).toBe(7);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
