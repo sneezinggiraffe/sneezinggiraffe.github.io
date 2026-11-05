@@ -24,10 +24,10 @@ for (const width of [1440, 390]) {
     await expect(card).toHaveCSS('background-color', 'rgb(38, 49, 64)');
     await expect(card).toHaveCSS('border-top-color', 'rgb(80, 96, 120)');
     await expect(action).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(action).toHaveText('$43');
+    await expect(action).toHaveText('$30');
     await card.click({ position: { x: 5, y: 5 } });
     expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('hire_assistant'))).toBe(true);
-    expect(await page.evaluate(() => GAME.state.cash)).toBe(957);
+    expect(await page.evaluate(() => GAME.state.cash)).toBe(970);
     await page.clock.runFor(200);
     const next = page.locator('.upgrade-card').filter({ hasText: 'Gas Station Coffee' }).locator('button');
     await next.focus();
@@ -35,7 +35,7 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('gas_station_coffee'))).toBe(true);
     await page.clock.runFor(200);
     await page.screenshot({ path: `test-results/upgrade-cards-${width}.png` });
-    await page.evaluate(() => { GAME.cheat('4'); GAME.state.cash = 0; });
+    await page.evaluate(() => { GAME.cheat('5'); GAME.state.cash = 0; });
     await page.clock.runFor(200);
     const pack = page.locator('.upgrade-repeatable').first();
     await expect(pack.locator('button')).toBeDisabled();

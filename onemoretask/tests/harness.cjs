@@ -60,7 +60,7 @@ function harness(saved, options = {}) {
   }
   function fullCluster() {
     const state=window.GAME.state;const cluster=api.addClusterWithNextName();cluster.managerAssigned=true;cluster.tokenManagerAssigned=true;
-    if(state.phase>=12)cluster.workforce=cluster.workerSlotsMax;
+    if(state.phase>=13)cluster.workforce=cluster.workerSlotsMax;
     else for(let i=0;i<cluster.workerSlotsMax;i++){const agent=worker('coder');agent.name=api.newClusterAgentName();cluster.workerAgentIds.push(agent.id);}
     return cluster;
   }

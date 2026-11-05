@@ -29,7 +29,7 @@
       workforce: 0,
       tank: 0,
       progress: 0,
-      workerSlotsMax: G.phase >= 11 || G.ceoMode === "scale" || G.purchasedUpgrades.includes("cluster_capacity_16") ? 16 : G.purchasedUpgrades.includes("network_density") ? 9 : 8,
+      workerSlotsMax: G.phase >= 12 || G.ceoMode === "scale" || G.purchasedUpgrades.includes("cluster_capacity_16") ? 16 : G.purchasedUpgrades.includes("network_density") ? 9 : 8,
       workerAgentIds: [],
       managerAssigned: false,
       tokenManagerAssigned: false,
@@ -73,12 +73,12 @@
   ];
   const DNB_LAYER_PATH = "dnb_synth_loop.wav";
   const DRUM_LAYERS = [
-    { minPhase: 4, path: "precursor_kick.mp3" },
-    { minPhase: 8, path: DNB_LAYER_PATH },
+    { minPhase: 5, path: "precursor_kick.mp3" },
+    { minPhase: 9, path: DNB_LAYER_PATH },
   ];
   const MUSIC_TARGET_VOLUME = 0.25;
   const DRUM_TARGET_VOLUME = 0.18;
-  const SYNTH_START_PHASE = 5;
+  const SYNTH_START_PHASE = 6;
   const SYNTH_LAYER_PATH = "synth_d4_loop.mp3";
   const SYNTH_TARGET_VOLUME = 0.0729;
   const SYNTH_FADE_IN_MS = 8000;
@@ -89,15 +89,15 @@
   const DRUM_CROSSFADE_MS = DRUM_BAR_SECONDS * 2000;
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
-  const FINAL_PHASE = 15;
-  const SAVE_VERSION = 16;
+  const FINAL_PHASE = 16;
+  const SAVE_VERSION = 17;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
   const SALE_FADE_IN_MS = 1200;
 
   const CLUSTER_COST = 50000;
-  const MAJOR_PHASE_POPUPS = [3, 9, 10, 12, 13, 14, 15];
+  const MAJOR_PHASE_POPUPS = [3, 10, 11, 13, 14, 15, 16];
 
   const TASK_TYPES = [
     { id: "email", name: "Write Email", icon: "\u2709\uFE0F", baseWork: 5, basePay: 3, phase: 1 },
@@ -107,10 +107,10 @@
     { id: "copy", name: "Copywriting", icon: "\u270D", baseWork: 8, basePay: 7, phase: 1 },
     { id: "article", name: "Blog Article", icon: "\uD83D\uDCDD", baseWork: 14, basePay: 15, phase: 3 },
     { id: "report", name: "Data Report", icon: "\uD83D\uDCC8", baseWork: 17, basePay: 20, phase: 3 },
-    { id: "code", name: "Small Script", icon: "\uD83D\uDCBB", baseWork: 20, basePay: 25, phase: 6 },
-    { id: "integration", name: "API Integration", icon: "\uD83D\uDD17", baseWork: 28, basePay: 40, phase: 6 },
-    { id: "webapp", name: "Mini Web App", icon: "\uD83C\uDF10", baseWork: 45, basePay: 70, phase: 9 },
-    { id: "saas", name: "SaaS Feature", icon: "\u2601", baseWork: 68, basePay: 110, phase: 10 },
+    { id: "code", name: "Small Script", icon: "\uD83D\uDCBB", baseWork: 20, basePay: 25, phase: 7 },
+    { id: "integration", name: "API Integration", icon: "\uD83D\uDD17", baseWork: 28, basePay: 40, phase: 7 },
+    { id: "webapp", name: "Mini Web App", icon: "\uD83C\uDF10", baseWork: 45, basePay: 70, phase: 10 },
+    { id: "saas", name: "SaaS Feature", icon: "\u2601", baseWork: 68, basePay: 110, phase: 11 },
   ];
 
   const CLIENT_NAMES = [
@@ -165,12 +165,12 @@
   const INCIDENT_TEMPLATES = [
     { id: "hallucination", name: "Hallucinated Output Published", desc: "An agent published confident nonsense to a client.", sev: "critical", phase: 2 },
     { id: "token_burn", name: "Token Budget Exceeded", desc: "An agent entered a reasoning loop and burned through tokens.", sev: "warning", tokenCost: 50, phase: 3 },
-    { id: "wrong_email", name: "Wrong Email Sent", desc: "An agent emailed the wrong client with another client's data.", sev: "critical", phase: 6 },
-    { id: "conflict", name: "Agent Conflict", desc: "Two agents overwrote each other's work.", sev: "warning", phase: 8 },
-    { id: "outage", name: "Deployment Outage", desc: "A deployed service went down. Clients are unhappy.", sev: "critical", cashCost: 20, phase: 10 },
-    { id: "drift", name: "Alignment Drift", desc: "Agents optimised for the wrong metric. Output quality dropped.", sev: "warning", phase: 11 },
-    { id: "overcharge", name: "Billing Spike", desc: "Compute costs surged from an unoptimised workflow.", sev: "warning", cashCost: 30, phase: 7 },
-    { id: "data_leak", name: "Data Mix-up", desc: "Training data from one client leaked into another's output.", sev: "critical", phase: 9 },
+    { id: "wrong_email", name: "Wrong Email Sent", desc: "An agent emailed the wrong client with another client's data.", sev: "critical", phase: 7 },
+    { id: "conflict", name: "Agent Conflict", desc: "Two agents overwrote each other's work.", sev: "warning", phase: 9 },
+    { id: "outage", name: "Deployment Outage", desc: "A deployed service went down. Clients are unhappy.", sev: "critical", cashCost: 20, phase: 11 },
+    { id: "drift", name: "Alignment Drift", desc: "Agents optimised for the wrong metric. Output quality dropped.", sev: "warning", phase: 12 },
+    { id: "overcharge", name: "Billing Spike", desc: "Compute costs surged from an unoptimised workflow.", sev: "warning", cashCost: 30, phase: 8 },
+    { id: "data_leak", name: "Data Mix-up", desc: "Training data from one client leaked into another's output.", sev: "critical", phase: 10 },
   ];
 
   // ---------- UPGRADES DEFINITIONS ----------
@@ -178,12 +178,12 @@
     // Early scrappy upgrades (milestone-gated by reqTasks)
     // Likely to have ~$110 at this point
     { id: "tools_of_trade", name: "Tools of the Trade", desc: "Maybe some better tools would help you keep up...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 7 },
-    { id: "hire_assistant", name: "Hire a Part-Time Assistant", desc: "Assign up to four tasks at once. Your assistant completes each one, keeps 15% of its payment, then waits for more work.", cost: 43, currency: "cash", phase: 1, oneTime: true, reqTasks: 7 },
+    { id: "hire_assistant", name: "Hire a Part-Time Assistant", desc: "Delegate easier tasks", cost: 30, currency: "cash", phase: 1, oneTime: true, reqTasks: 7 },
     { id: "gas_station_coffee", name: "Gas Station Coffee", desc: "Tasks pay 15% more. Caffeine helps.", cost: 51, currency: "cash", phase: 1, effect: { payMult: 1.15 }, oneTime: true, reqTasks: 7 },
     { id: "sticky_note_system", name: "A Box Of Paperclips", desc: "Record who's asking for what.", cost: 34, currency: "cash", phase: 1, effect: { taskDetails: true }, oneTime: true, reqTasks: 7 },
     { id: "ai_hint", name: "There Must Be a Better Way", desc: "You are getting faster, but the work never stops. Maybe there is a smarter way...", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 35 },
     { id: "side_hustle", name: "Side Hustle Optimization", desc: "Tasks pay 20% more.", cost: 41, currency: "cash", phase: 1, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 35 },
-    { id: "multitasking", name: "Multitasking", desc: "Do work starts two tasks together. Your assistant already works on up to four tasks at once.", cost: 61, currency: "cash", phase: 1, requires: "hire_assistant", optional: true, oneTime: true, reqTasks: 35 },
+    { id: "multitasking", name: "Multitasking", desc: "Do one task with each hand", cost: 61, currency: "cash", phase: 1, requires: "hire_assistant", oneTime: true, reqTasks: 35 },
     { id: "inbox_zero", name: "Inbox Zero Method", desc: "Tasks require 15% less work. A clear inbox, a clear mind.", cost: 51, currency: "cash", phase: 1, effect: { workReduction: 0.15 }, oneTime: true, reqTasks: 35 },
     { id: "focus_timer", name: "Focus Timer (Pomodoro)", desc: "Tasks require 20% less work.", cost: 79, currency: "cash", phase: 1, effect: { workReduction: 0.2 }, oneTime: true, reqTasks: 50 },
 
@@ -191,7 +191,7 @@
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
     { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
     { id: "reality_check", name: "Reality Check", desc: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash.", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 85 },
-    { id: "free_ai", requires: "reality_check", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 105 },
+    { id: "free_ai", requires: "reality_check", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, revealTasks: 105, reqTasks: 150 },
 
     // Phase 2 -> 3
     { id: "prompt_library", name: "Prompt Library", desc: "Reuse successful prompts. AI completes 10% more work per prompt.", cost: 150, currency: "cash", phase: 2, effect: { aiPowerMult: 1.1 }, oneTime: true, reqTasks: 115 },
@@ -211,102 +211,103 @@
     { id: "billboard_campaign", name: "Billboard", desc: "A large advert on the side of a nearby building. More demand and higher pay.", cost: 2000, currency: "cash", phase: 3, effect: { payMult: 2.0 }, oneTime: true, reqTasks: 500 },
     { id: "structured_output", name: "Structured Outputs", desc: "JSON mode makes task results 35% more valuable.", cost: 3000, currency: "cash", phase: 3, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 500 },
     { id: "client_outreach", name: "Client Outreach", desc: "Build a steady pipeline for both subscriptions. Tasks arrive twice as often.", cost: 4500, currency: "cash", phase: 3, effect: { taskSpawnMult: 2 }, oneTime: true, reqTasks: 650 },
-    { id: "second_ai", requires: "client_outreach", showBeforeRequires: true, name: "Second AI Subscription", desc: "Replace your assistant with AI 2000 Pro", cost: 18000, currency: "cash", phase: 3, oneTime: true, reqTasks: 650 },
-    { id: "inference_tuning", requires: "second_ai", name: "Inference Tuning", desc: "Tune both subscriptions to work 15% faster.", cost: 6000, currency: "cash", phase: 3, effect: { aiPowerMult: 1.15, agentSpeedMult: 1.15 }, oneTime: true, reqTasks: 900 },
-    { id: "prompt_refinement", requires: "inference_tuning", name: "Prompt Refinement", desc: "Polish reusable prompts. Both subscriptions work 5% faster.", cost: 1500, currency: "cash", phase: 3, effect: { aiPowerMult: 1.05, agentSpeedMult: 1.05 }, oneTime: true, reqTasks: 925 },
-    { id: "context_pruning", requires: "prompt_refinement", name: "Context Pruning", desc: "Trim unnecessary context. Both subscriptions use 5% fewer tokens.", cost: 2500, currency: "cash", phase: 3, effect: { tokenEfficiency: 0.95 }, oneTime: true, reqTasks: 950 },
-    { id: "multi_bot", name: "Multi-Agent Licence", requires: "context_pruning", visibleAfter: "inference_tuning", desc: "More agents, more work.", cost: 25000, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 1000 },
-
+    { id: "second_ai", requires: "client_outreach", showBeforeRequires: true, name: "Second AI Subscription", desc: "Replace your assistant with AI 2000 Pro", cost: 18000, currency: "cash", phase: 3, unlockPhase: 4, oneTime: true, reqTasks: 650 },
     // Phase 4 -> 5
-    { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 4, effect: { agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "inbound_pipeline", name: "Inbound Pipeline", desc: "Run an early growth push. Tasks arrive 30% faster.", cost: 1800, currency: "cash", phase: 4, effect: { taskSpawnMult: 1.3 }, oneTime: true },
-    { id: "task_templates", name: "Task Templates", desc: "Pre-written briefs. Tasks require 15% less work.", cost: 2400, currency: "cash", phase: 4, effect: { workReduction: 0.15 }, oneTime: true },
-    { id: "agent_slot_3", name: "Additional Agent Slot", desc: "Add room for one more agent.", cost: 5000, currency: "cash", phase: 4, effect: { agentSlots: 3 }, oneTime: true, requires: "task_templates", reqAgents: 3 },
-    { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 40% more.", cost: 2500, currency: "cash", phase: 4, effect: { payMult: 1.4 }, oneTime: true },
-    { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 3200, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true, reqTasks: 350, reqIncidents: 3 },
-    { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 4000, currency: "cash", phase: 4, effect: { aiFailMult: 0.8 }, oneTime: true },
-    { id: "parallel_prompts", name: "Parallel Prompting", desc: "Run independent steps together. Agents work 15% faster.", cost: 3800, currency: "cash", phase: 4, requires: "agent_slot_3", effect: { agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "response_streaming", name: "Response Streaming", desc: "Process results as they arrive. Agents work 20% faster.", cost: 5200, currency: "cash", phase: 4, requires: "parallel_prompts", effect: { agentSpeedMult: 1.2 }, oneTime: true },
-    { id: "agent_slot_5", requires: "response_streaming", name: "Two More Agent Slots", desc: "Add room for two more agents.", cost: 6500, currency: "cash", phase: 4, effect: { agentSlots: 5 }, oneTime: true },
-    { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools.", cost: 12000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true, reqTasks: 1150 },
+    { id: "inference_tuning", requires: "second_ai", name: "Inference Tuning", desc: "Tune both subscriptions to work 15% faster.", cost: 6000, currency: "cash", phase: 4, effect: { aiPowerMult: 1.15, agentSpeedMult: 1.15 }, oneTime: true, reqTasks: 900 },
+    { id: "prompt_refinement", requires: "inference_tuning", name: "Prompt Refinement", desc: "Polish reusable prompts. Both subscriptions work 5% faster.", cost: 1500, currency: "cash", phase: 4, effect: { aiPowerMult: 1.05, agentSpeedMult: 1.05 }, oneTime: true, reqTasks: 925 },
+    { id: "context_pruning", requires: "prompt_refinement", name: "Context Pruning", desc: "Trim unnecessary context. Both subscriptions use 5% fewer tokens.", cost: 2500, currency: "cash", phase: 4, effect: { tokenEfficiency: 0.95 }, oneTime: true, reqTasks: 950 },
+    { id: "multi_bot", name: "Multi-Agent Licence", requires: "context_pruning", visibleAfter: "inference_tuning", desc: "More agents, more work.", cost: 25000, currency: "cash", phase: 4, unlockPhase: 5, oneTime: true, reqTasks: 1000 },
 
-    // Phase 5 (operations pressure)
-    { id: "web_browse", name: "Web Search Tool", desc: "Agents can browse the web. +15% agent speed, +20% quality on research.", cost: 7500, currency: "cash", phase: 5, effect: { toolBonus: 0.2, agentSpeedMult: 1.15 }, oneTime: true },
-    { id: "bulk_jobs", name: "Bulk Processing", desc: "Deliver around 10 tasks in each job.", cost: 9000, currency: "cash", phase: 5, effect: { batchSize: 10 }, oneTime: true },
-    { id: "sales_playbook", name: "Sales Playbook", desc: "Sharper discovery and handoff process. Sales increase by 50%.", cost: 12000, currency: "cash", phase: 5, effect: { payMult: 1.5 }, oneTime: true },
-    { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +25% speed on code tasks.", cost: 16000, currency: "cash", phase: 5, effect: { codeSpeedMult: 1.25 }, oneTime: true },
-    { id: "revenue_ops", name: "Revenue Ops System", desc: "Pipeline discipline and better follow-up. Sales increase by 50%.", cost: 28000, currency: "cash", phase: 5, effect: { payMult: 1.50 }, oneTime: true },
-    { id: "workflow_orchestration", name: "Workflow Orchestration", desc: "Keep the team moving. Tasks arrive 25% faster and agents work 20% faster.", cost: 18000, currency: "cash", phase: 5, effect: { taskSpawnMult: 1.25, agentSpeedMult: 1.2 }, oneTime: true, reqTasks: 3500 },
-    { id: "manager_agent", name: "Manager Agent", desc: "Add a Manager role to coordinate your agents.", cost: 12000, currency: "cash", phase: 5, unlockPhase: 6, effect: { managerUnlock: true, agentSlots: 6 }, oneTime: true, reqTasks: 5000 },
+    // Phase 5 -> 6
+    { id: "agent_onboarding", name: "Agent Onboarding Guide", desc: "Better instructions for agents. +15% agent speed.", cost: 1100, currency: "cash", phase: 5, effect: { agentSpeedMult: 1.15 }, oneTime: true },
+    { id: "inbound_pipeline", name: "Inbound Pipeline", desc: "Run an early growth push. Tasks arrive 30% faster.", cost: 1800, currency: "cash", phase: 5, effect: { taskSpawnMult: 1.3 }, oneTime: true },
+    { id: "task_templates", name: "Task Templates", desc: "Pre-written briefs. Tasks require 15% less work.", cost: 2400, currency: "cash", phase: 5, effect: { workReduction: 0.15 }, oneTime: true },
+    { id: "agent_slot_3", name: "Additional Agent Slot", desc: "Add room for one more agent.", cost: 5000, currency: "cash", phase: 5, effect: { agentSlots: 3 }, oneTime: true, requires: "task_templates", reqAgents: 3 },
+    { id: "client_crm", name: "Client Tracker", desc: "Keep clients happy. Tasks pay 40% more.", cost: 2500, currency: "cash", phase: 5, effect: { payMult: 1.4 }, oneTime: true },
+    { id: "prompt_basics", name: "Prompt Engineering 101", desc: "Reduce AI failure rate by 20%.", cost: 3200, currency: "cash", phase: 5, effect: { aiFailMult: 0.8 }, oneTime: true, reqTasks: 350, reqIncidents: 3 },
+    { id: "error_handling", name: "Error Recovery Protocol", desc: "Agents fail less often. -20% AI failure rate.", cost: 4000, currency: "cash", phase: 5, effect: { aiFailMult: 0.8 }, oneTime: true },
+    { id: "parallel_prompts", name: "Parallel Prompting", desc: "Run independent steps together. Agents work 15% faster.", cost: 3800, currency: "cash", phase: 5, requires: "agent_slot_3", effect: { agentSpeedMult: 1.15 }, oneTime: true },
+    { id: "response_streaming", name: "Response Streaming", desc: "Process results as they arrive. Agents work 20% faster.", cost: 5200, currency: "cash", phase: 5, requires: "parallel_prompts", effect: { agentSpeedMult: 1.2 }, oneTime: true },
+    { id: "agent_slot_5", requires: "response_streaming", name: "Two More Agent Slots", desc: "Add room for two more agents.", cost: 6500, currency: "cash", phase: 5, effect: { agentSlots: 5 }, oneTime: true },
+    { id: "tool_use", name: "Tool Use SDK", desc: "Agents can use tools.", cost: 12000, currency: "cash", phase: 5, unlockPhase: 6, oneTime: true, reqTasks: 1150 },
 
-    // Phase 6 (manager-led automation)
-    { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Coordinate batches of around 100 tasks. Assignment is 50% faster.", cost: 15000, currency: "cash", phase: 6, effect: { batchSize: 100, managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
-    { id: "smart_routing", name: "Smart Routing", desc: "Manager can route agents across specialties when needed.", cost: 19000, currency: "cash", phase: 6, effect: { smartRouting: true }, oneTime: true },
-    { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 35% faster.", cost: 25000, currency: "cash", phase: 6, effect: { agentSpeedMult: 1.35 }, oneTime: true, reqTasks: 580 },
-    { id: "token_manager_unlock", name: "Token Manager Slot", desc: "Automatically buy tokens when they run out.", cost: 40000, currency: "cash", phase: 6, requiresRole: "manager", unlockPhase: 7, effect: { giveTokens: 300, agentSlots: 7 }, oneTime: true, reqTasks: 30000 },
+    // Phase 6 (operations pressure)
+    { id: "web_browse", name: "Web Search Tool", desc: "Agents can browse the web. +15% agent speed, +20% quality on research.", cost: 7500, currency: "cash", phase: 6, effect: { toolBonus: 0.2, agentSpeedMult: 1.15 }, oneTime: true },
+    { id: "bulk_jobs", name: "Bulk Processing", desc: "Deliver around 10 tasks in each job.", cost: 9000, currency: "cash", phase: 6, effect: { batchSize: 10 }, oneTime: true },
+    { id: "sales_playbook", name: "Sales Playbook", desc: "Sharper discovery and handoff process. Sales increase by 50%.", cost: 12000, currency: "cash", phase: 6, effect: { payMult: 1.5 }, oneTime: true },
+    { id: "code_exec", name: "Code Execution Tool", desc: "Agents can run code. +25% speed on code tasks.", cost: 16000, currency: "cash", phase: 6, effect: { codeSpeedMult: 1.25 }, oneTime: true },
+    { id: "revenue_ops", name: "Revenue Ops System", desc: "Pipeline discipline and better follow-up. Sales increase by 50%.", cost: 28000, currency: "cash", phase: 6, effect: { payMult: 1.50 }, oneTime: true },
+    { id: "workflow_orchestration", name: "Workflow Orchestration", desc: "Keep the team moving. Tasks arrive 25% faster and agents work 20% faster.", cost: 18000, currency: "cash", phase: 6, effect: { taskSpawnMult: 1.25, agentSpeedMult: 1.2 }, oneTime: true, reqTasks: 3500 },
+    { id: "manager_agent", name: "Manager Agent", desc: "Add a Manager role to coordinate your agents.", cost: 12000, currency: "cash", phase: 6, unlockPhase: 7, effect: { managerUnlock: true, agentSlots: 6 }, oneTime: true, reqTasks: 5000 },
 
-    // Phase 7 (token-stable autopilot)
-    { id: "agent_slot_7", name: "Add Another Agent Slot", desc: "Room for another agent.", cost: 22000, currency: "cash", phase: 8, requiresRole: "token_mgr", effect: { agentSlots: 8 }, oneTime: true, reqTasks: 670 },
-    { id: "compute_2", name: "Revenue Optimization Upgrade", desc: "Deliver batches of around 500 tasks. Double revenue.", cost: 150000, currency: "cash", phase: 7, effect: { batchSize: 500, payMult: 2.0 }, oneTime: true, reqTasks: 45000 },
-    { id: "devops_unlock", name: "DevOps Agent Slot", desc: "Automate incident response.", cost: 60000, currency: "cash", phase: 7, oneTime: true, reqTasks: 28000 },
-    { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 175000, currency: "cash", phase: 7, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 65000 },
-    { id: "delivery_pipeline", name: "Delivery Pipeline", desc: "A smoother handoff. All agents work 25% faster.", cost: 250000, currency: "cash", phase: 7, effect: { agentSpeedMult: 1.25 }, oneTime: true, reqTasks: 90000 },
-    { id: "premium_contracts", name: "Premium Client Contracts", desc: "Win better client work. All tasks pay 35% more.", cost: 350000, currency: "cash", phase: 7, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 115000 },
-    { id: "ops_flywheel", name: "Ralph-loops", desc: "Agents work for longer and check their work.", cost: 1000000, currency: "cash", phase: 7, unlockPhase: 8, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 150000 },
+    // Phase 7 (manager-led automation)
+    { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Coordinate batches of around 100 tasks. Assignment is 50% faster.", cost: 15000, currency: "cash", phase: 7, effect: { batchSize: 100, managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
+    { id: "smart_routing", name: "Smart Routing", desc: "Manager can route agents across specialties when needed.", cost: 19000, currency: "cash", phase: 7, effect: { smartRouting: true }, oneTime: true },
+    { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 35% faster.", cost: 25000, currency: "cash", phase: 7, effect: { agentSpeedMult: 1.35 }, oneTime: true, reqTasks: 580 },
+    { id: "token_manager_unlock", name: "Token Manager Slot", desc: "Automatically buy tokens when they run out.", cost: 40000, currency: "cash", phase: 7, requiresRole: "manager", unlockPhase: 8, effect: { giveTokens: 300, agentSlots: 7 }, oneTime: true, reqTasks: 30000 },
 
-    // Phase 8 (growth marketing)
-    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Serve larger clients with batches of around 2,000 tasks. Double revenue.", cost: 300000, currency: "cash", phase: 8, effect: { batchSize: 2000, payMult: 2.00 }, oneTime: true, reqTasks: 175000 },
-    { id: "management", name: "Referral Partnerships", desc: "Partner channels bring higher-value client work.", cost: 500000, currency: "cash", phase: 8, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 350000 },
-    { id: "enterprise_pipeline", name: "Enterprise Sales Pipeline", desc: "Larger accounts bring 25% more demand and 25% more revenue.", cost: 1000000, currency: "cash", phase: 8, effect: { taskSpawnMult: 1.25, payMult: 1.25 }, oneTime: true, reqTasks: 600000 },
-    { id: "project_playbooks", name: "Long-Running Project Playbooks", desc: "Keep longer projects moving. Agents work 25% faster.", cost: 750000, currency: "cash", phase: 8, effect: { agentSpeedMult: 1.25 }, oneTime: true, reqTasks: 720000 },
-    { id: "account_expansion", name: "Account Expansion", desc: "Grow existing client accounts. Tasks arrive 20% faster and pay 30% more.", cost: 1250000, currency: "cash", phase: 8, effect: { taskSpawnMult: 1.2, payMult: 1.3 }, oneTime: true, reqTasks: 860000 },
-    { id: "acquire_micro_agency", name: "Acquire Micro Agency", desc: "Bring your team together as a managed cluster.", cost: 1500000, currency: "cash", phase: 8, unlockPhase: 9, effect: { agentSlots: 10 }, oneTime: true, reqTasks: 1000000 },
+    // Phase 8 (token-stable autopilot)
+    { id: "agent_slot_7", name: "Add Another Agent Slot", desc: "Room for another agent.", cost: 22000, currency: "cash", phase: 9, requiresRole: "token_mgr", effect: { agentSlots: 8 }, oneTime: true, reqTasks: 670 },
+    { id: "compute_2", name: "Revenue Optimization Upgrade", desc: "Deliver batches of around 500 tasks. Double revenue.", cost: 150000, currency: "cash", phase: 8, effect: { batchSize: 500, payMult: 2.0 }, oneTime: true, reqTasks: 45000 },
+    { id: "devops_unlock", name: "DevOps Agent Slot", desc: "Automate incident response.", cost: 60000, currency: "cash", phase: 8, oneTime: true, reqTasks: 28000 },
+    { id: "compute_1", name: "Incident Runbooks", desc: "DevOps resolves incidents 20% faster.", cost: 175000, currency: "cash", phase: 8, effect: { devopsIncidentMult: 1.2 }, oneTime: true, reqTasks: 65000 },
+    { id: "delivery_pipeline", name: "Delivery Pipeline", desc: "A smoother handoff. All agents work 25% faster.", cost: 250000, currency: "cash", phase: 8, effect: { agentSpeedMult: 1.25 }, oneTime: true, reqTasks: 90000 },
+    { id: "premium_contracts", name: "Premium Client Contracts", desc: "Win better client work. All tasks pay 35% more.", cost: 350000, currency: "cash", phase: 8, effect: { payMult: 1.35 }, oneTime: true, reqTasks: 115000 },
+    { id: "ops_flywheel", name: "Ralph-loops", desc: "Agents work for longer and check their work.", cost: 1000000, currency: "cash", phase: 8, unlockPhase: 9, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 150000 },
 
-    // Phase 9 (clusterization)
+    // Phase 9 (growth marketing)
+    { id: "growth_marketing", name: "Growth Marketing Engine", desc: "Serve larger clients with batches of around 2,000 tasks. Double revenue.", cost: 300000, currency: "cash", phase: 9, effect: { batchSize: 2000, payMult: 2.00 }, oneTime: true, reqTasks: 175000 },
+    { id: "management", name: "Referral Partnerships", desc: "Partner channels bring higher-value client work.", cost: 500000, currency: "cash", phase: 9, effect: { payMult: 1.50 }, oneTime: true, reqTasks: 350000 },
+    { id: "enterprise_pipeline", name: "Enterprise Sales Pipeline", desc: "Larger accounts bring 25% more demand and 25% more revenue.", cost: 1000000, currency: "cash", phase: 9, effect: { taskSpawnMult: 1.25, payMult: 1.25 }, oneTime: true, reqTasks: 600000 },
+    { id: "project_playbooks", name: "Long-Running Project Playbooks", desc: "Keep longer projects moving. Agents work 25% faster.", cost: 750000, currency: "cash", phase: 9, effect: { agentSpeedMult: 1.25 }, oneTime: true, reqTasks: 720000 },
+    { id: "account_expansion", name: "Account Expansion", desc: "Grow existing client accounts. Tasks arrive 20% faster and pay 30% more.", cost: 1250000, currency: "cash", phase: 9, effect: { taskSpawnMult: 1.2, payMult: 1.3 }, oneTime: true, reqTasks: 860000 },
+    { id: "acquire_micro_agency", name: "Acquire Micro Agency", desc: "Bring your team together as a managed cluster.", cost: 1500000, currency: "cash", phase: 9, unlockPhase: 10, effect: { agentSlots: 10 }, oneTime: true, reqTasks: 1000000 },
 
-    { id: "code_agents", name: "Cluster Operations Blueprint", desc: "Standardise cluster operations. Reduce debt growth by 25% and improve output quality by 10%.", cost: 1500000, currency: "cash", phase: 9, effect: { debtReduction: 0.25, codeQualityMult: 1.1 }, oneTime: true, reqTasks: 1050000 },
-    { id: "cluster_capacity_2", name: "Second Cluster Permit", desc: "Unlock Provision cluster and room for one more cluster.", cost: 2500000, currency: "cash", phase: 9, requires: "code_agents", effect: {}, oneTime: true, reqTasks: 1150000 },
-    { id: "cluster_capacity_3", name: "Third Cluster Permit", desc: "Add room for a third cluster.", cost: 12000000, currency: "cash", phase: 9, requires: "cluster_capacity_2", effect: {}, oneTime: true, reqTasks: 1500000 },
-    { id: "testing", name: "Cluster Runbooks", desc: "Reduce technical debt growth and tighten incident handling.", cost: 3500000, currency: "cash", phase: 9, effect: { debtReduction: 0.3, devopsIncidentMult: 1.15 }, oneTime: true, reqTasks: 1750000 },
-    { id: "code_review", name: "Cross-Cluster QA Mesh", desc: "Improves cluster output quality by 25%.", cost: 5000000, currency: "cash", phase: 9, effect: { codeQualityMult: 1.25 }, oneTime: true, reqTasks: 2000000 },
-    { id: "deploy", name: "Cluster Revenue Platform", desc: "Sign ongoing client contracts for regular income.", cost: 6500000, currency: "cash", phase: 9, effect: { serviceSlots: 2, payMult: 1.12 }, oneTime: true, reqTasks: 2250000 },
-    { id: "ceo_readiness", name: "AI CEO Readiness", desc: "Formalize org controls so an AI CEO can take over.", cost: 35000000, currency: "cash", phase: 9, unlockPhase: 10, effect: {}, oneTime: true, reqTasks: 2500000 },
+    // Phase 10 (clusterization)
 
-    // Phase 10 (AI CEO)
-    { id: "ai_ceo", name: "AI CEO", desc: "AI CEO takes over cluster coordination and budgets.", cost: 1000000, currency: "cash", phase: 10, effect: { aiCeo: true }, oneTime: true, reqTasks: 1320 },
-    { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 25000000, currency: "cash", phase: 10, requires: "ai_ceo", oneTime: true },
-    { id: "network_density", name: "Re-architect Network", desc: "Increase cluster density. Add one agent slot per cluster.", cost: 30000000, currency: "cash", phase: 10, requires: "ai_ceo", effect: { clusterSlots: 9 }, oneTime: true },
-    { id: "ceo_deploy_speed", name: "Faster AI Provisioning", desc: "Provision agents 50% faster.", cost: 40000000, currency: "cash", phase: 10, requires: "network_density", oneTime: true },
-    { id: "cluster_capacity_16", name: "High-Density Clusters", desc: "Optimise cluster space for more agent slots.", cost: 50000000, currency: "cash", phase: 10, requires: "ceo_deploy_speed", effect: { clusterSlots: 16 }, oneTime: true },
-    { id: "ceo_batch", name: "Dual Agent Provisioning", desc: "Provision two agents at once.", cost: 75000000, currency: "cash", phase: 10, requires: "cluster_capacity_16", oneTime: true },
-    { id: "server_1", name: "AI CEO Scale Mode", desc: "Let the AI CEO create and staff new clusters automatically.", cost: 200000000, currency: "cash", phase: 10, requires: "ceo_batch", unlockPhase: 11, effect: { ceoScale: true, agentSpeedMult: 1.5, payMult: 1.3, serviceSlots: 5 }, oneTime: true, reqTasks: 1400 },
-    { id: "ceo_quad_batch", name: "Four-Agent Provisioning", desc: "Provision four agents at once.", cost: 100000000, currency: "cash", phase: 11, requires: "server_1", oneTime: true },
-    { id: "ceo_parallel_clusters", name: "Parallel Cluster Builds", desc: "Build two clusters at once.", cost: 150000000, currency: "cash", phase: 11, requires: "ceo_quad_batch", oneTime: true },
-    { id: "ceo_fast_builds", name: "Preassembled Server Racks", desc: "Halve cluster construction time.", cost: 200000000, currency: "cash", phase: 11, requires: "server_1", oneTime: true },
-    { id: "server_2", name: "Autonomous Expansion Desk", desc: "Refine expansion workflows. Task pay increases by 20%.", cost: 2500000, currency: "cash", phase: 11, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1440 },
+    { id: "code_agents", name: "Cluster Operations Blueprint", desc: "Standardise cluster operations. Reduce debt growth by 25% and improve output quality by 10%.", cost: 1500000, currency: "cash", phase: 10, effect: { debtReduction: 0.25, codeQualityMult: 1.1 }, oneTime: true, reqTasks: 1050000 },
+    { id: "cluster_capacity_2", name: "Second Cluster Permit", desc: "Unlock Provision cluster and room for one more cluster.", cost: 2500000, currency: "cash", phase: 10, requires: "code_agents", effect: {}, oneTime: true, reqTasks: 1150000 },
+    { id: "cluster_capacity_3", name: "Third Cluster Permit", desc: "Add room for a third cluster.", cost: 12000000, currency: "cash", phase: 10, requires: "cluster_capacity_2", effect: {}, oneTime: true, reqTasks: 1500000 },
+    { id: "testing", name: "Cluster Runbooks", desc: "Reduce technical debt growth and tighten incident handling.", cost: 3500000, currency: "cash", phase: 10, effect: { debtReduction: 0.3, devopsIncidentMult: 1.15 }, oneTime: true, reqTasks: 1750000 },
+    { id: "code_review", name: "Cross-Cluster QA Mesh", desc: "Improves cluster output quality by 25%.", cost: 5000000, currency: "cash", phase: 10, effect: { codeQualityMult: 1.25 }, oneTime: true, reqTasks: 2000000 },
+    { id: "deploy", name: "Cluster Revenue Platform", desc: "Sign ongoing client contracts for regular income.", cost: 6500000, currency: "cash", phase: 10, effect: { serviceSlots: 2, payMult: 1.12 }, oneTime: true, reqTasks: 2250000 },
+    { id: "ceo_readiness", name: "AI CEO Readiness", desc: "Formalize org controls so an AI CEO can take over.", cost: 35000000, currency: "cash", phase: 10, unlockPhase: 11, effect: {}, oneTime: true, reqTasks: 2500000 },
 
-    { id: "ceo_course", name: "Rapid Cluster Deployment", desc: "Halve cluster build time and double CEO coordination speed.", cost: 300000000, currency: "cash", phase: 11, requires: "ceo_fast_builds", effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
-    { id: "ceo_full_fit", name: "Fully Fitted Racks", desc: "Install all 16 agents during construction. Agent costs are included in the cluster price.", cost: 400000000, currency: "cash", phase: 11, requires: "ceo_course", oneTime: true },
-    { id: "autonomous_nodes", name: "Autonomous Operating Model", desc: "Compact infrastructure for a larger autonomous company.", cost: 760000000, currency: "cash", phase: 11, unlockPhase: 12, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 2000000 },
-    { id: "ceo_continuous", name: "Continuous Deployment", desc: "Improve deployment speed by 50%.", cost: 150000000, currency: "cash", phase: 12, requires: "ceo_full_fit", oneTime: true },
-    { id: "replication", name: "Node Replication", desc: "Build four clusters at once. Reduce cluster costs by 35%.", cost: 1500000000, currency: "cash", phase: 12, reqNodes: 20, unlockPhase: 13, effect: { payMult: 1.15 }, oneTime: true },
-    { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 2000000000, currency: "cash", phase: 13, reqNodes: 40, unlockPhase: 14, effect: { payMult: 1.2 }, oneTime: true },
-    { id: "neocloud_pipeline", name: "Neocloud Deployment Pipeline", desc: "Halve cluster construction time.", cost: 2000000000, currency: "cash", phase: 14, requires: "global_network", reqNodes: 100, oneTime: true },
-    { id: "standardised_construction", name: "Standardised Construction", desc: "Use repeatable cluster designs. Halve cluster construction costs.", cost: 1000000000, currency: "cash", phase: 14, requires: "neocloud_pipeline", reqNodes: 125, oneTime: true },
-    { id: "neocloud_batch", name: "Neocloud Construction", desc: "Build 25 clusters at once to fill a whole neocloud.", cost: 2000000000, currency: "cash", phase: 14, requires: "standardised_construction", reqNodes: 150, oneTime: true },
-    { id: "bulk_hardware", name: "Bulk Hardware Contracts", desc: "Buy hardware across the network. Halve cluster construction costs again.", cost: 1500000000, currency: "cash", phase: 14, requires: "neocloud_batch", reqNodes: 200, oneTime: true },
-    { id: "factory_direct", name: "Factory-Direct Hardware", desc: "Buy directly from manufacturers. Lower hardware costs and keep future price increases linear.", cost: 2000000000, currency: "cash", phase: 14, requires: "bulk_hardware", reqNodes: 400, oneTime: true },
-    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 2500000000, currency: "cash", phase: 14, requires: "factory_direct", reqNodes: 450, oneTime: true },
-    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 3000000000, currency: "cash", phase: 14, requires: "neocloud_supply_chain", reqNodes: 500, oneTime: true },
-    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 14, requires: "parallel_neoclouds", reqNodes: 500, unlockPhase: 15, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
+    // Phase 11 (AI CEO)
+    { id: "ai_ceo", name: "AI CEO", desc: "AI CEO takes over cluster coordination and budgets.", cost: 1000000, currency: "cash", phase: 11, effect: { aiCeo: true }, oneTime: true, reqTasks: 1320 },
+    { id: "ceo_recruitment", name: "Provisioning Pipeline", desc: "The CEO adds agents and coordinates twice as often.", cost: 25000000, currency: "cash", phase: 11, requires: "ai_ceo", oneTime: true },
+    { id: "network_density", name: "Re-architect Network", desc: "Increase cluster density. Add one agent slot per cluster.", cost: 30000000, currency: "cash", phase: 11, requires: "ai_ceo", effect: { clusterSlots: 9 }, oneTime: true },
+    { id: "ceo_deploy_speed", name: "Faster AI Provisioning", desc: "Provision agents 50% faster.", cost: 40000000, currency: "cash", phase: 11, requires: "network_density", oneTime: true },
+    { id: "cluster_capacity_16", name: "High-Density Clusters", desc: "Optimise cluster space for more agent slots.", cost: 50000000, currency: "cash", phase: 11, requires: "ceo_deploy_speed", effect: { clusterSlots: 16 }, oneTime: true },
+    { id: "ceo_batch", name: "Dual Agent Provisioning", desc: "Provision two agents at once.", cost: 75000000, currency: "cash", phase: 11, requires: "cluster_capacity_16", oneTime: true },
+    { id: "server_1", name: "AI CEO Scale Mode", desc: "Let the AI CEO create and staff new clusters automatically.", cost: 200000000, currency: "cash", phase: 11, requires: "ceo_batch", unlockPhase: 12, effect: { ceoScale: true, agentSpeedMult: 1.5, payMult: 1.3, serviceSlots: 5 }, oneTime: true, reqTasks: 1400 },
+    { id: "ceo_quad_batch", name: "Four-Agent Provisioning", desc: "Provision four agents at once.", cost: 100000000, currency: "cash", phase: 12, requires: "server_1", oneTime: true },
+    { id: "ceo_parallel_clusters", name: "Parallel Cluster Builds", desc: "Build two clusters at once.", cost: 150000000, currency: "cash", phase: 12, requires: "ceo_quad_batch", oneTime: true },
+    { id: "ceo_fast_builds", name: "Preassembled Server Racks", desc: "Halve cluster construction time.", cost: 200000000, currency: "cash", phase: 12, requires: "server_1", oneTime: true },
+    { id: "server_2", name: "Autonomous Expansion Desk", desc: "Refine expansion workflows. Task pay increases by 20%.", cost: 2500000, currency: "cash", phase: 12, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1440 },
 
-    // Phase 11 (retirement)
-    // Retirement now follows the four new network stages, in Phase 15.
-    { id: "sale_advisor", name: "Appoint a Sale Advisor", desc: "Commission a valuation and prepare the company for potential buyers.", cost: 5000000, currency: "cash", phase: 15, requires: "retire_unlock", saleDuration: 10, saleActivity: "Preparing the valuation and buyer briefing", saleOutcome: "The advisor has prepared a valuation. Your AI management team would like a word.", oneTime: true },
-    { id: "sale_buyout", name: "Discuss a Management Buyout", desc: "Your AI management team has put together a proposal. Apparently it can run things without you.", cost: 20000000, currency: "cash", phase: 15, requires: "sale_advisor", saleDuration: 12, saleActivity: "Reviewing the management team's proposal", saleOutcome: "Management has made an offer. The buyers want a closer look at the business.", oneTime: true },
-    { id: "sale_diligence", name: "Complete Due Diligence", desc: "Open the books and review the company's operations, finances and outstanding issues.", cost: 100000000, currency: "cash", phase: 15, requires: "sale_buyout", saleDuration: 18, saleActivity: "Reviewing finances, contracts and operations", saleOutcome: "Due diligence is complete. The lawyers are ready to agree the final terms.", oneTime: true },
-    { id: "sale_terms", name: "Agree Sale Terms", desc: "Settle the final offer, sign the agreements and prepare your handover.", cost: 250000000, currency: "cash", phase: 15, requires: "sale_diligence", saleDuration: 10, saleActivity: "Negotiating the final offer and agreements", saleOutcome: "The agreements are signed. One last decision, then your time belongs to you.", oneTime: true },
-    { id: "fusion", name: "Complete Company Sale", desc: "Take your golden parachute. Hand over the company and begin your next chapter.", cost: 5000000000, currency: "cash", phase: 15, requires: "sale_terms", reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
+    { id: "ceo_course", name: "Rapid Cluster Deployment", desc: "Halve cluster build time and double CEO coordination speed.", cost: 300000000, currency: "cash", phase: 12, requires: "ceo_fast_builds", effect: { payMult: 1.2 }, oneTime: true, reqTasks: 1500000 },
+    { id: "ceo_full_fit", name: "Fully Fitted Racks", desc: "Install all 16 agents during construction. Agent costs are included in the cluster price.", cost: 400000000, currency: "cash", phase: 12, requires: "ceo_course", oneTime: true },
+    { id: "autonomous_nodes", name: "Autonomous Operating Model", desc: "Compact infrastructure for a larger autonomous company.", cost: 760000000, currency: "cash", phase: 12, unlockPhase: 13, effect: { payMult: 1.2 }, oneTime: true, reqTasks: 2000000 },
+    { id: "ceo_continuous", name: "Continuous Deployment", desc: "Improve deployment speed by 50%.", cost: 150000000, currency: "cash", phase: 13, requires: "ceo_full_fit", oneTime: true },
+    { id: "replication", name: "Node Replication", desc: "Build four clusters at once. Reduce cluster costs by 35%.", cost: 1500000000, currency: "cash", phase: 13, reqNodes: 20, unlockPhase: 14, effect: { payMult: 1.15 }, oneTime: true },
+    { id: "global_network", name: "Global Expansion", desc: "Expansion accelerates as the network grows. Reduce node costs another 40%.", cost: 2000000000, currency: "cash", phase: 14, reqNodes: 40, unlockPhase: 15, effect: { payMult: 1.2 }, oneTime: true },
+    { id: "neocloud_pipeline", name: "Neocloud Deployment Pipeline", desc: "Halve cluster construction time.", cost: 2000000000, currency: "cash", phase: 15, requires: "global_network", reqNodes: 100, oneTime: true },
+    { id: "standardised_construction", name: "Standardised Construction", desc: "Use repeatable cluster designs. Halve cluster construction costs.", cost: 1000000000, currency: "cash", phase: 15, requires: "neocloud_pipeline", reqNodes: 125, oneTime: true },
+    { id: "neocloud_batch", name: "Neocloud Construction", desc: "Build 25 clusters at once to fill a whole neocloud.", cost: 2000000000, currency: "cash", phase: 15, requires: "standardised_construction", reqNodes: 150, oneTime: true },
+    { id: "bulk_hardware", name: "Bulk Hardware Contracts", desc: "Buy hardware across the network. Halve cluster construction costs again.", cost: 1500000000, currency: "cash", phase: 15, requires: "neocloud_batch", reqNodes: 200, oneTime: true },
+    { id: "factory_direct", name: "Factory-Direct Hardware", desc: "Buy directly from manufacturers. Lower hardware costs and keep future price increases linear.", cost: 2000000000, currency: "cash", phase: 15, requires: "bulk_hardware", reqNodes: 400, oneTime: true },
+    { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 2500000000, currency: "cash", phase: 15, requires: "factory_direct", reqNodes: 450, oneTime: true },
+    { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 3000000000, currency: "cash", phase: 15, requires: "neocloud_supply_chain", reqNodes: 500, oneTime: true },
+    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 15, requires: "parallel_neoclouds", reqNodes: 500, unlockPhase: 16, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
+
+    // Phase 12 (retirement)
+    // Retirement now follows the four new network stages, in Phase 16.
+    { id: "sale_advisor", name: "Appoint a Sale Advisor", desc: "Commission a valuation and prepare the company for potential buyers.", cost: 5000000, currency: "cash", phase: 16, requires: "retire_unlock", saleDuration: 10, saleActivity: "Preparing the valuation and buyer briefing", saleOutcome: "The advisor has prepared a valuation. Your AI management team would like a word.", oneTime: true },
+    { id: "sale_buyout", name: "Discuss a Management Buyout", desc: "Your AI management team has put together a proposal. Apparently it can run things without you.", cost: 20000000, currency: "cash", phase: 16, requires: "sale_advisor", saleDuration: 12, saleActivity: "Reviewing the management team's proposal", saleOutcome: "Management has made an offer. The buyers want a closer look at the business.", oneTime: true },
+    { id: "sale_diligence", name: "Complete Due Diligence", desc: "Open the books and review the company's operations, finances and outstanding issues.", cost: 100000000, currency: "cash", phase: 16, requires: "sale_buyout", saleDuration: 18, saleActivity: "Reviewing finances, contracts and operations", saleOutcome: "Due diligence is complete. The lawyers are ready to agree the final terms.", oneTime: true },
+    { id: "sale_terms", name: "Agree Sale Terms", desc: "Settle the final offer, sign the agreements and prepare your handover.", cost: 250000000, currency: "cash", phase: 16, requires: "sale_diligence", saleDuration: 10, saleActivity: "Negotiating the final offer and agreements", saleOutcome: "The agreements are signed. One last decision, then your time belongs to you.", oneTime: true },
+    { id: "fusion", name: "Complete Company Sale", desc: "Take your golden parachute. Hand over the company and begin your next chapter.", cost: 5000000000, currency: "cash", phase: 16, requires: "sale_terms", reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
 
     // Repeatable
     { id: "token_pack_2", name: "Token Pack (500)", desc: "Get 500 tokens.", cost: 300, currency: "cash", phase: 3, effect: { giveTokens: 500 }, oneTime: false },
@@ -317,18 +318,18 @@
     { phase: 1, name: "Living in car", rate: 1.0 },
     { phase: 2, name: "Shared coworking desk", rate: 1.5 },
     { phase: 3, name: "Coffee Shop Regular", rate: 2.0 },
-    { phase: 4, name: "Home office", rate: 5 },
-    { phase: 5, name: "Tooling overhead", rate: 10 },
-    { phase: 6, name: "Manager operations", rate: 14 },
-    { phase: 7, name: "Token and incident control", rate: 18 },
-    { phase: 8, name: "Growth spend + referrals", rate: 28 },
-    { phase: 9, name: "Server power & cooling", rate: 45 },
-    { phase: 10, name: "AI CEO command stack", rate: 70 },
-    { phase: 11, name: "Expansion infrastructure", rate: 120 },
-    { phase: 12, name: "Autonomous network", rate: 180 },
-    { phase: 13, name: "Replication platform", rate: 250 },
-    { phase: 14, name: "Global network", rate: 400 },
-    { phase: 15, name: "Exit prep and legal", rate: 500 },
+    { phase: 5, name: "Home office", rate: 5 },
+    { phase: 6, name: "Tooling overhead", rate: 10 },
+    { phase: 7, name: "Manager operations", rate: 14 },
+    { phase: 8, name: "Token and incident control", rate: 18 },
+    { phase: 9, name: "Growth spend + referrals", rate: 28 },
+    { phase: 10, name: "Server power & cooling", rate: 45 },
+    { phase: 11, name: "AI CEO command stack", rate: 70 },
+    { phase: 12, name: "Expansion infrastructure", rate: 120 },
+    { phase: 13, name: "Autonomous network", rate: 180 },
+    { phase: 14, name: "Replication platform", rate: 250 },
+    { phase: 15, name: "Global network", rate: 400 },
+    { phase: 16, name: "Exit prep and legal", rate: 500 },
   ];
 
   // ---------- MILESTONES ----------
@@ -344,9 +345,9 @@
     // Phase-based
     { id: "tokens_unlock", reqPhase: 3, reveals: ["tokens"] },
     { id: "agents_unlock", reqPhase: 2, reveals: ["agents"] },
-    { id: "dashboard_unlock", reqPhase: 8, reveals: ["dashboard"] },
-    { id: "clusters_unlock", reqPhase: 9, reveals: ["clusters"] },
-    { id: "debt_unlock", reqPhase: 9, reveals: ["debt"] },
+    { id: "dashboard_unlock", reqPhase: 9, reveals: ["dashboard"] },
+    { id: "clusters_unlock", reqPhase: 10, reveals: ["clusters"] },
+    { id: "debt_unlock", reqPhase: 10, reveals: ["debt"] },
     { id: "prestige_unlock", reqPhase: FINAL_PHASE, reveals: ["prestige"] },
   ];
 
@@ -578,10 +579,14 @@
     return G.batchSize === 1 ? 1 : randInt(Math.ceil(G.batchSize * 0.8), Math.floor(G.batchSize * 1.2));
   }
 
+  function workloadTier(phase) {
+    return phase >= 4 ? phase - 1 : phase;
+  }
+
   function generateTask() {
     const types = availableTaskTypes();
     const type = pick(types);
-    const tier = Math.max(1, G.phase - type.phase + 1);
+    const tier = Math.max(1, workloadTier(G.phase) - workloadTier(type.phase) + 1);
     const mult = 1 + (tier - 1) * 0.5 + G.prestigeCount * 0.1;
     const fatigueTasks = Math.max(0, Math.min(G.totalTasksDone, 1000) - 20);
     const fatigueMult = 1 + fatigueTasks * 0.002; // keep early completion speed through task 20
@@ -626,8 +631,8 @@
   }
 
   function getMaxTasks() {
-    if (G.phase >= 9) return Math.max(MAX_TASKS, managedNodeCount() * 12);
-    if (G.phase === 2 || G.phase === 3) return MAX_TASKS;
+    if (G.phase >= 10) return Math.max(MAX_TASKS, managedNodeCount() * 12);
+    if (G.phase >= 2 && G.phase <= 4) return MAX_TASKS;
     if (G.phase === 1 && G.purchasedUpgrades.includes("hire_assistant")) return G.totalTasksDone < 100 ? 8 : MAX_TASKS;
     if (G.totalTasksDone < 10) return 3;
     if (G.totalTasksDone < 20) return 5;
@@ -641,13 +646,13 @@
     {
       if (!G.uiRevealed.taskQueue) return Infinity; // No auto-spawn before task queue
       if (G.tasks.some((task) => task.id === "setup_inbox" && task.status === "available")) return Infinity;
-      if (G.phase === 2 || G.phase === 3) return (G.phase === 2 ? 4000 : 3500) / 7.5 * G.taskSpawnDelay / Math.max(1, G.taskSpawnMult);
+      if (G.phase >= 2 && G.phase <= 4) return (G.phase === 2 ? 4000 : 3500) / 7.5 * G.taskSpawnDelay / Math.max(1, G.taskSpawnMult);
       if (G.totalTasksDone < 10) base = 2000;
       else if (G.totalTasksDone < 15) base = 1600;
       else if (G.totalTasksDone < 20) base = 1100;
       else if (G.totalTasksDone < 50) base = 1000;
       else if (G.totalTasksDone < 200) base = 500;
-      else base = Math.max(300, TASK_SPAWN_BASE - G.phase * 550 - G.totalTasksDone * 5);
+      else base = Math.max(300, TASK_SPAWN_BASE - workloadTier(G.phase) * 550 - G.totalTasksDone * 5);
     }
 
     var spawnMult = Math.max(0.1, G.taskSpawnMult || 1);
@@ -794,7 +799,7 @@
     if (!assistantAvailable()) return "";
     const count = G.assistant.taskIds.length;
     const active = G.tasks.filter((task) => task.status === "assistant").length;
-    const status = count ? active + " working · " + (count - active) + " queued" : "Waiting for work · 15% task fee";
+    const status = count ? active + " working" : "Waiting for work · 15% task fee";
     const disabled = count || !G.tasks.some((task) => task.status === "available");
     return "<div class='card agent-card' data-assistant><div class='agent-icon' aria-hidden='true'>🧑‍💼</div><div class='agent-info'><div class='name'>Assistant <span class='role'>Part-time</span></div><div class='text-sm'>" + status + "</div><small>" + deliveredTasksLabel(G.assistant.tasksCompleted) + "</small></div><div class='agent-action-col'><button class='btn btn-primary btn-sm' onclick='GAME.assignAssistantWork()' " + (disabled ? "disabled" : "") + ">" + (count ? "Working..." : "Assign work") + "</button></div></div>";
   }
@@ -851,16 +856,16 @@
 
   function workerTokenCapacity(agent) {
     if (agent && agent.olderModel) return 40;
-    if (agent && agent.name === "AI 2000 Pro" && G.phase < 4) return 100;
-    return G.phase >= 6 ? 1500 : G.phase === 5 ? 500 : G.phase === 4 ? 200 : G.phase === 3 ? 40 : 10;
+    if (agent && agent.name === "AI 2000 Pro" && G.phase < 5) return 100;
+    return G.phase >= 7 ? 1500 : G.phase === 6 ? 500 : G.phase === 5 ? 200 : G.phase >= 3 ? 40 : 10;
   }
 
   function workerTokenRate() {
-    return G.phase >= 6 ? 150 : G.phase === 5 ? 60 : G.phase === 4 ? 15 : G.phase === 3 ? 4 : 2.4;
+    return G.phase >= 7 ? 150 : G.phase === 6 ? 60 : G.phase === 5 ? 15 : G.phase >= 3 ? 4 : 2.4;
   }
 
   function workerTokenCost(agent) {
-    return G.phase >= 4 && agent.name === "AI 2000 Pro" ? 1 : agent.tokenCost;
+    return G.phase >= 5 && agent.name === "AI 2000 Pro" ? 1 : agent.tokenCost;
   }
 
   function topUpAiWorker() {
@@ -873,7 +878,7 @@
   }
 
   function shutdownAiWorker() {
-    if (G.phase < 4) {
+    if (G.phase < 5) {
       log("This AI agent cannot be sold yet.", "bad");
       return;
     }
@@ -890,7 +895,7 @@
 
 
   function topUpAgent(agentId) {
-    if (G.phase >= 9) return;
+    if (G.phase >= 10) return;
     const agent = G.agents.find((item) => item.id === agentId);
     if (!agent || UTILITY_ROLES.includes(agent.roleId) || managerControls(agent)) return;
     const amount = Math.min(G.tokens, Math.max(0, workerTokenCapacity(agent) - agent.tokenTank));
@@ -902,7 +907,7 @@
   }
 
   function topUpManager() {
-    if (G.phase < 6 || !hasIdleManager()) return;
+    if (G.phase < 7 || !hasIdleManager()) return;
     const amount = Math.min(G.tokens, MANAGER_TOKEN_TANK_MAX - G.managerTokenTank);
     G.tokens -= amount;
     G.managerTokenTank += amount;
@@ -987,7 +992,7 @@
     if (!task || task.status === "done") return;
     if (G.phase < 2) return;
 
-    const tokenCost = G.phase >= 3 ? Math.ceil(3 * (1 + G.phase * 0.2) * G.tokenEfficiency) : 0;
+    const tokenCost = G.phase >= 3 ? Math.ceil(3 * (1 + workloadTier(G.phase) * 0.2) * G.tokenEfficiency) : 0;
     if (tokenCost > 0 && G.tokens < tokenCost) {
       log("Not enough tokens for AI assist!", "bad");
       return;
@@ -1046,11 +1051,11 @@
   }
 
   function workerAvailable(agent) {
-    return !UTILITY_ROLES.includes(agent.roleId) && (G.phase < 9 || !!getAgentCluster(agent.id));
+    return !UTILITY_ROLES.includes(agent.roleId) && (G.phase < 10 || !!getAgentCluster(agent.id));
   }
 
   function clusterControl(agent, role) {
-    if (G.phase < 9) return true;
+    if (G.phase < 10) return true;
     const cluster = getAgentCluster(agent.id);
     return !!cluster && cluster.active && cluster[role];
   }
@@ -1066,12 +1071,12 @@
   function workerSpeed(task, agent) {
     const specialty = agent.specialty.includes(task.typeId) ? 1.4 : 1;
     const code = ["code", "integration", "webapp", "saas"].includes(task.typeId) ? G.codeSpeedMult : 1;
-    const scale = G.phase >= 9 ? 1 + Math.min(2, Math.max(0, managedNodeCount() - 1)) * 0.5 : 1;
+    const scale = G.phase >= 10 ? 1 + Math.min(2, Math.max(0, managedNodeCount() - 1)) * 0.5 : 1;
     return agent.speed * (agent.olderModel ? 0.25 : 1) * AGENT_WORK_MULT * G.agentSpeedMult * specialty * code * scale;
   }
 
   function hasIdleManager() {
-    if (G.phase >= 9) return G.clusters.some((cluster) => cluster.managerAssigned);
+    if (G.phase >= 10) return G.clusters.some((cluster) => cluster.managerAssigned);
     return G.agents.some(function (a) { return a.roleId === "manager" && a.status === "idle"; });
   }
 
@@ -1085,7 +1090,7 @@
   }
 
   function toggleAgentAuto(agentId) {
-    if (G.phase >= 9) return;
+    if (G.phase >= 10) return;
     var agent = G.agents.find(function (a) { return a.id === agentId; });
     if (!agent) return;
     if (agent.roleId === "manager" || agent.roleId === "token_mgr" || agent.roleId === "devops") return;
@@ -1137,7 +1142,7 @@
     G.totalCashEarned += pay;
     G.totalTasksDone += task.batchSize;
     if (method === "manual") G.manualTasksCompleted += task.batchSize;
-    if (G.phase >= 9) {
+    if (G.phase >= 10) {
       const metrics = deliveryMetrics();
       metrics.recent.unshift(task.name);
       metrics.recent.length = Math.min(3, metrics.recent.length);
@@ -1221,7 +1226,7 @@
   var UTILITY_ROLES = ["manager", "token_mgr", "devops"];
 
   function getSharedAgentPoolSize() {
-    if (G.phase < 4) return G.aiWorkerShutdown ? 0 : 1;
+    if (G.phase < 5) return G.aiWorkerShutdown ? 0 : 1;
     return G.agentSlots + 1;
   }
 
@@ -1235,8 +1240,8 @@
   }
 
   function getHireAgentCapacity() {
-    if (G.phase < 4) return 0;
-    if (G.phase >= 9) return G.clusters.reduce((total, cluster) => total + cluster.workerSlotsMax, 0);
+    if (G.phase < 5) return 0;
+    if (G.phase >= 10) return G.clusters.reduce((total, cluster) => total + cluster.workerSlotsMax, 0);
     return G.aiWorkerShutdown ? G.agentSlots + 1 : G.agentSlots;
   }
 
@@ -1249,12 +1254,12 @@
   }
 
   function hireAgent(roleId, slotIndex = nextWorkerSlot()) {
-    if (G.phase >= 9) return;
+    if (G.phase >= 10) return;
     const role = AGENT_ROLES.find((candidate) => candidate.id === roleId);
-    if (!role || G.phase < 4 || (roleId === "manager" && !G.managerUnlock) ||
+    if (!role || G.phase < 5 || (roleId === "manager" && !G.managerUnlock) ||
         (roleId === "token_mgr" && !G.purchasedUpgrades.includes("token_manager_unlock")) ||
-        (roleId === "devops" && !G.purchasedUpgrades.includes("devops_unlock")) || (roleId === "sales" && G.phase < 8)) return;
-    // Utility roles are always singletons; worker roles allow duplicates in Phase 9+
+        (roleId === "devops" && !G.purchasedUpgrades.includes("devops_unlock")) || (roleId === "sales" && G.phase < 9)) return;
+    // Utility roles are always singletons; worker roles allow duplicates in Phase 10+
     var isUtility = UTILITY_ROLES.indexOf(roleId) >= 0;
     if (isUtility) {
       if (G.agents.some(function (a) { return a.roleId === roleId; })) {
@@ -1308,8 +1313,8 @@
       }
     }
 
-    // In Phase 9+, auto-assign new worker to first cluster with available slots
-    if (G.phase >= 9 && UTILITY_ROLES.indexOf(roleId) === -1) {
+    // In Phase 10+, auto-assign new worker to first cluster with available slots
+    if (G.phase >= 10 && UTILITY_ROLES.indexOf(roleId) === -1) {
       for (var ci = 0; ci < G.clusters.length; ci++) {
         var cl = G.clusters[ci];
         if (cl.workerAgentIds.length < cl.workerSlotsMax) {
@@ -1322,7 +1327,7 @@
   }
 
   function fireAgent(agentId) {
-    if (G.phase < 4 || G.phase >= 9) return;
+    if (G.phase < 5 || G.phase >= 10) return;
     const idx = G.agents.findIndex((a) => a.id === agentId);
     if (idx === -1) return;
     const agent = G.agents[idx];
@@ -1436,7 +1441,7 @@
 
   // ---------- MANAGER AUTO-ASSIGN ----------
   function tickManager() {
-    if (G.phase >= 9) { tickClusterManagers(); return; }
+    if (G.phase >= 10) { tickClusterManagers(); return; }
     if (!hasIdleManager()) return;
     var now = Date.now();
     if (now - G.lastManagerAssignAt < 100) return;
@@ -1449,7 +1454,7 @@
       G.managerTokenTank -= amount;
     }
     var assignmentBudget = getManagerAssignmentBudget();
-    if (G.phase >= 6) {
+    if (G.phase >= 7) {
       for (var ri = 0; ri < G.agents.length; ri++) {
         if (G.managerTokenTank <= 0) break;
         var refillAgent = G.agents[ri];
@@ -1482,7 +1487,7 @@
   // ---------- PER-AGENT AUTO-ASSIGN ----------
   function tickAgentAutoAssign() {
     if (!G.agentAutoAssign) return;
-    if (hasIdleManager() && G.phase < 9) return;
+    if (hasIdleManager() && G.phase < 10) return;
     var now = Date.now();
     if (now - G.lastAgentAutoAssignAt < 1600) return;
     G.lastAgentAutoAssignAt = now;
@@ -1505,7 +1510,7 @@
     // Buy bulk pack if affordable, otherwise starter pack
   // ---------- INCIDENTS ----------
   function tokenPackAmount(upgrade) {
-    const multiplier = G.phase >= 6 ? 100 : G.phase === 5 ? 20 : G.phase === 4 ? 5 : 1;
+    const multiplier = G.phase >= 7 ? 100 : G.phase === 6 ? 20 : G.phase === 5 ? 5 : 1;
     return upgrade.effect.giveTokens * multiplier;
   }
 
@@ -1514,7 +1519,7 @@
   }
 
   function tokenBurnRate() {
-    if (G.phase >= 12) return G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned && cluster.tank > 0 ? cluster.workforce : 0), 0) * workerTokenRate() * G.tokenEfficiency;
+    if (G.phase >= 13) return G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned && cluster.tank > 0 ? cluster.workforce : 0), 0) * workerTokenRate() * G.tokenEfficiency;
     return (G.agents.reduce((total, agent) => total + (agent.status === "working" && agent.tokenTank > 0 ? workerTokenCost(agent) : 0), 0) + (G.aiWorkerCurrentTaskId && G.aiWorkerTokenTank > 0 ? 1 : 0)) * workerTokenRate() * G.tokenEfficiency;
   }
 
@@ -1533,15 +1538,15 @@
     if (amount > 0) {
       const message = "Purchased " + fmtTokens(amount) + " tokens for " + fmtCash(cost) + ".";
       log(message, "info");
-      if (G.phase >= 9) deliveryMetrics().purchase = message;
+      if (G.phase >= 10) deliveryMetrics().purchase = message;
     }
   }
 
   function tickTokenManager() {
-    const online = G.phase >= 10 || (G.phase >= 9 ? G.clusters.some((cluster) => cluster.managerAssigned) : G.agents.some((agent) => agent.roleId === "token_mgr" && agent.status === "idle"));
+    const online = G.phase >= 11 || (G.phase >= 10 ? G.clusters.some((cluster) => cluster.managerAssigned) : G.agents.some((agent) => agent.roleId === "token_mgr" && agent.status === "idle"));
     if (!online) return;
-    const demand = G.phase >= 9 ? G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned ? (G.phase >= 12 ? cluster.workforce : cluster.workerAgentIds.length) : 0), 0) * workerTokenRate() * G.tokenEfficiency : tokenBurnRate();
-    const transfers = G.phase >= 9 ? G.clusters.filter((cluster) => cluster.managerAssigned).reduce((total, cluster) => total + MANAGER_TOKEN_TANK_MAX - cluster.tank, 0) : MANAGER_TOKEN_TANK_MAX + G.agents.reduce((total, agent) => total + workerTokenCapacity(agent), 0);
+    const demand = G.phase >= 10 ? G.clusters.reduce((total, cluster) => total + (cluster.managerAssigned ? (G.phase >= 13 ? cluster.workforce : cluster.workerAgentIds.length) : 0), 0) * workerTokenRate() * G.tokenEfficiency : tokenBurnRate();
+    const transfers = G.phase >= 10 ? G.clusters.filter((cluster) => cluster.managerAssigned).reduce((total, cluster) => total + MANAGER_TOKEN_TANK_MAX - cluster.tank, 0) : MANAGER_TOKEN_TANK_MAX + G.agents.reduce((total, agent) => total + workerTokenCapacity(agent), 0);
     const reserveTarget = MANAGER_TOPUP_COST_TOKEN + Math.max(demand * 5, transfers);
     if (G.tokens < reserveTarget) {
       // Buy bulk pack if affordable, otherwise starter pack
@@ -1549,10 +1554,10 @@
       if (pack) buyTokenPacks(pack, Math.max(1, Math.ceil(reserveTarget * 2 / tokenPackAmount(pack))));
       G.lastTokenBuy = Date.now();
     }
-    if (G.phase < 9 && G.managerTokenTank < MANAGER_TOKEN_TANK_MAX * 0.25) topUpManager();
+    if (G.phase < 10 && G.managerTokenTank < MANAGER_TOKEN_TANK_MAX * 0.25) topUpManager();
     for (const cluster of G.clusters) {
-      if (!cluster.managerAssigned || cluster.tank >= MANAGER_TOKEN_TANK_MAX * (G.phase >= 10 ? 1 : 0.25)) continue;
-      const amount = Math.min(G.tokens, MANAGER_TOKEN_TANK_MAX - cluster.tank, G.phase >= 10 ? 250 : MANAGER_TOKEN_TANK_MAX);
+      if (!cluster.managerAssigned || cluster.tank >= MANAGER_TOKEN_TANK_MAX * (G.phase >= 11 ? 1 : 0.25)) continue;
+      const amount = Math.min(G.tokens, MANAGER_TOKEN_TANK_MAX - cluster.tank, G.phase >= 11 ? 250 : MANAGER_TOKEN_TANK_MAX);
       G.tokens -= amount;
       cluster.tank += amount;
     }
@@ -1625,11 +1630,11 @@
     // Random incident generation -- only after tutorial incident
     if (!G.incidentsExplained) return;
     if (G.phase < 2 || G.agents.length === 0) return;
-    const checkInterval = Math.max(15000, 60000 - G.phase * 3000 - G.agents.length * 1000);
+    const checkInterval = Math.max(15000, 60000 - workloadTier(G.phase) * 3000 - G.agents.length * 1000);
     if (Date.now() - G.lastIncidentCheck < checkInterval) return;
     G.lastIncidentCheck = Date.now();
 
-    let chance = 0.05 + G.phase * 0.02 + G.techDebt * 0.003 + G.agents.length * 0.01;
+    let chance = 0.05 + workloadTier(G.phase) * 0.02 + G.techDebt * 0.003 + G.agents.length * 0.01;
     if (G.driftReduction > 0) chance *= (1 - G.driftReduction * 0.3);
     if (Math.random() < chance) {
       maybeCreateIncident(null);
@@ -1638,7 +1643,7 @@
 
   // ---------- DEVOPS INCIDENT RESPONSE ----------
   function tickDevopsIncidentResponse(dtSec) {
-    const responders = G.phase >= 9 ? G.clusters.filter((cluster) => cluster.managerAssigned) : G.agents.filter((a) => a.roleId === "devops" && a.status === "idle");
+    const responders = G.phase >= 10 ? G.clusters.filter((cluster) => cluster.managerAssigned) : G.agents.filter((a) => a.roleId === "devops" && a.status === "idle");
     if (responders.length === 0) return;
 
     const active = G.incidents
@@ -1675,7 +1680,7 @@
   function tickServices(dtSec) {
     let totalPassiveIncome = 0;
     totalPassiveIncome += (getAgentRevenueRate() + getMarketingRevenueRate()) * dtSec;
-    if (G.phase >= 9) {
+    if (G.phase >= 10) {
       for (const svc of G.services) {
         if (!svc.active) continue;
         const uptime = Math.max(0.5, 1 - G.techDebt * 0.005 - G.incidents.filter((i) => !i.resolved).length * 0.05);
@@ -1696,7 +1701,7 @@
       if (G.phase >= tier.phase) rate = tier.rate;
     }
     // Agent upkeep
-    rate += G.agents.length * (0.8 + G.phase * 0.2);
+    rate += G.agents.length * (0.8 + workloadTier(G.phase) * 0.2);
     // Service costs
     rate += G.services.length * 2;
     rate += G.clusters.length * (G.ceoMode === "off" ? 12 : 4);
@@ -1710,9 +1715,9 @@
     if (G.cash < 0) G.cash = 0;
   }
 
-  // ---------- TECH DEBT (Phase 9+) ----------
+  // ---------- TECH DEBT (Phase 10+) ----------
   function tickDebt(dtSec) {
-    if (G.phase < 9) return;
+    if (G.phase < 10) return;
     // Debt grows with agent activity
     const activeAgents = G.agents.filter((a) => a.status === "working").length;
     const growth = activeAgents * 0.05 * dtSec * (1 - G.debtReduction);
@@ -1729,8 +1734,8 @@
   }
 
   function getLateCostMultiplier() {
-    if (G.phase < 4) return 1;
-    var mult = 1 + (G.phase - 3) * 0.18;
+    if (G.phase < 5) return 1;
+    var mult = 1 + (workloadTier(G.phase) - 3) * 0.18;
     if (G.purchasedUpgrades.includes("growth_marketing")) mult += 0.15;
     return mult;
   }
@@ -1747,24 +1752,24 @@
   }
 
   function getAgentRevenueRate() {
-    if (G.phase < 4) return 0;
+    if (G.phase < 5) return 0;
     var activeWorkers = G.agents.filter(function (agent) {
       return workerAvailable(agent) && agent.status === "working" && agent.tokenTank > 0;
     }).length;
     if (activeWorkers <= 0) return 0;
-    var perAgent = 1.4 + G.phase * 0.4;
+    var perAgent = 1.4 + workloadTier(G.phase) * 0.4;
     if (G.purchasedUpgrades.includes("growth_marketing")) perAgent *= 1.65;
     return activeWorkers * perAgent;
   }
 
   function getMarketingRevenueRate() {
     if (!G.purchasedUpgrades.includes("growth_marketing")) return 0;
-    return 4 + G.phase * 1.5;
+    return 4 + workloadTier(G.phase) * 1.5;
   }
 
   // ---------- INCOME RATE ESTIMATION ----------
   function getIncomeRate() {
-    // Passive growth income (Phase 4+)
+    // Passive growth income (Phase 5+)
     let rate = networkIncomeRate() + getAgentRevenueRate() + getMarketingRevenueRate();
     for (const task of G.tasks.filter((item) => item.status === "assistant")) {
       rate += getTaskCashPayout(task, "assistant", null) * 4 / task.workRequired;
@@ -1788,7 +1793,7 @@
 
   // ---------- UPGRADE PURCHASE ----------
   function clusterOnline(cluster) {
-    return cluster.buildRemaining === 0 && cluster.managerAssigned && (G.phase >= 12 ? cluster.workforce === cluster.workerSlotsMax : cluster.workerAgentIds.length === cluster.workerSlotsMax && cluster.workerAgentIds.every((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning"));
+    return cluster.buildRemaining === 0 && cluster.managerAssigned && (G.phase >= 13 ? cluster.workforce === cluster.workerSlotsMax : cluster.workerAgentIds.length === cluster.workerSlotsMax && cluster.workerAgentIds.every((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning"));
   }
 
   function clustersFull() {
@@ -1809,11 +1814,11 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
-    if (upgrade.id === "reality_check") return G.totalTasksDone >= upgrade.reqTasks;
     if (G.phase === 1 && upgrade.id !== "tools_of_trade" && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
     if (G.phase === 1 && upgrade.reqTasks >= 35 && upgrade.id !== "ai_hint" && !G.purchasedUpgrades.includes("ai_hint")) return false;
     if (upgrade.saleDuration && G.salePreparation.upgradeId && G.salePreparation.upgradeId !== upgrade.id) return false;
-    if (upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
+    const revealTasks = upgrade.revealTasks ?? upgrade.reqTasks;
+    if (revealTasks && G.totalTasksDone < revealTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
     if (upgrade.visibleAfter) return G.purchasedUpgrades.includes(upgrade.visibleAfter);
@@ -1822,7 +1827,7 @@
     if (!upgrade.oneTime || upgrade.optional) return true;
     const prior = UPGRADES.filter((item) => item.oneTime && !item.introductory && !item.optional && (item.phase < upgrade.phase || (item.phase === upgrade.phase && UPGRADES.indexOf(item) < UPGRADES.indexOf(upgrade))));
     if (prior.some((item) => ["agent_slot_3", "agent_slot_5"].includes(item.id) && !G.purchasedUpgrades.includes(item.id))) return false;
-    if (upgrade.unlockPhase || upgrade.id === "second_ai") {
+    if (upgrade.unlockPhase || ["ai_hint", "reality_check"].includes(upgrade.id)) {
       if (prior.some((item) => !(upgrade.showBeforeRequires && item.id === upgrade.requires) && !G.purchasedUpgrades.includes(item.id))) return false;
     } else {
       const waiting = prior.filter((item) => item.phase === upgrade.phase && !G.purchasedUpgrades.includes(item.id));
@@ -1837,7 +1842,7 @@
   }
 
   function upgradeStaffingReady(upgrade) {
-    return G.phase !== 9 || upgrade.phase !== 9 || clustersFull();
+    return G.phase !== 10 || upgrade.phase !== 10 || clustersFull();
   }
 
   function purchaseUpgrade(upgradeId) {
@@ -1850,7 +1855,7 @@
     if (upgradeId === "autonomous_nodes" && hasUnfinishedAgentInstallations()) return;
     if (upg.oneTime && G.purchasedUpgrades.includes(upgradeId)) return;
     if (upg.phase > G.phase) return;
-    if (G.phase >= 9 && upg.effect && upg.effect.agentSlots && !upg.unlockPhase) return;
+    if (G.phase >= 10 && upg.effect && upg.effect.agentSlots && !upg.unlockPhase) return;
     if (upg.requires && !G.purchasedUpgrades.includes(upg.requires)) return;
     if (upg.requiresRole && !G.agents.some((agent) => agent.roleId === upg.requiresRole)) return;
 
@@ -1970,11 +1975,11 @@
       var msg = upg.desc;
       if (G.phase === 3) msg += "\n\nYou start with " + starter_tokens + " tokens. AI Assist and agents will burn tokens over time. Buy token packs from the upgrade shop to keep up, or you will stall out.";
 
-      if (G.phase === 6) msg += "\n\nManager mode is live. Buy a Manager to auto-assign idle agents immediately.";
+      if (G.phase === 7) msg += "\n\nManager mode is live. Buy a Manager to auto-assign idle agents immediately.";
       if (newTier && G.expensesRevealed) msg += "\n\nLifestyle upgraded to: " + newTier.name + ". Expenses are now " + "$" + fmtTokens(newTier.rate) + "/s.";
 
-      // Phase 9: initialize clusters
-      if (G.phase === 9 && G.clusters.length === 0) {
+      // Phase 10: initialize clusters
+      if (G.phase === 10 && G.clusters.length === 0) {
         var alpha = addClusterWithNextName();
         alpha.invested = CLUSTER_COST + 12000;
         alpha.managerAssigned = true;
@@ -1999,7 +2004,7 @@
         msg += "\n\nCluster 1 includes Manager, Token Manager and DevOps. Bring another cluster online, then provision its agents.";
       }
 
-      if (G.phase === 12) {
+      if (G.phase === 13) {
         G.replicationTarget = Math.max(20, G.clusters.length + 9);
         for (const cluster of G.clusters) {
           cluster.workforce = cluster.workerAgentIds.length;
@@ -2013,8 +2018,8 @@
         msg += "\n\nYour CEO now operates the nodes. Individual agent controls are retired.";
       }
 
-      // Phase 10: AI CEO baseline orchestration bump
-      if (G.phase === 10) {
+      // Phase 11: AI CEO baseline orchestration bump
+      if (G.phase === 11) {
         G.agentSpeedMult *= 1.8;
         G.payMult *= 1.6;
         msg += "\n\nYour company is ready for an AI CEO.";
@@ -2024,7 +2029,7 @@
         showPopup(title, msg);
       }
 
-      // Auto-deploy a service when reaching phase 10
+      // Auto-deploy a service when reaching phase 11
       // Service-slot upgrades now deploy and fund recurring contracts directly.
 
     }
@@ -2163,12 +2168,12 @@
     if (interval === Infinity) return;
     if (Date.now() - G.lastTaskSpawn < interval) return;
     G.lastTaskSpawn = Date.now();
-    if (G.phase === 2 || G.phase === 3) G.taskSpawnDelay = rand(0.25, 1.75) * (Math.random() < 0.15 ? 5 : 0.3);
-    const batch = G.phase >= 9 ? Math.max(1, managedNodeCount()) : 1;
+    if (G.phase >= 2 && G.phase <= 4) G.taskSpawnDelay = rand(0.25, 1.75) * (Math.random() < 0.15 ? 5 : 0.3);
+    const batch = G.phase >= 10 ? Math.max(1, managedNodeCount()) : 1;
     for (let index = 0; index < batch; index++) spawnTask();
   }
 
-  // ---------- AI CEO auto-management (Phase 10+) ----------
+  // ---------- AI CEO auto-management (Phase 11+) ----------
     // Manage mode: auto-enable autoAssign on new hires
     // New hires enable self-assignment on creation; CEO routing supersedes it.
     // Manage mode + Scale mode: auto-assign idle agents to available tasks
@@ -2186,7 +2191,7 @@
 
 
   function clusterCapacity() {
-    if (G.phase >= 10 && G.ceoMode === "scale") return Infinity;
+    if (G.phase >= 11 && G.ceoMode === "scale") return Infinity;
     if (G.ceoMode === "manage") return 5;
     return G.purchasedUpgrades.includes("cluster_capacity_3") ? 3 : G.purchasedUpgrades.includes("cluster_capacity_2") ? 2 : 1;
   }
@@ -2194,12 +2199,12 @@
   function nodeCost(provisioned = G.clustersProvisioned) {
     const scale = 1 + provisioned * 0.025;
     const hardware = G.purchasedUpgrades.includes("factory_direct") ? scale * 10 : scale * scale;
-    return Math.ceil(1000000 * hardware * (G.phase >= 13 ? 0.65 : 1) * (G.phase >= 14 ? 0.6 : 1));
+    return Math.ceil(1000000 * hardware * (G.phase >= 14 ? 0.65 : 1) * (G.phase >= 15 ? 0.6 : 1));
   }
 
   function provisionCost(provisioned = G.clustersProvisioned) {
     const constructionDiscount = (G.purchasedUpgrades.includes("standardised_construction") ? 0.5 : 1) * (G.purchasedUpgrades.includes("bulk_hardware") ? 0.5 : 1);
-    return Math.ceil((12000 + (G.purchasedUpgrades.includes("ceo_full_fit") ? 40000 : 0) + (G.phase >= 12 ? nodeCost(provisioned) : Math.ceil(CLUSTER_COST * Math.pow(1.6, Math.max(0, provisioned - 1))))) * constructionDiscount);
+    return Math.ceil((12000 + (G.purchasedUpgrades.includes("ceo_full_fit") ? 40000 : 0) + (G.phase >= 13 ? nodeCost(provisioned) : Math.ceil(CLUSTER_COST * Math.pow(1.6, Math.max(0, provisioned - 1))))) * constructionDiscount);
   }
 
 
@@ -2213,7 +2218,7 @@
 
   function canPlanNextCluster() {
     if (G.ceoMode !== "scale" || G.clusters.length === 0) return false;
-    if (G.phase >= 12) return true;
+    if (G.phase >= 13) return true;
     const cluster = G.clusters.at(-1);
     const target = 9 + parseInt(cluster.id, 36) % 4;
     const ready = cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
@@ -2223,12 +2228,12 @@
   function clusterBuildDuration() {
     const neocloudSpeed = (G.purchasedUpgrades.includes("neocloud_pipeline") ? 2 : 1) * (G.purchasedUpgrades.includes("neocloud_supply_chain") ? 2 : 1);
     if (G.purchasedUpgrades.includes("ceo_continuous")) return 2 / expansionSpeed() / neocloudSpeed;
-    const base = G.phase >= 14 ? 2 : G.phase >= 13 ? 3 : 12;
+    const base = G.phase >= 15 ? 2 : G.phase >= 14 ? 3 : 12;
     return base / (G.purchasedUpgrades.includes("ceo_fast_builds") ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_course") ? 2 : 1) / expansionSpeed() / neocloudSpeed;
   }
 
   function expansionSpeed() {
-    return G.phase < 14 ? 1 : clamp(1 + (completedClusterCount() - 40) / 20, 1, 4);
+    return G.phase < 15 ? 1 : clamp(1 + (completedClusterCount() - 40) / 20, 1, 4);
   }
 
   function staggeredStartDelay(jobs, remaining, duration, spacing = 1) {
@@ -2239,7 +2244,7 @@
 
   function openCluster() {
     const cost = provisionCost();
-    if (G.phase < 9 || G.clusters.length >= clusterCapacity() || G.cash < cost) return;
+    if (G.phase < 10 || G.clusters.length >= clusterCapacity() || G.cash < cost) return;
     G.cash -= cost;
     const duration = clusterBuildDuration();
     const concurrency = clusterBuildConcurrency();
@@ -2250,7 +2255,7 @@
     cluster.buildDuration = duration;
     cluster.buildRemaining = cluster.buildDuration + delay;
     if (G.purchasedUpgrades.includes("ceo_full_fit")) {
-      if (G.phase >= 12) cluster.workforce = cluster.workerSlotsMax;
+      if (G.phase >= 13) cluster.workforce = cluster.workerSlotsMax;
       else for (let index = 0; index < cluster.workerSlotsMax; index++) provisionClusterAgent(cluster, cluster.buildDuration, delay);
     }
     if (G.clusters.length === 2) deliveryMetrics().showTasks = false;
@@ -2263,7 +2268,7 @@
 
   function sellCluster(clusterId) {
     const cluster = G.clusters.find((item) => item.id === clusterId);
-    if (G.phase < 9 || G.phase >= 12 || G.clusters.length <= 1 || !cluster || cluster.workerAgentIds.length !== cluster.workerSlotsMax || !cluster.managerAssigned) return;
+    if (G.phase < 10 || G.phase >= 13 || G.clusters.length <= 1 || !cluster || cluster.workerAgentIds.length !== cluster.workerSlotsMax || !cluster.managerAssigned) return;
     const ids = new Set(cluster.workerAgentIds);
     for (const task of G.tasks) {
       if (!ids.has(task.assignedAgent)) continue;
@@ -2285,11 +2290,11 @@
 
   function buyNextClusterWorker(clusterId) {
     const cluster = G.clusters.find((item) => item.id === clusterId);
-    if (G.phase < 9 || G.phase >= 12 || !cluster || cluster.buildRemaining > 0 || !cluster.managerAssigned || cluster.workerAgentIds.length >= cluster.workerSlotsMax || G.cash < 2500) return;
+    if (G.phase < 10 || G.phase >= 13 || !cluster || cluster.buildRemaining > 0 || !cluster.managerAssigned || cluster.workerAgentIds.length >= cluster.workerSlotsMax || G.cash < 2500) return;
     G.cash -= 2500;
     cluster.invested += 2500;
     const delay = staggeredStartDelay(provisioningAgents(), "provisionRemaining", "provisionDuration");
-    provisionClusterAgent(cluster, (G.phase >= 11 ? 2 : 4) / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1), delay);
+    provisionClusterAgent(cluster, (G.phase >= 12 ? 2 : 4) / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1), delay);
   }
 
   function provisionClusterAgent(cluster, duration, delay) {
@@ -2308,13 +2313,13 @@
   }
 
   function canManuallyProvisionCluster() {
-    if (G.phase < 9 || G.ceoMode === "scale" || G.clusters.length >= clusterCapacity() || G.clusters.some((cluster) => cluster.buildRemaining > 0)) return false;
+    if (G.phase < 10 || G.ceoMode === "scale" || G.clusters.length >= clusterCapacity() || G.clusters.some((cluster) => cluster.buildRemaining > 0)) return false;
     if (!clustersFull()) return false;
     return true;
   }
 
   function tickClusterManagers() {
-    if (G.phase >= 12) return;
+    if (G.phase >= 13) return;
     for (const cluster of G.clusters) {
       if (!cluster.managerAssigned) continue;
       for (const id of cluster.workerAgentIds) {
@@ -2336,12 +2341,12 @@
   }
 
   function networkIncomeRate() {
-    if (G.phase < 12) return 0;
+    if (G.phase < 13) return 0;
     return G.clusters.reduce((total, cluster) => total + clusterIncomeRate(cluster), 0);
   }
 
   function tickNetwork(dtSec) {
-    if (G.phase < 12) return;
+    if (G.phase < 13) return;
     for (const cluster of G.clusters) {
       if (!cluster.managerAssigned || cluster.workforce === 0) continue;
       const rate = cluster.workforce * workerTokenRate() * G.tokenEfficiency;
@@ -2351,7 +2356,7 @@
       const income = cluster.workforce * 15 * G.payMult * elapsed;
       G.cash += income;
       G.totalCashEarned += income;
-      cluster.progress += cluster.workforce * G.batchSize * elapsed * (G.phase >= 14 ? 7 : G.phase === 13 ? 3 : 2) / 4;
+      cluster.progress += cluster.workforce * G.batchSize * elapsed * (G.phase >= 15 ? 7 : G.phase === 14 ? 3 : 2) / 4;
       const completed = Math.floor(cluster.progress);
       cluster.progress -= completed;
       G.totalTasksDone += completed;
@@ -2380,11 +2385,11 @@
     if (G.ceoMode === "off") return;
     tickAgentProvisioning();
     tickClusterProvisioning();
-    const baseInterval = G.phase >= 14 ? 1000 : G.phase >= 13 ? 2000 : 5000;
+    const baseInterval = G.phase >= 15 ? 1000 : G.phase >= 14 ? 2000 : 5000;
     const interval = baseInterval / (G.purchasedUpgrades.includes("ceo_recruitment") ? 2 : 1) / (G.ceoMode === "scale" ? 2 : 1) / (G.purchasedUpgrades.includes("ceo_deploy_speed") ? 1.5 : 1) / (G.purchasedUpgrades.includes("ceo_course") ? 2 : 1) / expansionSpeed();
     if (Date.now() - G.lastCeoAction < interval) return;
     G.lastCeoAction = Date.now();
-    if (G.phase >= 12) {
+    if (G.phase >= 13) {
       const unfinished = G.clusters.find((cluster) => cluster.buildRemaining === 0 && (!cluster.managerAssigned || cluster.workforce < cluster.workerSlotsMax));
       if (unfinished) {
         const cost = (unfinished.managerAssigned ? 0 : 12000) + (unfinished.workerSlotsMax - unfinished.workforce) * 2500;
@@ -2401,7 +2406,7 @@
   }
 
   function tickAgentProvisioning() {
-    if (G.phase >= 12) return;
+    if (G.phase >= 13) return;
     const capacity = G.purchasedUpgrades.includes("ceo_quad_batch") ? 4 : G.purchasedUpgrades.includes("ceo_batch") ? 2 : 1;
     for (let index = provisioningAgents().length; index < capacity; index++) {
       const hiring = G.clusters.find((cluster) => cluster.buildRemaining === 0 && cluster.managerAssigned && cluster.workerAgentIds.length < cluster.workerSlotsMax);
@@ -2422,9 +2427,9 @@
   }
 
   function clusterBuildConcurrency() {
-    if (G.phase >= 14 && G.purchasedUpgrades.includes("parallel_neoclouds")) return NEOCLOUD_SIZE * 2;
-    if (G.phase >= 14 && G.purchasedUpgrades.includes("neocloud_batch")) return NEOCLOUD_SIZE;
-    return G.phase >= 13 ? 4 : G.purchasedUpgrades.includes("ceo_parallel_clusters") ? 2 : 1;
+    if (G.phase >= 15 && G.purchasedUpgrades.includes("parallel_neoclouds")) return NEOCLOUD_SIZE * 2;
+    if (G.phase >= 15 && G.purchasedUpgrades.includes("neocloud_batch")) return NEOCLOUD_SIZE;
+    return G.phase >= 14 ? 4 : G.purchasedUpgrades.includes("ceo_parallel_clusters") ? 2 : 1;
   }
 
   function checkMilestones() {
@@ -2504,10 +2509,10 @@
     const queued = G.tasks.filter((task) => task.status === "available").length;
     const running = G.tasks.filter((task) => ["active", "ai", "agent"].includes(task.status)).length;
     let html = "<div class='card delivery-card'><h3>Delivery</h3><div class='delivery-metrics'><strong class='delivery-rate'>" + fmtTokens(metrics.rate * 60) + "<small>completed / min</small></strong>";
-    if (G.phase < 12) html += "<span class='delivery-queued'>" + queued + " queued</span><span class='delivery-running'>" + running + " in progress</span>";
+    if (G.phase < 13) html += "<span class='delivery-queued'>" + queued + " queued</span><span class='delivery-running'>" + running + " in progress</span>";
     else html += "<span>" + managedNodeCount() + " managed nodes</span><span>" + "$" + fmtTokens(networkIncomeRate()) + "/s delivery revenue</span>";
     html += "</div>";
-    if (G.phase < 12) {
+    if (G.phase < 13) {
       html += "<ul class='recent-deliveries'>" + metrics.recent.map((name) => "<li>✓ " + name + "</li>").join("") + "</ul>";
       html += "<button class='btn btn-outline btn-sm delivery-toggle' aria-expanded='" + metrics.showTasks + "' aria-controls='task-list' onclick='GAME.toggleDeliveryTasks()'>" + (metrics.showTasks ? "Hide tasks ∧" : "Show tasks ∨") + "</button>";
     }
@@ -2814,7 +2819,7 @@
       stopSynthPlayback();
       return;
     }
-    if (G.phase >= 8) {
+    if (G.phase >= 9) {
       if (!drumTransitionPending && !drumCrossfadeInterval) stopSynthPlayback();
       return;
     }
@@ -3031,7 +3036,7 @@
     const consumedBefore = G.tokensConsumed;
     const completedBefore = G.totalTasksDone;
     tickConstruction(dtSec);
-    if (G.phase < 12) tickTaskSpawn();
+    if (G.phase < 13) tickTaskSpawn();
     tickNetwork(dtSec);
     tickManualWork(dtSec);
     tickAssistant(dtSec);
@@ -3040,7 +3045,7 @@
     tickAgents(dtSec);
     tickAgentAutoAssign();
     if (dtSec > 0) G.averageTokenBurn += ((G.tokensConsumed - consumedBefore) / dtSec - G.averageTokenBurn) * (1 - Math.exp(-dtSec / 5));
-    if (dtSec > 0 && G.phase >= 9) {
+    if (dtSec > 0 && G.phase >= 10) {
       const metrics = deliveryMetrics();
       metrics.rate += ((G.totalTasksDone - completedBefore) / dtSec - metrics.rate) * (1 - Math.exp(-dtSec / 10));
     }
@@ -3126,7 +3131,7 @@
     $("#res-stress-wrap").style.display = G.uiRevealed.stress ? "" : "none";
 
     // Warning pulse
-    $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < (G.phase >= 6 ? MANAGER_TOPUP_COST_TOKEN : workerTokenCapacity()));
+    $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < (G.phase >= 7 ? MANAGER_TOPUP_COST_TOKEN : workerTokenCapacity()));
     $("#res-stress-wrap").classList.toggle("res-warning", G.stress > 80);
 
     // Income and expense rates
@@ -3161,9 +3166,9 @@
       $("#prelude-progress").setAttribute("aria-valuenow", progress);
       $("#prelude-status").textContent = task ? fmtCash(getTaskCashPayout(task, "manual", null)) + " reward · " + progress + "% done" : "";
     }
-    const compact = G.phase >= 10 || (G.phase === 9 && G.clusters.length >= 2);
+    const compact = G.phase >= 11 || (G.phase === 10 && G.clusters.length >= 2);
     $("#delivery-summary").hidden = !compact;
-    $("#task-list").hidden = compact && (G.phase >= 12 || !deliveryMetrics().showTasks);
+    $("#task-list").hidden = compact && (G.phase >= 13 || !deliveryMetrics().showTasks);
     if (compact) {
       $("#task-queue-section").style.display = "block";
       $("#tasks-complete-count").textContent = fmtTokens(G.totalTasksDone);
@@ -3303,7 +3308,7 @@
     var repeatables = [];
     var oneTime = [];
     for (var i = 0; i < available.length; i++) {
-      if (available[i].id === "ai_ceo" || (G.phase >= 10 && available[i].id.startsWith("token_pack_"))) continue;
+      if (available[i].id === "ai_ceo" || (G.phase >= 11 && available[i].id.startsWith("token_pack_"))) continue;
       if (available[i].oneTime) oneTime.push(available[i]);
       else repeatables.push(available[i]);
     }
@@ -3363,7 +3368,7 @@
 
   // Hire info
   // Agent list -- assignable first, then error, idle, working last
-  // manager always leads in phase 6+
+  // manager always leads in phase 7+
   // assignable
   // working or utility
   function availableHireRoles() {
@@ -3371,7 +3376,7 @@
       (!UTILITY_ROLES.includes(role.id) || !G.agents.some((agent) => agent.roleId === role.id)) &&
       (role.id !== "manager" || G.managerUnlock) &&
       (role.id !== "token_mgr" || G.purchasedUpgrades.includes("token_manager_unlock")) &&
-      (role.id !== "devops" || G.purchasedUpgrades.includes("devops_unlock")) && (role.id !== "sales" || G.phase >= 8));
+      (role.id !== "devops" || G.purchasedUpgrades.includes("devops_unlock")) && (role.id !== "sales" || G.phase >= 9));
   }
 
   function renderAgentCard(agent) {
@@ -3381,13 +3386,13 @@
     const capacity = manager ? MANAGER_TOKEN_TANK_MAX : workerTokenCapacity(agent);
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
-    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 8 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 4 ? "" : agent.roleName) + "</span></div>";
-    if (original) html += "<small>" + G.aiWorkerTasksCompleted + " tasks delivered · Automatically takes the next task</small>";
+    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 9 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 5 ? "" : agent.roleName) + "</span></div>";
+    if (original) html += "<small>" + G.aiWorkerTasksCompleted + " tasks delivered</small>";
     if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
     else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
-    if (!utility || manager) html += managerControls(agent) && !manager ? "<button class='btn btn-primary btn-sm' disabled>Managed</button>" : "<button class='btn btn-primary btn-sm' onclick=\"" + action + "\" >Top-up tokens</button>";
-    if (G.phase >= 4) html += "<button class='btn btn-outline btn-sm' onclick=\"" + (original ? "GAME.shutdownAiWorker()" : "GAME.fire('" + agent.id + "')") + "\">Sell</button>";
+    if (!utility || manager) html += managerControls(agent) && !manager ? "<button class='btn btn-primary btn-sm' disabled>Managed</button>" : "<button class='btn btn-primary btn-sm' onclick=\"" + action + "\" >Add tokens</button>";
+    if (G.phase >= 5) html += "<button class='btn btn-outline btn-sm' onclick=\"" + (original ? "GAME.shutdownAiWorker()" : "GAME.fire('" + agent.id + "')") + "\">Sell</button>";
     html += "</div></div>";
     return html;
   }
@@ -3414,12 +3419,12 @@
       }
     }
     const workers = G.agents.filter((item) => !UTILITY_ROLES.includes(item.roleId));
-    if (G.phase < 4) {
+    if (G.phase < 5) {
       html += renderAiWorkerCard();
       for (const agent of workers) html += renderAgentCard(agent);
     }
     const hireRoles = availableHireRoles().filter((item) => !UTILITY_ROLES.includes(item.id));
-    for (let slot = 0; G.phase >= 4 && slot < workerSlotCount(); slot++) {
+    for (let slot = 0; G.phase >= 5 && slot < workerSlotCount(); slot++) {
       if (slot === 0 && !G.aiWorkerShutdown) { html += renderAiWorkerCard(); continue; }
       const agent = workers.find((item) => item.slotIndex === slot);
       if (agent) { html += renderAgentCard(agent); continue; }
@@ -3457,21 +3462,21 @@
   // Find first unassigned worker and assign to this cluster
   function renderClusterSlot(cluster, index, delegated) {
     const agent = G.agents.find((item) => item.id === cluster.workerAgentIds[index]);
-    const filled = G.phase >= 12 ? index < cluster.workforce : Boolean(agent);
-    const label = G.phase < 12 && agent ? agent.name : "";
+    const filled = G.phase >= 13 ? index < cluster.workforce : Boolean(agent);
+    const label = G.phase < 13 && agent ? agent.name : "";
     const identity = cluster.name + ", agent slot " + (index + 1);
     if (agent && agent.status === "provisioning") {
       const progress = clamp(100 * (1 - agent.provisionRemaining / agent.provisionDuration), 0, 100);
       return "<span class='capacity-slot provisioning' role='progressbar' aria-label='Provisioning agent' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + progress + "' title='Installing " + identity + "' style='--progress:" + progress + "%'>" + label + "</span>";
     }
-    if (!filled && !delegated && G.phase < 12) return "<button class='capacity-slot empty provision-agent' onclick=\"GAME.buyClusterWorker('" + cluster.id + "'," + index + ")\" aria-label='Provision agent for $2,500' title='Add " + identity + "' " + (G.cash < 2500 || !cluster.managerAssigned || index !== cluster.workerAgentIds.length ? "disabled" : "") + ">+</button>";
+    if (!filled && !delegated && G.phase < 13) return "<button class='capacity-slot empty provision-agent' onclick=\"GAME.buyClusterWorker('" + cluster.id + "'," + index + ")\" aria-label='Provision agent for $2,500' title='Add " + identity + "' " + (G.cash < 2500 || !cluster.managerAssigned || index !== cluster.workerAgentIds.length ? "disabled" : "") + ">+</button>";
     return "<span class='capacity-slot " + (filled ? "filled" : "empty") + "' title='" + identity + (filled ? " online" : " vacant") + "'>" + (filled ? label : "+") + "</span>";
   }
 
   function renderClusterCard(cluster) {
-    const compact = G.phase >= 12;
-    const minimal = G.phase >= 14;
-    const delegated = G.phase >= 10 && G.ceoMode !== "off";
+    const compact = G.phase >= 13;
+    const minimal = G.phase >= 15;
+    const delegated = G.phase >= 11 && G.ceoMode !== "off";
     const count = compact ? cluster.workforce : cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
     const title = cluster.name + ": " + count + "/" + cluster.workerSlotsMax + " agents, " + fmtTokens(cluster.tank) + " tokens";
     let html = "<div class='cluster-card' data-cluster-id='" + cluster.id + "' title='" + title + "'>";
@@ -3499,7 +3504,7 @@
   function renderPlanningCard() {
     const funding = G.cash < expansionFundingTarget();
     const stage = funding ? "Securing " + fmtCash(expansionFundingTarget()) + " funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
-    return "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + (G.phase >= 14 ? "C" : "Cluster ") + (G.clustersProvisioned + 1) + "</strong><span>Planning</span><small>" + stage + "</small></div>";
+    return "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + (G.phase >= 15 ? "C" : "Cluster ") + (G.clustersProvisioned + 1) + "</strong><span>Planning</span><small>" + stage + "</small></div>";
   }
 
   function neocloudGroups(planning) {
@@ -3537,7 +3542,7 @@
     const section = $("#section-clusters");
     section.style.display = G.uiRevealed.clusters ? "" : "none";
     if (!G.uiRevealed.clusters) return;
-    const minimal = G.phase >= 14;
+    const minimal = G.phase >= 15;
     const planning = canPlanNextCluster();
     const tiles = G.clusters.length + (canManuallyProvisionCluster() || planning ? 1 : 0);
     const density = Math.max(0, tiles - 3);
@@ -3545,7 +3550,7 @@
     $("#cluster-count").textContent = managedNodeCount() + " online / " + G.clusters.length + " clusters";
     $("#cluster-heading").textContent = minimal ? "Neoclouds" : "Clusters";
     let html = "";
-    if (G.phase >= 10) {
+    if (G.phase >= 11) {
       const purchase = deliveryMetrics().purchase;
       html += "<div class='company-leadership' aria-label='Company leadership'>";
       if (G.ceoMode === "off") html += "<button class='card hire-slot management-agent leadership-agent ceo-slot' onclick=\"GAME.buy('ai_ceo')\" " + (G.cash < 1000000 ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Provision AI CEO</strong><span>$1M</span></button>";
@@ -3564,7 +3569,7 @@
   }
 
   function renderDevops() {
-    if (G.phase >= 9) return "";
+    if (G.phase >= 10) return "";
     const agent = G.agents.find((item) => item.roleId === "devops");
     if (agent) return renderAgentCard(agent);
     if (!G.purchasedUpgrades.includes("devops_unlock")) return "";
@@ -3574,17 +3579,17 @@
 
   function renderIncidentSection() {
     var section = $("#section-incidents");
-    if (!G.uiRevealed.incidents && G.phase < 7) { section.style.display = "none"; return; }
+    if (!G.uiRevealed.incidents && G.phase < 8) { section.style.display = "none"; return; }
     section.style.display = "";
 
     updateHTML($("#incident-devops"), renderDevops());
     var active = G.incidents.filter(function (i) { return !i.resolved; });
-    var idleDevops = G.phase >= 9 ? managedNodeCount() : G.agents.filter(function (a) { return a.roleId === "devops" && a.status === "idle"; }).length;
+    var idleDevops = G.phase >= 10 ? managedNodeCount() : G.agents.filter(function (a) { return a.roleId === "devops" && a.status === "idle"; }).length;
     const health = $("#operations-health");
-    health.hidden = G.phase < 9;
+    health.hidden = G.phase < 10;
     health.textContent = active.length === 0 ? "Operations healthy · DevOps included in every cluster" : active.length + (active.length === 1 ? " incident · " : " incidents · ") + (idleDevops > 0 ? "Cluster DevOps responding" : "Waiting for an online cluster");
     health.classList.toggle("attention", active.length > 0);
-    $("#incidents-header").parentElement.hidden = G.phase >= 9 && active.length === 0;
+    $("#incidents-header").parentElement.hidden = G.phase >= 10 && active.length === 0;
     $("#incident-count").textContent = active.length + " active";
 
     var header = $("#incidents-header");
@@ -3598,7 +3603,7 @@
 
     if (active.length === 0) {
       updateHTML($("#incident-list"), "");
-      $("#no-incidents").style.display = G.phase >= 9 ? "none" : "";
+      $("#no-incidents").style.display = G.phase >= 10 ? "none" : "";
       return;
     }
     $("#no-incidents").style.display = "none";
@@ -3683,7 +3688,7 @@
     container.classList.toggle("cp-visible", cpVisible);
 
     // Late game: control panel dominates
-    var lateGame = G.phase >= 5 || G.agents.length > 0;
+    var lateGame = G.phase >= 6 || G.agents.length > 0;
     container.classList.toggle("cp-late", cpVisible && lateGame);
   }
 
@@ -3856,9 +3861,9 @@
   }
 
   function fillCheatCompany(targetClusters) {
-    if (G.phase < 4) return;
-    if (G.phase < 9) {
-      while (sharedAgentCount() < getHireAgentCapacity() || (G.phase >= 7 && !G.agents.some((agent) => agent.roleId === "devops"))) {
+    if (G.phase < 5) return;
+    if (G.phase < 10) {
+      while (sharedAgentCount() < getHireAgentCapacity() || (G.phase >= 8 && !G.agents.some((agent) => agent.roleId === "devops"))) {
         const candidates = availableHireRoles().sort((a, b) => Number(UTILITY_ROLES.includes(b.id)) - Number(UTILITY_ROLES.includes(a.id)) || G.agents.filter((agent) => agent.roleId === a.id).length - G.agents.filter((agent) => agent.roleId === b.id).length);
         const before = G.agents.length;
         for (const role of candidates) {
@@ -3872,7 +3877,7 @@
     while (G.clusters.length < targetClusters && G.clusters.length < clusterCapacity()) openCluster();
     tickConstruction(Math.max(0, ...G.clusters.map((cluster) => cluster.buildRemaining)));
     for (const cluster of G.clusters) {
-      if (G.phase < 12) {
+      if (G.phase < 13) {
         while (cluster.workerAgentIds.length < cluster.workerSlotsMax) buyNextClusterWorker(cluster.id);
       } else if (!cluster.managerAssigned || cluster.workforce < cluster.workerSlotsMax) {
         G.lastCeoAction = 0;
@@ -3884,12 +3889,12 @@
 
   function loadCheatStage(stage) {
     const early = { "0_1": 0, "0_2": 7, "0_": 35, "0_4": 100, "1": 50 };
-    const startPhase8 = stage === "start8";
-    const number = startPhase8 ? 8 : Number(stage);
-    const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
+    const startPhase9 = stage === "start9";
+    const number = startPhase9 ? 9 : Number(stage);
+    const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
-    const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 180000000, clusters: 5 }, "12": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
+    const checkpoint = { "4": { tasks: 870, cash: 14000 }, "9": { tasks: 390000, cash: 800000 }, "10": { tasks: 1000000, cash: 1200000 }, "11": { tasks: 4600000, cash: 30000000, clusters: 3 }, "12": { tasks: 27000000, cash: 180000000, clusters: 5 }, "13": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
     const musicMode = G.musicMode;
     G = defaultState();
     G.musicMode = musicMode;
@@ -3898,8 +3903,8 @@
     G.totalIncidents = 3;
     G.incidentsExplained = true;
     G.cash = 1e15;
-    const preceding = UPGRADES.filter((upgrade, index) => upgrade !== target && (stage !== "3_1" || index < UPGRADES.indexOf(target)) && upgrade.oneTime && (!Object.hasOwn(early, stage) || (upgrade.reqTasks < early[stage] || (upgrade.introductory && upgrade.reqTasks === early[stage]))) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
-    const requiredClusters = Math.max(checkpoint?.clusters || 0, phase >= 10 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
+    const preceding = UPGRADES.filter((upgrade) => upgrade !== target && upgrade.oneTime && (!Object.hasOwn(early, stage) || (upgrade.reqTasks < early[stage] || (upgrade.introductory && upgrade.reqTasks === early[stage]))) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
+    const requiredClusters = Math.max(checkpoint?.clusters || 0, phase >= 11 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
       const before = G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
@@ -3914,15 +3919,15 @@
     fillCheatCompany(requiredClusters);
     tickConstruction(12.1);
     if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - (stage === "retire" ? 0 : 1)));
-    G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 12 ? (phase === 12 ? 3000000 : phase === 13 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
+    G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 13 ? (phase === 13 ? 3000000 : phase === 14 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
-    G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 6 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
+    G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 7 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
     if (target && target.reqNodes) G.cash = Math.max(G.cash, provisionCost() * 2 + getUpgradeCost(target));
     if (number === 3) G.cash = 1900;
-    if (number === 4) G.cash = 1300;
-    G.tokens = phase >= 9 ? Math.max(100000, G.clusters.length * 12000) : phase >= 6 ? 50000 : phase >= 3 ? 10000 : 0;
+    if (number === 5) G.cash = 1300;
+    G.tokens = phase >= 10 ? Math.max(100000, G.clusters.length * 12000) : phase >= 7 ? 50000 : phase >= 3 ? 10000 : 0;
     G.aiWorkerTokenTank = phase >= 2 && !G.aiWorkerShutdown ? workerTokenCapacity() : 0;
-    G.managerTokenTank = phase >= 6 && phase < 9 ? MANAGER_TOKEN_TANK_MAX : 0;
+    G.managerTokenTank = phase >= 7 && phase < 10 ? MANAGER_TOKEN_TANK_MAX : 0;
     G.aiRunSeconds = 0;
     G.totalIncidents = phase >= 3 ? 3 : 0;
     G.incidentsExplained = phase >= 3;
@@ -3944,14 +3949,14 @@
     G.lastTick = Date.now();
     G.lastTaskSpawn = Date.now();
     G.lastCeoAction = Date.now();
-    if (startPhase8) {
+    if (startPhase9) {
       G.totalTasksDone = target.reqTasks;
       purchaseUpgrade(target.id);
     }
     popupQueue = [];
     dismissPopup();
     $("#intro-overlay").classList.add("hidden");
-    log("Debug checkpoint: Phase " + G.phase + (startPhase8 ? ", at phase entry" : target ? ", before " + target.name : "") + ".", "info");
+    log("Debug checkpoint: Phase " + G.phase + (startPhase9 ? ", at phase entry" : target ? ", before " + target.name : "") + ".", "info");
     syncMusicPlayback();
     renderAll();
     save();
@@ -3964,14 +3969,14 @@
   // -> Reality Check / expenses (task 90)
   // -> Discover Free-Tier AI / phase 2 (task 110)
   // -> Pro AI Subscription / phase 3
-  // -> Multi-Bot License / phase 4
-  // Phase 5 entry: web/code upgrades available
-  // Phase 6 entry: manager works before playbooks
-  // Phase 7 entry: Token budget console
-  // Phase 7 entry: Token budget console
-  // Phase 9 entry: single cluster Alpha
-  // Phase 9: second cluster upgrade available soon
-  // Phase 9: second cluster can be purchased
+  // -> Multi-Bot License / phase 5
+  // Phase 6 entry: web/code upgrades available
+  // Phase 7 entry: manager works before playbooks
+  // Phase 8 entry: Token budget console
+  // Phase 8 entry: Token budget console
+  // Phase 10 entry: single cluster Alpha
+  // Phase 10: second cluster upgrade available soon
+  // Phase 10: second cluster can be purchased
   // Purchase all available upgrades (loop until stable for phase unlocks)
   // Fill all currently available hire slots
   // Clean up side effects from purchases
@@ -4023,9 +4028,9 @@
   // Console shortcuts
   window.chPh0 = function () { GAME.resetSave(); };
   var cheatShortcuts = [
-    "0_", 1, 2, 3, "3_1", 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    "0_", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
   ];
-  window.chStart8 = function () { GAME.cheat("start8"); };
+  window.chStart9 = function () { GAME.cheat("start9"); };
   window.chRetire = function () { GAME.cheat("retire"); };
   for (var shortcutIndex = 0; shortcutIndex < cheatShortcuts.length; shortcutIndex++) {
     var shortcut = cheatShortcuts[shortcutIndex];

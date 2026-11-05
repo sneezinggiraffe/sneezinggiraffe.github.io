@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
-function company(phase = 14, count = 500, options = {}) {
+function company(phase = 15, count = 500, options = {}) {
   const h = harness(undefined, options);
   const g = h.fresh(phase);
   g.ceoMode = 'scale';
@@ -11,7 +11,7 @@ function company(phase = 14, count = 500, options = {}) {
   g.totalTasksDone = 1e9;
   g.aiWorkerShutdown = true;
   g.purchasedUpgrades.push('ceo_full_fit', 'ceo_continuous', 'ceo_parallel_clusters');
-  if (phase >= 14) h.prepareUpgrade('retire_unlock');
+  if (phase >= 15) h.prepareUpgrade('retire_unlock');
   for (let index = 0; index < count; index++) h.fullCluster().tank = 4000;
   h.api.checkMilestones();
   h.dismiss();
@@ -23,13 +23,13 @@ function saleButton(h, id) {
 }
 
 test('manual provisioning placeholders and newly built clusters take the first position in Phases 9 and 10', () => {
-  for (const phase of [9, 10]) {
+  for (const phase of [10, 11]) {
     const h = harness();
     try {
       const g = h.fresh(phase);
       g.cash = 1e9;
       g.totalTasksDone = 1e9;
-      g.ceoMode = phase === 10 ? 'manage' : 'off';
+      g.ceoMode = phase === 11 ? 'manage' : 'off';
       g.purchasedUpgrades.push('cluster_capacity_2', 'cluster_capacity_3');
       const original = h.fullCluster();
       h.api.checkMilestones();
@@ -60,7 +60,7 @@ test('manual provisioning placeholders and newly built clusters take the first p
 });
 
 test('Phases 11 through 13 put planning and newest clusters first throughout construction', () => {
-  for (const phase of [11, 12, 13]) {
+  for (const phase of [12, 13, 14]) {
     const h = company(phase, 3);
     try {
       const g = h.window.GAME.state;
@@ -69,7 +69,7 @@ test('Phases 11 through 13 put planning and newest clusters first throughout con
       const building = g.clusters.at(-1);
       h.api.renderClusterSection();
       const grid = h.window.document.querySelector('#cluster-list .node-grid');
-      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 11 ? 'Cluster 4' : 'Cluster 5');
+      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 12 ? 'Cluster 4' : 'Cluster 5');
       assert.equal(grid.querySelector('[data-cluster-id]').dataset.clusterId, building.id);
       assert.equal(grid.querySelectorAll('.cluster-capacity').length, 3);
       assert.equal(grid.querySelectorAll('[aria-label="Cluster construction"]').length, 1);
@@ -81,7 +81,7 @@ test('Phases 11 through 13 put planning and newest clusters first throughout con
       assert.equal(grid.firstElementChild.classList.contains('planning-card'), true);
       h.api.openCluster();
       h.api.renderClusterSection();
-      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 11 ? 'Cluster 5' : 'Cluster 6');
+      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 12 ? 'Cluster 5' : 'Cluster 6');
       assert.deepEqual([...grid.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
       assert.deepEqual(g.clusters.slice(0, 3).map(cluster => cluster.id), originalOrder);
       assert.equal(h.api.validSave(g), true);
@@ -97,8 +97,8 @@ test('Phases 11 through 13 put planning and newest clusters first throughout con
   }
 });
 
-test('Phase 14 groups every cluster into permanent neoclouds of twenty-five', () => {
-  const h = company(14, 250);
+test('Phase 15 groups every cluster into permanent neoclouds of twenty-five', () => {
+  const h = company(15, 250);
   try {
     const g = h.window.GAME.state;
     h.api.renderClusterSection();
@@ -136,7 +136,7 @@ test('Phase 14 groups every cluster into permanent neoclouds of twenty-five', ()
 });
 
 test('neocloud boundaries retain both simultaneous builds and count only real output', () => {
-  const h = company(14, 24);
+  const h = company(15, 24);
   try {
     const g = h.window.GAME.state;
     g.clusters[0].tank = 0;
@@ -161,8 +161,8 @@ test('neocloud boundaries retain both simultaneous builds and count only real ou
   }
 });
 
-test('investor talks wait for 500 completed clusters, charge $90k once and unlock Phase 15 on completion', () => {
-  const h = company(14, 499);
+test('investor talks wait for 500 completed clusters, charge $90k once and unlock Phase 16 on completion', () => {
+  const h = company(15, 499);
   try {
     const g = h.window.GAME.state;
     g.cash = 90000;
@@ -180,7 +180,7 @@ test('investor talks wait for 500 completed clusters, charge $90k once and unloc
     assert.equal(saleButton(h, 'retire_unlock').textContent, '$90.0K');
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(g.cash, 0);
-    assert.equal(g.phase, 14);
+    assert.equal(g.phase, 15);
     assert.equal(g.salePreparation.remaining, 8);
     h.api.purchaseUpgrade('retire_unlock');
     h.api.purchaseUpgrade('sale_advisor');
@@ -195,7 +195,7 @@ test('investor talks wait for 500 completed clusters, charge $90k once and unloc
     h.api.tickSalePreparation(4);
     h.dismiss();
     h.api.renderUpgradeSection();
-    assert.equal(g.phase, 15);
+    assert.equal(g.phase, 16);
     assert.equal(g.purchasedUpgrades.filter(id => id === 'retire_unlock').length, 1);
     assert.equal(g.salePreparation.upgradeId, '');
     assert.match(saleButton(h, 'sale_advisor').closest('.card').textContent, /The investors are interested/);
@@ -278,11 +278,11 @@ test('sale timers pause with dialogs and offline gaps and resume with the game t
   }
 });
 
-test('save format 16 rejects invalid sale timers and preserves older saves for explicit reset', () => {
+test('save format 17 rejects invalid sale timers and preserves older saves for explicit reset', () => {
   const h = company();
   try {
     const g = h.window.GAME.state;
-    assert.equal(g.saveVersion, 16);
+    assert.equal(g.saveVersion, 17);
     assert.equal(h.api.validSave(g), true);
     for (const preparation of [
       { upgradeId: 'missing', remaining: 1 },
@@ -295,11 +295,11 @@ test('save format 16 rejects invalid sale timers and preserves older saves for e
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(h.api.validSave(g), true);
     assert.equal(h.api.validSave({...g, retired: true}), false);
-    assert.equal(h.api.validSave({...g, phase: 15}), false);
+    assert.equal(h.api.validSave({...g, phase: 16}), false);
     assert.equal(h.api.validSave({...g, purchasedUpgrades: [...g.purchasedUpgrades, 'retire_unlock']}), false);
     h.api.tickSalePreparation(8);
     assert.equal(h.api.validSave({...g, salePreparation: {upgradeId: 'sale_terms', remaining: 1}}), false);
-    const raw = JSON.stringify({...g, saveVersion: 15});
+    const raw = JSON.stringify({...g, saveVersion: 16});
     const restored = harness(raw);
     try {
       assert.equal(restored.window.GAME.state.phase, 1);
@@ -316,7 +316,7 @@ test('save format 16 rejects invalid sale timers and preserves older saves for e
 });
 
 test('sale readiness shows the actual financial and operating blockers', () => {
-  const h = company(15);
+  const h = company(16);
   try {
     const g = h.window.GAME.state;
     h.prepareUpgrade('fusion');
@@ -340,12 +340,12 @@ test('sale readiness shows the actual financial and operating blockers', () => {
 });
 
 test('a completed sale freezes the company, fades to black and reveals retirement with its music', () => {
-  const h = company(15, 100, { reducedMotion: false });
+  const h = company(16, 100, { reducedMotion: false });
   try {
     const g = h.window.GAME.state;
-    g.phase = 5;
+    g.phase = 6;
     h.api.unlockMusicPlayback();
-    g.phase = 15;
+    g.phase = 16;
     h.prepareUpgrade('fusion');
     h.api.renderAll();
     const companyHtml = h.window.document.querySelector('#game-container').innerHTML;

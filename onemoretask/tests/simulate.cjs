@@ -12,7 +12,7 @@ function play(seed=17,actionEveryMs=500,delegateOpening=false) {
       if(!g.uiRevealed.taskQueue)h.api.doEarlyTask();
       else if (!(delegateOpening && g.phase === 1 && h.api.assistantAvailable())) h.api.doWork();
       if(g.phase>=2 && g.aiWorkerTokenTank<1)h.api.topUpAiWorker();
-      if(g.phase<7)for(const inc of g.incidents.filter(i=>!i.resolved))h.api.resolveIncident(inc.id,'manual');
+      if(g.phase<8)for(const inc of g.incidents.filter(i=>!i.resolved))h.api.resolveIncident(inc.id,'manual');
       if (g.uiRevealed.upgrades) for (const u of h.api.UPGRADES) if (u.oneTime && (!u.optional || u.id === "multitasking") && !g.purchasedUpgrades.includes(u.id)) {
         if (h.api.upgradeVisible(u) && !offered.has(u.id)) {
           offered.add(u.id);
@@ -30,16 +30,16 @@ function play(seed=17,actionEveryMs=500,delegateOpening=false) {
       }
       if(g.phase>=3&&g.tokens<50)h.api.purchaseUpgrade('token_pack_1');
       if(g.phase>=3)for(const agent of g.agents)if(agent.tokenTank<1)h.api.topUpAgent(agent.id);
-      if(g.phase>=4){
+      if(g.phase>=5){
         const roles=['manager','token_mgr','devops','writer','coder','researcher','analyst','sales'];
         for(const role of roles)if(!g.agents.some(a=>a.roleId===role))h.api.hireAgent(role);
         if(g.managerTokenTank<10)h.api.topUpManager();
         for(const agent of g.agents)if(agent.tokenTank<1)h.api.topUpAgent(agent.id);
       }
     }
-    if(step%actionSteps===0 && g.phase>=9 && g.phase<=12){
+    if(step%actionSteps===0 && g.phase>=10 && g.phase<=13){
       if(h.api.canManuallyProvisionCluster())h.window.GAME.openCluster();
-      if(g.phase<10)for(const c of g.clusters){h.api.buyNextClusterWorker(c.id);}
+      if(g.phase<11)for(const c of g.clusters){h.api.buyNextClusterWorker(c.id);}
     }
     h.api.tick();
     if(g.phase!==lastPhase){milestones.push({phase:g.phase,seconds:step/10,tasks:g.totalTasksDone,clicks:g.totalClicks,cash:Math.round(g.cash),nodes:h.api.completedClusterCount()});lastPhase=g.phase;}

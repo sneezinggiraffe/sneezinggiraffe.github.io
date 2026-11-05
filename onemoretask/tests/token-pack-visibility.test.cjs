@@ -2,19 +2,19 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
-test('manual token packs disappear on entering Phase 10 and stay hidden thereafter', () => {
+test('manual token packs disappear on entering Phase 11 and stay hidden thereafter', () => {
   const h = harness();
   try {
-    h.window.chPh10();
+    h.window.chPh11();
     const g = h.window.GAME.state;
     const packs = () => h.window.document.querySelectorAll('#upgrade-list button[onclick*="token_pack_"]');
-    assert.equal(g.phase, 9);
+    assert.equal(g.phase, 10);
     h.api.renderUpgradeSection();
     assert.equal(packs().length, 2);
 
     g.cash = 35000000;
     h.api.purchaseUpgrade('ceo_readiness');
-    assert.equal(g.phase, 10);
+    assert.equal(g.phase, 11);
     h.api.renderUpgradeSection();
     assert.equal(packs().length, 0);
 
@@ -25,7 +25,7 @@ test('manual token packs disappear on entering Phase 10 and stay hidden thereaft
     assert.ok(g.tokenPacksBought > bought);
     assert.ok(g.cash < 1000000);
 
-    for (const phase of [11, 12, 13, 14, 15]) {
+    for (const phase of [12, 13, 14, 15, 16]) {
       g.phase = phase;
       h.api.renderUpgradeSection();
       assert.equal(packs().length, 0);

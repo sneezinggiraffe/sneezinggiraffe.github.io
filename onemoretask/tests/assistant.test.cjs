@@ -6,6 +6,7 @@ function hire(h, multitasking = false) {
   const g = h.fresh();
   g.uiRevealed.taskQueue = true; g.totalTasksDone = multitasking ? 35 : 7; g.cash = 1000;
   h.api.purchaseUpgrade('tools_of_trade'); h.api.purchaseUpgrade('hire_assistant');
+  h.api.purchaseUpgrade('gas_station_coffee'); h.api.purchaseUpgrade('sticky_note_system');
   if (multitasking) { h.api.purchaseUpgrade('ai_hint'); h.api.purchaseUpgrade('multitasking'); }
   return g;
 }
@@ -18,7 +19,7 @@ function tasks(h, count = 5) {
 test('one assignment reserves four concurrent tasks, pays each completion and then waits', () => {
   const h = harness(); let restored;
   try {
-    const g = hire(h); const jobs = tasks(h); const cash = g.cash;
+    const g = hire(h); g.payMult = 1; const jobs = tasks(h); const cash = g.cash;
     h.api.renderAll(); assert.equal(h.window.document.querySelector('#task-list button'), null);
     assert.equal(h.window.document.querySelector('#team-heading').textContent, 'Team');
     h.window.GAME.assignAssistantWork(); h.api.assignAssistantWork();
@@ -224,7 +225,7 @@ test('human icons and all AI top-ups share the primary action style without dism
   const h = harness();
   try {
     const g = hire(h);
-    for (const phase of [2, 3, 4, 6]) {
+    for (const phase of [2, 3, 5, 7]) {
       g.phase = phase;
       h.api.renderAll();
       for (const selector of ['#you-card', '[data-assistant]']) {
@@ -272,5 +273,68 @@ test('opening, manual work and AI assist never create floating click rewards', (
     g.phase = 2;
     h.api.aiAssistTask(task.id, event);
     assert.equal(h.window.document.querySelector('.click-reward'), null);
+  } finally { h.close(); }
+});
+
+test('assistant pricing and concise copy are reflected in the cards', () => {
+  const h = harness();
+  try {
+    const g = h.fresh(); g.totalTasksDone = 7; g.uiRevealed.taskQueue = true;
+    h.api.purchaseUpgrade('tools_of_trade');
+    g.cash = 29; h.api.purchaseUpgrade('hire_assistant');
+    assert.equal(h.api.assistantAvailable(), false);
+    g.cash = 30; h.api.purchaseUpgrade('hire_assistant');
+    assert.equal(g.cash, 0); assert.equal(h.api.assistantAvailable(), true);
+    const upgrade = id => h.api.UPGRADES.find(item => item.id === id);
+    assert.equal(upgrade('hire_assistant').desc, 'Delegate easier tasks');
+    assert.equal(upgrade('multitasking').desc, 'Do one task with each hand');
+    tasks(h); h.api.assignAssistantWork(); h.api.renderAll();
+    const assistant = h.window.document.querySelector('[data-assistant]');
+    assert.match(assistant.textContent, /4 working/);
+    assert.doesNotMatch(assistant.textContent, /queued/);
+    g.phase = 2; h.api.renderAll();
+    const ai = h.window.document.querySelector('[data-agent-slot="0"]');
+    assert.match(ai.textContent, /Add tokens/);
+    assert.doesNotMatch(ai.textContent, /Automatically takes the next task|Top-up tokens/);
+  } finally { h.close(); }
+});
+
+test('Pro starts Phase 4 without changing workload, tanks or starter tokens; the licence starts Phase 5', () => {
+  const h = harness();
+  try {
+    h.window.chPh4();
+    const g = h.window.GAME.state;
+    assert.equal(g.phase, 3);
+    const transitions = h.api.UPGRADES.filter(upgrade => upgrade.unlockPhase);
+    assert.deepEqual(Array.from(transitions, upgrade => upgrade.unlockPhase), Array.from({ length: 15 }, (_, index) => index + 2));
+    assert.equal(h.window.chPh3_1, undefined);
+    assert.equal(h.window.chStart8, undefined);
+    assert.equal(typeof h.window.chStart9, 'function');
+    g.cash = 18000;
+    const tokens = g.tokens;
+    const capacity = h.api.workerTokenCapacity();
+    const rate = h.api.workerTokenRate();
+    const interval = h.api.getSpawnInterval();
+    h.api.purchaseUpgrade('second_ai');
+    assert.equal(g.phase, 4); assert.equal(g.tokens, tokens);
+    assert.equal(h.api.workloadTier(4), h.api.workloadTier(3));
+    assert.equal(h.api.workerTokenCapacity(), capacity);
+    assert.equal(h.api.workerTokenRate(), rate);
+    assert.equal(h.api.workerTokenCapacity(g.agents[0]), 100);
+    assert.equal(h.api.getSpawnInterval(), interval);
+    assert.equal(h.api.validSave(g), true);
+    const restored = harness(JSON.stringify(g));
+    try {
+      assert.equal(restored.window.GAME.state.phase, 4);
+      assert.equal(restored.window.GAME.state.agents[0].name, 'AI 2000 Pro');
+    } finally { restored.close(); }
+    h.window.chPh5();
+    const licensed = h.window.GAME.state;
+    assert.equal(licensed.phase, 4);
+    licensed.cash = 25000; licensed.totalTasksDone = 1000;
+    h.api.purchaseUpgrade('multi_bot');
+    assert.equal(licensed.phase, 5);
+    assert.equal(h.api.workerTokenCapacity(licensed.agents.find(agent => agent.name === 'AI 2000 Pro')), 200);
+    assert.equal(h.api.validSave(licensed), true);
   } finally { h.close(); }
 });

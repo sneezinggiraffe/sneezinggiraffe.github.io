@@ -10,7 +10,7 @@ function expansionCompany(phase, count) {
   g.totalTasksDone = 1e9;
   g.ceoMode = 'scale';
   g.aiWorkerShutdown = true;
-  h.prepareUpgrade(phase >= 14 ? 'neocloud_pipeline' : 'replication');
+  h.prepareUpgrade(phase >= 15 ? 'neocloud_pipeline' : 'replication');
   for (let index = 0; index < count; index++) h.fullCluster().tank = 4000;
   h.api.checkMilestones();
   h.dismiss();
@@ -20,7 +20,7 @@ function expansionCompany(phase, count) {
 test('four-character agent IDs resolve collisions, retain leading zeroes and wrap from ffff to 0000', () => {
   const h = harness();
   try {
-    const g = h.fresh(9);
+    const g = h.fresh(10);
     h.window.Math.random = () => 0xffff / 0x10000;
     assert.equal(h.api.newClusterAgentName(), 'ffff');
     g.agents = [{name: 'ffff'}];
@@ -36,23 +36,23 @@ test('four-character agent IDs resolve collisions, retain leading zeroes and wra
   }
 });
 
-test('Scale Mode enters Phase 11 with an explicit automatic expansion unlock', () => {
+test('Scale Mode enters Phase 12 with an explicit automatic expansion unlock', () => {
   const h = harness();
   try {
-    h.window.chPh11();
+    h.window.chPh12();
     const g = h.window.GAME.state;
-    assert.equal(g.phase, 10);
+    assert.equal(g.phase, 11);
     assert.equal(g.ceoMode, 'manage');
     assert.equal(g.clusters.length, 5);
     assert.equal(g.cash, 180000000);
     const scale = h.api.UPGRADES.find(upgrade => upgrade.id === 'server_1');
-    assert.equal(scale.unlockPhase, 11);
+    assert.equal(scale.unlockPhase, 12);
     assert.match(scale.desc, /create and staff new clusters automatically/);
     h.api.purchaseUpgrade('server_1');
-    assert.equal(g.phase, 10);
+    assert.equal(g.phase, 11);
     g.cash += 20000000;
     h.api.purchaseUpgrade('server_1');
-    assert.equal(g.phase, 11);
+    assert.equal(g.phase, 12);
     assert.equal(g.ceoMode, 'scale');
     assert.equal(h.api.canManuallyProvisionCluster(), false);
     g.cash = 1e12;
@@ -65,8 +65,8 @@ test('Scale Mode enters Phase 11 with an explicit automatic expansion unlock', (
   }
 });
 
-test('the Phase 11 speed upgrade halves construction and CEO coordination without changing phase', () => {
-  const h = expansionCompany(11, 5);
+test('the Phase 12 speed upgrade halves construction and CEO coordination without changing phase', () => {
+  const h = expansionCompany(12, 5);
   try {
     const g = h.window.GAME.state;
     g.purchasedUpgrades = g.purchasedUpgrades.filter(id => !['ceo_course', 'ceo_full_fit', 'ceo_continuous'].includes(id));
@@ -74,7 +74,7 @@ test('the Phase 11 speed upgrade halves construction and CEO coordination withou
     assert.equal(duration, 6);
     assert.equal(h.api.UPGRADES.find(upgrade => upgrade.id === 'ceo_course').name, 'Rapid Cluster Deployment');
     h.api.purchaseUpgrade('ceo_course');
-    assert.equal(g.phase, 11);
+    assert.equal(g.phase, 12);
     assert.equal(h.api.clusterBuildDuration(), duration / 2);
     assert.equal(h.api.queue().length, 0);
     g.lastCeoAction = h.window.Date.now();
@@ -93,13 +93,13 @@ test('the Phase 11 speed upgrade halves construction and CEO coordination withou
 });
 
 test('replication expands two concurrent builds to four and pays for independent replacements', () => {
-  const h = expansionCompany(12, 20);
+  const h = expansionCompany(13, 20);
   try {
     const g = h.window.GAME.state;
     h.api.tickAiCeo();
     assert.equal(g.clusters.filter(cluster => cluster.buildRemaining > 0).length, 2);
     h.api.purchaseUpgrade('replication');
-    assert.equal(g.phase, 13);
+    assert.equal(g.phase, 14);
     const initial = g.cash;
     const existing = g.clusters.length;
     h.api.tickAiCeo();
@@ -126,8 +126,8 @@ test('replication expands two concurrent builds to four and pays for independent
   }
 });
 
-test('Phase 14 upgrades require completed clusters and cash, then unlock speed, cost reductions and whole neoclouds', () => {
-  const h = expansionCompany(14, 99);
+test('Phase 15 upgrades require completed clusters and cash, then unlock speed, cost reductions and whole neoclouds', () => {
+  const h = expansionCompany(15, 99);
   try {
     const g = h.window.GAME.state;
     for (const [id, nodes, cost, concurrency, faster, cheaper] of [
@@ -173,8 +173,8 @@ test('Phase 14 upgrades require completed clusters and cash, then unlock speed, 
   }
 });
 
-test('construction discounts halve every rising price and funding target, survive reload and remain active in Phase 15', () => {
-  const h = expansionCompany(14, 300);
+test('construction discounts halve every rising price and funding target, survive reload and remain active in Phase 16', () => {
+  const h = expansionCompany(15, 300);
   let restored;
   try {
     const g = h.window.GAME.state;
@@ -203,7 +203,7 @@ test('construction discounts halve every rising price and funding target, surviv
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
     assert.equal(restored.api.provisionCost(), h.api.provisionCost());
     assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
-    restored.window.GAME.state.phase = 15;
+    restored.window.GAME.state.phase = 16;
     assert.equal(restored.api.provisionCost(), h.api.provisionCost());
     assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
   } finally {
@@ -213,7 +213,7 @@ test('construction discounts halve every rising price and funding target, surviv
 });
 
 test('Factory-Direct Hardware lowers costs, makes price increases linear and persists without changing speed or investments', () => {
-  const h = expansionCompany(14, 400);
+  const h = expansionCompany(15, 400);
   let restored;
   try {
     const g = h.window.GAME.state;
@@ -233,7 +233,7 @@ test('Factory-Direct Hardware lowers costs, makes price increases linear and per
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
     assert.equal(restored.api.provisionCost(), prices[0]);
-    restored.window.GAME.state.phase = 15;
+    restored.window.GAME.state.phase = 16;
     assert.equal(restored.api.provisionCost(), prices[0]);
     assert.equal(restored.api.validSave(restored.window.GAME.state), true);
   } finally {
@@ -242,12 +242,12 @@ test('Factory-Direct Hardware lowers costs, makes price increases linear and per
   }
 });
 
-test('the final Phase 14 company funds approximately one neocloud per second from its own income', () => {
+test('the final Phase 15 company funds approximately one neocloud per second from its own income', () => {
   const h = harness();
   try {
     h.window.chRetire();
     const g = h.window.GAME.state;
-    g.phase = 14;
+    g.phase = 15;
     g.cash = 0;
     const samples = [];
     for (let second = 0; second < 30; second++) {
@@ -272,7 +272,7 @@ test('the final Phase 14 company funds approximately one neocloud per second fro
 for (const concurrency of [25, 50]) {
   test(`${concurrency} neocloud builds pay every price, overlap, preserve order and resume after reload`, () => {
     const count = concurrency === 25 ? 75 : 125;
-    const h = expansionCompany(14, count);
+    const h = expansionCompany(15, count);
     let restored;
     try {
       const g = h.window.GAME.state;
@@ -310,7 +310,7 @@ for (const concurrency of [25, 50]) {
 }
 
 test('whole-neocloud expansion saves for its full budget and resumes when cash recovers', () => {
-  const h = expansionCompany(14, 125);
+  const h = expansionCompany(15, 125);
   try {
     const g = h.window.GAME.state;
     h.prepareUpgrade('retire_unlock');

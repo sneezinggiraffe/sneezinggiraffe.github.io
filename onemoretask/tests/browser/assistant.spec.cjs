@@ -4,7 +4,7 @@ const { harness } = require('../harness.cjs');
 async function openTeam(page, width, phase = 1) {
   const h = harness(); const g = h.fresh(phase);
   g.totalTasksDone = phase === 1 ? 7 : 650; g.cash = 20000; g.uiRevealed.taskQueue = true;
-  if (phase === 1) { h.api.purchaseUpgrade('tools_of_trade'); h.api.purchaseUpgrade('hire_assistant'); }
+  if (phase === 1) { h.api.purchaseUpgrade('tools_of_trade'); h.api.purchaseUpgrade('hire_assistant'); h.api.purchaseUpgrade('gas_station_coffee'); h.api.purchaseUpgrade('sticky_note_system'); g.payMult = 1; }
   else { h.prepareUpgrade('second_ai'); g.assistant.dismissed = false; }
   g.aiFailMult = 0; g.incidentsExplained = true;
   h.api.checkMilestones(); h.dismiss();
@@ -37,7 +37,7 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(500);
     await expect(page.locator('#task-list button')).toHaveCount(0);
     await expect(page.locator('.task-assignee')).toHaveText(['Assistant', 'Assistant', 'Assistant', 'Assistant', 'Unassigned', 'Unassigned', 'Unassigned']);
-    await expect(assistant).toContainText('4 working · 0 queued');
+    await expect(assistant).toContainText('4 working');
     await expect(assistant.getByRole('button', { name: 'Working...' })).toBeDisabled();
     const ids = await page.evaluate(() => GAME.state.assistant.taskIds);
     await page.reload();
@@ -100,7 +100,7 @@ test('Multitasking opens a second manual slot and the assistant cannot be dismis
   await page.clock.runFor(200);
   await page.locator('.upgrade-card').filter({ hasText: 'Multitasking' }).getByRole('button').click();
   await page.clock.runFor(200);
-  await expect(page.locator('[data-assistant]')).toContainText('4 working · 0 queued');
+  await expect(page.locator('[data-assistant]')).toContainText('4 working');
   await page.evaluate(() => GAME.setPhase(2));
   await page.clock.runFor(200);
   await expect(page.getByRole('button', { name: 'Dismiss assistant' })).toHaveCount(0);
@@ -110,7 +110,7 @@ test('Multitasking opens a second manual slot and the assistant cannot be dismis
     const css = getComputedStyle(element);
     return ['padding', 'fontSize', 'fontWeight', 'borderRadius', 'backgroundColor', 'color'].map(key => css[key]);
   };
-  expect(await page.getByRole('button', { name: 'Top-up tokens' }).evaluate(primaryStyle))
+  expect(await page.getByRole('button', { name: 'Add tokens' }).evaluate(primaryStyle))
     .toEqual(await page.locator('#btn-do-task').evaluate(primaryStyle));
   await expect(page.locator('#btn-do-task')).toBeEnabled();
   await page.locator('#btn-do-task').click(); await page.clock.runFor(200);

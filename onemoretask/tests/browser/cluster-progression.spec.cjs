@@ -2,9 +2,9 @@ const { test, expect } = require('@playwright/test');
 const { harness } = require('../harness.cjs');
 
 for (const width of [1440, 390]) {
-  test(`four-character hex IDs fit agent tiles and Rapid Cluster Deployment keeps Phase 11 at ${width}px`, async ({ page }) => {
+  test(`four-character hex IDs fit agent tiles and Rapid Cluster Deployment keeps Phase 12 at ${width}px`, async ({ page }) => {
     const h = harness();
-    const g = h.fresh(11);
+    const g = h.fresh(12);
     g.ceoMode = 'scale';
     g.cash = 300000000;
     g.tokens = 1e9;
@@ -33,7 +33,7 @@ for (const width of [1440, 390]) {
     const rapid = page.locator('[onclick="GAME.buy(\'ceo_course\')"]');
     await expect(rapid.locator('xpath=ancestor::div[contains(@class,"upgrade-card")]')).toContainText('Rapid Cluster Deployment');
     await rapid.click();
-    expect(await page.evaluate(() => GAME.state.phase)).toBe(11);
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(12);
     await expect(page.locator('#milestone-popup')).toBeHidden();
     await page.evaluate(() => GAME.addCash(1e9));
     await page.clock.runFor(200);
@@ -42,9 +42,9 @@ for (const width of [1440, 390]) {
     await page.screenshot({path: `test-results/hex-agent-ids-${width}.png`, animations: 'disabled'});
   });
 
-  test(`Phase 12 keeps Phase 11 agent-box dimensions at ${width}px`, async ({ page }) => {
+  test(`Phase 13 keeps Phase 12 agent-box dimensions at ${width}px`, async ({ page }) => {
     const h = harness();
-    h.window.chPh12();
+    h.window.chPh13();
     const g = h.window.GAME.state;
     expect(g.totalTasksDone).toBe(63000000);
     expect(g.cash).toBe(600000000);
@@ -70,7 +70,7 @@ for (const width of [1440, 390]) {
     const before = await slot.boundingBox();
     await page.locator('[onclick="GAME.buy(\'autonomous_nodes\')"]').click();
     await page.clock.runFor(200);
-    expect(await page.evaluate(() => GAME.state.phase)).toBe(12);
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(13);
     await expect(page.locator('.capacity-slot.filled')).toHaveCount(21 * 16);
     await expect(slot).toBeEmpty();
     const after = await slot.boundingBox();
@@ -85,7 +85,7 @@ for (const width of [1440, 390]) {
 
   test(`Factory-Direct Hardware is a separate cost upgrade before Dedicated Hardware Supply at ${width}px`, async ({ page }) => {
     const h = harness();
-    const g = h.fresh(14);
+    const g = h.fresh(15);
     g.cash = 2e9;
     g.tokens = 1e9;
     g.totalTasksDone = 1e9;
@@ -120,9 +120,9 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 
-  test(`Phase 14 builds two neoclouds together and requires all upgrades before investor talks at ${width}px`, async ({ page }) => {
+  test(`Phase 15 builds two neoclouds together and requires all upgrades before investor talks at ${width}px`, async ({ page }) => {
     const h = harness();
-    const g = h.fresh(14);
+    const g = h.fresh(15);
     g.ceoMode = 'scale';
     g.cash = 3e9;
     g.tokens = 1e9;
@@ -172,14 +172,14 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(300);
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
     await expect(talks).toBeDisabled();
-    expect(await page.evaluate(() => GAME.state.phase)).toBe(14);
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(15);
     await page.evaluate(() => GAME.addCash(1e10));
     await page.clock.runFor(500);
     expect(await page.evaluate(() => GAME.state.clusters.filter(cluster => cluster.buildRemaining === 0 && cluster.managerAssigned).length)).toBeGreaterThanOrEqual(500);
     await expect(talks).toBeEnabled();
     await talks.click();
     await page.clock.runFor(8100);
-    expect(await page.evaluate(() => GAME.state.phase)).toBe(15);
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(16);
     await expect(page.locator('#milestone-popup')).toBeVisible();
   });
 }

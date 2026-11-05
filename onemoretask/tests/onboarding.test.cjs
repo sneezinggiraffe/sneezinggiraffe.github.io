@@ -120,10 +120,10 @@ test('better way is a free upgrade at 35 tasks that gates later upgrades and per
     g.cash = 1000;
     for (const id of ['side_hustle', 'focus_timer', 'free_ai']) h.api.purchaseUpgrade(id);
     assert.equal(g.cash, 1000);
-    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint', 'reality_check']);
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint', 'reality_check']);
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
     restored.close();
     restored = undefined;
     g.totalTasksDone = 35;
@@ -196,6 +196,18 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
     assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), item => item.id), []);
     restored.window.GAME.state.totalTasksDone = 105;
     assert.equal(restored.api.upgradeVisible(upgrade('free_ai')), true);
+    for (const count of [105, 130, 149]) {
+      restored.window.GAME.state.totalTasksDone = count;
+      restored.api.renderAll();
+      const button = restored.window.document.querySelector('[onclick="GAME.buy(\'free_ai\')"]');
+      assert.equal(button.textContent, '150 tasks');
+      assert.equal(button.disabled, true);
+      restored.window.GAME.buy('free_ai');
+      assert.equal(restored.window.GAME.state.phase, 1);
+    }
+    restored.window.GAME.state.totalTasksDone = 150;
+    restored.api.renderAll();
+    assert.equal(restored.window.document.querySelector('[onclick="GAME.buy(\'free_ai\')"]').disabled, false);
     restored.window.GAME.buy('free_ai');
     assert.equal(restored.window.GAME.state.phase, 2);
   } finally {
@@ -205,7 +217,7 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
 });
 
 
-test('Reality Check appears at 85 even with earlier purchases missing; free AI still requires them', () => {
+test('Reality Check requires every earlier purchase, including Multitasking, monitors and headphones', () => {
   const h = harness();
   try {
     const g = h.fresh();
@@ -213,11 +225,11 @@ test('Reality Check appears at 85 even with earlier purchases missing; free AI s
     g.totalTasksDone = 85;
     const reality = h.api.UPGRADES.find(upgrade => upgrade.id === 'reality_check');
     const purchased = [...g.purchasedUpgrades];
-    for (const missing of purchased.filter(id => !h.api.UPGRADES.find(item => item.id === id).optional)) {
+    for (const missing of purchased) {
       g.purchasedUpgrades = purchased.filter(id => id !== missing);
-      assert.equal(h.api.upgradeVisible(reality), true, missing);
+      assert.equal(h.api.upgradeVisible(reality), false, missing);
       h.api.purchaseUpgrade('reality_check');
-      assert.equal(g.purchasedUpgrades.includes('reality_check'), true, missing);
+      assert.equal(g.purchasedUpgrades.includes('reality_check'), false, missing);
       g.totalTasksDone = 105;
       assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(item => item.id === 'free_ai')), false, missing);
       g.totalTasksDone = 85;
@@ -230,3 +242,17 @@ test('Reality Check appears at 85 even with earlier purchases missing; free AI s
     h.close();
   }
 });
+
+for (const id of ['hire_assistant', 'gas_station_coffee', 'sticky_note_system']) {
+  test(`There Must Be a Better Way waits for ${id}`, () => {
+    const h = harness();
+    try {
+      const g = h.fresh(); h.prepareUpgrade('ai_hint'); g.totalTasksDone = 130; g.cash = 1000;
+      g.purchasedUpgrades = g.purchasedUpgrades.filter(item => item !== id);
+      const hint = h.api.UPGRADES.find(item => item.id === 'ai_hint');
+      assert.equal(h.api.upgradeVisible(hint), false);
+      h.api.purchaseUpgrade('ai_hint'); assert.equal(g.purchasedUpgrades.includes('ai_hint'), false);
+      h.api.purchaseUpgrade(id); assert.equal(h.api.upgradeVisible(hint), true);
+    } finally { h.close(); }
+  });
+}
