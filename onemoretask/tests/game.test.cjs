@@ -1432,12 +1432,12 @@ scenario('cluster panel shows ordered management and removes individual worker c
   h.api.createAiWorkerIncident(h.task());g.incidents[0].fixProgress=90;h.api.renderIncidentSection();assert.match(h.window.document.querySelector('#incident-list').textContent,/DevOps responding/);
 });
 scenario('storage access failures, explicit resets, and successful recovery', (h) => {
-  const prototype=Object.getPrototypeOf(h.window.localStorage);const get=prototype.getItem;const set=prototype.setItem;
+  const prototype=Object.getPrototypeOf(h.window.localStorage);const get=prototype.getItem;const remove=prototype.removeItem;
   prototype.getItem=()=>{throw new h.window.DOMException('denied','SecurityError')};assert.equal(h.api.load(),false);
   prototype.getItem=()=>{throw new TypeError('bad')};assert.throws(()=>h.api.load(),TypeError);prototype.getItem=get;
-  prototype.setItem=()=>{throw new h.window.DOMException('denied','SecurityError')};h.api.performFullReset();assert.match(h.window.document.querySelector('#save-status').textContent,/Reset failed/);
-  prototype.setItem=()=>{throw new TypeError('bad')};assert.throws(()=>h.api.performFullReset(),TypeError);prototype.setItem=set;
-  h.window.localStorage.setItem('ai_empire_save','test');h.api.performFullReset();assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).gameStarted,false);
+  prototype.removeItem=()=>{throw new h.window.DOMException('denied','SecurityError')};h.api.performFullReset();assert.match(h.window.document.querySelector('#save-status').textContent,/Reset failed/);
+  prototype.removeItem=()=>{throw new TypeError('bad')};assert.throws(()=>h.api.performFullReset(),TypeError);prototype.removeItem=remove;
+  h.window.localStorage.setItem('ai_empire_save','test');h.api.performFullReset();assert.equal(h.window.localStorage.getItem('ai_empire_save'),null);
 });
 scenario('dialog focus, tab loop, escape, settings actions and lifecycle saves', (h) => {
   h.fresh(6);h.api.renderAll();const doc=h.window.document;doc.querySelector('#btn-settings').focus();h.api.openSettingsPopup();assert.equal(doc.activeElement.id,'btn-settings-music');
@@ -1573,7 +1573,7 @@ scenario('reset buttons require confirmation before discarding saved progress', 
   const doc=h.window.document;h.window.confirm=()=>false;
   for(const id of ['btn-save-reset','btn-ending-reset']){h.window.localStorage.setItem('ai_empire_save','keep');doc.getElementById(id).click();assert.equal(h.window.localStorage.getItem('ai_empire_save'),'keep');}
   h.window.confirm=()=>true;
-  for(const id of ['btn-save-reset','btn-ending-reset']){doc.getElementById(id).click();assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).gameStarted,false);}
+  for(const id of ['btn-save-reset','btn-ending-reset']){doc.getElementById(id).click();assert.equal(h.window.localStorage.getItem('ai_empire_save'),null);}
 });
 scenario('cluster workers cannot be detached fired or individually controlled', (h) => {
   const g=h.fresh(9);g.cash=1e6;h.api.openCluster();const c=g.clusters[0];h.api.tickConstruction(12.1);h.api.buyNextClusterWorker(c.id,'writer');
@@ -1621,7 +1621,7 @@ scenario('manual work can start from a full or partly filled tank without buying
 });
 scenario('reset cannot be undone by the pagehide autosave', (h) => {
   h.fresh();h.api.save();h.api.performFullReset();h.window.dispatchEvent(new h.window.Event('pagehide'));
-  assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).gameStarted,false);assert.equal(h.api.save(),false);
+  assert.equal(h.window.localStorage.getItem('ai_empire_save'),null);assert.equal(h.api.save(),false);
 });
 scenario('chPh0 clears saved progress even after retirement and prevents autosave restoring it', (h) => {
   const g = h.fresh();
@@ -1631,7 +1631,7 @@ scenario('chPh0 clears saved progress even after retirement and prevents autosav
   assert.notEqual(h.window.localStorage.getItem('ai_empire_save'), null);
   h.window.chPh0();
   h.window.dispatchEvent(new h.window.Event('pagehide'));
-  assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).gameStarted, false);
+  assert.equal(h.window.localStorage.getItem('ai_empire_save'), null);
   assert.equal(h.api.save(), false);
 });
 scenario('token top-up stays enabled even when the reserve is empty', (h) => {
@@ -3117,47 +3117,4 @@ scenario('chRetire prepares an immediate Golden Parachute and retirement restore
   } finally {
     restored.close();
   }
-});
-
-for (const musicMode of ['off', 'on']) {
-  scenario(`reset preserves music ${musicMode} across reload while clearing progress`, (h) => {
-    const g = h.fresh(6);
-    g.musicMode = musicMode;
-    g.cash = 12345;
-    h.api.performFullReset();
-    h.window.dispatchEvent(new h.window.Event('pagehide'));
-    const restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-    try {
-      const state = restored.window.GAME.state;
-      assert.equal(state.musicMode, musicMode);
-      assert.equal(state.phase, 1);
-      assert.equal(state.gameStarted, false);
-      assert.equal(state.cash, restored.api.defaultState().cash);
-      assert.equal(restored.api.validSave(state), true);
-    } finally {
-      restored.close();
-    }
-  });
-  scenario(`cheats preserve music ${musicMode} in memory and saved progress`, (h) => {
-    h.fresh().musicMode = musicMode;
-    for (const stage of ['0_1', 3, 'start8', 9, 'retire']) {
-      h.window.GAME.cheat(stage);
-      assert.equal(h.window.GAME.state.musicMode, musicMode);
-      assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).musicMode, musicMode);
-    }
-  });
-}
-scenario('reset storage quota failure preserves progress and allows saving again', (h) => {
-  h.fresh().cash = 12345;
-  h.api.save();
-  const previous = h.window.localStorage.getItem('ai_empire_save');
-  const prototype = Object.getPrototypeOf(h.window.localStorage);
-  const set = prototype.setItem;
-  prototype.setItem = () => { throw new h.window.DOMException('full', 'QuotaExceededError'); };
-  h.api.performFullReset();
-  assert.equal(h.window.localStorage.getItem('ai_empire_save'), previous);
-  assert.equal(h.window.GAME.state.cash, 12345);
-  assert.match(h.window.document.querySelector('#save-status').textContent, /Reset failed/);
-  prototype.setItem = set;
-  assert.equal(h.api.save(), true);
 });

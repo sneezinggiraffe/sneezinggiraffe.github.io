@@ -2875,13 +2875,11 @@
   }
 
   function performFullReset() {
-    const newState = defaultState();
-    newState.musicMode = G.musicMode;
     try {
-      localStorage.setItem("ai_empire_save", JSON.stringify(newState));
+      localStorage.removeItem("ai_empire_save");
     } catch (error) {
-      if (!(error instanceof DOMException) || !["SecurityError", "QuotaExceededError"].includes(error.name)) throw error;
-      storageMessage("Reset failed because browser storage is unavailable. Allow storage or free space and try again.");
+      if (!(error instanceof DOMException) || error.name !== "SecurityError") throw error;
+      storageMessage("Reset failed because browser storage is blocked. Allow storage and try again.");
       return;
     }
     saveBlocked = true;
@@ -3856,9 +3854,7 @@
     if (!Object.hasOwn(early, stage) && !target) return;
     const phase = target ? target.phase : 1;
     const checkpoint = { "3_1": { tasks: 870, cash: 14000 }, "8": { tasks: 390000, cash: 800000 }, "9": { tasks: 1000000, cash: 1200000 }, "10": { tasks: 4600000, cash: 30000000, clusters: 3 }, "11": { tasks: 27000000, cash: 180000000, clusters: 5 }, "12": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
-    const musicMode = G.musicMode;
     G = defaultState();
-    G.musicMode = musicMode;
     G.gameStarted = true;
     G.totalTasksDone = target ? 100000000 : early[stage];
     G.totalIncidents = 3;
