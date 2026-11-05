@@ -3839,7 +3839,7 @@
   }
 
   function loadCheatStage(stage) {
-    const early = { "0_1": 0, "0_2": 7, "0_3": 35, "0_4": 100, "1": 89 };
+    const early = { "0_1": 0, "0_2": 7, "0_": 35, "0_4": 100, "1": 89 };
     const startPhase8 = stage === "start8";
     const number = startPhase8 ? 8 : Number(stage);
     const target = stage === "retire" || stage === "3_1" ? UPGRADES.find((upgrade) => upgrade.id === (stage === "retire" ? "fusion" : "second_ai")) : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
@@ -3973,7 +3973,7 @@
   // Console shortcuts
   window.chPh0 = function () { GAME.resetSave(); };
   var cheatShortcuts = [
-    "0_1", "0_2", "0_3", "0_4", 1, 2, 3, "3_1", 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    "0_", 1, 2, 3, "3_1", 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
   ];
   window.chStart8 = function () { GAME.cheat("start8"); };
   window.chRetire = function () { GAME.cheat("retire"); };

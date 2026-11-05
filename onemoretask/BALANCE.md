@@ -40,9 +40,7 @@ These task milestones control visibility in the background. Existing staffing re
 
 ## Checkpoint interpretation
 
-- `chPh0_2()` loads seven tasks with the first three upgrades available.
-- `chPh0_3()` loads 35 tasks with Side Hustle Optimization, Inbox Zero and GTD Workflow available.
-- `chPh0_4()` loads 100 tasks with Discover Free-Tier AI visible; one five-task manual session reaches its 105-task requirement.
+- `chPh0_()` loads 35 tasks with Side Hustle Optimization, Inbox Zero and GTD Workflow available.
 - `chPh3()` loads the transition into Phase 3 with $1,900 cash, leaving $100 to earn for the Basic subscription.
 - `chPh3_1()` loads Phase 3 at 870 tasks and $14,000, just before Second AI Subscription. All earlier upgrades are purchased; another $4,000 funds the subscription.
 - `chPh4()` loads the transition into Phase 4 with $1,300 cash. The subscriptions, Inference Tuning, Prompt Refinement and Context Pruning are already purchased; the licence remains a savings goal.

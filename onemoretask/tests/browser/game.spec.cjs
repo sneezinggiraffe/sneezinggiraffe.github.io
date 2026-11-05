@@ -163,7 +163,7 @@ for (const width of [1440, 390]) {
     await page.goto('/');
     const groups = [
       ['0_2', 7, ['Post-It Notes', 'Gas Station Coffee', 'A Box Of Paperclips']],
-      ['0_3', 35, ['Side Hustle Optimization', 'Inbox Zero Method', 'GTD Workflow']],
+      ['0_', 35, ['Side Hustle Optimization', 'Inbox Zero Method', 'GTD Workflow']],
       ['0_4', 100, ['Discover Free-Tier AI']],
     ];
     for (const [stage, tasks, names] of groups) {

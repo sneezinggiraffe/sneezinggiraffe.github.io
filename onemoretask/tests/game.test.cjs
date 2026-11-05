@@ -2205,7 +2205,10 @@ scenario('dashed hiring cards reserve management roles and disable unaffordable 
 });
 scenario('phase cheats preserve their requested savings goals and prepare valid transitions', (h) => {
   const checkpoints = { 3: { cash: 1900 }, 4: { cash: 1300 }, 8: { tasks: 390000, cash: 800000 }, 9: { tasks: 1000000, cash: 1200000 }, 10: { tasks: 4600000, cash: 30000000, clusters: 3 }, 11: { tasks: 27000000, cash: 180000000, clusters: 5 }, 12: { tasks: 63000000, cash: 600000000, clusters: 21 } };
-  for(const stage of ['0_1','0_2','0_3','0_4',1]){h.window['chPh'+stage]();assert.equal(h.window.GAME.state.phase,1);assert.equal(h.api.validSave(h.window.GAME.state),true);}
+  for (const stage of ['0_1', '0_2', '0_3', '0_4']) assert.equal(Object.hasOwn(h.window, 'chPh' + stage), false);
+  h.window.chPh0_();
+  assert.equal(h.window.GAME.state.totalTasksDone, 35);
+  for(const stage of ['0_',1]){h.window['chPh'+stage]();assert.equal(h.window.GAME.state.phase,1);assert.equal(h.api.validSave(h.window.GAME.state),true);}
   for(let stage=2;stage<=15;stage++){
     h.window['chPh'+stage]();const g=h.window.GAME.state;const upgrade=h.api.UPGRADES.find(item=>item.unlockPhase===stage);assert.equal(g.phase,stage-1,'chPh'+stage);assert.equal(h.api.validSave(g),true);
     const checkpoint = checkpoints[stage];
@@ -2741,11 +2744,11 @@ scenario('the free AI tank drains twice as fast and needs another top-up after f
 scenario('opening checkpoints leave the intended upgrade groups ready to play', (h) => {
   const checkpoints = [
     ['0_2', 7, ['post_it_notes', 'gas_station_coffee', 'sticky_note_system']],
-    ['0_3', 35, ['side_hustle', 'inbox_zero', 'gtd_workflow']],
+    ['0_', 35, ['side_hustle', 'inbox_zero', 'gtd_workflow']],
     ['0_4', 100, ['free_ai']],
   ];
   for (const [stage, tasks, expected] of checkpoints) {
-    h.window['chPh' + stage]();
+    h.window.GAME.cheat(stage);
     const g = h.window.GAME.state;
     assert.equal(g.phase, 1);
     assert.equal(g.totalTasksDone, tasks);
