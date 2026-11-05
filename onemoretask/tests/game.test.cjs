@@ -967,14 +967,14 @@ scenario('free AI requires prior purchases and shows its task requirement inside
   h.prepareUpgrade('free_ai');
   g.totalTasksDone = 104;
   h.api.renderUpgradeSection();
-  const button = h.window.document.querySelector('[onclick="GAME.buy(\'free_ai\')"]');
-  assert.equal(button.textContent, '105 tasks');
-  assert.equal(button.disabled, true);
+  assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'free_ai\')"]'), null);
   assert.equal(h.window.document.querySelector('.upgrade-cost'), null);
   h.api.purchaseUpgrade('free_ai');
   assert.equal(g.phase, 1);
   g.totalTasksDone = 105;
   h.api.renderUpgradeSection();
+  const button = h.window.document.querySelector('[onclick="GAME.buy(\'free_ai\')"]');
+  assert.equal(button.textContent, '105 tasks');
   assert.equal(button.disabled, false);
   h.api.purchaseUpgrade('free_ai');
   assert.equal(g.phase, 2);
@@ -1229,7 +1229,7 @@ scenario('real batch sizes vary around their upgrade target and change the compl
 
 scenario('empty upgrade space retains the height of the last visible upgrade card', (h) => {
   const g = h.fresh();
-  g.totalTasksDone = 7;
+  g.totalTasksDone = 105;
   g.uiRevealed.upgrades = true;
   h.prepareUpgrade('free_ai');
   h.api.renderUpgradeSection();
@@ -1851,9 +1851,9 @@ scenario('Global Expansion costs $2B and requires forty completed nodes', (h) =>
   assert.ok(g.purchasedUpgrades.includes('global_network'));
 });
 scenario('free AI unlocks at its task milestone and later upgrades retain their prerequisites', (h) => {
-  const g=h.fresh();g.cash=1e9;g.totalTasksDone=89;g.uiRevealed.upgrades=true;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();
+  const g=h.fresh();g.cash=1e9;g.totalTasksDone=84;g.uiRevealed.upgrades=true;h.prepareUpgrade('free_ai');h.api.checkMilestones();h.dismiss();
   const upgrade=id=>h.api.UPGRADES.find(u=>u.id===id);
-  assert.equal(g.milestonesReached.includes('expenses_unlock'),false);assert.equal(h.api.upgradeVisible(upgrade('free_ai')),true);
+  assert.equal(g.milestonesReached.includes('expenses_unlock'),false);assert.equal(h.api.upgradeVisible(upgrade('free_ai')),false);
   h.api.purchaseUpgrade('free_ai');assert.equal(g.phase,1);
   g.totalTasksDone=105;h.api.purchaseUpgrade('free_ai');assert.equal(g.phase,2);h.api.renderUpgradeSection();assert.doesNotMatch(h.window.document.querySelector('#upgrade-list').textContent,/Prompt|Pro AI/);
   g.totalTasksDone=199;h.api.purchaseUpgrade('prompt_basics');assert.equal(g.purchasedUpgrades.includes('prompt_basics'),false);
@@ -1934,7 +1934,7 @@ scenario('prestige stops music and restores the introduction and first manual ta
 scenario('ordinary upgrades appear in affordable and aspirational groups while transitions stay gated', (h) => {
   const g=h.fresh();g.purchasedUpgrades.push('tools_of_trade');g.totalTasksDone=15;g.cash=40;g.uiRevealed.upgrades=true;h.api.renderUpgradeSection();
   const cards=[...h.window.document.querySelectorAll('#upgrade-list .upgrade-card')];assert.equal(cards.length,3);assert.equal(cards.filter(card=>card.querySelector('button').disabled).length,2);
-  g.totalTasksDone=50;assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u=>u.id==='free_ai')),false);h.prepareUpgrade('free_ai');assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u=>u.id==='free_ai')),true);
+  g.totalTasksDone=50;assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u=>u.id==='free_ai')),false);h.prepareUpgrade('free_ai');assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u=>u.id==='free_ai')),false);
   g.totalTasksDone=0;g.purchasedUpgrades.push('free_ai');h.api.renderUpgradeSection();h.api.renderTaskQueue();assert.equal(h.window.document.querySelector('#upgrade-list').textContent,'');assert.equal(h.window.document.querySelector('#no-tasks').textContent,'');assert.ok(h.window.document.querySelector('.upgrade-space'));
   g.phase=9;h.prepareUpgrade('ai_ceo');h.api.renderUpgradeSection();assert.ok(h.window.document.querySelector('.upgrade-space'));assert.equal(h.window.document.querySelectorAll('#upgrade-list .upgrade-card').length,0);assert.match(h.window.document.querySelector('#upgrade-list').textContent,/Token Pack/);
   for(const upgrade of h.api.UPGRADES)assert.doesNotMatch(upgrade.desc,/Unlocks? Phase|Required before|Phase \d+ begins|for a Sales agent/);
@@ -2746,7 +2746,7 @@ scenario('opening checkpoints leave the intended upgrade groups ready to play', 
     ['0_2', 7, ['post_it_notes', 'gas_station_coffee', 'sticky_note_system']],
     ['0_', 35, ['side_hustle', 'inbox_zero', 'gtd_workflow']],
     ['1', 50, ['dual_monitors', 'noise_cancelling']],
-    ['0_4', 100, ['free_ai']],
+    ['0_4', 100, []],
   ];
   for (const [stage, tasks, expected] of checkpoints) {
     h.window.GAME.cheat(stage);
@@ -2763,8 +2763,7 @@ scenario('opening checkpoints leave the intended upgrade groups ready to play', 
     assert.equal(h.api.validSave(g), true);
   }
   const g = h.window.GAME.state;
-  assert.equal(h.window.document.querySelector('.upgrade-card button').textContent, '105 tasks');
-  assert.equal(h.window.document.querySelector('.upgrade-card button').disabled, true);
+  assert.equal(h.window.document.querySelector('.upgrade-card'), null);
   for (let i = 0; i < 5; i++) h.task();
   h.api.clickTask(g.tasks[0].id);
   h.api.tickManualWork(10);

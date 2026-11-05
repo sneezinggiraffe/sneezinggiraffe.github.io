@@ -132,7 +132,7 @@ Income estimates use whole-job throughput rather than the remaining time on a ne
 
 Progress is stored locally in the browser, automatically every ten seconds and when leaving or hiding the page. No accounts, backend, or network saves are required.
 
-**Breaking change:** this release uses save format version 12 to persist the two-click pause after Reality Check. It does not migrate earlier saves, including version 11. Incompatible saves are preserved until the player explicitly resets them; a visible notice explains the problem. Current saves persist sale preparation, construction, worker slots and task-arrival delays. Storage failures remain visible and can be retried.
+**Breaking change:** this release uses save format version 11 because Scale Mode now enters Phase 11 and the late expansion progression has changed. It does not migrate earlier saves, including version 10. Incompatible saves are preserved until the player explicitly resets them; a visible notice explains the problem. Current saves persist sale preparation, construction, worker slots and task-arrival delays. Storage failures remain visible and can be retried.
 
 Offline earnings are limited to recurring services and referral contracts at 50% efficiency, minus expenses, for up to eight hours. Offline losses are forgiven. Busy-agent snapshots do not generate offline income. Returning from a background tab follows the same rule. Story and settings dialogs pause foreground simulation.
 
@@ -193,4 +193,4 @@ The canonical design reference is [the repository design spec](../DESIGN.md). Ad
 
 **Breaking debug API change:** manual provisioning now requires `GAME.buyClusterWorker(clusterId, slotIndex)`, with a zero-based slot index. A slot can only purchase itself, in order. The former cluster-only manual call no longer provisions an agent.
 
-Discover Free-Tier AI appears after two accepted manual work clicks following Reality Check. It still requires 105 completed tasks to purchase. Save format 12 stores this progress; older saves require an explicit reset.
+Reality Check appears at 85 completed tasks after all earlier upgrades are purchased. Expenses start at 85 tasks. Discover Free-Tier AI appears at 105 completed tasks after Reality Check is purchased, with no additional click or time requirement.

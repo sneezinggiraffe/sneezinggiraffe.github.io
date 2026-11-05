@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 for (const width of [1440, 390]) {
-  test(`Reality Check reveals free AI only after clicking its free upgrade at ${width}px`, async ({ page }) => {
+  test(`Reality Check appears at 85 tasks and free AI waits until 105 at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.clock.install();
     await page.goto('/');
@@ -10,7 +10,7 @@ for (const width of [1440, 390]) {
     const cards = page.locator('#upgrade-list .upgrade-card');
     await expect(cards).toHaveCount(2);
     await expect(cards).not.toContainText(['Reality Check']);
-    await page.evaluate(() => { GAME.addTasks(40); GAME.addCash(1000); });
+    await page.evaluate(() => { GAME.addTasks(35); GAME.addCash(1000); });
     await page.clock.runFor(200);
     for (const name of ['Dual Monitors', 'Noise-Cancelling Headphones']) {
       await expect(page.locator('#upgrade-list')).not.toContainText('Reality Check');
@@ -26,15 +26,14 @@ for (const width of [1440, 390]) {
     await cards.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     await expect(cards).toHaveCount(0);
-    await page.clock.runFor(10000);
-    await page.locator('#task-list button:enabled').first().click();
-    await page.clock.runFor(5000);
+    await page.evaluate(() => GAME.addTasks(19));
+    await page.clock.runFor(200);
     await expect(cards).toHaveCount(0);
-    await page.locator('#task-list button:enabled').first().click();
+    await page.evaluate(() => GAME.addTasks(1));
     await page.clock.runFor(200);
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText('Discover Free-Tier AI');
-    await expect(cards.getByRole('button', { name: '105 tasks', exact: true })).toBeDisabled();
+    await expect(cards.getByRole('button', { name: '105 tasks', exact: true })).toBeEnabled();
     await expect(page.locator('#milestone-popup')).toBeHidden();
   });
 }

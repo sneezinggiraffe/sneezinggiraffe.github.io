@@ -90,7 +90,7 @@
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
   const FINAL_PHASE = 15;
-  const SAVE_VERSION = 12;
+  const SAVE_VERSION = 11;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
@@ -190,7 +190,7 @@
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
     { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
-    { id: "reality_check", name: "Reality Check", desc: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash.", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 90 },
+    { id: "reality_check", name: "Reality Check", desc: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash.", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 85 },
     { id: "free_ai", requires: "reality_check", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, reqTasks: 105 },
 
     // Phase 2 -> 3
@@ -338,7 +338,7 @@
     { id: "backlog_start", reqTasks: 5, reveals: ["taskQueue"], inboxTask: true },
     { id: "stress_unlock", reqTasks: 12, reveals: ["stress"] },
     { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades", "log"], setFlags: { taskExpiryEnabled: true } },
-    { id: "expenses_unlock", reqTasks: 90, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true } },
+    { id: "expenses_unlock", reqTasks: 85, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
     { id: "ai_hint", reqTasks: 35 },
     // Phase-based
@@ -403,7 +403,6 @@
       totalCashEarned: 0,
       totalTasksDone: 0,
       totalClicks: 0,
-      realityCheckClicksRemaining: 0,
       totalIncidents: 0,
       activeTaskId: null,
       // Prestige
@@ -481,7 +480,6 @@
 
   function validSave(state) {
     if (!validShape(state, defaultState()) || state.saveVersion !== SAVE_VERSION) return false;
-    if (!Number.isInteger(state.realityCheckClicksRemaining) || state.realityCheckClicksRemaining < 0 || state.realityCheckClicksRemaining > 2) return false;
     if (!Number.isInteger(state.batchSize) || state.batchSize < 1) return false;
     if (state.retirementFinal && !state.retired) return false;
     if (!Number.isInteger(state.phase) || state.phase < 1 || state.phase > FINAL_PHASE) return false;
@@ -697,7 +695,6 @@
     const queued = G.tasks.filter((t) => t.status === "available").slice(0, getManualQueueSize() - 1);
     for (const next of queued) next.status = "active";
     G.totalClicks++;
-    if (G.realityCheckClicksRemaining > 0) G.realityCheckClicksRemaining--;
     showClickReward(G.clickPower, evt);
   }
 
@@ -1727,9 +1724,8 @@
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
     if (G.phase === 1 && upgrade.id !== "tools_of_trade" && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
     if (G.phase === 1 && upgrade.reqTasks >= 35 && upgrade.id !== "ai_hint" && !G.purchasedUpgrades.includes("ai_hint")) return false;
-    if (upgrade.id === "free_ai" && G.realityCheckClicksRemaining > 0) return false;
     if (upgrade.saleDuration && G.salePreparation.upgradeId && G.salePreparation.upgradeId !== upgrade.id) return false;
-    if (upgrade.id !== "free_ai" && upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
+    if (upgrade.reqTasks && G.totalTasksDone < upgrade.reqTasks) return false;
     if (upgrade.reqIncidents && G.totalIncidents < upgrade.reqIncidents) return false;
     if (upgrade.reqAgents && G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId)).length < upgrade.reqAgents) return false;
     if (upgrade.visibleAfter) return G.purchasedUpgrades.includes(upgrade.visibleAfter);
@@ -1805,7 +1801,6 @@
   function completeUpgradePurchase(upg) {
     const upgradeId = upg.id;
     if (upg.oneTime) G.purchasedUpgrades.push(upgradeId);
-    if (upgradeId === "reality_check") G.realityCheckClicksRemaining = 2;
     if (upgradeId === "ceo_recruitment" || upgradeId === "ceo_deploy_speed") {
       const speed = upgradeId === "ceo_recruitment" ? 2 : 1.5;
       for (const agent of G.agents) {
@@ -3872,7 +3867,6 @@
       fillCheatCompany(requiredClusters);
       for (const upgrade of preceding) {
         purchaseUpgrade(upgrade.id);
-        if (upgrade.id === "reality_check") G.realityCheckClicksRemaining = 0;
         if (G.salePreparation.upgradeId) tickSalePreparation(G.salePreparation.remaining);
       }
       changed = before !== G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
