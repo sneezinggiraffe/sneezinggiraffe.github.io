@@ -3277,7 +3277,7 @@
         renderSaleStatus(u) +
         "</div>" +
         "<div style='display:flex;align-items:center;gap:10px'>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (preparing || !canAfford || !requirementsMet ? "disabled" : "") + ">" + (preparing ? "In progress" : u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? (cost === 0 ? "Free" : fmtCash(cost)) : fmtTokens(u.cost) + " tok") + "</button>" +
+        "<button class='upgrade-action' onclick=\"GAME.buy('" + u.id + "')\" " + (preparing || !canAfford || !requirementsMet ? "disabled" : "") + (u.currency === "cash" && cost === 0 ? " aria-label='" + u.name + "'" : "") + ">" + (preparing ? "In progress" : u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? (cost === 0 ? "" : fmtCash(cost)) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>" +
         "</div>";
     }
@@ -3287,9 +3287,9 @@
       var u = repeatables[i];
       var cost = getUpgradeCost(u);
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
-      html += "<div style='display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);margin-right:6px;margin-bottom:6px'>" +
+      html += "<div class='upgrade-repeatable' style='position:relative;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);margin-right:6px;margin-bottom:6px'>" +
         "<span class='text-sm'>" + (u.id.startsWith("token_pack_") ? "Token Pack (" + fmtTokens(tokenPackAmount(u)) + ")" : u.name) + "</span>" +
-        "<button class='btn btn-green btn-sm' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>" + (u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
+        "<button class='upgrade-action' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>" + (u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>";
     }
     updateHTML($("#upgrade-list"), html);

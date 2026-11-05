@@ -131,7 +131,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .status-error{background:#3e1a1a;color:var(--red)}
 
 /* Upgrade cards */
-.upgrade-card{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:68px}
+.upgrade-card{position:relative;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:68px}
+.upgrade-action{background:transparent;color:var(--green);padding:4px 10px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.upgrade-action::after{content:"";position:absolute;inset:0;border-radius:var(--radius)}
+.upgrade-action:hover:not(:disabled)::after{background:rgba(255,255,255,.04)}
+.upgrade-action:focus-visible{outline:none}
+.upgrade-action:focus-visible::after{outline:2px solid var(--accent);outline-offset:2px}
 .upgrade-info{flex:1;min-width:0}
 .upgrade-info .name{font-weight:700;font-size:.88rem}
 .upgrade-info .desc{font-size:.75rem;color:var(--text2);margin-top:2px}

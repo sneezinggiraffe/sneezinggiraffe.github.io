@@ -68,7 +68,8 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await expect(intro).toContainText('Tools of the Trade');
     await page.screenshot({path: `test-results/tools-alone-${width}.png`, fullPage: true});
     const beforeFree = await page.evaluate(() => GAME.state.cash);
-    await intro.getByRole('button', {name: 'Free', exact: true}).click();
+    await expect(intro.locator('button')).toHaveText('');
+    await intro.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     expect(await page.evaluate(() => GAME.state.cash)).toBe(beforeFree);
     await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(3);

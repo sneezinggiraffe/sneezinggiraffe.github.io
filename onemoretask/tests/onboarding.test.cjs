@@ -111,7 +111,7 @@ test('Tools of the Trade appears alone and dismissing it reveals the paid upgrad
     assert.equal(h.window.document.querySelectorAll('#upgrade-list .upgrade-card').length, 1);
     const first = h.window.document.querySelector('#upgrade-list .upgrade-card');
     assert.match(first.textContent, /Tools of the Trade/);
-    assert.equal(first.querySelector('button').textContent, 'Free');
+    assert.equal(first.querySelector('button').textContent, '');
     assert.equal(first.querySelector('button').disabled, false);
     g.cash = 1000;
     h.api.purchaseUpgrade('post_it_notes');
@@ -160,7 +160,7 @@ test('better way is a free upgrade at 35 tasks that gates later upgrades and per
     assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
     const card = h.window.document.querySelector('#upgrade-list .upgrade-card');
     assert.match(card.textContent, /There Must Be a Better Way/);
-    assert.equal(card.querySelector('button').textContent, 'Free');
+    assert.equal(card.querySelector('button').textContent, '');
     assert.equal(card.querySelector('button').disabled, false);
     g.totalTasksDone = 105;
     g.cash = 1000;
@@ -215,7 +215,7 @@ test('Reality Check replaces its modal at 90 tasks and gates free AI without cha
     const card = h.window.document.querySelector('#upgrade-list .upgrade-card');
     assert.match(card.textContent, /Reality Check/);
     assert.match(card.textContent, /Bills are now draining your cash/);
-    assert.equal(card.querySelector('button').textContent, 'Free');
+    assert.equal(card.querySelector('button').textContent, '');
     assert.equal(card.querySelector('button').disabled, false);
     g.totalTasksDone = 105;
     h.window.GAME.buy('free_ai');

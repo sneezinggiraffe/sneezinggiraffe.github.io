@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 for (const width of [1440, 390]) {
-  test(`better way gates later upgrades until its free button is clicked at ${width}px`, async ({ page }) => {
+  test(`better way gates later upgrades until its card is clicked at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.clock.install();
     await page.goto('/');
@@ -20,7 +20,8 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#milestone-popup')).toBeHidden();
     await expect(card).toHaveCount(1);
     await expect(card).toContainText('There Must Be a Better Way');
-    await card.getByRole('button', { name: 'Free', exact: true }).click();
+    await expect(card.locator('button')).toHaveText('');
+    await card.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     await expect(card).toHaveCount(3);
     for (const name of ['Side Hustle Optimization', 'Inbox Zero Method', 'GTD Workflow']) {

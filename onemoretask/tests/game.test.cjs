@@ -2309,7 +2309,7 @@ scenario('the first paid tools appear at seven tasks and free AI reveals without
   h.api.renderUpgradeSection();
   assert.equal(g.uiRevealed.upgrades, true);
   assert.equal(h.window.document.querySelectorAll('.upgrade-card').length, 1);
-  assert.equal(h.window.document.querySelector('.upgrade-card button').textContent, 'Free');
+  assert.equal(h.window.document.querySelector('.upgrade-card button').textContent, '');
   assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'post_it_notes\')"]'), null);
   h.api.purchaseUpgrade('tools_of_trade');
   h.api.renderUpgradeSection();

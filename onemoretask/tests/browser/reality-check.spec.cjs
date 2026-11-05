@@ -15,7 +15,8 @@ for (const width of [1440, 390]) {
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText('Reality Check');
     expect(await page.evaluate(() => GAME.state.expensesRevealed)).toBe(true);
-    await cards.getByRole('button', { name: 'Free', exact: true }).click();
+    await expect(cards.locator('button')).toHaveText('');
+    await cards.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText('Discover Free-Tier AI');
