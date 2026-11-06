@@ -29,7 +29,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .res .label{color:var(--text3);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
 .res .val{font-weight:700;font-variant-numeric:tabular-nums}
 .res-cash .val{color:var(--cash)}.res-tokens .val{color:var(--token)}.res-debt .val{color:var(--debt)}
-.res-stress .val{color:var(--pink)}
 .res-warning{background:rgba(239,68,68,0.15);border-radius:6px;padding:2px 6px;animation:res-pulse 2s ease-in-out infinite}
 @keyframes res-pulse{0%,100%{background:rgba(239,68,68,0.08)}50%{background:rgba(239,68,68,0.25)}}
 #res-tokens-wrap.res-warning{
@@ -331,7 +330,6 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
   <span class="res res-cash" id="res-cash-wrap" style="display:none"><span class="label">Cash</span><span class="val" id="res-cash">$0</span></span>
   <span class="res res-tokens" id="res-tokens-wrap" style="display:none"><span class="label" title="Tokens. Top-ups transfer tokens to agents.">Tokens</span><span class="val" id="res-tokens">0</span><span class="sub" id="token-burn"></span></span>
   <span class="res res-debt" id="res-debt-wrap" style="display:none"><span class="label">Debt</span><span class="val" id="res-debt">0</span></span>
-  <span class="res res-stress" id="res-stress-wrap" style="display:none"><span class="label">Stress</span><span class="val" id="res-stress">0%</span></span>
   <span class="res" id="res-expense-wrap" style="display:none"><span class="label" id="expense-tier-label">Expenses</span><span class="val" style="color:var(--red)" id="expense-rate">-$0/s</span></span>
   <span id="income-rate" title="Estimated automated income, before expenses" style="display:none">+$0/s</span>
   <button class="btn btn-outline btn-sm" id="btn-settings">Settings</button>

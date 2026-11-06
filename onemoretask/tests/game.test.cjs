@@ -2731,11 +2731,11 @@ scenario('opening checkpoints leave the intended upgrade groups ready to play', 
   assert.equal(g.phase, 2);
 });
 
-scenario('pressure, tools and Manager milestones retain their effects without a modal', (h) => {
+scenario('retired stress milestone stays save-valid while tools and Manager retain their effects', (h) => {
   const g = h.fresh();
   g.totalTasksDone = 12;
   h.api.checkMilestones();
-  assert.equal(g.uiRevealed.stress, true);
+  assert.equal(g.uiRevealed.stress, false);
   assert.ok(g.milestonesReached.includes('stress_unlock'));
   assert.equal(h.api.queue().some(popup => popup.title === 'Pressure Building'), false);
   h.dismiss();

@@ -57,7 +57,7 @@
   const ASSISTANT_BREAK_SECONDS = 2;
   const ASSISTANT_BREAK_LABELS = ["Break time", "Lunch", "Dentist", "Sleeping"];
   const MANUAL_WORK_SECONDS_PER_CLICK = 0.15;
-  const MANUAL_STRESS_PER_SEC = 2;
+  const MANUAL_REPAIR_SECONDS = 2;
   // Keep AI throughput after moving the early 4.5x click-power bonuses into manual queues.
   const AI_WORK_MULT_PHASE2 = 2.8125;
   const AI_WORK_MULT_PHASE3 = 8.1;
@@ -341,7 +341,8 @@
     // Task-count based
     { id: "first_task", reqTasks: 3, reveals: ["topBar", "cash"] },
     { id: "backlog_start", reqTasks: 3, reveals: ["taskQueue"], inboxTask: true },
-    { id: "stress_unlock", reqTasks: 12, reveals: ["stress"] },
+    // Retain the milestone ID so existing saves remain valid.
+    { id: "stress_unlock", reqTasks: 12 },
     { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades"], setFlags: { taskExpiryEnabled: true } },
     { id: "expenses_unlock", reqTasks: 85, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true } },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
@@ -373,6 +374,9 @@
       tokensConsumed: 0,
       averageTokenBurn: 0,
       techDebt: 0,
+      // ---------- STRESS ----------
+      // Stress slowly recovers
+      // Retired mechanic: retain the stored fields without changing their values.
       stress: 0,
       phase: 1,
       clickPower: 1,
@@ -508,7 +512,7 @@
     if (!Number.isInteger(state.assistant.cycleCompleted) || state.assistant.cycleCompleted >= 5) return false;
     if (state.assistant.breakRemaining > ASSISTANT_BREAK_SECONDS) return false;
     if (state.assistant.breakRemaining > 0 ? taskIds.length > 0 || state.assistant.cycleCompleted !== 0 || !ASSISTANT_BREAK_LABELS.includes(state.assistant.breakLabel) : state.assistant.breakLabel !== "") return false;
-    if (state.tasks.filter((task) => task.status === "active").length > slots) return false;
+    if (state.tasks.filter((task) => task.status === "active").length + state.incidents.filter((incident) => !incident.resolved && incident.manualRepair === true).length > slots) return false;
     const entities = [...state.tasks, ...state.agents, ...state.clusters, ...state.services, ...state.incidents];
     if (!entities.every((item) => /^[a-z0-9_]+$/.test(item.id) && !/["'&]/.test(item.name))) return false;
     if (new Set(entities.map((item) => item.id)).size !== entities.length) return false;
@@ -516,7 +520,7 @@
     if (!state.agents.every((agent) => AGENT_ROLES.some((role) => role.id === agent.roleId) && /^#[0-9a-f]{6}$/i.test(agent.color) && agent.speed > 0 && agent.tokenCost > 0 && agent.specialty.every((id) => TASK_TYPES.some((type) => type.id === id)) && ["idle", "working", "error", "provisioning"].includes(agent.status) && (agent.status !== "provisioning" || (agent.provisionRemaining > 0 && agent.provisionDuration > 0)))) return false;
     const workers = state.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId));
     if (state.taskSpawnDelay <= 0 || !workers.every((agent) => Number.isInteger(agent.slotIndex)) || new Set(workers.map((agent) => agent.slotIndex)).size !== workers.length) return false;
-    if (!state.incidents.every((incident) => ["warning", "critical"].includes(incident.sev) && incident.fixProgress <= 100)) return false;
+    if (!state.incidents.every((incident) => ["warning", "critical"].includes(incident.sev) && incident.fixProgress <= 100 && (!Object.hasOwn(incident, "manualRepair") || typeof incident.manualRepair === "boolean"))) return false;
     if (!state.purchasedUpgrades.every((id) => UPGRADES.some((upgrade) => upgrade.id === id)) || !state.milestonesReached.every((id) => MILESTONES.some((milestone) => milestone.id === id))) return false;
     if (!state.log.every((entry) => ["", "good", "bad", "warn", "info"].includes(entry.type))) return false;
     const assigned = state.clusters.flatMap((cluster) => cluster.workerAgentIds);
@@ -694,7 +698,7 @@
   // ---------- CLICKING / TASK WORK ----------
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
-    if (!task || task.status !== "available" || G.tasks.filter((item) => item.status === "active").length >= humanWorkSlots()) return;
+    if (!task || task.status !== "available" || manualRepairs().length > 0 || availableManualSlots() === 0) return;
 
     startManualTasks([task], evt);
   }
@@ -726,11 +730,18 @@
       }
     }
     if (!G.activeTaskId) G.activeTaskId = (G.tasks.find((t) => t.status === "active") || {}).id || null;
-    G.stress = clamp(G.stress + MANUAL_STRESS_PER_SEC * dtSec * activeTasks.length, 0, 100);
   }
 
   function humanWorkSlots() {
     return G.purchasedUpgrades.includes("multitasking") ? 2 : 1;
+  }
+
+  function manualRepairs() {
+    return G.incidents.filter((incident) => !incident.resolved && incident.manualRepair === true);
+  }
+
+  function availableManualSlots() {
+    return Math.max(0, humanWorkSlots() - G.tasks.filter((task) => task.status === "active").length - manualRepairs().length);
   }
 
   function assistantAvailable() {
@@ -800,9 +811,9 @@
   }
 
   function doWork(evt) {
-    if (!G.gameStarted || G.retired) return;
+    if (!G.gameStarted || G.retired || manualRepairs().length > 0 || availableManualSlots() === 0) return;
     if (!G.uiRevealed.taskQueue) { doEarlyTask(evt); return; }
-    const slots = humanWorkSlots() - G.tasks.filter((task) => task.status === "active").length;
+    const slots = availableManualSlots();
     const tasks = G.tasks.filter((task) => task.status === "available").slice(0, slots);
     if (tasks.length) startManualTasks(tasks, evt);
   }
@@ -810,12 +821,13 @@
   function renderYouCard() {
     const working = G.tasks.filter((task) => task.status === "active");
     $("#you-status").textContent = working.length ? "Working on " + working.length + (working.length === 1 ? " task" : " tasks") : "Ready to work";
+    if (manualRepairs().length) $("#you-status").textContent = "Busy fixing an incident";
     $("#you-delivered").textContent = deliveredTasksLabel(G.manualTasksCompleted);
     const button = $("#btn-do-task");
     button.textContent = G.uiRevealed.taskQueue ? "Do work" : "Do Task";
     const parent = G.uiRevealed.taskQueue ? $("#you-controls") : $("#prelude-controls");
     if (button.parentElement !== parent) parent.appendChild(button);
-    button.disabled = working.length >= humanWorkSlots() || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
+    button.disabled = manualRepairs().length > 0 || availableManualSlots() === 0 || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
     button.style.cursor = button.disabled ? "default" : "pointer";
   }
 
@@ -1034,12 +1046,10 @@
       // Total nonsense -- reset progress
       task.workDone = 0;
       log("AI produced nonsense on \"" + task.name + "\". Progress reset!", "bad");
-      G.stress = clamp(G.stress + 5, 0, 100);
     } else if (failRoll < failThreshold) {
       // Hallucination -- partial redo
       task.workDone = Math.max(0, task.workDone - Math.ceil(power * 0.5));
       log("AI hallucinated on \"" + task.name + "\". Some progress lost.", "warn");
-      G.stress = clamp(G.stress + 2, 0, 100);
     } else {
       task.workDone = Math.min(task.workRequired, task.workDone + power);
     }
@@ -1069,7 +1079,7 @@
     G.totalIncidents++;
     G.uiRevealed.incidents = true;
     log("INCIDENT: Hallucinated Output Published!", "bad");
-    showPopup("Your First Incident", "Incidents are operational failures caused by automation. Incidents disrupt work and cost money. Fix manually (costs stress) or pay to resolve. This is a mild one. They get worse as you scale.");
+    showPopup("Your First Incident", "Incidents are operational failures caused by automation. Incidents disrupt work and cost money. Fix manually in 2 seconds using a manual work slot, or pay to fix instantly. This is a mild one. They get worse as you scale.");
   }
 
   function findMatchingTask(agent) {
@@ -1175,8 +1185,6 @@
       metrics.recent.length = Math.min(3, metrics.recent.length);
     }
     syncMusicPlayback();
-
-    if (G.stress > 0) G.stress = clamp(G.stress - 2, 0, 100);
 
     log("Completed \"" + task.name + "\" -> +" + fmtCash(pay), "good");
 
@@ -1632,10 +1640,11 @@
 
     if (method === "manual") {
       // Takes time/stress but free
-      G.stress = clamp(G.stress + 10 * (1 - inc.fixProgress / 100), 0, 100);
-      inc.fixProgress = 100;
-      inc.resolved = true;
-      log("Manually resolved: " + inc.name + ".", "good");
+      // Manual repairs now use a work slot; stress has been retired.
+      if (inc.manualRepair || availableManualSlots() === 0) return;
+      inc.manualRepair = true;
+      renderYouCard();
+      return;
     } else if (method === "cash") {
       const cost = (inc.cashCost || 20) * 2;
       if (G.cash < cost) { log("Not enough cash!", "bad"); return; }
@@ -1643,12 +1652,26 @@
       inc.fixProgress = 100;
       inc.resolved = true;
       log("Paid " + fmtCash(cost) + " to resolve: " + inc.name + ".", "warn");
+      renderYouCard();
     }
 
     // Remove resolved after delay
     setTimeout(() => {
       G.incidents = G.incidents.filter((i) => i.id !== incidentId);
     }, 500);
+  }
+
+  function tickManualRepairs(dtSec) {
+    for (const inc of manualRepairs()) {
+      inc.fixProgress = Math.min(100, inc.fixProgress + dtSec * 100 / MANUAL_REPAIR_SECONDS);
+      if (inc.fixProgress < 100) continue;
+      inc.resolved = true;
+      log("Manually resolved: " + inc.name + ".", "good");
+      renderYouCard();
+      setTimeout(() => {
+        G.incidents = G.incidents.filter((incident) => incident.id !== inc.id);
+      }, 500);
+    }
   }
 
   function tickIncidents(dtSec) {
@@ -1674,7 +1697,7 @@
     if (responders.length === 0) return;
 
     const active = G.incidents
-      .filter((i) => !i.resolved)
+      .filter((i) => !i.resolved && !i.manualRepair)
       .sort((a, b) => {
         var sa = a.sev === "critical" ? 2 : 1;
         var sb = b.sev === "critical" ? 2 : 1;
@@ -1750,14 +1773,6 @@
     const growth = activeAgents * 0.05 * dtSec * (1 - G.debtReduction);
     const devops = G.clusters.filter((cluster) => cluster.managerAssigned).length;
     G.techDebt = Math.max(0, G.techDebt + growth - devops * dtSec * 0.5);
-  }
-
-  // ---------- STRESS ----------
-  function tickStress(dtSec) {
-    // Stress slowly recovers
-    if (G.stress > 0) {
-      G.stress = clamp(G.stress - 0.5 * dtSec, 0, 100);
-    }
   }
 
   function getLateCostMultiplier() {
@@ -3080,11 +3095,11 @@
     }
     tickTokenManager();
     tickIncidents(dtSec);
+    tickManualRepairs(dtSec);
     tickDevopsIncidentResponse(dtSec);
     tickServices(dtSec);
     tickExpenses(dtSec);
     tickDebt(dtSec);
-    tickStress(dtSec);
     tickAiCeo();
     tickSalePreparation(dtSec);
 
@@ -3150,18 +3165,15 @@
         $("#res-tasks").textContent = fmt(G.totalTasksDone);
         $("#token-burn").textContent = "-" + fmtTokens(G.averageTokenBurn) + " tok/s";
 	    $("#res-debt").textContent = fmt(G.techDebt);
-	    $("#res-stress").textContent = Math.round(G.stress) + "%";
 	    $("#phase-label").textContent = "Phase " + G.phase;
 
     // Progressive reveal of resource counters
     $("#res-cash-wrap").style.display = G.uiRevealed.cash ? "" : "none";
     $("#res-tokens-wrap").style.display = G.uiRevealed.tokens ? "" : "none";
     $("#res-debt-wrap").style.display = G.uiRevealed.debt ? "" : "none";
-    $("#res-stress-wrap").style.display = G.uiRevealed.stress ? "" : "none";
 
     // Warning pulse
     $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < (G.phase >= 7 ? MANAGER_TOPUP_COST_TOKEN : workerTokenCapacity()));
-    $("#res-stress-wrap").classList.toggle("res-warning", G.stress > 80);
 
     // Income and expense rates
     var income = getIncomeRate();
@@ -3652,10 +3664,11 @@
 	        "</div>" +
 	        "</div>" +
 	        "<div class='text-sm text-muted mb'>" + inc.desc + "</div>" +
-	        (idleDevops > 0 ? "<div class='text-sm mb' style='color:var(--green)'>DevOps responding (" + (inc.fixProgress || 0).toFixed(0) + "%)" + "</div>" : "") +
-	        ((inc.fixProgress || 0) > 0 ? "<div class='task-bar mb'><div class='task-bar-fill' style='width:" + Math.min(100, inc.fixProgress).toFixed(0) + "%;background:var(--green)'></div></div>" : "") +
+	        (inc.manualRepair ? "<div class='text-sm mb' style='color:var(--green)'>Fixing manually (" + inc.fixProgress.toFixed(0) + "%)</div>" : idleDevops > 0 ? "<div class='text-sm mb' style='color:var(--green)'>DevOps responding (" + (inc.fixProgress || 0).toFixed(0) + "%)" + "</div>" : "") +
+	        ((inc.fixProgress || 0) > 0 || inc.manualRepair ? "<div class='task-bar mb'><div class='task-bar-fill' style='width:" + Math.min(100, inc.fixProgress).toFixed(0) + "%;background:var(--green)'></div></div>" : "") +
+	        (!inc.manualRepair && availableManualSlots() === 0 ? "<div class='text-sm mb'>Manual slot busy</div>" : "") +
 	        "<div style='display:flex;gap:6px'>" +
-	        "<button class='btn btn-primary btn-sm' onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">Fix Manually (+stress)</button>" +
+	        "<button class='btn btn-primary btn-sm'" + (inc.manualRepair || availableManualSlots() === 0 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">FIx Manually</button>" +
 	        "<button class='btn btn-yellow btn-sm'" + (G.cash < (inc.cashCost || 20) * 2 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','cash')\">Pay to Fix (" + fmtCash((inc.cashCost || 20) * 2) + ")</button>" +
 	        "</div>" +
 	        "</div>";
