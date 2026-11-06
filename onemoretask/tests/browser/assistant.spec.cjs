@@ -20,7 +20,7 @@ async function openTeam(page, width, phase = 1) {
   await page.clock.pauseAt(new Date(g.lastTick + 1000));
   await page.addInitScript(value => { if (!localStorage.getItem('ai_empire_save')) localStorage.setItem('ai_empire_save', value); }, raw);
   await page.goto('/');
-  if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
 }
 
 for (const width of [1440, 390]) {
@@ -43,7 +43,7 @@ for (const width of [1440, 390]) {
     await page.evaluate(() => localStorage.setItem('ai_empire_save', JSON.stringify(GAME.state)));
     const ids = await page.evaluate(() => GAME.state.assistant.taskIds);
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     expect(await page.evaluate(() => GAME.state.assistant.taskIds)).toEqual(ids);
     await page.clock.runFor(19000);
     expect(await page.evaluate(() => GAME.state.assistant.tasksCompleted)).toBe(5);
@@ -59,7 +59,7 @@ for (const width of [1440, 390]) {
     await page.evaluate(() => localStorage.setItem('ai_empire_save', JSON.stringify(GAME.state)));
     const label = await page.evaluate(() => GAME.state.assistant.breakLabel);
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(assistant).toContainText(label);
     await page.clock.runFor(11000);
     expect(await page.evaluate(() => GAME.state.assistant.tasksCompleted)).toBe(7);
@@ -88,7 +88,7 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#section-agents .name')).toHaveText(['You', 'AI 2000 Basic', 'AI 2000 Pro']);
     expect(await page.evaluate(() => GAME.state.assistant.breakRemaining)).toBe(0);
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(page.locator('#team-heading')).toHaveText('Agents');
     await expect(page.locator('[data-assistant]')).toHaveCount(0);
     await expect(page.locator('#you-card')).toBeVisible();
@@ -145,7 +145,7 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(15000);
     await expect(page.locator('#you-delivered')).toHaveText('2 tasks delivered');
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(page.locator('#you-delivered')).toHaveText('2 tasks delivered');
     await page.screenshot({ path: `test-results/matched-team-${width}.png`, fullPage: true, animations: 'disabled' });
   });

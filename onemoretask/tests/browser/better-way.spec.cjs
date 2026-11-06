@@ -13,7 +13,7 @@ for (const width of [1440, 390]) {
       GAME.buy('assistant_settling'); GAME.buy('assistant_routine');
     });
     await page.clock.runFor(200);
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     const card = page.locator('#upgrade-list .upgrade-card');
     await expect(card).toHaveCount(0);
     await page.evaluate(() => GAME.addTasks(1));

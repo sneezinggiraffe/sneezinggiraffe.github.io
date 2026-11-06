@@ -49,7 +49,7 @@ function harness(saved, options = {}) {
   }
   function worker(role = 'writer') { const agent = api.createAgent(role); window.GAME.state.agents.push(agent); return agent; }
   function task() { const item = api.generateTask(); window.GAME.state.tasks.push(item); return item; }
-  function dismiss() { while (api.queue().length) api.dismissPopup(); window.document.querySelector('#offline-popup').classList.remove('show'); }
+  function dismiss() { while (api.queue().length) api.dismissPopup(); }
   function prepareUpgrade(id) {
     const upgrade=api.UPGRADES.find(item=>item.id===id);
     const state=window.GAME.state;

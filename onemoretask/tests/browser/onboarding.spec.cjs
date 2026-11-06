@@ -13,7 +13,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await expect(page.locator('#intro-overlay h2')).toBeInViewport();
     const findWork = page.getByRole('button', {name: 'Find Work', exact: true});
     await findWork.click();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     for (let index = 0; index < 3; index++) {
       const work = page.getByRole('button', {name: 'Do Task', exact: true});
       await expect(work).toBeInViewport();
@@ -42,7 +42,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await expect(page.locator('#task-list .task-card')).toHaveCount(1);
     await page.screenshot({path: `test-results/inbox-waiting-${width}.png`, fullPage: true});
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(page.locator('#task-list .task-card')).toHaveCount(1);
     await page.getByRole('button', {name: 'Do work', exact: true}).focus();
     await page.keyboard.press('Enter');
@@ -57,7 +57,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     const cash = await page.evaluate(() => GAME.state.cash);
     await page.screenshot({path: `test-results/inbox-working-${width}.png`, fullPage: true});
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(inbox.locator('[data-assignment="active"]')).toBeVisible();
     await page.clock.runFor(2000);
     expect(await page.evaluate(() => GAME.state.totalTasksDone)).toBe(4);
@@ -73,7 +73,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await expect(page.locator('#section-log')).toBeHidden();
     await expect(page.locator('#milestone-popup')).toBeHidden();
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(intro).toHaveCount(1);
     await expect(intro).toContainText('Tools of the Trade');
     await expect(page.locator('#section-log')).toBeHidden();
@@ -87,7 +87,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(3);
     await expect(page.locator('#upgrade-list')).not.toContainText('Tools of the Trade');
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await expect(page.locator('#upgrade-list .upgrade-card')).toHaveCount(3);
     await expect(page.locator('#upgrade-list')).not.toContainText('Tools of the Trade');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

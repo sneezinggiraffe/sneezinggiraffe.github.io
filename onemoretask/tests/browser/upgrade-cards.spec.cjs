@@ -10,7 +10,7 @@ for (const width of [1440, 390]) {
       GAME.state.cash = 0;
     });
     await page.clock.runFor(200);
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     const card = page.locator('.upgrade-card').filter({ hasText: 'Hire a Part-Time Assistant' });
     const action = card.locator('button');
     await expect(action).toBeDisabled();

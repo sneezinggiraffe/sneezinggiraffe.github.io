@@ -25,7 +25,7 @@ for (const width of [1440, 390]) {
     await page.clock.pauseAt(new Date(g.lastTick + 1000));
     await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
     await page.goto('/');
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     const slots = await page.locator('.capacity-slot.filled').evaluateAll(elements => elements.map(element => ({label: element.textContent, fits: element.scrollWidth <= element.clientWidth})));
     expect(slots).toHaveLength(80);
     expect(slots.every(slot => /^[0-9a-f]{4}$/.test(slot.label) && slot.fits)).toBe(true);
@@ -61,10 +61,10 @@ for (const width of [1440, 390]) {
     await page.clock.pauseAt(new Date(g.lastTick + 1000));
     await page.addInitScript(value => {
       localStorage.setItem('ai_empire_save', value);
-      sessionStorage.setItem('rotate_dismissed', '1');
+
     }, raw);
     await page.goto('/');
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     const slot = page.locator('.capacity-slot.filled').first();
     await expect(slot).toHaveText(/^[0-9a-f]{4}$/);
     const before = await slot.boundingBox();
@@ -77,7 +77,7 @@ for (const width of [1440, 390]) {
     expect(after.width).toBeCloseTo(before.width, 1);
     expect(after.height).toBeCloseTo(before.height, 1);
     expect(after.height).toBe(16);
-    await page.locator('#btn-dismiss-popup').click();
+    await expect(page.locator('#milestone-popup')).toBeHidden();
     await page.locator('#section-clusters').scrollIntoViewIfNeeded();
     await page.screenshot({path: `test-results/phase12-agent-boxes-${width}.png`, animations: 'disabled'});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -102,10 +102,10 @@ for (const width of [1440, 390]) {
     await page.clock.install();
     await page.addInitScript(value => {
       localStorage.setItem('ai_empire_save', value);
-      sessionStorage.setItem('rotate_dismissed', '1');
+
     }, raw);
     await page.goto('/');
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     const factory = page.locator('[onclick="GAME.buy(\'factory_direct\')"]');
     const supply = page.locator('[onclick="GAME.buy(\'neocloud_supply_chain\')"]');
     await expect(factory.locator('xpath=ancestor::div[contains(@class,"upgrade-card")]')).toContainText('Factory-Direct Hardware');
@@ -145,10 +145,10 @@ for (const width of [1440, 390]) {
         localStorage.setItem('ai_empire_save', value);
         sessionStorage.setItem('neocloud_seeded', '1');
       }
-      sessionStorage.setItem('rotate_dismissed', '1');
+
     }, raw);
     await page.goto('/');
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     const talks = page.locator('[onclick="GAME.buy(\'retire_unlock\')"]');
     await expect(talks).toHaveCount(0);
     await page.locator('[onclick="GAME.buy(\'parallel_neoclouds\')"]').click();
@@ -167,7 +167,7 @@ for (const width of [1440, 390]) {
       return GAME.state.clusters.slice(500).map(cluster => cluster.buildRemaining);
     });
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     expect(await page.evaluate(() => GAME.state.clusters.slice(500).map(cluster => cluster.buildRemaining))).toEqual(remaining);
     await page.clock.runFor(300);
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
@@ -180,6 +180,6 @@ for (const width of [1440, 390]) {
     await talks.click();
     await page.clock.runFor(8100);
     expect(await page.evaluate(() => GAME.state.phase)).toBe(16);
-    await expect(page.locator('#milestone-popup')).toBeVisible();
+    await expect(page.locator('#milestone-popup')).toBeHidden();
   });
 }

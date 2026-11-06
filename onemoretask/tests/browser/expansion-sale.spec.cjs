@@ -68,7 +68,7 @@ for (const width of [1440, 390, 320]) {
         }
       }, raw);
       await page.goto('/');
-      if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
       const grid = page.locator('#cluster-list .node-grid');
       const placeholder = grid.locator(phase === 11 ? '.provision-card' : '.planning-card');
       await expect(grid.locator(':scope > .cluster-card').first()).toHaveClass(phase === 11 ? /provision-card/ : /planning-card/);
@@ -92,7 +92,7 @@ for (const width of [1440, 390, 320]) {
       expect(newestBounds.x).toBeCloseTo(placeholderBounds.x, 0);
       expect(newestBounds.y).toBeCloseTo(placeholderBounds.y, 0);
       await page.reload();
-      if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
       await expect(grid.locator(':scope > .cluster-card').first()).toHaveAttribute('data-cluster-id', ids.at(-1));
       await page.clock.runFor(13000);
       await expect(grid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', ids.at(-1));
@@ -113,10 +113,10 @@ for (const width of [1440, 390, 320]) {
       await page.clock.pauseAt(new Date(state.lastTick + 1000));
       await page.addInitScript(value => {
         localStorage.setItem('ai_empire_save', value);
-        sessionStorage.setItem('rotate_dismissed', '1');
+
       }, raw);
       await page.goto('/');
-      if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
       const planning = page.locator('.planning-card');
       await planning.scrollIntoViewIfNeeded();
       await expect(planning).toBeInViewport();
@@ -156,13 +156,13 @@ for (const width of [1440, 390, 320]) {
 for (const width of [1440, 390]) {
   test(`the investor-to-sale journey resumes after reload and fades into retirement at ${width}px`, async ({ page }) => {
     await page.setViewportSize({width, height: 900});
-    await page.addInitScript(() => sessionStorage.setItem('rotate_dismissed', '1'));
+
     const started = Date.now();
     await page.clock.install({time: new Date(started)});
     await page.clock.pauseAt(new Date(started + 1000));
     await page.goto('/');
     await page.evaluate(() => { chPh16(); GAME.addCash(1e11); });
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     await page.clock.runFor(1000);
     const talks = page.locator('[onclick="GAME.buy(\'retire_unlock\')"]');
     await expect(talks).toHaveText('$90.0K');
@@ -172,12 +172,12 @@ for (const width of [1440, 390]) {
     await expect(page.locator('[aria-label="Sale preparation"]')).toHaveAttribute('aria-valuenow', /4\d|5\d/);
     const remaining = await page.evaluate(() => GAME.state.salePreparation.remaining);
     await page.reload();
-    if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
     expect(await page.evaluate(() => GAME.state.salePreparation.remaining)).toBe(remaining);
     await page.screenshot({path: `test-results/investor-talks-${width}.png`, animations: 'disabled'});
     await page.clock.runFor((remaining + 0.3) * 1000);
-    await expect(page.locator('#milestone-popup')).toBeVisible();
-    await page.locator('#btn-dismiss-popup').click();
+    await expect(page.locator('#milestone-popup')).toBeHidden();
+    await expect(page.locator('#milestone-popup')).toBeHidden();
     expect(await page.evaluate(() => GAME.state.phase)).toBe(16);
     for (const [id, duration] of [['sale_advisor', 10], ['sale_buyout', 12], ['sale_diligence', 18], ['sale_terms', 10]]) {
       const button = page.locator('[onclick="GAME.buy(\'' + id + '\')"]');

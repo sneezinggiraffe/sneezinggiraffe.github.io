@@ -168,15 +168,14 @@ test('Ralph-loops and Scale Mode advance without modals while the operating mode
       h.dismiss();
       h.api.purchaseUpgrade(id);
       assert.equal(g.phase, phase + 1);
-      assert.equal(h.api.queue().length, id === 'autonomous_nodes' ? 1 : 0);
+      assert.equal(h.api.queue().length, 0);
       if (id === 'ops_flywheel') {
         const upgrade = h.api.UPGRADES.find(item => item.id === id);
         assert.equal(upgrade.name, 'Ralph-loops');
         assert.equal(upgrade.desc, 'Agents work for longer and check their work.');
       }
       if (id === 'autonomous_nodes') {
-        assert.match(h.window.document.querySelector('#milestone-popup-msg').textContent, /Your CEO now operates the nodes/);
-        assert.doesNotMatch(h.window.document.querySelector('#milestone-popup-msg').textContent, /100 managed nodes/);
+        assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(item => item.id === 'network_info')), false);
       }
       assert.equal(h.api.validSave(g), true);
     }
@@ -1535,10 +1534,12 @@ scenario('cluster workers cannot be detached fired or individually controlled', 
   assert.equal(t.status,'agent');assert.equal(a.currentTask,t.id);assert.equal(c.managerAssigned,true);assert.equal(c.workerAgentIds[0],a.id);
   h.api.completeTask(t,'ai_assist');assert.equal(a.currentTask,null);assert.equal(h.api.validSave(g),true);
 });
-scenario('mobile rotate preference needs no storage permission', (h) => {
-  Object.defineProperty(h.window,'innerWidth',{value:390,configurable:true});Object.defineProperty(h.window,'innerHeight',{value:844,configurable:true});h.api.updateRotateOverlay();
-  assert.equal(h.window.document.querySelector('#rotate-overlay').classList.contains('show'),true);
-  h.window.document.querySelector('#btn-rotate-continue').click();h.api.updateRotateOverlay();assert.equal(h.window.document.querySelector('#rotate-overlay').classList.contains('show'),false);
+scenario('portrait play has no rotation prompt', (h) => {
+  Object.defineProperty(h.window, 'innerWidth', { value: 390, configurable: true });
+  Object.defineProperty(h.window, 'innerHeight', { value: 844, configurable: true });
+  h.window.dispatchEvent(new h.window.Event('resize'));
+  h.window.dispatchEvent(new h.window.Event('orientationchange'));
+  assert.equal(h.window.document.querySelector('#rotate-overlay'), null);
 });
 scenario('autopilot sustains work without manual tank refills', (h) => {
   const g=h.fresh(8);g.totalTasksDone=650;g.cash=100000;g.tokens=0;g.managerUnlock=true;g.aiWorkerShutdown=true;g.incidentsExplained=true;
@@ -1565,7 +1566,7 @@ scenario('empty and locked panels clear prior DOM content', (h) => {
   const g=h.fresh();g.uiRevealed.agents=true;g.uiRevealed.prestige=true;h.api.renderAgentSection();h.api.renderPrestigeSection();h.api.renderTaskQueue();
   assert.equal(h.window.document.querySelector('#task-list').textContent,'');assert.equal(h.window.document.querySelector('#section-prestige').style.display,'none');
   g.phase=2;g.aiWorkerShutdown=true;h.api.renderAgentSection();assert.equal(h.window.document.querySelector('#agent-list').textContent,'');
-  h.window.document.querySelector('#offline-popup').classList.add('show');h.window.document.querySelector('#btn-dismiss-offline').click();assert.equal(h.window.document.querySelector('#offline-popup').classList.contains('show'),false);
+  assert.equal(h.window.document.querySelector('#offline-popup'), null);
 });
 scenario('manual work can start from a full or partly filled tank without buying fuel', (h) => {
   const g=h.fresh(5);g.tokens=0;const a=h.worker();a.autoAssign=false;a.tokenTank=10;const t=h.task();h.api.topUpAgent(a.id);
@@ -2129,8 +2130,8 @@ scenario('provisioning occupies the first grid slot and respects unlocks capacit
   g.phase=11;g.ceoMode='scale';h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);assert.equal(h.window.document.querySelectorAll('.leadership-agent').length,2);
 });
 scenario('the first random AI incident shows its tutorial once before ordinary incidents', (h) => {
-  const g=h.fresh(2);g.cash=1000;const task=h.task();h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,1);assert.equal(g.totalIncidents,1);assert.equal(g.incidents[0].sev,'warning');assert.equal(g.incidentsExplained,true);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,1);
-  h.api.triggerTutorialIncident();assert.equal(g.incidents.length,1);h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,2);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,1);
+  const g=h.fresh(2);g.cash=1000;const task=h.task();h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,1);assert.equal(g.totalIncidents,1);assert.equal(g.incidents[0].sev,'warning');assert.equal(g.incidentsExplained,true);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,0);
+  h.api.triggerTutorialIncident();assert.equal(g.incidents.length,1);h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,2);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,0);
   h.fresh(5);h.window.Math.random=()=>0;h.api.maybeCreateIncident(h.worker());assert.equal(h.window.GAME.state.incidents.length,1);assert.equal(h.window.GAME.state.incidentsExplained,true);
 });
 scenario('the timed incident cannot create a second failure in the same tick', (h) => {
@@ -2426,7 +2427,7 @@ scenario('the second subscription checkpoint saves 870 tasks and $14K before the
   h.window.chPh4();
   const g = h.window.GAME.state;
   const second = h.api.UPGRADES.find(upgrade => upgrade.id === 'second_ai');
-  const prior = h.api.UPGRADES.filter(upgrade => upgrade.oneTime && h.api.UPGRADES.indexOf(upgrade) < h.api.UPGRADES.indexOf(second));
+  const prior = h.api.UPGRADES.filter(upgrade => upgrade.oneTime && upgrade.infoUntilPhase !== 0 && h.api.UPGRADES.indexOf(upgrade) < h.api.UPGRADES.indexOf(second));
   assert.equal(g.phase, 3);
   assert.equal(g.totalTasksDone, 870);
   assert.equal(g.totalClicks, 6960);

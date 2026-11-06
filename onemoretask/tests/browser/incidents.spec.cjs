@@ -31,7 +31,7 @@ async function openIncident(page, width, multitasking = false) {
     if (!localStorage.getItem('ai_empire_save')) localStorage.setItem('ai_empire_save', value);
   }, raw);
   await page.goto('/');
-  if (await page.locator('#rotate-overlay').isVisible()) await page.locator('#btn-rotate-continue').click();
+
 }
 
 for (const width of [1440, 390]) {

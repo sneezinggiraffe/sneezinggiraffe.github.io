@@ -202,7 +202,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .popup-overlay .popup{background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;padding:24px;max-width:420px;width:90%;text-align:center}
 .popup-overlay h3{color:var(--accent);margin-bottom:10px}
 .popup-overlay .popup-msg{color:var(--text2);font-size:.9rem;line-height:1.5;margin-bottom:16px}
-.popup-overlay .earnings{font-size:1.3rem;font-weight:700;color:var(--cash);margin:10px 0}
 #settings-popup .popup{max-width:360px}
 #settings-popup .settings-actions{display:flex;flex-direction:column;gap:8px}
 #settings-popup .settings-action{width:100%;padding:8px 12px}
@@ -216,12 +215,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #intro-overlay p{color:var(--text2);margin-bottom:16px;line-height:1.5;font-size:.9rem}
 
 /* Rotate prompt */
-#rotate-overlay{display:none;position:fixed;inset:0;background:rgba(5,8,14,.94);z-index:1950;align-items:center;justify-content:center;padding:20px}
-#rotate-overlay.show{display:flex}
-#rotate-overlay .rotate-box{background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;max-width:340px;width:100%;padding:20px;text-align:center}
-#rotate-overlay .rotate-icon{font-size:2rem;line-height:1;margin-bottom:10px}
-#rotate-overlay h3{color:var(--accent);margin-bottom:8px}
-#rotate-overlay p{color:var(--text2);font-size:.9rem;line-height:1.45;margin-bottom:14px}
 
 /* Click ripple */
 
@@ -439,14 +432,6 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 </div>
 
 <!-- Mobile Rotate Prompt -->
-<div id="rotate-overlay" role="dialog" aria-modal="true" aria-label="rotate overlay">
-  <div class="rotate-box">
-    <div class="rotate-icon">📱↔</div>
-    <h3>Rotate Phone</h3>
-    <p>For the best play experience, rotate your phone widthways.</p>
-    <button class="btn btn-primary" id="btn-rotate-continue">Continue Anyway</button>
-  </div>
-</div>
 
 <!-- Milestone / Story Popup -->
 <div id="milestone-popup" role="dialog" aria-modal="true" aria-label="milestone popup" class="popup-overlay">
@@ -458,15 +443,6 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 </div>
 
 <!-- Offline Earnings Popup -->
-<div id="offline-popup" role="dialog" aria-modal="true" aria-label="offline popup" class="popup-overlay">
-  <div class="popup">
-    <h3>Welcome Back!</h3>
-    <p class="popup-msg">While you were away, your work kept running.</p>
-    <div class="earnings" id="offline-earnings">+$0</div>
-    <p class="text-sm text-muted" id="offline-details"></p>
-    <button class="btn btn-primary mt" id="btn-dismiss-offline">Collect</button>
-  </div>
-</div>
 
 <!-- Settings Popup -->
 <div id="settings-popup" role="dialog" aria-modal="true" aria-label="settings popup" class="popup-overlay">
