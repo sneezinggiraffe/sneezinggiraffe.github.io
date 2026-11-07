@@ -41,6 +41,7 @@ for (const width of [1440, 320]) {
     await page.locator('#btn-settings').click();
     const popup = page.locator('#settings-popup .popup');
     await expect(popup).toHaveClass(/paper-card/);
+    await expect(popup).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
     const settingsMaterial = await popup.evaluate(element => {
       const style = getComputedStyle(element);
       return [style.backgroundColor, style.border, style.borderRadius, style.boxShadow, style.padding, style.fontFamily, style.fontSize];
