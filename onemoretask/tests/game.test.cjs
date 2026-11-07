@@ -1701,7 +1701,7 @@ scenario('token-manager slot is reserved before another worker slot unlocks', (h
   for(const role of ['manager','writer','coder','researcher','analyst','support'])h.worker(role);
   h.api.purchaseUpgrade('token_manager_unlock');assert.equal(g.phase,8);assert.equal(g.agentSlots,7);
   h.api.purchaseUpgrade('agent_slot_7');assert.equal(g.agentSlots,7);
-  h.api.checkMilestones();h.dismiss();h.api.renderAgentSection();assert.match(h.window.document.querySelector('.token-manager-slot').textContent,/Buy Token Manager/);
+  h.api.checkMilestones();h.dismiss();h.api.renderAgentSection();assert.match(h.window.document.querySelector('.token-manager-slot').textContent,/Token Manager.*Buy/);
   h.api.hireAgent('token_mgr');g.purchasedUpgrades.push('devops_unlock');h.api.hireAgent('devops');assert.equal(g.agents.length,8);h.api.renderAgentSection();assert.equal(h.window.document.querySelectorAll('.agent-vacancy').length,1);
   h.prepareUpgrade('ops_flywheel');h.api.purchaseUpgrade('ops_flywheel');h.api.purchaseUpgrade('agent_slot_7');assert.equal(g.agentSlots,8);h.api.renderAgentSection();assert.match(h.window.document.querySelector('.agent-vacancy').textContent,/Sales/);
 });
@@ -2189,13 +2189,13 @@ scenario('phase cheats preserve their requested savings goals and prepare valid 
 
 scenario('DevOps has a dedicated purchasable slot even when every shared slot is occupied', (h) => {
   const g=h.fresh(8);g.cash=1e7;g.aiWorkerShutdown=true;g.managerUnlock=true;g.agentSlots=7;g.purchasedUpgrades.push('token_manager_unlock','devops_unlock');g.uiRevealed.agents=true;
-  for(let i=0;i<6;i++)h.worker('writer');h.worker('manager');h.worker('token_mgr');assert.equal(h.api.getSharedAgentPoolUsed(),8);h.api.renderAll();const slot=h.window.document.querySelector('#incident-devops .devops-slot');assert.equal(slot.tagName,'BUTTON');assert.ok(slot.classList.contains('hire-slot'));assert.equal(slot.disabled,false);assert.match(slot.textContent,/Buy DevOps.*Dedicated incident slot/);
+  for(let i=0;i<6;i++)h.worker('writer');h.worker('manager');h.worker('token_mgr');assert.equal(h.api.getSharedAgentPoolUsed(),8);h.api.renderAll();const slot=h.window.document.querySelector('#incident-devops .devops-slot');assert.equal(slot.tagName,'BUTTON');assert.ok(slot.classList.contains('hire-slot'));assert.equal(slot.disabled,false);assert.match(slot.textContent,/DevOps.*Resolves incidents.*Buy/);
   const price=h.api.getAgentHireCost(g.agents.length);const cash=g.cash;h.window.GAME.hire('devops');assert.equal(g.cash,cash-price);assert.equal(g.agents.length,9);assert.equal(h.api.getSharedAgentPoolUsed(),8);assert.equal(h.api.validSave(g),true);h.api.renderAll();assert.equal(h.window.document.querySelector('.agent-vacancy'),null);assert.ok(h.window.document.querySelector('#incident-devops .agent-card'));
   h.api.hireAgent('devops');assert.equal(g.agents.length,9);h.api.fireAgent(g.agents.find(a=>a.roleId==='manager').id);h.api.hireAgent('writer');assert.equal(h.api.getSharedAgentPoolUsed(),7);h.api.renderAgentSection();assert.equal(h.window.document.querySelector('.manager-slot').disabled,false);h.api.hireAgent('manager');assert.equal(h.api.getSharedAgentPoolUsed(),8);
 });
-scenario('each empty agent slot offers direct role purchases and accurate prices', (h) => {
+scenario('each empty agent slot offers direct role buttons and accurate prices', (h) => {
   const g=h.fresh(5);g.aiWorkerShutdown=true;g.uiRevealed.agents=true;g.cash=0;h.worker('writer');h.worker('researcher');h.api.renderAgentSection();const slot=h.window.document.querySelector('.agent-vacancy');assert.equal(slot.querySelector('select'),null);assert.equal(slot.querySelectorAll('button').length,5);assert.ok([...slot.querySelectorAll('button')].every(button=>button.disabled));
-  const price=h.api.getAgentHireCost(2);g.cash=price;h.api.renderAgentSection();const button=[...slot.querySelectorAll('button')].find(item=>item.textContent==='Buy Coder');assert.equal(button.disabled,false);h.window.eval(button.getAttribute('onclick'));assert.equal(g.cash,0);assert.equal(g.agents.at(-1).roleId,'coder');h.api.renderAgentSection();assert.equal(h.window.document.querySelector('.agent-vacancy'),null);
+  const price=h.api.getAgentHireCost(2);g.cash=price;h.api.renderAgentSection();const button=slot.querySelector('[aria-label="Buy Coder"]');assert.equal(button.disabled,false);h.window.eval(button.getAttribute('onclick'));assert.equal(g.cash,0);assert.equal(g.agents.at(-1).roleId,'coder');h.api.renderAgentSection();assert.equal(h.window.document.querySelector('.agent-vacancy'),null);
   assert.equal(h.api.UPGRADES.find(u=>u.id==='token_manager_unlock').desc,'Automatically buy tokens when they run out.');
 });
 
@@ -2576,7 +2576,7 @@ scenario('selling Basic preserves every worker slot through reload and replaceme
     assert.equal(loaded.agents.find(agent => agent.id === coder.id).slotIndex, 2);
     const first = restored.window.document.querySelector('#agent-list').firstElementChild;
     assert.ok(first.classList.contains('agent-vacancy'));
-    const buy = [...first.querySelectorAll('button')].find(button => button.textContent === 'Buy Writer');
+    const buy = first.querySelector('[aria-label="Buy Writer"]');
     const cash = loaded.cash;
     const cost = restored.api.getAgentHireCost(loaded.agents.length);
     restored.window.eval(buy.getAttribute('onclick'));

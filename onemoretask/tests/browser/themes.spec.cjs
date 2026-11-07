@@ -106,8 +106,8 @@ test('buy-agent roles and DevOps remain clear interactive controls in both views
     GAME.fire(GAME.state.agents.find(agent => !['manager', 'token_mgr'].includes(agent.roleId)).id);
   });
   await page.clock.runFor(200);
-  const writer = page.getByRole('button', { name: 'Buy Writer', exact: true }).first();
-  const devops = page.getByRole('button', { name: /Buy DevOps/ });
+  const writer = page.locator('.agent-vacancy').first().getByRole('button', { name: 'Buy Writer', exact: true });
+  const devops = page.getByRole('button', { name: /DevOps.*Buy/ });
   const refill = page.getByRole('button', { name: 'Add tokens', exact: true }).first();
   await expect(refill).toBeEnabled();
   await expect(writer).toBeEnabled();

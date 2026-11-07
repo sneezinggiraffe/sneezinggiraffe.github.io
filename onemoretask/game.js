@@ -3557,7 +3557,7 @@
       else if (reserved.includes(roleId)) {
         const name = roleId === "manager" ? "Manager" : "Token Manager";
         const price = getAgentHireCost(G.agents.length, roleId);
-        html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy " + name + "</strong><span>" + fmtCash(price) + "</span><span class='hire-arrow' aria-hidden='true'>→</span></button>";
+        html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='vacancy-heading'><strong>" + name + "</strong><span>" + fmtCash(price) + "</span></span><span class='manager-purchase-detail'><span>" + (roleId === "manager" ? "Assigns work and refills agents" : "Buys and distributes tokens") + "</span><span>Buy</span></span></button>";
       }
     }
     const workers = G.agents.filter((item) => !UTILITY_ROLES.includes(item.roleId));
@@ -3571,8 +3571,8 @@
       const agent = workers.find((item) => item.slotIndex === slot);
       if (agent) { html += renderAgentCard(agent); continue; }
       const number = slot + getSharedAgentPoolSize() - workerSlotCount() + 1;
-      html += "<div class='card hire-slot agent-vacancy' data-agent-slot='" + slot + "'><div class='vacancy-heading'><span class='provision-icon'>+</span><strong>Agent slot " + number + "</strong><span>" + fmtCash(cost) + " each</span></div><div class='agent-buy-options'>";
-      for (const role of hireRoles) html += "<button class='btn btn-primary btn-sm' onclick=\"GAME.hire('" + role.id + "'," + slot + ")\" " + (G.cash < cost ? "disabled" : "") + ">Buy " + role.name + "</button>";
+      html += "<div class='card hire-slot agent-vacancy' data-agent-slot='" + slot + "'><div class='vacancy-heading'><strong>Agent slot " + number + "</strong><span>" + fmtCash(cost) + "</span></div><div class='agent-buy-options'>";
+      for (const role of hireRoles) html += "<button class='btn btn-sm' aria-label='Buy " + role.name + "' onclick=\"GAME.hire('" + role.id + "'," + slot + ")\" " + (G.cash < cost ? "disabled" : "") + ">" + role.name + "</button>";
       html += "</div></div>";
     }
     updateHTML($("#agent-list"), html);
@@ -3717,7 +3717,7 @@
     if (agent) return renderAgentCard(agent);
     if (!G.purchasedUpgrades.includes("devops_unlock")) return "";
     const cost = getAgentHireCost(G.agents.length);
-    return "<button class='card hire-slot devops-slot' onclick=\"GAME.hire('devops')\" " + (G.cash < cost ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy DevOps</strong><span>" + fmtCash(cost) + "</span><span class='hire-arrow' aria-hidden='true'>→</span><small>Dedicated incident slot</small></button>";
+    return "<button class='card hire-slot devops-slot' onclick=\"GAME.hire('devops')\" " + (G.cash < cost ? "disabled" : "") + "><span class='vacancy-heading'><strong>DevOps</strong><span>" + fmtCash(cost) + "</span></span><span class='manager-purchase-detail'><span>Resolves incidents</span><span>Buy</span></span></button>";
   }
 
   function renderIncidentSection() {
