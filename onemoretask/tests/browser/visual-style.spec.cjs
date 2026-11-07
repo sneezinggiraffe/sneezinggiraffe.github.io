@@ -47,7 +47,7 @@ for (const width of [1440, 844, 390, 320]) {
   });
 }
 
-test('token shortages stay visible without glow or continuous motion and managed workers remain legible', async ({ page }) => {
+test('token shortages pulse while managed workers remain legible', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   await page.evaluate(() => {
@@ -64,6 +64,9 @@ test('token shortages stay visible without glow or continuous motion and managed
   await page.clock.runFor(200);
   const warning = page.locator('#res-tokens-wrap');
   await expect(warning).toHaveClass(/res-warning/);
+  await expect(warning).toHaveCSS('animation-name', 'token-warning-pulse');
+  await expect(warning).toHaveCSS('border-top-width', '3px');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(warning).toHaveCSS('animation-name', 'none');
   await expect(warning).toHaveCSS('box-shadow', 'none');
   await expect(page.locator('#res-debt-wrap')).not.toHaveClass(/res-debt-active/);
@@ -120,3 +123,36 @@ for (const width of [844, 320]) {
     expect(number).toEqual({ lines: 1, fits: true });
   });
 }
+
+test('buying tokens clears purchase highlights and enables refills', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  await page.evaluate(() => {
+    GAME.cheat(4);
+    GAME.state.tokens = 0;
+    GAME.state.cash = 100000;
+    GAME.state.aiWorkerTokenTank = 0;
+  });
+  await page.clock.runFor(200);
+  const refill = page.locator('.btn-refill').first();
+  await expect(refill).toBeDisabled();
+  await expect(refill).toHaveText('No tokens');
+  const purchase = page.locator('.token-purchase-warning').first();
+  const pack = page.locator('.upgrade-repeatable').filter({ has: purchase }).first();
+  await expect(pack).toHaveCSS('outline-width', '3px');
+  await expect(pack).toHaveCSS('outline-style', 'solid');
+  await expect(purchase).toHaveCSS('outline-style', 'none');
+  const packBounds = await pack.boundingBox();
+  const buttonBounds = await purchase.boundingBox();
+  expect(packBounds.width).toBeGreaterThan(buttonBounds.width);
+  expect(packBounds.height).toBeGreaterThan(buttonBounds.height);
+  await expect(purchase).toHaveCSS('animation-name', 'none');
+  await purchase.click();
+  await page.clock.runFor(200);
+  await expect(page.locator('.token-purchase-warning')).toHaveCount(0);
+  await expect(page.locator('.upgrade-repeatable').first()).toHaveCSS('outline-style', 'none');
+  await expect(refill).toBeEnabled();
+  await expect(refill).toHaveText('Add tokens');
+  await refill.click();
+  expect(await page.evaluate(() => GAME.state.aiWorkerTokenTank)).toBeGreaterThan(0);
+});

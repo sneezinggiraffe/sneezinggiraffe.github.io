@@ -77,7 +77,7 @@ test('zero tanks have a precise empty label while funded tanks omit it', () => {
     g.managerTokenTank = 0;
     template.innerHTML = h.api.renderAgentCard(manager);
     assert.equal(template.content.querySelector('.token-empty').textContent, 'Empty');
-    assert.equal(template.content.querySelector('button').textContent, 'Add tokens');
+    assert.equal(template.content.querySelector('button').textContent, 'No tokens');
   } finally { h.close(); }
 });
 
@@ -109,5 +109,50 @@ test('settings omit redundant default copy and restore it after cancelling reset
     assert.equal(document.querySelector('#settings-msg').textContent, '');
     assert.equal(document.querySelector('#settings-main-actions').style.display, 'flex');
     assert.equal(document.querySelector('#settings-confirm-actions').style.display, 'none');
+  } finally { h.close(); }
+});
+
+test('refill buttons disable without reserve tokens and recover after funding', () => {
+  const h = harness();
+  try {
+    const g = h.fresh(3);
+    const agents = [{ roleId: 'original_ai', tokenTank: 0 }, h.worker('coder'), h.worker('manager')];
+    agents[2].status = 'error';
+    const template = h.window.document.createElement('template');
+    for (const tokens of [0, 1, 0]) {
+      g.tokens = tokens;
+      for (const agent of agents) {
+        template.innerHTML = h.api.renderAgentCard(agent);
+        const button = template.content.querySelector('.btn-refill');
+        assert.equal(button.disabled, tokens === 0);
+        assert.equal(button.textContent, tokens === 0 ? 'No tokens' : 'Add tokens');
+      }
+    }
+    g.phase = 2;
+    template.innerHTML = h.api.renderAiWorkerCard();
+    assert.equal(template.content.querySelector('.btn-refill').disabled, false);
+    assert.equal(template.content.querySelector('.btn-refill').textContent, 'Add tokens');
+  } finally { h.close(); }
+});
+
+test('token pack purchase highlights follow the same low threshold as the status', () => {
+  const h = harness();
+  try {
+    const g = h.fresh(3);
+    g.cash = 10000;
+    g.uiRevealed.tokens = true;
+    g.uiRevealed.topBar = true;
+    g.uiRevealed.upgrades = true;
+    for (const tokens of [0, 1, 100000, 0]) {
+      g.tokens = tokens;
+      h.api.renderAll();
+      const document = h.window.document;
+      const low = document.querySelector('#res-tokens-wrap').classList.contains('res-warning');
+      assert.equal(low, tokens < 100000);
+      const buttons = [...document.querySelectorAll('button[onclick*="token_pack_"]')];
+      assert.equal(buttons.length, 2);
+      assert.ok(buttons.every(button => button.classList.contains('token-purchase-warning') === low));
+      assert.equal(document.querySelectorAll('.token-purchase-warning:not([onclick*="token_pack_"])').length, 0);
+    }
   } finally { h.close(); }
 });

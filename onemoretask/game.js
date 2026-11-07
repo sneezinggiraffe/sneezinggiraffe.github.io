@@ -3233,6 +3233,10 @@
     for (const button of document.querySelectorAll("[data-layout-choice]")) button.addEventListener("click", handleLayoutSelection);
   }
 
+  function tokensLow() {
+    return G.tokens < (G.phase >= 7 ? MANAGER_TOPUP_COST_TOKEN : workerTokenCapacity());
+  }
+
   function renderTopBar() {
     var topBar = $("#top-bar");
     if (G.uiRevealed.topBar) {
@@ -3258,7 +3262,7 @@
     $("#res-debt-wrap").classList.toggle("res-debt-active", G.techDebt > 0);
 
     // Warning pulse
-    $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < (G.phase >= 7 ? MANAGER_TOPUP_COST_TOKEN : workerTokenCapacity()));
+    $("#res-tokens-wrap").classList.toggle("res-warning", tokensLow());
 
     // Income and expense rates
     var income = getIncomeRate();
@@ -3483,7 +3487,7 @@
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       html += "<div class='upgrade-repeatable' style='position:relative;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);margin-right:6px;margin-bottom:6px'>" +
         "<span class='text-sm'>" + (u.id.startsWith("token_pack_") ? "Token Pack (" + fmtTokens(tokenPackAmount(u)) + ")" : u.name) + "</span>" +
-        "<button class='upgrade-action' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>" + (u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
+        "<button class='upgrade-action" + (u.id.startsWith("token_pack_") && tokensLow() ? " token-purchase-warning" : "") + "' onclick=\"GAME.buy('" + u.id + "')\" " + (!canAfford ? "disabled" : "") + " style='padding:2px 10px'>" + (u.currency === "cash" ? fmtCash(cost) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>";
     }
     updateHTML($("#upgrade-list"), html);
@@ -3523,13 +3527,14 @@
     const original = agent.roleId === "original_ai";
     const capacity = manager ? MANAGER_TOKEN_TANK_MAX : workerTokenCapacity(agent);
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
+    const noTokens = G.phase >= 3 && G.tokens <= 0;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
     let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 9 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon' aria-hidden='true'>" + AGENT_MARKERS[agent.roleId] + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 5 ? "" : agent.roleName) + "</span></div>";
     if (original) html += "<small>" + G.aiWorkerTasksCompleted + " tasks delivered</small>";
     if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens" + (tokens <= 0 ? " <span class='token-empty'>Empty</span>" : "") + "</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
     else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
-    if (!utility || manager) html += managerControls(agent) && !manager ? "<span class='agent-managed' role='status'>Managed</span>" : "<button class='btn btn-refill btn-sm' onclick=\"" + action + "\" >Add tokens</button>";
+    if (!utility || manager) html += managerControls(agent) && !manager ? "<span class='agent-managed' role='status'>Managed</span>" : "<button class='btn btn-refill btn-sm' onclick=\"" + action + "\" " + (noTokens ? "disabled>No tokens" : ">Add tokens") + "</button>";
     if (G.phase >= 5) html += "<button class='btn btn-outline btn-sm' onclick=\"" + (original ? "GAME.shutdownAiWorker()" : "GAME.fire('" + agent.id + "')") + "\">Sell</button>";
     html += "</div></div>";
     return html;

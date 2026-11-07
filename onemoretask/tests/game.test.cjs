@@ -1591,10 +1591,10 @@ scenario('chPh0 clears saved progress even after retirement and prevents autosav
   assert.equal(JSON.parse(h.window.localStorage.getItem('ai_empire_save')).gameStarted, false);
   assert.equal(h.api.save(), false);
 });
-scenario('token top-up stays enabled even when the reserve is empty', (h) => {
+scenario('token top-up disables with an empty reserve and enables after funding', (h) => {
   const g=h.fresh(5);g.tokens=0;g.uiRevealed.agents=true;const a=h.worker();a.tokenTank=5;h.api.renderAgentSection();
-  const button=h.window.document.querySelector('[onclick="GAME.topUpAgent(\''+a.id+'\')"]');assert.equal(button.disabled,false);
-  g.tokens=50;h.api.renderAgentSection();assert.equal(button.disabled,false);h.api.topUpAgent(a.id);assert.equal(a.tokenTank,55);assert.equal(g.tokens,0);
+  const button=()=>h.window.document.querySelector('[onclick="GAME.topUpAgent(\''+a.id+'\')"]');assert.equal(button().disabled,true);
+  g.tokens=50;h.api.renderAgentSection();assert.equal(button().disabled,false);h.api.topUpAgent(a.id);assert.equal(a.tokenTank,55);assert.equal(g.tokens,0);
 });
 scenario('task quality affects cash without a separate reputation resource', (h) => {
   const g=h.fresh(5);g.totalTasksDone=25;g.codeQualityMult=1.25;const a=h.worker();a.quality=2;a.tokenTank=10;const t=h.task();h.api.assignAgentToTask(t.id,a.id);h.api.renderTaskQueue();

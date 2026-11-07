@@ -34,13 +34,15 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .res-debt-active .val{color:var(--red)}
 .res-warning{background:#342823;border-color:var(--red);border-radius:3px}
 #res-tokens-wrap.res-warning{
-  border:1px solid var(--red);
-  background:#342823;
-  padding:2px 6px;
+  border:3px solid var(--red);
+  padding:0 4px;
+  animation:token-warning-pulse 1.4s ease-in-out infinite;
 }
 #res-tokens-wrap.res-warning .label,
 #res-tokens-wrap.res-warning .val{color:var(--red)}
-#res-tokens-wrap.res-warning::after{content:'Low';font-size:.78rem;color:var(--red)}
+#res-tokens-wrap.res-warning::after{content:'Low';font-size:.78rem;font-weight:700;color:var(--red)}
+@keyframes token-warning-pulse{50%{border-color:color-mix(in srgb,var(--red) 35%,transparent)}}
+.upgrade-repeatable:has(.token-purchase-warning){outline:3px solid var(--red);outline-offset:-3px}
 #income-rate{color:var(--green);font-family:var(--number-font);font-weight:500}
 #expense-rate{color:var(--red);font-weight:500}
 #phase-label{background:var(--bg3);color:var(--text2);padding:3px 7px;border-radius:2px;font-weight:600;font-size:.78rem}
