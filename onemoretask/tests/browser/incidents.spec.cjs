@@ -35,6 +35,23 @@ async function openIncident(page, width, multitasking = false) {
 }
 
 for (const width of [1440, 390]) {
+  test(`incidents show red attention then soften during repair at ${width}px`, async ({ page }) => {
+    await openIncident(page, width);
+    const card = page.locator('.incident-card');
+    await expect(card).not.toHaveClass(/repairing/);
+    await expect(card).toHaveCSS('border-left-width', '3px');
+    await expect(card).toHaveCSS('cursor', 'auto');
+    await expect(card).toHaveCSS('background-color', 'rgb(239, 221, 218)');
+    await expect(card).toHaveCSS('border-top-color', 'rgb(162, 58, 56)');
+    await card.screenshot({ path: `test-results/incident-${width}.png` });
+    await card.getByRole('button', { name: 'Fix Manually', exact: true }).click();
+    await page.clock.runFor(200);
+    await expect(card).toHaveClass(/repairing/);
+    await expect(card).toHaveCSS('background-color', 'rgb(245, 245, 237)');
+    await expect(card).not.toHaveCSS('border-top-color', 'rgb(162, 58, 56)');
+    await card.screenshot({ path: `test-results/incident-repairing-${width}.png` });
+  });
+
   test(`manual repair uses the shared progress bar for two seconds at ${width}px`, async ({ page }) => {
     await openIncident(page, width);
     await expect(page.locator('#res-stress-wrap')).toHaveCount(0);

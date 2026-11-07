@@ -49,12 +49,11 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await page.reload();
 
     await expect(page.locator('#task-list .task-card')).toHaveCount(1);
-    await page.locator('#task-list > .task-card').focus();
-    await page.keyboard.press('Enter');
-    await page.clock.runFor(400);
-    await expect(page.locator('#task-list .task-card')).toHaveCount(3);
     const inbox = page.locator('#task-list .task-card').filter({hasText: 'Set Up Your Inbox'});
+    await inbox.press('Enter');
     await expect(inbox.locator('[data-assignment="active"]')).toBeVisible();
+    await expect(page.locator('#task-list .task-card')).toHaveCount(3);
+    await page.clock.runFor(400);
     const progress = await inbox.locator('.task-bar-fill').evaluate(element => parseFloat(element.style.width));
     expect(progress).toBeGreaterThan(0);
     expect(progress).toBeLessThan(100);

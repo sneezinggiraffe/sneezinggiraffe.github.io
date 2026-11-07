@@ -1303,13 +1303,14 @@ scenario('Scale Mode builds automatically through Phase 13 and replication excee
   g.phase=15;h.api.checkMilestones();h.dismiss();h.api.renderAll();assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card:not(.planning-card)').length,g.clusters.length);assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card button').length,0);
   assert.equal(h.window.document.querySelector('.network-grid [data-cluster-id] strong').textContent,'C'+g.clusters.length);assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
 });
-scenario('DevOps resolves critical incidents more slowly without final approval', (h) => {
+scenario('DevOps resolves incidents at one rate, oldest first, without final approval', (h) => {
   const g=h.fresh(8);h.worker('devops');
-  const critical={id:'critical',name:'Critical',sev:'critical',fixProgress:0,createdAt:1,resolved:false,repCost:5,cashCost:0};
-  const warning={...critical,id:'warning',name:'Warning',sev:'warning'};g.incidents=[critical,warning];
-  h.api.tickDevopsIncidentResponse(10);assert.equal(critical.fixProgress,55);assert.equal(critical.resolved,false);
-  h.api.tickDevopsIncidentResponse(30);assert.equal(critical.resolved,true);assert.equal(warning.resolved,true);assert.equal(g.stress,0);
-  h.api.resolveIncident('critical','invalid');
+  const older={id:'older',name:'Older incident',fixProgress:0,createdAt:1,resolved:false,cashCost:0};
+  const newer={...older,id:'newer',name:'Newer incident',createdAt:2};g.incidents=[newer,older];
+  h.api.tickDevopsIncidentResponse(5);assert.equal(older.fixProgress,55);assert.equal(newer.fixProgress,0);
+  h.api.tickDevopsIncidentResponse(5);assert.equal(older.resolved,true);assert.equal(newer.fixProgress,10);
+  h.api.tickDevopsIncidentResponse(10);assert.equal(newer.resolved,true);assert.equal(g.stress,0);
+  h.api.resolveIncident('older','invalid');
 });
 scenario('selling freezes the company before either ending choice and persists', (h) => {
   const g=h.fresh(16);h.prepareUpgrade('fusion');g.cash=1e10;g.totalTasksDone=2000;g.services=[{id:'service',name:'Service',incomeRate:1000,active:true}];
@@ -2132,7 +2133,7 @@ scenario('provisioning occupies the first grid slot and respects unlocks capacit
   g.phase=11;g.ceoMode='scale';h.api.renderClusterSection();assert.equal(h.window.document.querySelector('.provision-card'),null);assert.equal(h.window.document.querySelectorAll('.leadership-agent').length,2);
 });
 scenario('the first random AI incident shows its tutorial once before ordinary incidents', (h) => {
-  const g=h.fresh(2);g.cash=1000;const task=h.task();h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,1);assert.equal(g.totalIncidents,1);assert.equal(g.incidents[0].sev,'warning');assert.equal(g.incidentsExplained,true);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,0);
+  const g=h.fresh(2);g.cash=1000;const task=h.task();h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,1);assert.equal(g.totalIncidents,1);assert.equal(Object.hasOwn(g.incidents[0],'sev'),false);assert.equal(g.incidentsExplained,true);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,0);
   h.api.triggerTutorialIncident();assert.equal(g.incidents.length,1);h.api.createAiWorkerIncident(task);assert.equal(g.incidents.length,2);assert.equal(h.api.queue().filter(item=>item.title==='Your First Incident').length,0);
   h.fresh(5);h.window.Math.random=()=>0;h.api.maybeCreateIncident(h.worker());assert.equal(h.window.GAME.state.incidents.length,1);assert.equal(h.window.GAME.state.incidentsExplained,true);
 });

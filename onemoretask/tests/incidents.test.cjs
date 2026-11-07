@@ -14,6 +14,23 @@ function repairFixture(t, phase = 2) {
   return { h, g, inc: g.incidents[0] };
 }
 
+test('incident attention styling follows active repairs', (t) => {
+  const { h, g, inc } = repairFixture(t);
+  assert.equal(Object.hasOwn(inc, 'sev'), false);
+  assert.equal(h.api.validSave(g), true);
+  for (const responding of ['none', 'manual', 'devops', 'paused']) {
+    g.agents = [];
+    inc.manualRepair = responding === 'manual';
+    inc.fixProgress = responding === 'paused' ? 50 : 0;
+    if (responding === 'devops') h.worker('devops');
+    h.api.renderIncidentSection();
+    const card = h.window.document.querySelector('.incident-card');
+    assert.equal(card.classList.contains('repairing'), ['manual', 'devops'].includes(responding));
+    assert.equal(card.hasAttribute('onclick'), false);
+    assert.equal(card.querySelectorAll('button').length, 2);
+  }
+});
+
 test('manual repair takes exactly two seconds through the game tick and releases its work slot', (t) => {
   const { h, g, inc } = repairFixture(t);
   const task = h.task();
@@ -59,7 +76,6 @@ test('repair buttons keep their labels and share the DevOps progress bar', (t) =
   assert.equal(list.querySelector('.task-bar-fill').style.width, '50%');
   assert.match(list.textContent, /Fixing manually \(50%\)/);
   assert.doesNotMatch(list.textContent, /DevOps responding|stress/i);
-  inc.sev = 'critical';
   h.api.renderIncidentSection();
   assert.equal(list.querySelector('.sev'), null);
   assert.doesNotMatch(list.textContent, /critical|warning|\d+ active/i);

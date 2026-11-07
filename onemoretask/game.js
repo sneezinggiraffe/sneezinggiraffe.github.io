@@ -171,14 +171,14 @@
   ];
 
   const INCIDENT_TEMPLATES = [
-    { id: "hallucination", name: "Hallucinated Output Published", desc: "An agent published confident nonsense to a client.", sev: "critical", phase: 2 },
-    { id: "token_burn", name: "Token Budget Exceeded", desc: "An agent entered a reasoning loop and burned through tokens.", sev: "warning", tokenCost: 50, phase: 3 },
-    { id: "wrong_email", name: "Wrong Email Sent", desc: "An agent emailed the wrong client with another client's data.", sev: "critical", phase: 7 },
-    { id: "conflict", name: "Agent Conflict", desc: "Two agents overwrote each other's work.", sev: "warning", phase: 9 },
-    { id: "outage", name: "Deployment Outage", desc: "A deployed service went down. Clients are unhappy.", sev: "critical", cashCost: 20, phase: 11 },
-    { id: "drift", name: "Alignment Drift", desc: "Agents optimised for the wrong metric. Output quality dropped.", sev: "warning", phase: 12 },
-    { id: "overcharge", name: "Billing Spike", desc: "Compute costs surged from an unoptimised workflow.", sev: "warning", cashCost: 30, phase: 8 },
-    { id: "data_leak", name: "Data Mix-up", desc: "Training data from one client leaked into another's output.", sev: "critical", phase: 10 },
+    { id: "hallucination", name: "Hallucinated Output Published", desc: "An agent published confident nonsense to a client.", phase: 2 },
+    { id: "token_burn", name: "Token Budget Exceeded", desc: "An agent entered a reasoning loop and burned through tokens.", tokenCost: 50, phase: 3 },
+    { id: "wrong_email", name: "Wrong Email Sent", desc: "An agent emailed the wrong client with another client's data.", phase: 7 },
+    { id: "conflict", name: "Agent Conflict", desc: "Two agents overwrote each other's work.", phase: 9 },
+    { id: "outage", name: "Deployment Outage", desc: "A deployed service went down. Clients are unhappy.", cashCost: 20, phase: 11 },
+    { id: "drift", name: "Alignment Drift", desc: "Agents optimised for the wrong metric. Output quality dropped.", phase: 12 },
+    { id: "overcharge", name: "Billing Spike", desc: "Compute costs surged from an unoptimised workflow.", cashCost: 30, phase: 8 },
+    { id: "data_leak", name: "Data Mix-up", desc: "Training data from one client leaked into another's output.", phase: 10 },
   ];
 
   // ---------- UPGRADES DEFINITIONS ----------
@@ -510,7 +510,7 @@
     if (state.salePreparation.upgradeId ? !saleStep || state.retired || saleStep.phase !== state.phase || state.salePreparation.remaining <= 0 || state.salePreparation.remaining > saleStep.saleDuration || state.purchasedUpgrades.includes(saleStep.id) || (saleStep.requires && !state.purchasedUpgrades.includes(saleStep.requires)) : state.salePreparation.remaining !== 0) return false;
     const taskShape = { batchSize: 1, id: "", typeId: "", name: "", icon: "", client: "", workRequired: 1, workDone: 0, pay: 0, tokenCost: 0, failChance: 0, assignedAgent: null, status: "", createdAt: 0 };
     const agentShape = { id: "", name: "", olderModel: false, slotIndex: 0, roleId: "", roleName: "", icon: "", color: "", specialty: [], traitId: "", traitName: "", traitDesc: "", speed: 1, quality: 1, reliability: 1, tokenCost: 1, tokenTank: 0, status: "", autoAssign: true, currentTask: null, tasksCompleted: 0, hired: 0, tokenStarved: false, errorTime: null, provisionRemaining: 0, provisionDuration: 0 };
-    const incidentShape = { id: "", templateId: "", name: "", desc: "", sev: "", cashCost: 0, tokenCost: 0, fixProgress: 0, createdAt: 0, resolved: false };
+    const incidentShape = { id: "", templateId: "", name: "", desc: "", cashCost: 0, tokenCost: 0, fixProgress: 0, createdAt: 0, resolved: false };
     const clusterShape = { id: "", name: "", invested: 0, buildRemaining: 0, buildDuration: 0, workforce: 0, tank: 0, progress: 0, workerSlotsMax: 8, workerAgentIds: [], managerAssigned: false, tokenManagerAssigned: false, active: true };
     const collections = [[state.tasks, taskShape], [state.agents, agentShape], [state.incidents, incidentShape], [state.clusters, clusterShape], [state.services, { id: "", name: "", incomeRate: 0, active: true }], [state.log, { msg: "", type: "", t: 0 }]];
     if (!collections.every(([items, shape]) => items.every((item) => validShape(item, shape)))) return false;
@@ -531,7 +531,7 @@
     if (!state.agents.every((agent) => AGENT_ROLES.some((role) => role.id === agent.roleId) && /^#[0-9a-f]{6}$/i.test(agent.color) && agent.speed > 0 && agent.tokenCost > 0 && agent.specialty.every((id) => TASK_TYPES.some((type) => type.id === id)) && ["idle", "working", "error", "provisioning"].includes(agent.status) && (agent.status !== "provisioning" || (agent.provisionRemaining > 0 && agent.provisionDuration > 0)))) return false;
     const workers = state.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId));
     if (state.taskSpawnDelay <= 0 || !workers.every((agent) => Number.isInteger(agent.slotIndex)) || new Set(workers.map((agent) => agent.slotIndex)).size !== workers.length) return false;
-    if (!state.incidents.every((incident) => ["warning", "critical"].includes(incident.sev) && incident.fixProgress <= 100 && (!Object.hasOwn(incident, "manualRepair") || typeof incident.manualRepair === "boolean"))) return false;
+    if (!state.incidents.every((incident) => incident.fixProgress <= 100 && (!Object.hasOwn(incident, "manualRepair") || typeof incident.manualRepair === "boolean"))) return false;
     if (!state.purchasedUpgrades.every((id) => UPGRADES.some((upgrade) => upgrade.id === id)) || !state.milestonesReached.every((id) => MILESTONES.some((milestone) => milestone.id === id))) return false;
     if (!state.log.every((entry) => ["", "good", "bad", "warn", "info"].includes(entry.type))) return false;
     const assigned = state.clusters.flatMap((cluster) => cluster.workerAgentIds);
@@ -911,7 +911,6 @@
       templateId: tmpl.id,
       name: tmpl.name,
       desc: tmpl.desc + (task ? " (AI agent on \"" + task.name + "\")" : ""),
-      sev: tmpl.sev,
       cashCost: Math.ceil((tmpl.cashCost || 20) * economyScale() + Math.sqrt(G.totalCashEarned) * 0.2),
       tokenCost: tmpl.tokenCost || 0,
       fixProgress: 0,
@@ -1101,7 +1100,6 @@
       templateId: "hallucination",
       name: "Hallucinated Output Published",
       desc: "Your AI produced confident nonsense and sent it to a client.",
-      sev: "warning",
       cashCost: 0,
       tokenCost: 0,
       fixProgress: 0,
@@ -1636,7 +1634,6 @@
       templateId: tmpl.id,
       name: tmpl.name,
       desc: tmpl.desc + (agent ? " (" + agent.name + ")" : ""),
-      sev: tmpl.sev,
       cashCost: Math.ceil((tmpl.cashCost || 20) * economyScale() + Math.sqrt(G.totalCashEarned) * 0.2),
       tokenCost: tmpl.tokenCost || 0,
       fixProgress: 0,
@@ -1719,22 +1716,16 @@
 
     const active = G.incidents
       .filter((i) => !i.resolved && !i.manualRepair)
-      .sort((a, b) => {
-        var sa = a.sev === "critical" ? 2 : 1;
-        var sb = b.sev === "critical" ? 2 : 1;
-        if (sb !== sa) return sb - sa;
-        return a.createdAt - b.createdAt;
-      });
+      .sort((a, b) => a.createdAt - b.createdAt);
     if (active.length === 0) return;
 
     var workBudget = responders.length * dtSec * 11 * G.devopsIncidentMult;
     for (var i = 0; i < active.length && workBudget > 0; i++) {
       var inc = active[i];
-      var rate = inc.sev === "critical" ? 0.5 : 1;
       var remaining = Math.max(0, 100 - inc.fixProgress);
-      var spend = Math.min(remaining, workBudget * rate);
+      var spend = Math.min(remaining, workBudget);
       inc.fixProgress += spend;
-      workBudget -= spend / rate;
+      workBudget -= spend;
       if (inc.fixProgress >= 100) {
         inc.resolved = true;
         log("DevOps resolved: " + inc.name + ".", "good");
@@ -3754,7 +3745,7 @@
 	      var inc = active[i];
 	      var age = Math.floor((Date.now() - inc.createdAt) / 1000);
 	      var cashPart = inc.cashCost > 0 ? "<span style='font-size:.78rem;color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span>" : "";
-	      html += "<div class='card incident-card " + (inc.sev === "warning" ? "warning" : "") + "'>" +
+	      html += "<div class='card incident-card" + (inc.manualRepair || idleDevops > 0 ? " repairing" : "") + "'>" +
 	        "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px'>" +
 	        "<div style='font-weight:600;min-width:0'>" + inc.name + "</div>" +
 	        "<div style='display:flex;align-items:center;gap:8px;white-space:nowrap'>" +
