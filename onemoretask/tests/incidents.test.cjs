@@ -45,7 +45,7 @@ test('repair buttons keep their labels and share the DevOps progress bar', (t) =
   h.worker('devops');
   h.api.renderIncidentSection();
   const list = h.window.document.querySelector('#incident-list');
-  assert.equal(list.querySelector('.sev.critical'), null);
+  assert.equal(list.querySelector('.sev'), null);
   assert.equal(h.window.document.querySelector('#incident-count'), null);
   assert.deepEqual([...list.querySelectorAll('button')].map(button => button.textContent), ['Fix Manually', 'Pay to Fix ($40)']);
   assert.match(list.textContent, /DevOps responding/);
@@ -62,7 +62,7 @@ test('repair buttons keep their labels and share the DevOps progress bar', (t) =
   inc.sev = 'critical';
   h.api.renderIncidentSection();
   assert.equal(list.querySelector('.sev'), null);
-  assert.doesNotMatch(list.textContent, /critical|\d+ active/i);
+  assert.doesNotMatch(list.textContent, /critical|warning|\d+ active/i);
 });
 
 test('busy manual slots block repairs and multitasking permits a task alongside a repair', (t) => {

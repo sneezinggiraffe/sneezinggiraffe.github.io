@@ -26,10 +26,17 @@ for (const width of [1440, 390]) {
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText('Reality Check');
     expect(await page.evaluate(() => GAME.state.expensesRevealed)).toBe(true);
+    await expect(page.locator('#res-expense-wrap')).toBeHidden();
+    await page.reload();
+    await expect(page.locator('#res-expense-wrap')).toBeHidden();
     await expect(cards.locator('button')).toHaveText('');
     await cards.click({ position: { x: 5, y: 5 } });
     await page.clock.runFor(200);
     await expect(cards).toHaveCount(0);
+    await expect(page.locator('#res-expense-wrap')).toBeVisible();
+    await expect(page.locator('#expense-tier-label')).toHaveText('Living in car');
+    await page.reload();
+    await expect(page.locator('#res-expense-wrap')).toBeVisible();
     await page.evaluate(() => GAME.addTasks(19));
     await page.clock.runFor(200);
     await expect(cards).toHaveCount(0);

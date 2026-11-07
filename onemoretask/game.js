@@ -3272,7 +3272,7 @@
     incomeEl.style.display = G.uiRevealed.income ? "" : "none";
     incomeEl.textContent = "+" + "$" + fmtTokens(smoothedIncomeRate) + "/s";
     var expenseWrap = $("#res-expense-wrap");
-    expenseWrap.style.display = G.uiRevealed.expenses ? "" : "none";
+    expenseWrap.style.display = G.uiRevealed.expenses && G.purchasedUpgrades.includes("reality_check") ? "" : "none";
     $("#expense-rate").textContent = "-" + "$" + fmtTokens(expense) + "/s";
     var expTier = null;
     for (var ti = 0; ti < EXPENSE_TIERS.length; ti++) {
@@ -3753,7 +3753,6 @@
 	      var age = Math.floor((Date.now() - inc.createdAt) / 1000);
 	      var cashPart = inc.cashCost > 0 ? "<span style='font-size:.78rem;color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span>" : "";
 	      html += "<div class='card incident-card " + (inc.sev === "warning" ? "warning" : "") + "'>" +
-	        (inc.sev === "warning" ? "<div class='sev warning'>warning</div>" : "") +
 	        "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px'>" +
 	        "<div style='font-weight:600;min-width:0'>" + inc.name + "</div>" +
 	        "<div style='display:flex;align-items:center;gap:8px;white-space:nowrap'>" +
@@ -3896,8 +3895,8 @@
   // ---------- CLICK REWARD ANIMATION ----------
   function renderIntro() {
     $("#intro-overlay").classList.toggle("hidden", G.gameStarted);
-    $("#intro-story").textContent = G.prestigeCount > 0 ? "Retirement was nice. Now you are bored. One more task?" : "You are broke. Your phone buzzes with a new gig.";
-    $("#intro-hint").textContent = G.prestigeCount > 0 ? "Start again. Build smarter." : "Work smarter. Retire early.";
+    $("#intro-story").textContent = G.prestigeCount > 0 ? "Retirement was nice. Now you are bored. One more task?" : "You are broke. Living out of your car. Your phone buzzes -- another gig app notification.";
+    $("#intro-hint").textContent = G.prestigeCount > 0 ? "Start again. Build smarter." : "You dream of early retirement. Maybe organising your life and smarter systems could set you free...";
   }
 
   function startGame() {

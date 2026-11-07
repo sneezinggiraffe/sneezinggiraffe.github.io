@@ -88,7 +88,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .task-bar-fill{display:block;height:100%;background:var(--meter);transition:width .1s;border-radius:2px}
 .task-expiry{position:absolute;top:8px;right:10px;font-size:.68rem;color:var(--red);font-weight:600}
 .btn{min-height:32px;padding:6px 12px;font-weight:600;font-size:.85rem}
-.btn-primary{background:var(--accent);color:var(--bg)}.btn-primary:hover:not(:disabled){background:var(--accent2)}
+.btn-primary{background:var(--accent);color:var(--bg)}.btn-primary:not(.intro-action):hover:not(:disabled){background:var(--accent2)}
 .btn-green,.btn-purple{background:var(--bg3);border-color:var(--bg4);color:var(--text)}.btn-green:hover:not(:disabled),.btn-purple:hover:not(:disabled){border-color:var(--accent)}
 .btn-red{background:transparent;border-color:#775249;color:var(--red)}.btn-red:hover:not(:disabled){background:#342823;border-color:var(--red)}
 .btn-yellow{background:var(--bg3);border-color:var(--bg4);color:var(--yellow)}.btn-yellow:hover:not(:disabled){border-color:var(--yellow)}
@@ -139,8 +139,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
 /* Incident cards */
 .incident-card{border-left:3px solid var(--red)}
 .incident-card.warning{border-left-color:var(--yellow)}
-.incident-card .sev{font-size:.7rem;text-transform:uppercase;font-weight:700;margin-bottom:4px}
-.incident-card .sev.critical{color:var(--red)}.incident-card .sev.warning{color:var(--yellow)}
 
 /* Cluster cards */
 .cluster-card{border:1px solid var(--bg4);border-radius:var(--radius);padding:10px;margin-bottom:10px;background:var(--bg2)}
@@ -309,7 +307,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .opening-task-card .task-name{font-size:.9rem;font-weight:700}
 .opening-task-card .task-description{display:block}
 .opening-task-card:disabled{opacity:1;cursor:default}
-.opening-task-card:hover:not(:disabled){outline:1px solid var(--accent)}
 .intro-action{display:inline-flex;align-items:center;justify-content:center;margin:4px 0 8px}
 .intro-action[hidden]{display:none}
 #prelude-progress{display:block;margin-top:8px}
@@ -396,8 +393,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       <button type="button" id="intro-overlay" aria-label="Find Work" aria-describedby="intro-story intro-hint" class="card task-card paper-card opening-task-card hidden">
         <span class="task-header"><span class="task-name" id="intro-title">One More Task</span></span>
         <span class="task-description">
-          <span id="intro-story">You are broke. Your phone buzzes with a new gig.</span>
-          <span id="intro-hint">Work smarter. Retire early.</span>
+          <span id="intro-story">You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</span>
+          <span id="intro-hint">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</span>
           <span class="btn btn-primary btn-sm intro-action" id="intro-action" aria-hidden="true">Find Work</span>
         </span>
       </button>

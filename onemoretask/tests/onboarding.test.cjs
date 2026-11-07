@@ -9,6 +9,8 @@ test('the whole introduction and gig cards are clickable, including the decorati
     const document = h.window.document;
     const intro = document.querySelector('#intro-overlay');
     assert.equal(intro.tagName, 'BUTTON');
+    assert.equal(document.querySelector('#intro-story').textContent, 'You are broke. Living out of your car. Your phone buzzes -- another gig app notification.');
+    assert.equal(document.querySelector('#intro-hint').textContent, 'You dream of early retirement. Maybe organising your life and smarter systems could set you free...');
     assert.equal(intro.classList.contains('paper-card'), true);
     assert.equal(intro.querySelector('button, .intro-box'), null);
     assert.equal(intro.querySelector('.task-name').textContent, 'One More Task');
@@ -254,6 +256,7 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
     assert.equal(h.api.queue().length, 0);
     assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), item => item.id), ['reality_check']);
     const card = h.window.document.querySelector('#upgrade-list .upgrade-card');
+    assert.equal(h.window.document.querySelector('#res-expense-wrap').style.display, 'none');
     assert.match(card.textContent, /Reality Check/);
     assert.match(card.textContent, /Bills are now draining your cash/);
     assert.equal(card.querySelector('button').textContent, '');
@@ -264,11 +267,15 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
     assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), item => item.id), ['reality_check']);
+    assert.equal(restored.window.document.querySelector('#res-expense-wrap').style.display, 'none');
     restored.close();
     restored = undefined;
     g.totalTasksDone = 85;
     const before = JSON.parse(JSON.stringify(g));
     h.window.GAME.buy('reality_check');
+    h.api.renderTopBar();
+    assert.equal(h.window.document.querySelector('#res-expense-wrap').style.display, '');
+    assert.equal(h.window.document.querySelector('#expense-tier-label').textContent, 'Living in car');
     before.purchasedUpgrades.push('reality_check');
     before.log = JSON.parse(JSON.stringify(g.log));
     assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
@@ -281,6 +288,7 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
     assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), item => item.id), []);
+    assert.equal(restored.window.document.querySelector('#res-expense-wrap').style.display, '');
     restored.window.GAME.state.totalTasksDone = 105;
     assert.equal(restored.api.upgradeVisible(upgrade('free_ai')), true);
     for (const count of [105, 130, 149]) {

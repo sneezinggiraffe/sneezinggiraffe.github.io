@@ -130,7 +130,7 @@ body[data-layout] #task-completions>.task-completed::after{
 
 body[data-layout] :is(#task-list,#intro-section,#prelude-section)>.task-card:disabled{opacity:1;cursor:default}
 body[data-layout] :is(#task-list,#intro-section,#prelude-section)>.task-card:enabled{cursor:pointer}
-body[data-layout] :is(#task-list,#intro-section,#prelude-section)>.task-card:enabled:hover{border-color:var(--accent);outline:1px solid var(--accent)}
+body[data-layout] #task-list>.task-card:enabled:hover{border-color:var(--accent);outline:1px solid var(--accent)}
 body[data-layout] :is(#task-list,#intro-section,#prelude-section)>.task-card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 body[data-layout] #game-container #work-stream{padding:0}
 body[data-layout] #tasks-heading{padding:13px 10px 0;margin-bottom:10px}
@@ -146,3 +146,6 @@ body[data-layout="3"] #game-container.cp-visible #control-panel{grid-column:1/-1
 @media(max-width:768px){
   body[data-layout="4"] #game-container :is(#intro-section,#prelude-section){margin-inline:22px}
 }
+
+body[data-layout] #game-container #intro-section{grid-auto-rows:auto}
+body[data-layout] #game-container #intro-section>#intro-overlay{height:auto;min-height:158px}

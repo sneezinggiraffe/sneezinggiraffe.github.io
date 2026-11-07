@@ -102,7 +102,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
 
 for (const width of [1440, 844, 390, 320]) {
   for (const layout of ['3', '4']) {
-    test(`opening cards keep the task position and size in view ${layout} at ${width}px`, async ({ page }) => {
+    test(`opening cards keep the task position and later cards keep the task size in view ${layout} at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.addInitScript(value => localStorage.setItem('ai_empire_layout', value), layout);
@@ -116,16 +116,19 @@ for (const width of [1440, 844, 390, 320]) {
       const intro = await bounds(page.locator('#intro-overlay'));
       const action = await page.locator('#intro-action').boundingBox();
       expect(action.y + action.height).toBeLessThanOrEqual(intro.y + intro.height);
+      expect(await page.locator('#intro-overlay').evaluate(element => element.scrollHeight <= element.clientHeight)).toBe(true);
       await page.locator('#intro-overlay').click();
+      const prelude = await bounds(page.locator('#prelude-card'));
+      expect({ x: prelude.x, y: prelude.y, width: prelude.width }).toEqual({ x: intro.x, y: intro.y, width: intro.width });
       for (let index = 0; index < 3; index++) {
-        expect(await bounds(page.locator('#prelude-card'))).toEqual(intro);
+        expect(await bounds(page.locator('#prelude-card'))).toEqual(prelude);
         await page.locator('#prelude-card').click();
         await page.clock.runFor(1000);
       }
       const task = page.locator('#task-list > .task-card').first();
       // Remove the decorative paper rotation to compare the underlying layout boxes.
       await task.evaluate(element => element.style.transform = 'none');
-      expect(await bounds(task)).toEqual(intro);
+      expect(await bounds(task)).toEqual(prelude);
       await expect(page.locator('#task-queue-section')).toHaveCSS('border-top-width', '0px');
       await page.evaluate(() => GAME.cheat('0_'));
       const headings = await page.locator('#tasks-heading h3, #section-upgrades h3').evaluateAll(elements => elements.map(element => { element.style.transform = 'none'; return element.getBoundingClientRect().top; }));

@@ -102,3 +102,32 @@ for (const layout of [3, 4]) {
     expect(stability.stable).toBe(true);
   });
 }
+
+for (const layout of ['3', '4']) {
+  test(`intro cards and action labels keep their colours on hover in view ${layout}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript(value => localStorage.setItem('ai_empire_layout', value), layout);
+    await page.clock.install();
+    await page.goto('/');
+    for (const [cardId, actionId] of [['intro-overlay', 'intro-action'], ['prelude-card', 'prelude-action']]) {
+      const card = page.locator('#' + cardId);
+      const action = page.locator('#' + actionId);
+      await page.mouse.move(0, 0);
+      const appearance = () => card.evaluate(element => [element, element.querySelector('.intro-action')].map(node => {
+        const style = getComputedStyle(node);
+        return { background: style.backgroundColor, color: style.color, border: style.borderColor, outline: style.outlineStyle };
+      }));
+      const before = await appearance();
+      await card.hover({ position: { x: 5, y: 5 } });
+      await page.clock.runFor(200);
+      expect(await appearance()).toEqual(before);
+      await action.hover();
+      await page.clock.runFor(200);
+      expect(await appearance()).toEqual(before);
+      await card.focus();
+      await expect(card).toBeFocused();
+      await page.keyboard.press('Enter');
+    }
+  });
+}
