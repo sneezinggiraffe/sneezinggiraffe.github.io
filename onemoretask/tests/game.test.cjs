@@ -944,7 +944,7 @@ scenario('music toggles only between full layered On and silent Off and saves th
 
 scenario('onboarding, manual work, keyboard action and rendering', (h) => {
   h.window.document.querySelector('#intro-overlay').click();
-  h.window.document.querySelector('#btn-do-task').click();
+  h.window.document.querySelector('#prelude-card').click();
   h.api.tickManualWork(10);
   assert.equal(h.window.GAME.state.totalTasksDone, 1);
   h.advance(1000);
@@ -993,10 +993,10 @@ for (const phase of [1, 2, 3, 5]) {
       const slots = multitasking ? 2 : 1;
       assert.equal(g.totalClicks, 1);
       assert.equal(g.tasks.filter(task => task.status === 'active').length, slots);
-      h.api.renderAll(); assert.equal(h.window.document.querySelector('#btn-do-task').disabled, true);
+      h.api.renderAll(); assert.ok([...h.window.document.querySelectorAll('#task-list > .task-card')].every(card => card.disabled));
       h.api.tickManualWork(2);
       assert.equal(g.totalTasksDone, slots); assert.equal(g.cash, slots * 10);
-      h.api.renderAll(); assert.equal(h.window.document.querySelector('#btn-do-task').disabled, false);
+      h.api.renderAll(); assert.equal(h.window.document.querySelector(`[data-task-id="${g.tasks.at(-1).id}"]`).disabled, false);
       assert.equal(g.tasks.at(-1).status, 'available');
       assert.equal(h.api.validSave(g), true);
     });

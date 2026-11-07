@@ -35,7 +35,9 @@ for (const width of [1440, 320]) {
       else await expect(page.locator('#top-bar')).toBeVisible();
     }
     await expect(page.locator('#prelude-section')).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Do work', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Do work', exact: true })).toHaveCount(0);
+    await expect(page.locator('#you-card')).toHaveCount(0);
+    await expect(page.locator('#section-agents')).toBeHidden();
     await page.locator('#btn-settings').click();
     const popup = page.locator('#settings-popup .popup');
     await expect(popup).toHaveClass(/paper-card/);

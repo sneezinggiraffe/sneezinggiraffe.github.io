@@ -35,9 +35,9 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     }
     await expect(page.locator('#prelude-section')).toBeHidden();
     await expect(page.locator('#team-heading')).toHaveText('');
-    await expect(page.locator('#you-controls #btn-do-task')).toHaveAccessibleName('Do work');
-    await expect(page.locator('#you-status')).toHaveText('Ready to work');
-    await expect(page.locator('#you-delivered')).toHaveText('3 tasks delivered');
+    await expect(page.locator('#you-card, #btn-do-task')).toHaveCount(0);
+    await expect(page.locator('#section-agents')).toBeHidden();
+    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(3);
     await expect(page.locator('#task-list .task-card')).toHaveCount(1);
     await expect(page.locator('#task-list')).toContainText('Set Up Your Inbox');
     await expect(page.locator('#task-list')).toContainText('Pay: $0');
@@ -49,7 +49,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await page.reload();
 
     await expect(page.locator('#task-list .task-card')).toHaveCount(1);
-    await page.getByRole('button', {name: 'Do work', exact: true}).focus();
+    await page.locator('#task-list > .task-card').focus();
     await page.keyboard.press('Enter');
     await page.clock.runFor(400);
     await expect(page.locator('#task-list .task-card')).toHaveCount(3);
@@ -69,7 +69,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     expect(await page.evaluate(() => GAME.state.cash)).toBe(cash);
     await expect(inbox).toHaveCount(0);
     for (let index = 0; index < 3; index++) {
-      await page.locator('#btn-do-task').click();
+      await page.locator('#task-list > .task-card:enabled .task-name').first().click();
       await page.clock.runFor(1500);
     }
     const intro = page.locator('#upgrade-list .upgrade-card');

@@ -849,16 +849,6 @@
     renderWorkStream();
   }
 
-  function renderYouCard() {
-    const working = G.tasks.filter((task) => task.status === "active");
-    $("#you-status").textContent = working.length ? "Working on " + working.length + (working.length === 1 ? " task" : " tasks") : "Ready to work";
-    if (manualRepairs().length) $("#you-status").textContent = "Busy fixing an incident";
-    $("#you-delivered").textContent = deliveredTasksLabel(G.manualTasksCompleted);
-    const button = $("#btn-do-task");
-    button.disabled = manualRepairs().length > 0 || availableManualSlots() === 0 || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
-    button.style.cursor = button.disabled ? "default" : "pointer";
-  }
-
   function deliveredTasksLabel(count) {
     return count + (count === 1 ? " task delivered" : " tasks delivered");
   }
@@ -1672,7 +1662,7 @@
       // Manual repairs now use a work slot; stress has been retired.
       if (inc.manualRepair || availableManualSlots() === 0) return;
       inc.manualRepair = true;
-      renderYouCard();
+      renderWorkStream();
       return;
     } else if (method === "cash") {
       const cost = (inc.cashCost || 20) * 2;
@@ -1681,7 +1671,7 @@
       inc.fixProgress = 100;
       inc.resolved = true;
       log("Paid " + fmtCash(cost) + " to resolve: " + inc.name + ".", "warn");
-      renderYouCard();
+      renderWorkStream();
     }
 
     // Remove resolved after delay
@@ -1696,7 +1686,7 @@
       if (inc.fixProgress < 100) continue;
       inc.resolved = true;
       log("Manually resolved: " + inc.name + ".", "good");
-      renderYouCard();
+      renderWorkStream();
       setTimeout(() => {
         G.incidents = G.incidents.filter((incident) => incident.id !== inc.id);
       }, 500);
@@ -3288,7 +3278,6 @@
     const prelude = G.gameStarted && !G.uiRevealed.taskQueue;
     if (!G.gameStarted || prelude) clearTaskCompletions();
     $("#prelude-section").hidden = !prelude;
-    renderYouCard();
     if (prelude) {
       const task = G.tasks.find((item) => item.status === "active" || item.status === "available");
       const working = task && task.status === "active";
@@ -3545,7 +3534,6 @@
     section.style.display = G.gameStarted && G.uiRevealed.taskQueue && !G.uiRevealed.clusters ? "" : "none";
     if (!G.gameStarted || !G.uiRevealed.taskQueue || G.uiRevealed.clusters) return;
     updateHTML($("#agent-hire-section"), "");
-    renderYouCard();
     const title = G.purchasedUpgrades.includes("second_ai") ? "Agents" : G.purchasedUpgrades.includes("hire_assistant") ? "Team" : "";
     $("#team-heading").textContent = title;
     $("#team-header").hidden = !title;
@@ -3577,6 +3565,7 @@
       html += "</div></div>";
     }
     updateHTML($("#agent-list"), html);
+    section.style.display = html ? "" : "none";
   }
 
   function getAgentCluster(agentId) {
@@ -3975,7 +3964,6 @@
     });
 
     // Do Task button (early game)
-    $("#btn-do-task").addEventListener("click", handleWorkClick);
     $("#prelude-card").addEventListener("click", handleWorkClick);
     $("#task-list").addEventListener("click", handleTaskClick);
 

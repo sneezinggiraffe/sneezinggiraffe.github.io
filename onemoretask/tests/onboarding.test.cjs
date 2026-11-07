@@ -112,17 +112,16 @@ test('You completes three everyday gigs before inbox setup opens normal arrivals
     }
     assert.equal(g.totalTasksDone, 3);
     assert.equal(g.manualTasksCompleted, 3);
-    assert.equal(document.querySelector('#you-delivered').textContent, '3 tasks delivered');
-    assert.equal(document.querySelector('#btn-do-task').getAttribute('aria-label'), 'Do work');
+    assert.equal(document.querySelector('#you-card, #btn-do-task'), null);
     assert.equal(document.querySelector('#prelude-section').hidden, true);
-    assert.equal(document.querySelector('#btn-do-task').parentElement.id, 'you-controls');
+    assert.equal(document.querySelector('#section-agents').style.display, 'none');
     assert.equal(document.querySelector('#team-heading').textContent, '');
     assert.equal(g.tasks.length, 1);
     assert.equal(g.tasks[0].id, 'setup_inbox');
     assert.equal(h.api.getSpawnInterval(), Infinity);
     assert.equal(document.querySelector('#task-list > .task-card').tagName, 'BUTTON');
     assert.equal(document.querySelector('.task-assignee').textContent, 'Unassigned');
-    document.querySelector('#btn-do-task').click(); h.api.renderAll();
+    document.querySelector('[data-task-id="setup_inbox"]').click(); h.api.renderAll();
     assert.equal(g.tasks.length, 3);
     assert.equal(document.querySelector('.task-assignee').textContent, 'You');
     h.api.tickManualWork(10);

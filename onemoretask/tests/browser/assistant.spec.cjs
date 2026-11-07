@@ -28,7 +28,7 @@ for (const width of [1440, 390]) {
     await openTeam(page, width);
     const assistant = page.locator('[data-assistant]');
     await expect(page.locator('#team-heading')).toHaveText('Team');
-    await expect(page.locator('#you-card > .agent-icon')).toBeVisible();
+    await expect(page.locator('#you-card, #btn-do-task')).toHaveCount(0);
     await expect(page.locator('[data-assistant] > .agent-icon')).toBeVisible();
     await expect(assistant.getByRole('button')).toHaveCount(0);
     const border = await assistant.evaluate(element => getComputedStyle(element).borderColor);
@@ -73,10 +73,10 @@ for (const width of [1440, 390]) {
     await openTeam(page, width, 3);
     await page.clock.runFor(500);
     await expect(page.locator('#team-heading')).toHaveText('Team');
-    await expect(page.locator('#you-card > .agent-icon')).toBeVisible();
+    await expect(page.locator('#you-card, #btn-do-task')).toHaveCount(0);
     await expect(page.locator('[data-assistant] > .agent-icon')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Dismiss assistant' })).toHaveCount(0);
-    await expect(page.locator('#section-agents .name')).toHaveText(['You', 'Assistant Part-time', 'AI 2000 Basic']);
+    await expect(page.locator('#section-agents .name')).toHaveText(['Assistant Part-time', 'AI 2000 Basic']);
     const before = await page.evaluate(() => GAME.state.tasks.map(task => ({ id: task.id, status: task.status, work: task.workDone })));
     expect(before.find(task => task.status === 'ai').work).toBeGreaterThan(0);
     await expect(page.locator('[data-assistant]')).toContainText('Lunch');
@@ -85,13 +85,13 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(200);
     await expect(page.locator('[data-assistant]')).toHaveCount(0);
     await expect(page.locator('#team-heading')).toHaveText('Agents');
-    await expect(page.locator('#section-agents .name')).toHaveText(['You', 'AI 2000 Basic', 'AI 2000 Pro']);
+    await expect(page.locator('#section-agents .name')).toHaveText(['AI 2000 Basic', 'AI 2000 Pro']);
     expect(await page.evaluate(() => GAME.state.assistant.breakRemaining)).toBe(0);
     await page.reload();
 
     await expect(page.locator('#team-heading')).toHaveText('Agents');
     await expect(page.locator('[data-assistant]')).toHaveCount(0);
-    await expect(page.locator('#you-card')).toBeVisible();
+    await expect(page.locator('#you-card, #btn-do-task')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
@@ -99,10 +99,11 @@ for (const width of [1440, 390]) {
 test('Multitasking opens a second manual slot and the assistant cannot be dismissed', async ({ page }) => {
   await openTeam(page, 1440);
   await page.evaluate(() => { for (const task of GAME.state.tasks) task.workRequired = 100; });
-  await page.clock.runFor(100);
-  await page.locator('#btn-do-task').click();
   await page.clock.runFor(200);
-  await expect(page.locator('#btn-do-task')).toBeDisabled();
+  const available = page.locator('#task-list > .task-card:enabled');
+  await available.first().locator('.task-name').click();
+  await page.clock.runFor(200);
+  await expect(available).toHaveCount(0);
   await page.evaluate(() => { GAME.state.totalTasksDone = 35; GAME.buy('assistant_settling'); GAME.buy('assistant_routine'); GAME.buy('ai_hint'); });
   await page.clock.runFor(200);
   await page.locator('.upgrade-card').filter({ hasText: 'Multitasking' }).getByRole('button').click();
@@ -117,11 +118,10 @@ test('Multitasking opens a second manual slot and the assistant cannot be dismis
   await expect(refill).toHaveClass(/btn-refill/);
   await expect(refill).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(refill).toHaveCSS('border-top-style', 'solid');
-  await expect(page.locator('#btn-do-task')).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await expect(page.locator('#btn-do-task')).toBeEnabled();
-  await page.locator('#btn-do-task').click(); await page.clock.runFor(200);
-  await expect(page.locator('#you-status')).toHaveText('Working on 2 tasks');
-  await expect(page.locator('#btn-do-task')).toBeDisabled();
+  await expect(available.first()).toBeEnabled();
+  await available.first().locator('.task-name').click(); await page.clock.runFor(200);
+  await expect(page.locator('[data-assignment="active"]')).toHaveCount(2);
+  await expect(available).toHaveCount(0);
 });
 
 for (const width of [1440, 390]) {
@@ -132,20 +132,20 @@ for (const width of [1440, 390]) {
       GAME.state.totalTasksDone = 35; GAME.buy('assistant_settling'); GAME.buy('assistant_routine'); GAME.buy('ai_hint'); GAME.buy('multitasking');
     });
     await page.clock.runFor(200);
-    const you = page.locator('#btn-do-task');
+    const available = page.locator('#task-list > .task-card:enabled');
     await expect(page.locator('[data-assistant] button')).toHaveCount(0);
-    await expect(page.locator('#you-delivered')).toHaveText('0 tasks delivered');
+    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(0);
     const before = await page.evaluate(() => GAME.state.totalClicks);
-    await you.click(); await page.clock.runFor(200);
+    await available.first().locator('.task-name').click(); await page.clock.runFor(200);
     expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(before + 1);
     await expect(page.locator('[data-assignment="active"]')).toHaveCount(2);
-    await expect(you).toBeDisabled();
+    await expect(available).toHaveCount(0);
     await expect(page.locator('.click-reward')).toHaveCount(0);
     await page.clock.runFor(15000);
-    await expect(page.locator('#you-delivered')).toHaveText('2 tasks delivered');
+    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(2);
     await page.reload();
 
-    await expect(page.locator('#you-delivered')).toHaveText('2 tasks delivered');
+    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(2);
     await page.screenshot({ path: `test-results/matched-team-${width}.png`, fullPage: true, animations: 'disabled' });
   });
 }

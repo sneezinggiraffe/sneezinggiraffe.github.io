@@ -25,9 +25,7 @@ test('manual repair takes exactly two seconds through the game tick and releases
   h.api.clickTask(task.id);
   h.api.doWork();
   assert.equal(task.status, 'available');
-  h.api.renderYouCard();
-  assert.equal(h.window.document.querySelector('#btn-do-task').disabled, true);
-  assert.equal(h.window.document.querySelector('#you-status').textContent, 'Busy fixing an incident');
+  assert.equal(h.window.document.querySelector(`[data-task-id="${task.id}"]`).disabled, true);
   for (let step = 0; step < 19; step++) { h.advance(100); h.api.tick(); }
   assert.equal(inc.fixProgress, 95);
   assert.equal(inc.resolved, false);
@@ -80,8 +78,7 @@ test('busy manual slots block repairs and multitasking permits a task alongside 
   assert.ok(task.workDone > 0);
   assert.equal(h.api.availableManualSlots(), 0);
   assert.equal(h.api.validSave(g), true);
-  h.api.renderYouCard();
-  assert.equal(h.window.document.querySelector('#you-status').textContent, 'Busy fixing an incident');
+  assert.equal(h.window.document.querySelector(`[data-task-id="${task.id}"]`).disabled, true);
 });
 
 test('manual repairs immediately block new work even with a free multitasking slot', (t) => {
@@ -90,18 +87,16 @@ test('manual repairs immediately block new work even with a free multitasking sl
   const task = h.task();
   h.task();
   h.api.resolveIncident(inc.id, 'manual');
-  const button = h.window.document.querySelector('#btn-do-task');
-  const status = h.window.document.querySelector('#you-status');
+  const card = h.window.document.querySelector(`[data-task-id="${task.id}"]`);
   assert.equal(h.api.availableManualSlots(), 1);
-  assert.equal(button.disabled, true);
-  assert.equal(status.textContent, 'Busy fixing an incident');
+  assert.equal(card.disabled, true);
+  card.click();
   h.api.doWork();
   h.api.clickTask(task.id);
   assert.equal(g.tasks.filter(task => task.status === 'active').length, 0);
   h.api.tickManualRepairs(2);
-  assert.equal(button.disabled, false);
-  assert.equal(status.textContent, 'Ready to work');
-  h.api.doWork();
+  assert.equal(card.disabled, false);
+  card.click();
   assert.equal(g.tasks.filter(task => task.status === 'active').length, 2);
   assert.equal(h.api.validSave(g), true);
 });
@@ -129,7 +124,7 @@ test('DevOps advances other incidents without doubling manual repair or discardi
 
 test('paid repair remains instant during manual work and cannot charge twice', (t) => {
   const { h, g, inc } = repairFixture(t);
-  h.task();
+  const task = h.task();
   g.purchasedUpgrades.push('multitasking');
   h.api.resolveIncident(inc.id, 'manual');
   h.api.tickManualRepairs(0.5);
@@ -140,8 +135,7 @@ test('paid repair remains instant during manual work and cannot charge twice', (
   g.cash = 100;
   h.api.resolveIncident(inc.id, 'cash');
   assert.equal(g.cash, 60);
-  assert.equal(h.window.document.querySelector('#btn-do-task').disabled, false);
-  assert.equal(h.window.document.querySelector('#you-status').textContent, 'Ready to work');
+  assert.equal(h.window.document.querySelector(`[data-task-id="${task.id}"]`).disabled, false);
   assert.equal(inc.resolved, true);
   assert.equal(inc.fixProgress, 100);
   assert.equal(h.api.availableManualSlots(), 2);

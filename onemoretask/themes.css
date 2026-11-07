@@ -7,10 +7,10 @@ body{
   --available-bg:#304b6b;--available-border:#79b8ff;--available-text:#e3f0ff;
   --management-bg:#232d3a;--management-border:#53677d;
   --warning-bg:#3a2025;--warning-border:var(--red);
-  display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+  display:flex;flex-direction:column;min-height:100dvh;height:100dvh;overflow:clip;
   font-family:var(--theme-font);
 }
-#top-bar{position:relative;flex-shrink:0;gap:8px 14px;padding:8px 12px}
+#top-bar{position:sticky;top:0;flex-shrink:0;gap:8px 14px;padding:8px 12px}
 #game-container{flex:1;min-height:0;height:auto;width:100%;margin:12px auto 0}
 .header-actions{display:flex;align-items:center;gap:6px;margin-left:auto;max-width:100%;min-width:0;flex:0 0 auto}
 #top-bar #btn-settings{margin-left:0;flex-shrink:0}
@@ -109,7 +109,7 @@ body[data-theme] #game-container button.hire-slot .provision-icon{font-size:1.4r
 body[data-theme] #game-container button.hire-slot small{font-size:.8rem}
 body[data-theme] #game-container .capacity-slot.provision-agent:enabled{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent)}
 @media(max-width:768px){
-body[data-theme]{height:auto;min-height:100dvh;overflow:auto}
+body[data-theme]{height:100dvh;min-height:100dvh;overflow:clip}
 #top-bar{position:sticky;top:0;gap:6px 10px;padding:6px 10px}
 #game-container{flex:none;height:auto;margin-top:0;padding-top:12px}
 

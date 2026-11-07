@@ -1318,7 +1318,7 @@ test('provisioning improvements bracket sixteen slots and stay available during 
 });
 
 for (const width of [1440, 390]) {
-  test(`central work control limits concurrent tasks before upgrades at ${width}px`, async ({ page }) => {
+  test(`task cards limit concurrent manual work before upgrades at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh();
     g.totalTasksDone = 6;
@@ -1336,11 +1336,11 @@ for (const width of [1440, 390]) {
     await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
     await page.goto('/');
 
-    const available = page.locator('#btn-do-task');
+    const available = page.locator('#task-list > .task-card:enabled');
     for (let count = 1; count <= 3; count++) {
-      await expect(available).toBeEnabled();
-      await available.click(); await page.clock.runFor(200);
-      await expect(available).toBeDisabled();
+      await expect(available.first()).toBeEnabled();
+      await available.first().click(); await page.clock.runFor(200);
+      await expect(available).toHaveCount(0);
       await expect(page.locator('#task-list [data-assignment="active"]')).toHaveCount(1);
       await page.clock.runFor(6500);
     }

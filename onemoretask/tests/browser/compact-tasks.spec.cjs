@@ -41,7 +41,7 @@ for (const width of [1440, 844, 390, 320]) {
       await card.locator('.task-name').click();
       await expect(card).toHaveAttribute('data-task-state', 'active');
       await expect(card).toBeDisabled();
-      await expect(page.locator('#btn-do-task')).toBeDisabled();
+      await expect(page.locator('#you-card, #btn-do-task')).toHaveCount(0);
       await expect(page.locator('[data-task-id="compact-0"]')).toHaveAttribute('data-task-state', 'available');
       await expect(page.locator('[data-task-id="compact-0"]')).toBeDisabled();
       expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(clicks + 1);
@@ -89,7 +89,7 @@ test('vertical notes have varied stable angles, no tray outline and continue bel
   expect(reordered.sort((a, b) => a.id.localeCompare(b.id))).toEqual(initial.sort((a, b) => a.id.localeCompare(b.id)));
 });
 
-test('task cards support keyboard work and Multitasking uses the same two slots as Do work', async ({ page }) => {
+test('task cards support keyboard work and Multitasking fills both manual slots', async ({ page }) => {
   await openInbox(page, 1440, 3);
   await page.evaluate(() => GAME.state.purchasedUpgrades.push('multitasking'));
   const selected = page.locator('[data-task-id="compact-2"]');
@@ -97,7 +97,7 @@ test('task cards support keyboard work and Multitasking uses the same two slots 
   await page.keyboard.press('Space');
   await expect(selected).toHaveAttribute('data-task-state', 'active');
   await expect(page.locator('[data-task-id="compact-0"]')).toHaveAttribute('data-task-state', 'active');
-  await expect(page.locator('#btn-do-task')).toBeDisabled();
+  await expect(page.locator('#task-list > .task-card:enabled')).toHaveCount(0);
   expect(await page.evaluate(() => GAME.state.tasks.filter(task => task.status === 'active').length)).toBe(2);
 });
 

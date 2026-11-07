@@ -45,14 +45,14 @@ for (const width of [1440, 390]) {
     await expect(card).toContainText('Fixing manually (50%)');
     await expect(card.locator('.task-bar-fill')).toHaveAttribute('style', /width:50%/);
     await expect(card.getByRole('button', { name: 'FIx Manually', exact: true })).toBeDisabled();
-    await expect(page.locator('#btn-do-task')).toBeDisabled();
+    await expect(page.locator('#task-list > .task-card')).toBeDisabled();
     await page.screenshot({ path: `test-results/manual-repair-${width}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.clock.runFor(900);
     expect(await page.evaluate(() => GAME.state.incidents[0].resolved)).toBe(false);
     await page.clock.runFor(100);
     await expect(card).toHaveCount(0);
-    await expect(page.locator('#btn-do-task')).toBeEnabled();
+    await expect(page.locator('#task-list > .task-card')).toBeEnabled();
   });
 }
 
@@ -63,36 +63,34 @@ test('manual repair resumes after reload and payment immediately releases its sl
   await page.evaluate(() => localStorage.setItem('ai_empire_save', JSON.stringify(GAME.state)));
   await page.reload();
   await expect(page.locator('.incident-card')).toContainText('Fixing manually (50%)');
-  await expect(page.locator('#btn-do-task')).toBeDisabled();
+  await expect(page.locator('#task-list > .task-card')).toBeDisabled();
   const cash = await page.evaluate(() => GAME.state.cash);
   await page.getByRole('button', { name: 'Pay to Fix ($40)', exact: true }).click();
   await page.clock.runFor(200);
   await expect(page.locator('.incident-card')).toHaveCount(0);
-  await expect(page.locator('#btn-do-task')).toBeEnabled();
+  await expect(page.locator('#task-list > .task-card')).toBeEnabled();
   expect(await page.evaluate(() => GAME.state.cash)).toBe(cash - 40);
 });
 
 for (const multitasking of [false, true]) {
-  test(`repair immediately blocks rapid Do work clicks with multitasking ${multitasking}`, async ({ page }) => {
+  test(`repair immediately blocks rapid task-card clicks with multitasking ${multitasking}`, async ({ page }) => {
     await openIncident(page, 1440, multitasking);
     const result = await page.evaluate(() => {
       const fix = document.querySelector('#incident-list button');
-      const work = document.querySelector('#btn-do-task');
+      const work = document.querySelector('#task-list > .task-card');
       fix.click();
       work.click();
       GAME.doWork();
       GAME.clickTask(GAME.state.tasks[0].id);
       return {
         disabled: work.disabled,
-        status: document.querySelector('#you-status').textContent,
         started: GAME.state.tasks.some(task => task.status === 'active'),
       };
     });
-    expect(result).toEqual({ disabled: true, status: 'Busy fixing an incident', started: false });
+    expect(result).toEqual({ disabled: true, started: false });
     await page.clock.runFor(2000);
-    await expect(page.locator('#btn-do-task')).toBeEnabled();
-    await expect(page.locator('#you-status')).toHaveText('Ready to work');
-    await page.locator('#btn-do-task').click();
+    await expect(page.locator('#task-list > .task-card')).toBeEnabled();
+    await page.locator('#task-list > .task-card .task-name').click();
     expect(await page.evaluate(() => GAME.state.tasks.some(task => task.status === 'active'))).toBe(true);
   });
 }

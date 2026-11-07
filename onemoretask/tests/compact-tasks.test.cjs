@@ -12,7 +12,7 @@ function inbox(h, phase = 1) {
   return { state, tasks, document: h.window.document };
 }
 
-test('clicking a task title starts that task and immediately disables Do work', () => {
+test('clicking a task title starts that task and immediately disables the other task cards', () => {
   const h = harness();
   try {
     const { state, tasks, document } = inbox(h);
@@ -22,7 +22,7 @@ test('clicking a task title starts that task and immediately disables Do work', 
     assert.equal(tasks[2].status, 'active');
     assert.equal(tasks[0].status, 'available');
     assert.equal(state.totalClicks, clicks + 1);
-    assert.equal(document.querySelector('#btn-do-task').disabled, true);
+    assert.equal(document.querySelector('#you-card, #btn-do-task'), null);
     assert.equal(selected.disabled, true);
     assert.ok([...document.querySelectorAll('#task-list > button')].every(card => card.disabled));
     selected.click();
@@ -30,7 +30,6 @@ test('clicking a task title starts that task and immediately disables Do work', 
     h.api.tickManualWork(10);
     h.api.pruneTasks(h.window.Date.now());
     h.api.renderAll();
-    assert.equal(document.querySelector('#btn-do-task').disabled, false);
     assert.equal(document.querySelector(`[data-task-id="${tasks[0].id}"]`).disabled, false);
   } finally { h.close(); }
 });
@@ -44,7 +43,7 @@ test('a clicked task takes priority while Multitasking fills both work slots', (
     assert.equal(tasks[2].status, 'active');
     assert.equal(tasks[0].status, 'active');
     assert.equal(tasks[1].status, 'available');
-    assert.equal(document.querySelector('#btn-do-task').disabled, true);
+    assert.equal(h.api.availableManualSlots(), 0);
     assert.equal(state.totalClicks, 1);
   } finally { h.close(); }
 });
@@ -137,7 +136,7 @@ test('the opening card action is decorative, disappears during work and never re
       h.api.renderAll();
     }
     document.querySelector('[data-task-id="setup_inbox"]').click();
-    assert.equal(document.querySelector('#btn-do-task').disabled, true);
+    assert.equal(document.querySelector('[data-task-id="setup_inbox"]').disabled, true);
     assert.equal(document.querySelector('#task-count'), null);
   } finally { h.close(); }
 });

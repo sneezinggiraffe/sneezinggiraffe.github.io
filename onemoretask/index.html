@@ -18,8 +18,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
   --number-font:ui-monospace,'SFMono-Regular',Consolas,monospace;
   --radius:5px;--shadow:none;
 }
-html{font-size:14px}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flow-root;overflow:auto}
+html{font-size:14px;height:100%;overflow:clip;overscroll-behavior:none;scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;height:100dvh;display:flow-root;overflow:clip}
 button{cursor:pointer;font-family:inherit;border:1px solid transparent;border-radius:3px;font-size:.85rem;transition:background-color .15s,border-color .15s,color .15s}
 button:disabled{opacity:.55;cursor:not-allowed}
 
@@ -46,10 +47,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
 #btn-settings{margin-left:auto}
 
 /* Two-pane game layout */
-#game-container{display:flex;gap:16px;padding:4px;max-width:1200px;margin:50px auto 0;height:calc(100dvh - 50px);overflow:hidden}
+#game-container{display:flex;gap:16px;padding:4px;max-width:1200px;margin:50px auto 0;height:auto;overflow:visible}
 
-#work-stream{flex:1 1 100%;min-width:0;min-height:0;transition:flex-basis .4s ease;overflow-y:auto;position:relative}
-#control-panel{flex:0 0 0%;overflow-y:auto;min-height:0;transition:all .4s ease;display:none;min-width:0}
+#work-stream{flex:1 1 100%;min-width:0;min-height:0;transition:flex-basis .4s ease;overflow:visible;position:relative}
+#control-panel{flex:0 0 0%;overflow:visible;min-height:0;transition:all .4s ease;display:none;min-width:0}
 
 #game-container.cp-visible #work-stream{flex:1 1 55%}
 #game-container.cp-visible #control-panel{flex:0 1 45%;display:block}
@@ -322,7 +323,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   .delivery-metrics>strong{grid-column:1/-1}
 }
 @media(min-width:769px) and (max-width:1100px){
-  body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+  body{display:flex;flex-direction:column;min-height:100dvh;height:100dvh;overflow:clip}
   #top-bar{position:relative;flex-shrink:0}
   #game-container{flex:1;min-height:0;height:auto;width:100%;margin-top:12px}
 }
@@ -441,7 +442,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
         <div class="section-hdr" id="team-header" style="margin-bottom:8px" hidden>
           <h3 id="team-heading" style="margin-bottom:0"></h3>
         </div>
-        <div class="card agent-card" id="you-card"><div class="agent-icon" aria-hidden="true">U</div><div class="agent-info"><div class="name">You</div><div id="you-status" class="text-sm">Ready to work</div><small id="you-delivered">0 tasks delivered</small></div><div id="you-controls" class="agent-action-col"><button class="btn btn-primary btn-sm" id="btn-do-task" aria-label="Do work"><span id="work-button-label">Do work</span></button></div></div>
         <div id="agent-hire-section"></div>
         <div id="agent-list"></div>
       </div>

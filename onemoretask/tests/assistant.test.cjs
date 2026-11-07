@@ -196,10 +196,10 @@ test('one Multitasking click starts two unassigned jobs and counts completed man
     assert.equal(g.manualTasksCompleted, 2);
     h.api.completeTask(jobs[1], 'manual'); assert.equal(g.manualTasksCompleted, 2);
     h.api.tickAssistant(2); assert.equal(g.manualTasksCompleted, 2);
-    h.api.renderAll(); assert.equal(h.window.document.querySelector('#you-delivered').textContent, '2 tasks delivered');
+    h.api.renderAll(); assert.equal(h.window.document.querySelector('#you-card, #btn-do-task'), null);
     restored = harness(JSON.stringify(g));
     assert.equal(restored.window.GAME.state.manualTasksCompleted, 2);
-    assert.equal(restored.window.document.querySelector('#you-delivered').textContent, '2 tasks delivered');
+    assert.equal(restored.window.document.querySelector('#you-card, #btn-do-task'), null);
     const loaded = restored.window.GAME.state;
     loaded.tasks = loaded.tasks.filter(task => task.status !== 'available');
     const last = restored.task();
@@ -208,14 +208,17 @@ test('one Multitasking click starts two unassigned jobs and counts completed man
   } finally { if (restored) restored.close(); h.close(); }
 });
 
-test('You shows the same delivery-count format as the assistant, including a singular completion', () => {
+test('the assistant retains its delivery count while manual work has no separate card', () => {
   const h = harness();
   try {
     const g = hire(h); tasks(h, 1); h.api.doWork(); h.api.tickManualWork(10); h.api.renderAll();
-    assert.equal(h.window.document.querySelector('#you-delivered').textContent, '1 task delivered');
+    assert.equal(h.window.document.querySelector('#you-card, #btn-do-task'), null);
+    assert.notEqual(h.window.document.querySelector('#section-agents').style.display, 'none');
     const assistant = h.window.document.querySelector('[data-assistant]');
     assert.equal(assistant.querySelector('small').textContent, '0 tasks delivered · 15% task fee');
     assert.equal(assistant.querySelector('button'), null);
+    h.task(); h.api.tickAssistant(4); h.api.renderAll();
+    assert.equal(h.window.document.querySelector('[data-assistant] small').textContent, '1 task delivered · 15% task fee');
     assert.equal(g.manualTasksCompleted, 1); assert.equal(h.api.validSave(g), true);
   } finally { h.close(); }
 });
@@ -242,7 +245,7 @@ test('human markers and manual AI refills use distinct controls without dismissa
     for (const phase of [2, 3, 5, 7]) {
       g.phase = phase;
       h.api.renderAll();
-      for (const selector of ['#you-card', '[data-assistant]']) {
+      for (const selector of ['[data-assistant]']) {
         assert.ok(h.window.document.querySelector(selector + ' > .agent-icon').textContent);
         assert.equal(h.window.document.querySelector(selector + ' > .agent-icon').getAttribute('aria-hidden'), 'true');
       }
