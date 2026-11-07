@@ -1485,7 +1485,7 @@ test('CEO prices require early saving and keep later automation goals across thr
     t.diagnostic(JSON.stringify({ actionEveryMs, pipelineWait: wait('ceo_recruitment'), scaleModeWait: wait('server_1'), dualWait: wait('ceo_batch'), fourWait: wait('ceo_quad_batch') }));
   }
 });
-scenario('managed workers show disabled controls while the Manager keeps its refill button', (h) => {
+scenario('managed workers show a status while the Manager keeps its refill button', (h) => {
   const g = h.fresh(7);
   g.totalTasksDone = 650;
   g.tokens = 10000;
@@ -1501,9 +1501,11 @@ scenario('managed workers show disabled controls while the Manager keeps its ref
     assert.equal(cards[0].querySelector('button').textContent, 'Add tokens');
     assert.equal(cards[0].querySelector('button').disabled, false);
     for (const card of cards.slice(1)) {
-      assert.equal(card.querySelector('button').textContent, 'Managed');
-      assert.equal(card.querySelector('button').disabled, true);
-      assert.equal(card.querySelector('button').hasAttribute('onclick'), false);
+      const status = card.querySelector('.agent-managed');
+      assert.equal(status.textContent, 'Managed');
+      assert.equal(status.getAttribute('role'), 'status');
+      assert.equal(status.hasAttribute('onclick'), false);
+      assert.equal(card.querySelector('button').textContent, 'Sell');
     }
     assert.doesNotMatch(cards.map(card => card.textContent).join(' '), /SPD|QUA|REL|Auto ON|Fuel/);
     assert.equal(h.window.document.querySelector('#section-stats').style.display, 'none');

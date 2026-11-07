@@ -1,0 +1,247 @@
+/* Theme lab: shared controls and layout, followed by ten visual directions. */
+body{
+  --theme-font:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --button-radius:3px;
+  --on-accent:var(--bg);
+  --purchase-bg:var(--accent);--purchase-text:var(--on-accent);
+  --available-bg:#304b6b;--available-border:#79b8ff;--available-text:#e3f0ff;
+  --management-bg:#232d3a;--management-border:#53677d;
+  --warning-bg:#3a2025;--warning-border:var(--red);
+  display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+  font-family:var(--theme-font);
+}
+#top-bar{position:relative;flex-shrink:0;gap:8px 14px;padding:8px 12px}
+#game-container{flex:1;min-height:0;height:auto;width:100%;margin:12px auto 0}
+.header-actions{display:flex;align-items:center;gap:6px;margin-left:auto;max-width:100%;min-width:0;flex:0 0 auto}
+#top-bar #btn-settings{margin-left:0;flex-shrink:0}
+
+#layout-switcher{display:flex;align-items:center;gap:2px;min-width:0;color:inherit}
+
+.layout-choice{flex:0 0 28px;min-width:28px;height:28px;padding:0;border:1px solid var(--bg4);border-radius:2px;background:transparent;color:inherit;font-size:.75rem;font-weight:700}
+.layout-choice:hover{background:var(--bg3);border-color:var(--text2)}
+.layout-choice[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+body[data-theme] :is(#game-container,#intro-overlay,#settings-popup) .btn{border-radius:var(--button-radius)}
+body[data-theme] :is(#game-container,#intro-overlay,#settings-popup) :is(.intro-box,.popup){border-radius:var(--radius)}
+body[data-theme] #prelude-controls #btn-do-task{border-radius:var(--button-radius)}
+body[data-theme] .management-agent{background:var(--management-bg);border-color:var(--management-border)}
+body[data-theme] .agent-card.res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
+body[data-theme] #res-tokens-wrap.res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
+body[data-theme] .status-error{background:var(--warning-bg);color:var(--red)}
+body[data-theme] .btn-red{border-color:var(--red)}
+body[data-theme] .btn-red:hover:not(:disabled){background:var(--warning-bg)}
+body[data-theme] .badge-red{background:var(--warning-bg)}
+body[data-theme] .capacity-slot.filled{background:var(--bg4);border-color:var(--text3)}
+body[data-theme] .capacity-slot.provisioning{background:linear-gradient(to right,color-mix(in srgb,var(--accent) 45%,var(--bg2)) var(--progress),var(--bg2) var(--progress))}
+body[data-theme] .neocloud.active{border-color:var(--text3)}
+body[data-theme] #game-container .upgrade-card:has(.upgrade-action:enabled),body[data-theme] #game-container .upgrade-repeatable:has(.upgrade-action:enabled){
+  --bg2:var(--available-bg);--bg3:var(--available-border);--bg4:var(--available-border);
+  border-color:var(--available-border);border-left-width:4px;
+}
+body[data-theme] #game-container .upgrade-card:has(.upgrade-action:enabled){background:var(--available-bg)}
+body[data-theme] #game-container .upgrade-card:has(.upgrade-action:enabled) :is(.name,.desc,.badge,.upgrade-action){color:var(--available-text)}
+body[data-theme] #game-container .upgrade-repeatable:has(.upgrade-action:enabled){color:var(--available-text)}
+body[data-theme] #game-container .upgrade-action{color:var(--text2)}
+body[data-theme] #game-container .upgrade-repeatable:has(.upgrade-action:enabled) .upgrade-action{color:var(--available-text)}
+.upgrade-purchase{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+body[data-theme] #game-container .upgrade-action:disabled{opacity:1;color:var(--text3)}
+body[data-theme] #game-container .upgrade-action:hover:not(:disabled)::after{background:color-mix(in srgb,var(--available-text) 6%,transparent)}
+body[data-theme] .res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
+body[data-theme] #ending-overlay{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  font-weight:400;
+  --button-radius:8px;
+}
+/* 1. Night Shift: crisp dark office software with clear blue purchase states. */
+
+/* 2. Outlook: a blue application ribbon and a white, compact inbox. */
+/* 2. Notepad: white ruled sheets, blue ink, and a red margin. */
+
+/* 7. Swiss Poster: strong type, red selection bands and a strict printed grid. */
+
+/* 10. Toybox: saturated primary colours, ink outlines and hard offset shadows. */
+
+/* Retired design notes retained from the first comparison. */
+/* 4. Windows 95: hard bevels, navy title bars, and a teal desktop. */
+/* 5. Blueprint: drafting lines, technical labels, and white plan marks. */
+/* 6. Terminal: a working console with command prompts and segmented meters. */
+/* 8. Arcade: high saturation, pixel corners and game-like status meters. */
+/* 9. Broadsheet: serif typography, column rules and a printed purchase stamp. */
+/* Permanent theme collection, expanded to twenty designs. */
+/* 4. Air Traffic: stacked flight strips and a precise control-room console. */
+/* 5. Thermal Receipt: a roll of itemised work, perforations and printer ink. */
+/* 6. Corkboard: pinned white job notes on a textured brown notice board. */
+/* 8. Departure Board: split-flap cells and station-style information panels. */
+/* 9. Field Manual: forest covers, ivory dossier sheets and tabbed sections. */
+/* 11. Spreadsheet: cells, row gutters, green column headings and precise numbers. */
+/* 12. Mixing Desk: numbered channels, fader tracks and studio console hardware. */
+/* 13. Case File: legal folders, exhibit dividers and stamped clerical tabs. */
+/* 14. Submarine: pressure-hull panels, instrument ticks and quiet sea-green paint. */
+/* 15. Candy Wrapper: violet foil, graphic stripes and crimp-cut heading ribbons. */
+
+/* 16. Mondrian: primary blocks, heavy orthogonal rules and open white space. */
+
+/* 17. Space Station: pressure-door panels, instrument rails and small hazard marks. */
+
+/* 18. Quest Ledger: a guild register with binding marks and illuminated headings. */
+/* 19. Photocopier: toner, fax dividers and an unapologetic office stamp. */
+/* 20. Under Construction: lemon hazard tape and stubborn site-office controls. */
+
+/* Shared purchase affordances stay recognisable in every theme. */
+body[data-theme] #game-container .btn-primary{color:var(--on-accent)}
+body[data-theme] #game-container .agent-buy-options .btn:enabled{
+  background:var(--purchase-bg);color:var(--purchase-text);border:2px solid var(--purchase-bg);
+  font-weight:700;cursor:pointer;
+}
+body[data-theme] #game-container button.hire-slot{
+  border:2px solid var(--bg4);background:var(--bg3);color:var(--text2);
+  text-align:left;justify-content:flex-start;padding:12px;gap:10px;
+}
+body[data-theme] #game-container button.hire-slot:enabled{
+  background:var(--purchase-bg);border-color:var(--purchase-bg);color:var(--purchase-text);
+  cursor:pointer;box-shadow:0 2px 0 color-mix(in srgb,var(--purchase-bg) 60%,#000000);
+}
+body[data-theme] #game-container button.hire-slot:enabled:hover{
+  outline:2px solid var(--text3);outline-offset:2px;
+}
+body[data-theme] #game-container button.hire-slot :is(strong,span,small){color:inherit}
+body[data-theme] #game-container button.hire-slot .provision-icon{font-size:1.4rem;font-weight:700}
+.hire-arrow{margin-left:auto;font-size:1.4rem;line-height:1}
+body[data-theme] #game-container button.hire-slot small{font-size:.8rem}
+body[data-theme] #game-container .capacity-slot.provision-agent:enabled{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent)}
+@media(max-width:768px){
+body[data-theme]{height:auto;min-height:100dvh;overflow:auto}
+#top-bar{position:sticky;top:0;gap:6px 10px;padding:6px 10px}
+#game-container{flex:none;height:auto;margin-top:0;padding-top:12px}
+
+.layout-choice{flex-basis:36px;min-width:36px;height:40px}
+
+.upgrade-purchase{max-width:100%}
+
+}
+
+/* Refinements retained from the third visual review. */
+
+/* The third theme round explores different workspaces and arrangements. */
+/* 1. Secondhand CRT: a charity-shop monitor, solid phosphor letters and a tired bezel. */
+
+/* 4. Pinball: a reversed playfield with banked target cards and bumper details. */
+
+/* 3. Cut & Paste: a broad collage board with clipped cards and taped captions. */
+body[data-theme="3"]{
+  color-scheme:light;
+  --bg:#d9ddda;--bg2:#f5f5ed;--bg3:#dedfd3;--bg4:#81877d;
+  --text:#202821;--text2:#39483a;--text3:#4e5d4f;
+  --accent:#295845;--accent2:#153e2c;--on-accent:#ffffff;
+  --purchase-bg:#233e31;--purchase-text:#ffffff;
+  --green:#235b37;--red:#a23a38;--orange:#874700;--yellow:#874700;--purple:#57477b;--pink:#8b3868;
+  --cash:#202821;--token:#234a3a;--debt:#202821;--meter:#295845;
+  --available-bg:#c5dccb;--available-border:#295845;--available-text:#183c28;
+  --management-bg:#e4e9de;--management-border:#748570;
+  --warning-bg:#efddda;--warning-border:#a23a38;
+  --theme-font:Arial,Helvetica,sans-serif;--radius:0;--button-radius:0;--shadow:3px 3px 0 #9da79b;
+  background-image:repeating-linear-gradient(172deg,transparent 0 51px,#243d2e07 51px 52px);
+}
+body[data-theme="3"] #top-bar{background:#f5f5ed;border-bottom:4px solid #202821}
+body[data-theme="3"] #game-container :is(h2,h3){font-family:Arial,Helvetica,sans-serif;font-weight:900;letter-spacing:-.045em}
+body[data-theme="3"] #game-container .section-hdr h2{font-size:1.45rem;background:#202821;color:#f5f5ed;padding:6px 10px;transform:rotate(-.5deg)}
+body[data-theme="3"] #game-container h3{display:inline-block;background:#c5dccb;border:2px solid #202821;padding:5px 14px;font-size:1.15rem;transform:rotate(.6deg);box-shadow:3px 3px 0 #202821}
+body[data-theme="3"] #game-container .task-card{border:1px solid #81877d;border-bottom:4px solid #81877d;background:#f5f5ed;padding:17px 12px 12px;margin-bottom:11px;box-shadow:3px 3px 0 #9da79b;clip-path:polygon(0 0,97% 0,100% 8px,100% 100%,0 100%)}
+body[data-theme="3"] #game-container .task-card::before{content:'';position:absolute;top:0;left:37%;width:60px;height:8px;background:#91aa9870;transform:rotate(-3deg);pointer-events:none}
+body[data-theme="3"] #game-container .task-name{font-size:1.04rem;font-weight:900}
+body[data-theme="3"] #game-container :is(.task-client,.task-meta,.upgrade-info .desc,.text-sm){font-size:.86rem;font-weight:600}
+body[data-theme="3"] #game-container .task-client{font-style:normal}
+body[data-theme="3"] #game-container .task-icon{border:0;border-radius:0;background:#202821;color:#ffffff;font-weight:800}
+body[data-theme="3"] #game-container .agent-icon{border:2px solid #202821;border-radius:0;color:#202821;background:#c5dccb;transform:rotate(-2deg);font-weight:800}
+body[data-theme="3"] #game-container .cp-section>.card{border:0;border-top:4px solid #202821;padding-top:13px}
+body[data-theme="3"] #game-container .task-bar,body[data-theme="3"] #game-container .task-bar-fill{height:5px;border-radius:0}
+body[data-theme="3"] #intro-overlay .intro-box,body[data-theme="3"] #settings-popup .popup{border:2px solid #202821;border-radius:0;box-shadow:7px 7px 0 #9da79b}
+body[data-theme="3"] #intro-overlay h2{font-family:Arial,Helvetica,sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:-.06em;background:#202821;color:#f5f5ed;padding:7px}
+
+/* 6. Midnight Diner: a horizontal order rail over a two-column restaurant till. */
+
+/* 8. Circuit Lab: component trays, board tracks and a matrix of control modules. */
+
+@media(max-width:768px){
+
+  body[data-theme="3"] #game-container .section-hdr h2{font-size:1.2rem}
+  body[data-theme="3"] #intro-overlay h2{font-size:1.9rem}
+
+}
+
+body[data-theme="3"] :is(#game-container,#intro-overlay,#settings-popup){font-weight:600}
+
+/* 9. Dispatch Wall: a whole-room operations board with lanes above the team. */
+
+/* 11. Brickworks: staggered masonry, concrete ground and fired-clay edges. */
+
+/* 12. Film Edit: horizontal frames, sprocket rails and a dark cutting room. */
+
+/* 13. Chess Club: a scored board of alternating work squares beside its scorebook. */
+
+/* 14. Jungle Desk: a trailing leaf board with the workbench above the queue. */
+
+/* Strong metadata is part of these five designs, rather than hairline decoration. */
+
+/* 18. Cargo Manifest: corrugated bays, stencilled labels and reversed loading lanes. */
+
+/* 19. Sticky Situation: fluorescent job notes, tape and an untidy desk-wide board. */
+
+/* 20. Aquarium: a full-width swimming lane above glass-fronted work tanks. */
+
+/* Fourth comparison: visual skins stay independent from the selected layout. */
+/* 4. Organ Donor: living membranes, tendon seams and sealed specimen labels. */
+
+/* 6. Municipal Snail: a shell-shaped civic identity and slime-green official ink. */
+
+/* 7. Lava Invoice: orange liquid trapped beneath coal-black enamel. */
+
+/* 8. Gravity Error: impossible graph paper and holes punched through digital matter. */
+
+/* 9. Meatspace: a butcher's tray crossed with supermarket packaging. */
+
+/* 10. Deep Freeze: a freezer full of chipped ice and blue laboratory labels. */
+
+/* 11. Banana Tribunal: fruit-shaped seals and absurdly serious judicial typography. */
+
+/* 12. Cosmic Laundry: spinning portholes, bleached fabric and a sky full of soap. */
+
+/* 13. Dental X-Ray: enamel silhouettes suspended over a clinical radiograph. */
+
+/* 14. Vending Oracle: snack-machine chrome with a very serious prophecy slot. */
+
+/* 15. Deep-Sea Jelly: transparent membranes, luminous organs and abyssal ink. */
+
+/* 16. Microwave Dinner: compartment foil, pea-green controls and the plastic lid. */
+
+/* 17. Inflatable Castle: welded air chambers with cartoon industrial seams. */
+
+/* 18. Meteorite Museum: fractured stone carrying tiny immaculate specimen labels. */
+
+/* 19. Frog Cathedral: solemn stone tracery presided over by amphibian seals. */
+
+/* 20. Dimensional Leak: incompatible outlines seen through a misregistered aperture. */
+
+/* Legibility remains consistent while the material and shape change. */
+
+/* Routine refills are outlined; new capacity keeps the filled purchase treatment. */
+
+body[data-theme] #game-container .agent-action-col > .btn-refill{
+  min-height:32px;padding:6px 12px;background:transparent;color:var(--text);
+  border:1px solid var(--text3);font-size:.85rem;font-weight:600;box-shadow:none;
+}
+body[data-theme] #game-container .agent-action-col > .btn-refill:hover:not(:disabled){
+  background:var(--bg3);border-color:var(--text);color:var(--text);
+}
+body[data-theme] #game-container .agent-buy-options .btn:enabled,
+body[data-theme] #game-container button.hire-slot:enabled{
+  background:var(--purchase-bg);color:var(--purchase-text);
+  border:2px solid var(--purchase-bg);border-bottom-width:4px;
+  box-shadow:0 2px 0 color-mix(in srgb,var(--purchase-bg) 55%,#000000);
+}
+body[data-theme] #game-container .agent-vacancy{border:2px solid var(--purchase-bg)}
+body[data-theme] #game-container .agent-buy-options .btn:active:not(:disabled),
+body[data-theme] #game-container button.hire-slot:active:not(:disabled){translate:0 1px;box-shadow:none}
+@media(max-width:768px){
+  body[data-theme] #game-container .agent-action-col > .btn-refill{min-height:40px}
+}

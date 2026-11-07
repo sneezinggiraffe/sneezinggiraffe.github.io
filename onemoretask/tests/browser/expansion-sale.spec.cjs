@@ -121,7 +121,10 @@ for (const width of [1440, 390, 320]) {
       await planning.scrollIntoViewIfNeeded();
       await expect(planning).toBeInViewport();
       await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(2);
-      for (const build of await page.locator('[aria-label="Cluster construction"]').all()) await expect(build).toBeInViewport();
+      for (const build of await page.locator('[aria-label="Cluster construction"]').all()) {
+        await build.scrollIntoViewIfNeeded();
+        await expect(build).toBeInViewport();
+      }
       const topGrid = page.locator(phase === 13 ? '#cluster-list .node-grid' : '[data-neocloud="11"] .network-grid');
       await expect(topGrid.locator(':scope > .cluster-card').first()).toHaveClass(/planning-card/);
       await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);

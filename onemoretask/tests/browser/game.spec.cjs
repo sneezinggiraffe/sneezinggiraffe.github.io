@@ -710,7 +710,7 @@ test('clusters build hardware and management before slots provision agents',asyn
   await page.getByRole('button',{name:/Bring cluster online/}).click();const second=page.locator('div.cluster-card:not(.planning-card)').first();await expect(second.locator('.cluster-hdr strong')).toHaveText('Cluster 2');const firstBox=await page.locator('div.cluster-card:not(.planning-card)').nth(1).boundingBox();const secondBox=await second.boundingBox();expect(secondBox.x).toBeLessThan(firstBox.x);expect(secondBox.y).toBe(firstBox.y);
   for(const stage of ['Procuring GPUs','Racking hardware','Installing software','Final checks']){await page.clock.runFor(100);await expect(second).toContainText(stage);await expect(second.getByRole('progressbar')).toBeVisible();await page.clock.runFor(2900);}
   await page.clock.runFor(300);await expect(second.getByRole('button',{name:'Provision agent for $2,500',exact:true})).toHaveCount(8);await expect(second.locator('.cluster-status')).toHaveText('Needs Agents');await expect(second.locator('.cluster-agents-label')).toHaveCount(0);
-  await expect(second.locator('.cluster-status')).toHaveCSS('color', 'rgb(251, 146, 60)');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);expect(await second.locator('.capacity-slot.filled').textContent()).toBe(await page.evaluate(() => GAME.state.agents.find(agent => agent.id === GAME.state.clusters[1].workerAgentIds[0]).name));await expect(second.locator('.cluster-status')).toHaveText('Partially Operational');
+  await expect(second.locator('.cluster-status')).toHaveCSS('color', 'rgb(135, 71, 0)');await second.getByRole('button',{name:'Provision agent for $2,500',exact:true}).first().click();await page.clock.runFor(2000);await expect(second.locator('[aria-label="Provisioning agent"]')).toBeVisible();await expect(second.locator('.cluster-status')).toHaveText('Installing agents');await page.clock.runFor(2200);await expect(second.locator('.capacity-slot.filled')).toHaveCount(1);expect(await second.locator('.capacity-slot.filled').textContent()).toBe(await page.evaluate(() => GAME.state.agents.find(agent => agent.id === GAME.state.clusters[1].workerAgentIds[0]).name));await expect(second.locator('.cluster-status')).toHaveText('Partially Operational');
   await expect(page.locator('#cluster-list')).not.toContainText('management team');await page.screenshot({path:'test-results/phase9-grid.png',fullPage:true});
 });
 test('Phase 9 workers are managed and refill only at ten percent', async ({ page }) => {
@@ -725,12 +725,13 @@ test('Phase 9 workers are managed and refill only at ten percent', async ({ page
   });
   await page.clock.runFor(200);
   await expect(page.locator('#section-stats')).toBeHidden();
-  await expect(page.locator('#agent-list')).not.toContainText('SPD');
-  const workers = page.locator('#agent-list .agent-card').filter({ has: page.getByRole('button', { name: 'Managed', exact: true }) });
+  await expect(page.locator('#agent-list .agent-stat')).toHaveCount(0);
+  const workers = page.locator('#agent-list .agent-card').filter({ has: page.locator('.agent-managed[role="status"]') });
   const count = await workers.count();
   expect(count).toBeGreaterThan(0);
   for (const worker of await workers.all()) {
-    await expect(worker.getByRole('button', { name: 'Managed', exact: true })).toBeDisabled();
+    await expect(worker.locator('.agent-managed[role="status"]')).toHaveText('Managed');
+    await expect(worker.getByRole('button', { name: 'Managed', exact: true })).toHaveCount(0);
     await expect(worker.getByRole('button', { name: 'Add tokens', exact: true })).toHaveCount(0);
     await expect(worker.locator('.agent-token-count')).toHaveText(/^(20\/40|750\/1,500) tokens$/);
   }
@@ -839,7 +840,7 @@ for(const width of [1440,390]) {
       const cards=page.locator('#agent-list .agent-card');await expect(cards).toHaveCount(2);await expect(cards.nth(0).locator('.name')).toContainText('AI 2000 Basic');await expect(cards.nth(1).locator('.name')).toContainText('AI 2000 Pro');
       const bars=await cards.locator('.task-bar').all();const first=await bars[0].boundingBox();const second=await bars[1].boundingBox();expect(first.width).toBe(second.width);
       const counts=await cards.locator('.agent-token-count').all();expect((await counts[0].boundingBox()).x).toBe(first.x);expect((await counts[1].boundingBox()).x).toBe(second.x);
-      await expect(counts[0]).toHaveText(/\/40 tokens$/);await expect(counts[1]).toHaveText(new RegExp('/'+(phase===4?100:200)+' tokens$'));await expect(page.locator('#agent-slots')).toHaveCount(0);await expect(page.locator('#token-burn')).toHaveText(/^-\d[\d,]* tok\/s$/);
+      await expect(counts[0]).toHaveText(/\/40 tokens(?: Empty)?$/);await expect(counts[1]).toHaveText(new RegExp('/'+(phase===4?100:200)+' tokens(?: Empty)?$'));await expect(page.locator('#agent-slots')).toHaveCount(0);await expect(page.locator('#token-burn')).toHaveText(/^-\d[\d,]* tok\/s$/);
       const buttons=cards.getByRole('button',{name:'Add tokens'});expect((await buttons.nth(0).boundingBox()).width).toBe((await buttons.nth(1).boundingBox()).width);
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`test-results/phase${phase}-agents-${width}.png`,fullPage:true});
       if(phase===4)await page.locator('[onclick="GAME.buy(\'multi_bot\')"]').click();
@@ -849,7 +850,7 @@ for(const width of [1440,390]) {
 test('DevOps sits in Incidents and management cards stand out',async({page})=>{
   const raw=fixture(9);await page.addInitScript(value=>localStorage.setItem('ai_empire_save',value),raw);await page.goto('/');
   await expect(page.locator('#incident-devops .agent-card')).toContainText('DevOps');await expect(page.locator('#agent-list')).not.toContainText('DevOps');
-  const colors=await page.locator('.management-agent').evaluateAll(cards=>cards.map(card=>getComputedStyle(card).backgroundColor));expect(colors).toEqual(['rgb(26, 38, 56)','rgb(26, 38, 56)']);
+  const colors=await page.locator('.management-agent').evaluateAll(cards=>cards.map(card=>getComputedStyle(card).backgroundColor));expect(colors).toEqual(['rgb(228, 233, 222)','rgb(228, 233, 222)']);
   await page.screenshot({path:'test-results/management-and-devops.png',fullPage:true,animations:'disabled'});
 });
 test('empty upgrades retain a blank card of space above token packs',async({page})=>{

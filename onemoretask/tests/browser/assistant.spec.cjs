@@ -52,7 +52,7 @@ for (const width of [1440, 390]) {
     await expect(assistant.getByRole('progressbar')).toHaveCount(0);
     await expect(assistant.locator('.text-sm')).toHaveCount(1);
     await expect(assistant.locator('.text-sm')).toHaveText(/^(Break time|Lunch|Dentist|Sleeping) - Back in [12]s$/);
-    await expect(assistant.locator('.assistant-break-status')).toHaveCSS('color', 'rgb(251, 146, 60)');
+    await expect(assistant.locator('.assistant-break-status')).toHaveCSS('color', 'rgb(135, 71, 0)');
     await expect(assistant).toHaveCSS('border-color', border);
     await expect(assistant).toHaveClass(/assistant-on-break/);
     await page.screenshot({ path: `test-results/assistant-break-${width}.png`, fullPage: true });
@@ -113,12 +113,11 @@ test('Multitasking opens a second manual slot and the assistant cannot be dismis
   await expect(page.getByRole('button', { name: 'Dismiss assistant' })).toHaveCount(0);
   expect(await page.evaluate(() => typeof GAME.dismissAssistant)).toBe('undefined');
   await expect(page.locator('[data-assistant]')).toBeVisible();
-  const primaryStyle = element => {
-    const css = getComputedStyle(element);
-    return ['padding', 'fontSize', 'fontWeight', 'borderRadius', 'backgroundColor', 'color'].map(key => css[key]);
-  };
-  expect(await page.getByRole('button', { name: 'Add tokens' }).evaluate(primaryStyle))
-    .toEqual(await page.locator('#btn-do-task').evaluate(primaryStyle));
+  const refill = page.getByRole('button', { name: 'Add tokens' });
+  await expect(refill).toHaveClass(/btn-refill/);
+  await expect(refill).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(refill).toHaveCSS('border-top-style', 'solid');
+  await expect(page.locator('#btn-do-task')).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(page.locator('#btn-do-task')).toBeEnabled();
   await page.locator('#btn-do-task').click(); await page.clock.runFor(200);
   await expect(page.locator('#you-status')).toHaveText('Working on 2 tasks');

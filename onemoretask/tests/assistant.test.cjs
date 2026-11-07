@@ -235,7 +235,7 @@ test('Marketing Campaign arrives at 200 tasks for $400 and increases demand befo
   } finally { h.close(); }
 });
 
-test('human icons and all AI top-ups share the primary action style without dismissal controls', () => {
+test('human markers and manual AI refills use distinct controls without dismissal controls', () => {
   const h = harness();
   try {
     const g = hire(h);
@@ -247,10 +247,15 @@ test('human icons and all AI top-ups share the primary action style without dism
         assert.equal(h.window.document.querySelector(selector + ' > .agent-icon').getAttribute('aria-hidden'), 'true');
       }
       const worker = h.worker('researcher');
+      for (const html of [h.api.renderAiWorkerCard(), h.api.renderAgentCard(worker)]) {
+        assert.match(html, /btn btn-refill btn-sm/);
+        assert.doesNotMatch(html, /btn-primary|btn-purple/);
+      }
       const manager = h.worker('manager');
-      for (const html of [h.api.renderAiWorkerCard(), h.api.renderAgentCard(worker), h.api.renderAgentCard(manager)]) {
-        assert.match(html, /btn btn-primary btn-sm/);
-        assert.doesNotMatch(html, /btn-purple/);
+      assert.match(h.api.renderAgentCard(manager), /btn btn-refill btn-sm/);
+      for (const html of [h.api.renderAiWorkerCard(), h.api.renderAgentCard(worker)]) {
+        assert.match(html, /class='agent-managed' role='status'>Managed/);
+        assert.doesNotMatch(html, /btn btn-refill btn-sm/);
       }
       assert.doesNotMatch(h.window.document.querySelector('[data-assistant]').textContent, /Dismiss/);
       g.agents = [];

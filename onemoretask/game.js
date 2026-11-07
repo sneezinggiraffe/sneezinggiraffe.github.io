@@ -152,6 +152,8 @@
     { id: "token_mgr", name: "Token Mgr", icon: "\uD83E\uDE99", color: "#0ea5e9", specialty: [], statBias: { speed: 1.0, quality: 1.0, reliability: 1.0 } },
   ];
 
+  const AGENT_MARKERS = { original_ai: "AI", writer: "WR", researcher: "RS", coder: "CD", analyst: "AN", support: "SP", manager: "MG", devops: "OP", sales: "SL", token_mgr: "TM" };
+
   const TRAITS = [
     { id: "overconfident", name: "Overconfident", desc: "+20% speed, -15% reliability", fx: (a) => { a.speed *= 1.2; a.reliability *= 0.85; } },
     { id: "pedantic", name: "Pedantic", desc: "+20% quality, -15% speed", fx: (a) => { a.quality *= 1.2; a.speed *= 0.85; } },
@@ -844,7 +846,7 @@
     const task = G.tasks.find((item) => item.id === G.assistant.taskIds[0]);
     const onBreak = G.assistant.breakRemaining > 0;
     const status = onBreak ? G.assistant.breakLabel + " - Back in " + Math.ceil(G.assistant.breakRemaining) + "s" : task ? "Working on " + task.name : "Waiting for work";
-    return "<div class='card agent-card" + (onBreak ? " assistant-on-break" : "") + "' data-assistant><div class='agent-icon' aria-hidden='true'>" + (onBreak ? "⏸" : "🧑‍💼") + "</div><div class='agent-info'><div class='name'>Assistant <span class='role'>Part-time</span></div><div class='text-sm" + (onBreak ? " assistant-break-status" : "") + "'>" + status + "</div><small>" + deliveredTasksLabel(G.assistant.tasksCompleted) + " · 15% task fee</small></div></div>";
+    return "<div class='card agent-card" + (onBreak ? " assistant-on-break" : "") + "' data-assistant><div class='agent-icon' aria-hidden='true'>" + (onBreak ? "Ⅱ" : "AS") + "</div><div class='agent-info'><div class='name'>Assistant <span class='role'>Part-time</span></div><div class='text-sm" + (onBreak ? " assistant-break-status" : "") + "'>" + status + "</div><small>" + deliveredTasksLabel(G.assistant.tasksCompleted) + " · 15% task fee</small></div></div>";
   }
 
   function getCurrentAiWorkerTask() {
@@ -1158,6 +1160,7 @@
 
   function completeTask(task, method) {
     if (task.status === "done") return;
+    showTaskCompletion(task);
     if (task.assignedAgent) method = "agent";
     if (G.activeTaskId === task.id) G.activeTaskId = null;
     task.status = "done";
@@ -2135,6 +2138,7 @@
 
   function prestige() {
     if (!canPrestige()) return;
+    clearTaskCompletions();
     const bonus = {
       clickBonus: 1,
       tokenBonus: 50 + G.prestigeCount * 25,
@@ -2971,7 +2975,7 @@
   }
 
   function resetSettingsPopupState() {
-    $("#settings-msg").textContent = "Manage settings.";
+    $("#settings-msg").textContent = "";
     $("#settings-main-actions").style.display = "flex";
     $("#settings-confirm-actions").style.display = "none";
     updateMusicToggleLabel();
@@ -2996,6 +3000,7 @@
   }
 
   function performFullReset() {
+    clearTaskCompletions();
     const newState = defaultState();
     newState.musicMode = G.musicMode;
     try {
@@ -3089,9 +3094,21 @@
 
   function patchChildren(target, source) {
     const desired = [...source.childNodes];
+    const taskCards = target.id === "task-list" ? new Map([...target.children].map((child) => [child.dataset.taskId, child])) : null;
     for (let index = 0; index < desired.length; index++) {
       const next = desired[index];
-      const current = target.childNodes[index];
+      let current = target.childNodes[index];
+      const taskId = taskCards && next.nodeType === 1 && next.getAttribute("data-task-id");
+      if (taskId && (!current || current.nodeType !== 1 || current.dataset.taskId !== taskId)) {
+        const existing = taskCards.get(taskId);
+        if (existing) {
+          target.insertBefore(existing, current || null);
+          current = existing;
+        } else {
+          target.insertBefore(next.cloneNode(true), current || null);
+          continue;
+        }
+      }
       if (!current) {
         target.appendChild(next.cloneNode(true));
       } else if (current.nodeType !== next.nodeType || current.nodeName !== next.nodeName ||
@@ -3124,9 +3141,74 @@
 
   // ---------- UI RENDERING ----------
 
+  function clearTaskCompletions() {
+    $("#task-completions").replaceChildren();
+  }
+
+  function showTaskCompletion(task) {
+    if (document.hidden) return;
+    const list = $("#task-list");
+    const card = [...list.children].find((element) => element.dataset.taskId === task.id);
+    if (!card || list.hidden) return;
+    const layer = $("#task-completions");
+    const note = card.cloneNode(true);
+    note.classList.add("task-completed");
+    note.removeAttribute("data-task-id");
+    note.dataset.taskCompletion = task.id;
+    note.dataset.taskState = "done";
+    note.setAttribute("aria-hidden", "true");
+    note.setAttribute("inert", "");
+    let left = card.offsetLeft;
+    let top = card.offsetTop;
+    for (let parent = card.offsetParent; parent && parent !== $("#task-queue-section"); parent = parent.offsetParent) {
+      left += parent.offsetLeft - parent.scrollLeft;
+      top += parent.offsetTop - parent.scrollTop;
+    }
+    note.style.left = left + "px";
+    note.style.top = top + "px";
+    note.style.width = card.offsetWidth + "px";
+    note.style.height = card.offsetHeight + "px";
+    const transform = getComputedStyle(card).transform;
+    note.style.setProperty("--completed-transform", transform === "none" ? "matrix(1,0,0,1,0,0)" : transform);
+    note.style.transform = transform;
+    note.querySelector(".task-assignee").textContent = "Done";
+    note.querySelector(".task-bar-fill").style.width = "100%";
+    const work = note.querySelector("[data-task-work]");
+    if (work) work.textContent = "Work: " + task.workRequired + "/" + task.workRequired;
+    while (layer.children.length >= 6) layer.firstElementChild.remove();
+    layer.appendChild(note);
+    setTimeout(() => note.remove(), 1100);
+  }
+
+  function selectLayout(layoutId) {
+    const buttons = [...document.querySelectorAll("[data-layout-choice]")];
+    const selected = buttons.find((button) => button.dataset.layoutChoice === layoutId);
+    if (!selected) return false;
+    clearTaskCompletions();
+    document.body.dataset.layout = layoutId;
+    for (const button of buttons) button.setAttribute("aria-pressed", String(button === selected));
+    return true;
+  }
+
+  function handleLayoutSelection(event) {
+    const layoutId = event.currentTarget.dataset.layoutChoice;
+    selectLayout(layoutId);
+    const parameters = new URLSearchParams(window.location.hash.slice(1));
+    parameters.set("layout", layoutId);
+    const url = new URL(window.location.href);
+    url.hash = parameters.toString();
+    window.history.replaceState(null, "", url.href);
+  }
+
+  function initLayoutSwitcher() {
+    const requested = new URLSearchParams(window.location.hash.slice(1)).get("layout") || "3";
+    if (!selectLayout(requested)) selectLayout("3");
+    for (const button of document.querySelectorAll("[data-layout-choice]")) button.addEventListener("click", handleLayoutSelection);
+  }
+
   function renderTopBar() {
     var topBar = $("#top-bar");
-    if (G.uiRevealed.topBar) {
+    if (G.uiRevealed.topBar || G.gameStarted) {
       topBar.classList.add("visible");
     } else {
       topBar.classList.remove("visible");
@@ -3146,6 +3228,7 @@
     $("#res-cash-wrap").style.display = G.uiRevealed.cash ? "" : "none";
     $("#res-tokens-wrap").style.display = G.uiRevealed.tokens ? "" : "none";
     $("#res-debt-wrap").style.display = G.uiRevealed.debt ? "" : "none";
+    $("#res-debt-wrap").classList.toggle("res-debt-active", G.techDebt > 0);
 
     // Warning pulse
     $("#res-tokens-wrap").classList.toggle("res-warning", G.tokens < (G.phase >= 7 ? MANAGER_TOPUP_COST_TOKEN : workerTokenCapacity()));
@@ -3171,12 +3254,13 @@
 
   function renderWorkStream() {
     const prelude = G.gameStarted && !G.uiRevealed.taskQueue;
+    if (!G.gameStarted || prelude) clearTaskCompletions();
     $("#prelude-section").hidden = !prelude;
     renderYouCard();
     if (prelude) {
       const task = G.tasks.find((item) => item.status === "active");
       $("#prelude-details").hidden = !task;
-      $("#prelude-task").textContent = task ? task.icon + " " + task.name : "";
+      $("#prelude-task").textContent = task ? task.name : "";
       const progress = task ? Math.floor(task.workDone / task.workRequired * 100) : 0;
       $("#prelude-bar").style.width = progress + "%";
       $("#prelude-progress").setAttribute("aria-valuenow", progress);
@@ -3259,14 +3343,14 @@
         (t.batchSize > 1 ? "<span>Batch: " + fmtTokens(t.batchSize) + " tasks</span>" : "") + "<span>Pay: <strong style='color:var(--cash)'>" + fmtCash(displayedPay) + "</strong></span>";
       if (G.totalTasksDone >= 20) {
         metaHtml +=
-          "<span>Work: " + Math.ceil(t.workDone) + "/" + t.workRequired + "</span>";
+          "<span data-task-work>Work: " + Math.ceil(t.workDone) + "/" + t.workRequired + "</span>";
       }
       metaHtml += "</div>";
 
       var taskCardClass = "card task-card" + (expiryHtml ? " has-expiry" : "");
-      html += "<div class='" + taskCardClass + "'>" +
+      html += "<div class='" + taskCardClass + "' data-task-id='" + t.id + "' data-task-state='" + t.status + "'>" +
         expiryHtml +
-        "<div class='task-header'><div class='task-name'>" + t.icon + " " + t.name + "</div>" + clientHtml + "</div>" +
+        "<div class='task-header'><div class='task-name'><span class='task-icon' aria-hidden='true'>▤</span> " + t.name + "</div>" + clientHtml + "</div>" +
         metaHtml +
         "<div class='task-bottom'><div class='task-actions'>" + actions + "</div>" +
         "<div class='task-bar'><div class='task-bar-fill' style='width:" + pct + "%'></div></div></div>" +
@@ -3348,7 +3432,7 @@
         "<div class='desc'>" + u.desc + "</div>" +
         renderSaleStatus(u) +
         "</div>" +
-        "<div style='display:flex;align-items:center;gap:10px'>" +
+        "<div class='upgrade-purchase'>" +
         "<button class='upgrade-action' onclick=\"GAME.buy('" + u.id + "')\" " + (preparing || !canAfford || !requirementsMet ? "disabled" : "") + (u.currency === "cash" && cost === 0 ? " aria-label='" + u.name + "'" : "") + ">" + (preparing ? "In progress" : u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" : u.currency === "cash" ? (cost === 0 ? "" : fmtCash(cost)) : fmtTokens(u.cost) + " tok") + "</button>" +
         "</div>" +
         "</div>";
@@ -3402,12 +3486,12 @@
     const capacity = manager ? MANAGER_TOKEN_TANK_MAX : workerTokenCapacity(agent);
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
-    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 9 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon'>" + agent.icon + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 5 ? "" : agent.roleName) + "</span></div>";
+    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 9 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon' aria-hidden='true'>" + AGENT_MARKERS[agent.roleId] + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 5 ? "" : agent.roleName) + "</span></div>";
     if (original) html += "<small>" + G.aiWorkerTasksCompleted + " tasks delivered</small>";
-    if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
+    if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens" + (tokens <= 0 ? " <span class='token-empty'>Empty</span>" : "") + "</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
     else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
-    if (!utility || manager) html += managerControls(agent) && !manager ? "<button class='btn btn-primary btn-sm' disabled>Managed</button>" : "<button class='btn btn-primary btn-sm' onclick=\"" + action + "\" >Add tokens</button>";
+    if (!utility || manager) html += managerControls(agent) && !manager ? "<span class='agent-managed' role='status'>Managed</span>" : "<button class='btn btn-refill btn-sm' onclick=\"" + action + "\" >Add tokens</button>";
     if (G.phase >= 5) html += "<button class='btn btn-outline btn-sm' onclick=\"" + (original ? "GAME.shutdownAiWorker()" : "GAME.fire('" + agent.id + "')") + "\">Sell</button>";
     html += "</div></div>";
     return html;
@@ -3431,7 +3515,7 @@
       else if (reserved.includes(roleId)) {
         const name = roleId === "manager" ? "Manager" : "Token Manager";
         const price = getAgentHireCost(G.agents.length, roleId);
-        html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy " + name + "</strong><span>" + fmtCash(price) + "</span></button>";
+        html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy " + name + "</strong><span>" + fmtCash(price) + "</span><span class='hire-arrow' aria-hidden='true'>→</span></button>";
       }
     }
     const workers = G.agents.filter((item) => !UTILITY_ROLES.includes(item.roleId));
@@ -3446,7 +3530,7 @@
       if (agent) { html += renderAgentCard(agent); continue; }
       const number = slot + getSharedAgentPoolSize() - workerSlotCount() + 1;
       html += "<div class='card hire-slot agent-vacancy' data-agent-slot='" + slot + "'><div class='vacancy-heading'><span class='provision-icon'>+</span><strong>Agent slot " + number + "</strong><span>" + fmtCash(cost) + " each</span></div><div class='agent-buy-options'>";
-      for (const role of hireRoles) html += "<button class='btn btn-green btn-sm' onclick=\"GAME.hire('" + role.id + "'," + slot + ")\" " + (G.cash < cost ? "disabled" : "") + ">Buy " + role.name + "</button>";
+      for (const role of hireRoles) html += "<button class='btn btn-primary btn-sm' onclick=\"GAME.hire('" + role.id + "'," + slot + ")\" " + (G.cash < cost ? "disabled" : "") + ">Buy " + role.name + "</button>";
       html += "</div></div>";
     }
     updateHTML($("#agent-list"), html);
@@ -3569,9 +3653,9 @@
     if (G.phase >= 11) {
       const purchase = deliveryMetrics().purchase;
       html += "<div class='company-leadership' aria-label='Company leadership'>";
-      if (G.ceoMode === "off") html += "<button class='card hire-slot management-agent leadership-agent ceo-slot' onclick=\"GAME.buy('ai_ceo')\" " + (G.cash < 1000000 ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Provision AI CEO</strong><span>$1M</span></button>";
-      else html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🧠</span><div><strong>AI CEO</strong><p class='ceo-status'>" + (G.ceoMode === "manage" ? "Adding agents to existing clusters" : "Adding agents and expanding") + "</p></div></div>";
-      html += "<div class='card management-agent leadership-agent'><span class='agent-icon'>🪙</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
+      if (G.ceoMode === "off") html += "<button class='card hire-slot management-agent leadership-agent ceo-slot' onclick=\"GAME.buy('ai_ceo')\" " + (G.cash < 1000000 ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Provision AI CEO</strong><span>$1M</span><span class='hire-arrow' aria-hidden='true'>→</span></button>";
+      else html += "<div class='card management-agent leadership-agent'><span class='agent-icon' aria-hidden='true'>CEO</span><div><strong>AI CEO</strong><p class='ceo-status'>" + (G.ceoMode === "manage" ? "Adding agents to existing clusters" : "Adding agents and expanding") + "</p></div></div>";
+      html += "<div class='card management-agent leadership-agent'><span class='agent-icon' aria-hidden='true'>TM</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
     }
     if (minimal) html += renderNeoclouds(planning);
     else {
@@ -3590,7 +3674,7 @@
     if (agent) return renderAgentCard(agent);
     if (!G.purchasedUpgrades.includes("devops_unlock")) return "";
     const cost = getAgentHireCost(G.agents.length);
-    return "<button class='card hire-slot devops-slot' onclick=\"GAME.hire('devops')\" " + (G.cash < cost ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy DevOps</strong><span>" + fmtCash(cost) + "</span><small>Dedicated incident slot</small></button>";
+    return "<button class='card hire-slot devops-slot' onclick=\"GAME.hire('devops')\" " + (G.cash < cost ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Buy DevOps</strong><span>" + fmtCash(cost) + "</span><span class='hire-arrow' aria-hidden='true'>→</span><small>Dedicated incident slot</small></button>";
   }
 
   function renderIncidentSection() {
@@ -3793,6 +3877,7 @@
 
   // ---------- INIT ----------
   function init() {
+    initLayoutSwitcher();
     // Prevent trackpad pinch-zoom (macOS) and Safari gesture zoom
     // Zoom is allowed for accessibility.
     window.addEventListener("pagehide", save);
@@ -3898,6 +3983,7 @@
     const number = startPhase9 ? 9 : Number(stage);
     const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
     if (!Object.hasOwn(early, stage) && !target) return;
+    clearTaskCompletions();
     const phase = target ? target.phase : 1;
     const checkpoint = { "4": { tasks: 870, cash: 14000 }, "9": { tasks: 390000, cash: 800000 }, "10": { tasks: 1000000, cash: 1200000 }, "11": { tasks: 4600000, cash: 30000000, clusters: 3 }, "12": { tasks: 27000000, cash: 180000000, clusters: 5 }, "13": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
     const musicMode = G.musicMode;

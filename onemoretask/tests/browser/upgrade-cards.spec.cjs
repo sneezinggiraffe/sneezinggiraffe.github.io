@@ -14,15 +14,15 @@ for (const width of [1440, 390]) {
     const card = page.locator('.upgrade-card').filter({ hasText: 'Hire a Part-Time Assistant' });
     const action = card.locator('button');
     await expect(action).toBeDisabled();
-    await expect(card).toHaveCSS('background-color', 'rgb(17, 24, 39)');
-    await expect(card).toHaveCSS('border-top-color', 'rgb(30, 41, 59)');
+    await expect(card).toHaveCSS('background-color', 'rgb(245, 245, 237)');
+    await expect(card).toHaveCSS('border-top-color', 'rgb(129, 135, 125)');
     await card.click({ position: { x: 5, y: 5 } });
     expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('hire_assistant'))).toBe(false);
     await page.evaluate(() => { GAME.state.cash = 1000; });
     await page.clock.runFor(200);
     await expect(action).toBeEnabled();
-    await expect(card).toHaveCSS('background-color', 'rgb(38, 49, 64)');
-    await expect(card).toHaveCSS('border-top-color', 'rgb(80, 96, 120)');
+    await expect(card).toHaveCSS('background-color', 'rgb(197, 220, 203)');
+    await expect(card).toHaveCSS('border-top-color', 'rgb(41, 88, 69)');
     await expect(action).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(action).toHaveText('$30');
     await card.click({ position: { x: 5, y: 5 } });
@@ -39,11 +39,11 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(200);
     const pack = page.locator('.upgrade-repeatable').first();
     await expect(pack.locator('button')).toBeDisabled();
-    await expect(pack).toHaveCSS('background-color', 'rgb(17, 24, 39)');
+    await expect(pack).toHaveCSS('background-color', 'rgb(245, 245, 237)');
     await page.evaluate(() => { GAME.state.cash = 1000000; });
     await page.clock.runFor(200);
     await expect(pack.locator('button')).toBeEnabled();
-    await expect(pack).toHaveCSS('background-color', 'rgb(38, 49, 64)');
-    await expect(pack).toHaveCSS('border-top-color', 'rgb(80, 96, 120)');
+    await expect(pack).toHaveCSS('background-color', 'rgb(197, 220, 203)');
+    await expect(pack).toHaveCSS('border-top-color', 'rgb(41, 88, 69)');
   });
 }
