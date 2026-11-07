@@ -16,6 +16,7 @@ async function openTeam(page, width, phase = 1) {
   if (phase > 1) { g.aiWorkerTokenTank = h.api.workerTokenCapacity(); }
   const raw = JSON.stringify(g); h.close();
   await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install({ time: new Date(g.lastTick) });
   await page.clock.pauseAt(new Date(g.lastTick + 1000));
   await page.addInitScript(value => { if (!localStorage.getItem('ai_empire_save')) localStorage.setItem('ai_empire_save', value); }, raw);

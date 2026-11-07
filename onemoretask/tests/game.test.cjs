@@ -1272,7 +1272,7 @@ scenario('auto OFF stays idle; explicit top-up starts one job; guards prevent ta
   h.task(); h.api.tickAgents(0.1); assert.equal(a.status,'idle');
   h.api.toggleAgentAuto(a.id); a.tokenTank=10; h.api.tickAgents(0.1); assert.equal(a.status,'working');
 });
-scenario('Token Manager purchases scaled packs and charges only missing tokens', (h) => {
+scenario('Token Assistant purchases scaled packs and charges only missing tokens', (h) => {
   const g=h.fresh(8);g.cash=1e6;g.tokens=0;g.aiWorkerShutdown=true;h.worker('manager');h.worker('token_mgr');const a=h.worker();
   h.api.tickTokenManager();assert.equal(g.tokens,46000);assert.equal(g.cash,970000);assert.equal(g.tokenPacksBought,1);
   h.advance(3000);h.api.tickTokenManager();h.api.tickManager();assert.equal(a.tokenTank,1500);assert.equal(g.managerTokenTank,2500);assert.equal(g.tokens,46000);
@@ -1314,7 +1314,8 @@ scenario('DevOps resolves incidents at one rate, oldest first, without final app
 });
 scenario('selling freezes the company before either ending choice and persists', (h) => {
   const g=h.fresh(16);h.prepareUpgrade('fusion');g.cash=1e10;g.totalTasksDone=2000;g.services=[{id:'service',name:'Service',incomeRate:1000,active:true}];
-  for(let i=0;i<100;i++)h.fullCluster();
+  for(let i=0;i<100;i++)h.fullCluster().tank=4000;
+  assert.equal(h.api.canSellCompany(),true);
   assert.equal(h.api.canTrueRetire(),false);h.api.purchaseUpgrade('fusion');assert.equal(g.retired,true);assert.equal(g.retirementFinal,false);assert.equal(h.api.canPrestige(),true);
   assert.equal(h.window.document.querySelector('#game-container').hidden,true);assert.equal(h.window.document.querySelector('#ending-overlay').hidden,false);
   const before=JSON.stringify(g);h.advance(1000);h.api.tick();h.window.GAME.buy('token_pack_2');h.window.GAME.addCash(1000);assert.equal(JSON.stringify(g),before);
@@ -1647,7 +1648,7 @@ scenario('management order stays fixed and locked roles have no placeholders', (
   const g=h.fresh(8);g.uiRevealed.agents=true;g.managerUnlock=true;g.agentSlots=8;g.purchasedUpgrades.push('token_manager_unlock','devops_unlock');
   h.worker('writer');h.worker('devops');h.worker('token_mgr');h.worker('manager');h.api.renderAgentSection();
   const roles=[...h.window.document.querySelectorAll('#agent-list .agent-info .role')].map(el=>el.textContent);
-  assert.match(roles[0],/Manager/);assert.match(roles[1],/Token Mgr/);assert.doesNotMatch(roles.join(' '),/DevOps/);h.api.renderIncidentSection();assert.match(h.window.document.querySelector('#incident-devops').textContent,/DevOps/);
+  assert.match(roles[0],/Manager/);assert.match(roles[1],/Token Assistant/);assert.doesNotMatch(roles.join(' '),/DevOps/);h.api.renderIncidentSection();assert.match(h.window.document.querySelector('#incident-devops').textContent,/DevOps/);
   g.agents=[];g.phase=5;g.managerUnlock=false;g.purchasedUpgrades=[];h.api.renderAgentSection();
   assert.doesNotMatch(h.window.document.querySelector('#agent-list').textContent,/Manager|DevOps/);
   assert.equal(h.window.document.querySelectorAll('#agent-list .agent-vacancy').length,8);
@@ -1672,9 +1673,111 @@ scenario('cluster construction and node upgrades enforce stage, capacity and fun
   g.cash=1e6;h.advance(6000);h.api.tickConstruction(6);h.api.tickAiCeo();assert.equal(c.workforce,8);h.advance(5000);h.api.tickAiCeo();assert.equal(empty.workforce,16);assert.equal(empty.managerAssigned,true);
   g.cash=0;h.advance(5000);h.api.tickAiCeo();assert.equal(g.clusters.length,2);
 });
-scenario('Token Manager can supply workers before a Manager is hired', (h) => {
-  const g=h.fresh(8);g.tokens=50;h.worker('token_mgr');const a=h.worker();
-  h.api.tickTokenManager();assert.equal(a.tokenTank,50);assert.equal(g.tokens,0);assert.equal(g.managerTokenTank,0);
+scenario('Token Assistant retains reserve tokens without a Manager', (h) => {
+  const g = h.fresh(8);
+  g.tokens = 50;
+  h.worker('token_mgr');
+  const agent = h.worker();
+  h.api.tickTokenManager();
+  assert.equal(agent.tokenTank, 0);
+  assert.equal(g.aiWorkerTokenTank, 0);
+  assert.equal(g.tokens, 50);
+  assert.equal(g.managerTokenTank, 0);
+  g.cash = 1e6;
+  h.api.tickTokenManager();
+  assert.ok(g.tokens > 50);
+  assert.ok(g.cash < 1e6);
+  assert.equal(agent.tokenTank, 0);
+  assert.equal(g.aiWorkerTokenTank, 0);
+  assert.equal(g.managerTokenTank, 0);
+});
+scenario('selling and rehiring the Manager stops and restores automatic worker refills', (h) => {
+  const g = h.fresh(8);
+  g.tokens = 100000;
+  g.managerUnlock = true;
+  g.agentSlots = 7;
+  h.worker('token_mgr');
+  const manager = h.worker('manager');
+  const agent = h.worker();
+  h.api.tickTokenManager();
+  assert.equal(g.managerTokenTank, 4000);
+  assert.equal(agent.tokenTank, 0);
+  assert.equal(g.aiWorkerTokenTank, 0);
+  h.api.tickManager();
+  assert.equal(agent.tokenTank, 1500);
+  assert.equal(g.aiWorkerTokenTank, 1500);
+  h.api.fireAgent(manager.id);
+  assert.equal(g.managerTokenTank, 0);
+  assert.equal(agent.tokenTank, 1500);
+  assert.equal(g.aiWorkerTokenTank, 1500);
+  agent.tokenTank = 100;
+  g.aiWorkerTokenTank = 100;
+  const reserve = g.tokens;
+  h.advance();
+  h.api.tickTokenManager();
+  h.api.tickManager();
+  assert.equal(agent.tokenTank, 100);
+  assert.equal(g.aiWorkerTokenTank, 100);
+  assert.equal(g.tokens, reserve);
+  assert.match(h.api.renderAgentCard(agent), /Add tokens/);
+  h.api.topUpAgent(agent.id);
+  h.api.topUpAiWorker();
+  assert.equal(agent.tokenTank, 1500);
+  assert.equal(g.aiWorkerTokenTank, 1500);
+  assert.equal(g.tokens, reserve - 2800);
+  g.cash = 1e6;
+  h.api.hireAgent('manager');
+  agent.tokenTank = 0;
+  g.aiWorkerTokenTank = 0;
+  h.advance();
+  h.api.tickManager();
+  assert.equal(agent.tokenTank, 1500);
+  assert.equal(g.aiWorkerTokenTank, 1500);
+  assert.match(h.api.renderAgentCard(agent), /Managed/);
+});
+scenario('selling the Token Assistant leaves Manager distribution and manual funding available', (h) => {
+  const g = h.fresh(8);
+  g.tokens = 10000;
+  h.worker('manager');
+  const assistant = h.worker('token_mgr');
+  const agent = h.worker();
+  h.api.tickTokenManager();
+  h.api.fireAgent(assistant.id);
+  h.api.tickManager();
+  assert.equal(agent.tokenTank, 1500);
+  assert.equal(g.aiWorkerTokenTank, 1500);
+  assert.equal(g.managerTokenTank, 1000);
+  const reserve = g.tokens;
+  h.api.tickTokenManager();
+  assert.equal(g.managerTokenTank, 1000);
+  assert.equal(g.tokens, reserve);
+  g.cash = 1e6;
+  h.api.purchaseUpgrade('token_pack_1');
+  assert.ok(g.tokens > reserve);
+  const fundedReserve = g.tokens;
+  h.api.topUpManager();
+  assert.equal(g.managerTokenTank, 4000);
+  assert.equal(g.tokens, fundedReserve - 3000);
+});
+scenario('Token Assistant labels and copy appear throughout its purchase and agent cards', (h) => {
+  const g = h.fresh(8);
+  g.managerUnlock = true;
+  g.purchasedUpgrades.push('token_manager_unlock');
+  const upgrade = h.api.UPGRADES.find(item => item.id === 'token_manager_unlock');
+  assert.equal(upgrade.name, 'Token Assistant Slot');
+  assert.equal(upgrade.desc, 'Buys token for manager agent');
+  assert.match(h.api.UPGRADES.find(item => item.id === 'cluster_info').desc, /Token Assistant/);
+  h.api.renderAgentSection();
+  const vacancy = h.window.document.querySelector('.token-manager-slot');
+  assert.match(vacancy.textContent, /Token Assistant/);
+  assert.match(vacancy.textContent, /Buys token for manager agent/);
+  const assistant = h.worker('token_mgr');
+  assert.equal(assistant.roleName, 'Token Assistant');
+  assistant.roleName = 'Stale role label';
+  const card = h.api.renderAgentCard(assistant);
+  assert.match(card, /Token Assistant/);
+  assert.match(card, /Buys token for manager agent/);
+  assert.doesNotMatch(card, /Stale role label/);
 });
 scenario('an empty Manager keeps assigning jobs until worker tokens run out', (h) => {
   const g=h.fresh(7);g.aiWorkerShutdown=true;g.smartRouting=true;h.worker('manager');const a=h.worker();a.tokenTank=1500;a.tokenCost=1;a.reliability=2;
@@ -1701,7 +1804,7 @@ scenario('token-manager slot is reserved before another worker slot unlocks', (h
   for(const role of ['manager','writer','coder','researcher','analyst','support'])h.worker(role);
   h.api.purchaseUpgrade('token_manager_unlock');assert.equal(g.phase,8);assert.equal(g.agentSlots,7);
   h.api.purchaseUpgrade('agent_slot_7');assert.equal(g.agentSlots,7);
-  h.api.checkMilestones();h.dismiss();h.api.renderAgentSection();assert.match(h.window.document.querySelector('.token-manager-slot').textContent,/Token Manager.*Buy/);
+  h.api.checkMilestones();h.dismiss();h.api.renderAgentSection();assert.match(h.window.document.querySelector('.token-manager-slot').textContent,/Token Assistant.*Buy/);
   h.api.hireAgent('token_mgr');g.purchasedUpgrades.push('devops_unlock');h.api.hireAgent('devops');assert.equal(g.agents.length,8);h.api.renderAgentSection();assert.equal(h.window.document.querySelectorAll('.agent-vacancy').length,1);
   h.prepareUpgrade('ops_flywheel');h.api.purchaseUpgrade('ops_flywheel');h.api.purchaseUpgrade('agent_slot_7');assert.equal(g.agentSlots,8);h.api.renderAgentSection();assert.match(h.window.document.querySelector('.agent-vacancy').textContent,/Sales/);
 });
@@ -1986,7 +2089,7 @@ scenario('Phase 11 scales real demand and continuously drains conserved reserve 
   assert.ok(g.tokensConsumed>25000);assert.ok(g.tokens<180000);assert.ok(g.totalTasksDone-completed>600);assert.ok(Math.abs(initial-inventory()-g.tokensConsumed)<.001);assert.ok(h.api.deliveryMetrics().rate>5);
   g.tasks=[];g.uiRevealed.taskQueue=false;h.advance(1000);h.api.tickTaskSpawn();assert.equal(g.tasks.length,0);
 });
-scenario('central Token Manager supplies each cluster before low worker tanks refill', (h) => {
+scenario('central Token Assistant supplies each cluster before low worker tanks refill', (h) => {
   const g=h.fresh(11);g.tokens=10000;g.cash=0;const first=h.fullCluster();const second=h.fullCluster();first.tank=3000;second.tank=3000;
   h.api.tickTokenManager();assert.equal(first.tank,3250);assert.equal(second.tank,3250);assert.equal(g.tokens,9500);
   h.api.tickClusterManagers();for(const cluster of [first,second]){assert.deepEqual(Array.from(cluster.workerAgentIds,id=>g.agents.find(agent=>agent.id===id).tokenTank),[1500,1500,250,0,0,0,0,0]);assert.equal(cluster.tank,0);}
@@ -2196,7 +2299,7 @@ scenario('DevOps has a dedicated purchasable slot even when every shared slot is
 scenario('each empty agent slot offers direct role buttons and accurate prices', (h) => {
   const g=h.fresh(5);g.aiWorkerShutdown=true;g.uiRevealed.agents=true;g.cash=0;h.worker('writer');h.worker('researcher');h.api.renderAgentSection();const slot=h.window.document.querySelector('.agent-vacancy');assert.equal(slot.querySelector('select'),null);assert.equal(slot.querySelectorAll('button').length,5);assert.ok([...slot.querySelectorAll('button')].every(button=>button.disabled));
   const price=h.api.getAgentHireCost(2);g.cash=price;h.api.renderAgentSection();const button=slot.querySelector('[aria-label="Buy Coder"]');assert.equal(button.disabled,false);h.window.eval(button.getAttribute('onclick'));assert.equal(g.cash,0);assert.equal(g.agents.at(-1).roleId,'coder');h.api.renderAgentSection();assert.equal(h.window.document.querySelector('.agent-vacancy'),null);
-  assert.equal(h.api.UPGRADES.find(u=>u.id==='token_manager_unlock').desc,'Automatically buy tokens when they run out.');
+  assert.equal(h.api.UPGRADES.find(u=>u.id==='token_manager_unlock').desc,'Buys token for manager agent');
 });
 
 scenario('agent warnings and integer cash rates remain consistent with the token warning', (h) => {
@@ -2214,7 +2317,7 @@ scenario('DevOps requires its own upgrade after the token-manager phase begins',
   const g=h.fresh(8);g.cash=1e6;g.totalTasksDone=30000;g.uiRevealed.incidents=true;h.prepareUpgrade('compute_2');h.api.renderIncidentSection();assert.equal(h.window.document.querySelector('.devops-slot'),null);h.api.hireAgent('devops');assert.equal(g.agents.length,0);
   h.api.purchaseUpgrade('devops_unlock');assert.ok(g.purchasedUpgrades.includes('devops_unlock'));h.api.renderIncidentSection();assert.ok(h.window.document.querySelector('.devops-slot'));h.api.hireAgent('devops');assert.equal(g.agents[0].roleId,'devops');
 });
-scenario('Token Manager replenishes ahead of the warning even during rapid tank transfers', (h) => {
+scenario('Token Assistant replenishes ahead of the warning even during rapid tank transfers', (h) => {
   const g=h.fresh(8);g.cash=1e9;g.tokens=4001;g.aiWorkerShutdown=true;g.managerUnlock=true;h.worker('manager');h.worker('token_mgr');for(let i=0;i<6;i++)h.worker();
   for(let i=0;i<100;i++){h.api.tickTokenManager();h.api.tickManager();h.advance(100);assert.ok(g.tokens>=4000);}
   g.phase=11;g.agents=[];g.tokens=4001;for(let i=0;i<5;i++)h.fullCluster();for(let i=0;i<30;i++){h.api.tickTokenManager();h.api.tickClusterManagers();h.advance(100);assert.ok(g.tokens>=4000);}

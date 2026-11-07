@@ -25,7 +25,7 @@ test('role markers are decorative and independent of stored emoji icons', () => 
   const h = harness();
   try {
     h.fresh(9);
-    const markers = { writer: 'WR', researcher: 'RS', coder: 'CD', analyst: 'AN', support: 'SP', manager: 'MG', devops: 'OP', sales: 'SL', token_mgr: 'TM' };
+    const markers = { writer: 'WR', researcher: 'RS', coder: 'CD', analyst: 'AN', support: 'SP', manager: 'MG', devops: 'OP', sales: 'SL', token_mgr: 'TA' };
     for (const [role, marker] of Object.entries(markers)) {
       const agent = h.worker(role);
       const template = h.window.document.createElement('template');
@@ -56,7 +56,7 @@ test('assistant and leadership markers retain meaningful names and break status'
     assert.match(h.window.document.querySelector('[data-assistant]').textContent, /Lunch - Back in 2s/);
     h.window.chPh13();
     const icons = [...h.window.document.querySelectorAll('.company-leadership .agent-icon')];
-    assert.deepEqual(icons.map(icon => icon.textContent), ['CEO', 'TM']);
+    assert.deepEqual(icons.map(icon => icon.textContent), ['CEO', 'TA']);
     assert.ok(icons.every(icon => icon.getAttribute('aria-hidden') === 'true'));
   } finally { h.close(); }
 });

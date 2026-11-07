@@ -154,10 +154,10 @@
     { id: "manager", name: "Manager", icon: "\uD83D\uDC54", color: "#f97316", specialty: [], statBias: { speed: 0.7, quality: 1.0, reliability: 1.2 } },
     { id: "devops", name: "DevOps", icon: "\uD83D\uDD27", color: "#64748b", specialty: ["code", "integration", "webapp"], statBias: { speed: 0.9, quality: 1.0, reliability: 1.3 } },
     { id: "sales", name: "Sales", icon: "\uD83D\uDCE3", color: "#22c55e", specialty: ["email", "social", "copy"], statBias: { speed: 1.1, quality: 0.8, reliability: 1.0 } },
-    { id: "token_mgr", name: "Token Mgr", icon: "\uD83E\uDE99", color: "#0ea5e9", specialty: [], statBias: { speed: 1.0, quality: 1.0, reliability: 1.0 } },
+    { id: "token_mgr", name: "Token Assistant", icon: "\uD83E\uDE99", color: "#0ea5e9", specialty: [], statBias: { speed: 1.0, quality: 1.0, reliability: 1.0 } },
   ];
 
-  const AGENT_MARKERS = { original_ai: "AI", writer: "WR", researcher: "RS", coder: "CD", analyst: "AN", support: "SP", manager: "MG", devops: "OP", sales: "SL", token_mgr: "TM" };
+  const AGENT_MARKERS = { original_ai: "AI", writer: "WR", researcher: "RS", coder: "CD", analyst: "AN", support: "SP", manager: "MG", devops: "OP", sales: "SL", token_mgr: "TA" };
 
   const TRAITS = [
     { id: "overconfident", name: "Overconfident", desc: "+20% speed, -15% reliability", fx: (a) => { a.speed *= 1.2; a.reliability *= 0.85; } },
@@ -257,7 +257,7 @@
     { id: "scheduling", name: "Auto-Assign Playbooks", desc: "Coordinate batches of around 100 tasks. Assignment is 50% faster.", cost: 15000, currency: "cash", phase: 7, effect: { batchSize: 100, managerAssignMult: 1.5, agentAutoAssign: true }, oneTime: true },
     { id: "smart_routing", name: "Smart Routing", desc: "Manager can route agents across specialties when needed.", cost: 19000, currency: "cash", phase: 7, effect: { smartRouting: true }, oneTime: true },
     { id: "neural_boost", name: "Neural Architecture Boost", desc: "Optimised model weights. All agents work 35% faster.", cost: 25000, currency: "cash", phase: 7, effect: { agentSpeedMult: 1.35 }, oneTime: true, reqTasks: 580 },
-    { id: "token_manager_unlock", name: "Token Manager Slot", desc: "Automatically buy tokens when they run out.", cost: 40000, currency: "cash", phase: 7, requiresRole: "manager", unlockPhase: 8, effect: { giveTokens: 300, agentSlots: 7 }, oneTime: true, reqTasks: 30000 },
+    { id: "token_manager_unlock", name: "Token Assistant Slot", desc: "Buys token for manager agent", cost: 40000, currency: "cash", phase: 7, requiresRole: "manager", unlockPhase: 8, effect: { giveTokens: 300, agentSlots: 7 }, oneTime: true, reqTasks: 30000 },
 
     // Phase 8 (token-stable autopilot)
     { id: "agent_slot_7", name: "Add Another Agent Slot", desc: "Room for another agent.", cost: 22000, currency: "cash", phase: 9, requiresRole: "token_mgr", effect: { agentSlots: 8 }, oneTime: true, reqTasks: 670 },
@@ -278,7 +278,7 @@
 
     // Phase 10 (clusterization)
 
-    { id: "cluster_info", name: "Your First Cluster", desc: "Your team is now Cluster 1, with Manager, Token Manager and DevOps included. Buy the Second Cluster Permit, bring another cluster online, then provision its agents.", cost: 0, currency: "cash", phase: 10, infoUntilPhase: 0, introductory: true, optional: true, oneTime: true },
+    { id: "cluster_info", name: "Your First Cluster", desc: "Your team is now Cluster 1, with Manager, Token Assistant and DevOps included. Buy the Second Cluster Permit, bring another cluster online, then provision its agents.", cost: 0, currency: "cash", phase: 10, infoUntilPhase: 0, introductory: true, optional: true, oneTime: true },
     { id: "code_agents", name: "Cluster Operations Blueprint", desc: "Standardise cluster operations. Reduce debt growth by 25% and improve output quality by 10%.", cost: 1500000, currency: "cash", phase: 10, effect: { debtReduction: 0.25, codeQualityMult: 1.1 }, oneTime: true, reqTasks: 1050000 },
     { id: "cluster_capacity_2", name: "Second Cluster Permit", desc: "Unlock Provision cluster and room for one more cluster.", cost: 2500000, currency: "cash", phase: 10, requires: "code_agents", effect: {}, oneTime: true, reqTasks: 1150000 },
     { id: "cluster_capacity_3", name: "Third Cluster Permit", desc: "Add room for a third cluster.", cost: 12000000, currency: "cash", phase: 10, requires: "cluster_capacity_2", effect: {}, oneTime: true, reqTasks: 1500000 },
@@ -1614,12 +1614,6 @@
       const amount = Math.min(G.tokens, MANAGER_TOKEN_TANK_MAX - cluster.tank, G.phase >= 11 ? 250 : MANAGER_TOKEN_TANK_MAX);
       G.tokens -= amount;
       cluster.tank += amount;
-    }
-    if (!hasIdleManager()) {
-      for (const agent of G.agents) {
-        if (workerAvailable(agent) && agent.tokenTank < workerTokenCapacity(agent) * 0.25) topUpAgent(agent.id);
-      }
-      if (!G.aiWorkerShutdown && G.aiWorkerTokenTank < workerTokenCapacity() * 0.25) topUpAiWorker();
     }
   }
 
@@ -3529,10 +3523,10 @@
     const tokens = manager ? G.managerTokenTank : agent.tokenTank;
     const noTokens = G.phase >= 3 && G.tokens <= 0;
     const action = original ? "GAME.topUpAiWorker()" : manager ? "GAME.topUpManager()" : "GAME.topUpAgent('" + agent.id + "')";
-    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 9 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon' aria-hidden='true'>" + AGENT_MARKERS[agent.roleId] + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 5 ? "" : agent.roleName) + "</span></div>";
+    let html = "<div class='card agent-card" + (["manager", "token_mgr"].includes(agent.roleId) ? " management-agent" : "") + (G.phase >= 9 ? " simple-agent" : "") + ((!utility || manager) && tokens <= 0 ? " res-warning" : "") + "'" + (utility ? "" : " data-agent-slot='" + (original ? 0 : agent.slotIndex) + "'") + "><div class='agent-icon' aria-hidden='true'>" + AGENT_MARKERS[agent.roleId] + "</div><div class='agent-info'><div class='name'>" + (agent.olderModel ? "AI 2000 Basic" : agent.name) + " <span class='role'>" + (agent.olderModel ? "Older model · slow" : G.phase < 5 ? "" : agent.roleId === "token_mgr" ? "Token Assistant" : agent.roleName) + "</span></div>";
     if (original) html += "<small>" + G.aiWorkerTasksCompleted + " tasks delivered</small>";
     if (!utility || manager) html += "<div class='agent-token-count'>" + fmtTokens(tokens) + "/" + fmtTokens(capacity) + " tokens" + (tokens <= 0 ? " <span class='token-empty'>Empty</span>" : "") + "</div><div class='task-bar'><div class='task-bar-fill' style='width:" + clamp(tokens / capacity * 100, 0, 100) + "%'></div></div>";
-    else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buying and distributing tokens" : "Resolving incidents") + "</span>";
+    else html += "<span class='text-sm'>" + (agent.roleId === "token_mgr" ? "Buys token for manager agent" : "Resolving incidents") + "</span>";
     html += "</div><div class='agent-action-col'>";
     if (!utility || manager) html += managerControls(agent) && !manager ? "<span class='agent-managed' role='status'>Managed</span>" : "<button class='btn btn-refill btn-sm' onclick=\"" + action + "\" " + (noTokens ? "disabled>No tokens" : ">Add tokens") + "</button>";
     if (G.phase >= 5) html += "<button class='btn btn-outline btn-sm' onclick=\"" + (original ? "GAME.shutdownAiWorker()" : "GAME.fire('" + agent.id + "')") + "\">Sell</button>";
@@ -3555,9 +3549,9 @@
       const agent = G.agents.find((item) => item.roleId === roleId);
       if (agent) html += renderAgentCard(agent);
       else if (reserved.includes(roleId)) {
-        const name = roleId === "manager" ? "Manager" : "Token Manager";
+        const name = roleId === "manager" ? "Manager" : "Token Assistant";
         const price = getAgentHireCost(G.agents.length, roleId);
-        html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='vacancy-heading'><strong>" + name + "</strong><span>" + fmtCash(price) + "</span></span><span class='manager-purchase-detail'><span>" + (roleId === "manager" ? "Assigns work and refills agents" : "Buys and distributes tokens") + "</span><span>Buy</span></span></button>";
+        html += "<button class='card hire-slot management-agent " + (roleId === "manager" ? "manager-slot" : "token-manager-slot") + "' onclick=\"GAME.hire('" + roleId + "')\" " + (G.cash < price || sharedAgentCount() >= getHireAgentCapacity() ? "disabled" : "") + "><span class='vacancy-heading'><strong>" + name + "</strong><span>" + fmtCash(price) + "</span></span><span class='manager-purchase-detail'><span>" + (roleId === "manager" ? "Assigns work and refills agents" : "Buys token for manager agent") + "</span><span>Buy</span></span></button>";
       }
     }
     const workers = G.agents.filter((item) => !UTILITY_ROLES.includes(item.roleId));
@@ -3698,7 +3692,7 @@
       html += "<div class='company-leadership' aria-label='Company leadership'>";
       if (G.ceoMode === "off") html += "<button class='card hire-slot management-agent leadership-agent ceo-slot' onclick=\"GAME.buy('ai_ceo')\" " + (G.cash < 1000000 ? "disabled" : "") + "><span class='provision-icon'>+</span><strong>Provision AI CEO</strong><span>$1M</span><span class='hire-arrow' aria-hidden='true'>→</span></button>";
       else html += "<div class='card management-agent leadership-agent'><span class='agent-icon' aria-hidden='true'>CEO</span><div><strong>AI CEO</strong><p class='ceo-status'>" + (G.ceoMode === "manage" ? "Adding agents to existing clusters" : "Adding agents and expanding") + "</p></div></div>";
-      html += "<div class='card management-agent leadership-agent'><span class='agent-icon' aria-hidden='true'>TM</span><div><strong>Token Manager</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
+      html += "<div class='card management-agent leadership-agent'><span class='agent-icon' aria-hidden='true'>TA</span><div><strong>Token Assistant</strong><p>Company-wide token supply</p><p>" + fmtTokens(G.tokens) + " tokens · -" + fmtTokens(G.averageTokenBurn) + " tok/s</p><p class='text-sm token-purchase'>" + (purchase || "Monitoring tokens") + "</p></div></div></div>";
     }
     if (minimal) html += renderNeoclouds(planning);
     else {

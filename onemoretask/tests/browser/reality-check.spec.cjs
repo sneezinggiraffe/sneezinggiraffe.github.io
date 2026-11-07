@@ -14,10 +14,13 @@ for (const width of [1440, 390]) {
     const cards = page.locator('#upgrade-list .upgrade-card');
     await expect(cards).toHaveCount(2);
     await expect(cards).not.toContainText(['Reality Check']);
-    await page.evaluate(() => { GAME.addTasks(35); GAME.addCash(1000); });
+    await page.evaluate(() => { GAME.addTasks(34); GAME.addCash(1000); });
+    await page.clock.runFor(200);
+    await expect(page.locator('#upgrade-list')).not.toContainText('Reality Check');
+    await page.evaluate(() => GAME.addTasks(1));
     await page.clock.runFor(200);
     for (const name of ['Dual Monitors', 'Noise-Cancelling Headphones']) {
-      await expect(page.locator('#upgrade-list')).not.toContainText('Reality Check');
+      await expect(page.locator('#upgrade-list')).toContainText('Reality Check');
       await cards.filter({ hasText: name }).locator('button').click();
       await page.clock.runFor(200);
     }
@@ -25,7 +28,7 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#milestone-popup')).toBeHidden();
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText('Reality Check');
-    expect(await page.evaluate(() => GAME.state.expensesRevealed)).toBe(true);
+    expect(await page.evaluate(() => GAME.state.expensesRevealed)).toBe(false);
     await expect(page.locator('#res-expense-wrap')).toBeHidden();
     await page.reload();
     await expect(page.locator('#res-expense-wrap')).toBeHidden();
@@ -34,6 +37,7 @@ for (const width of [1440, 390]) {
     await page.clock.runFor(200);
     await expect(cards).toHaveCount(0);
     await expect(page.locator('#res-expense-wrap')).toBeVisible();
+    expect(await page.evaluate(() => GAME.state.expensesRevealed)).toBe(true);
     await expect(page.locator('#expense-tier-label')).toHaveText('Living in car');
     await page.reload();
     await expect(page.locator('#res-expense-wrap')).toBeVisible();

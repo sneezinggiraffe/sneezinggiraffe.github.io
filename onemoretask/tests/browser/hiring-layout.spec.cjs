@@ -33,7 +33,7 @@ for (const width of [1440, 390, 320]) {
         await purchase.focus();
         await page.keyboard.press('Enter');
         await page.clock.runFor(200);
-        const role = selector === '.manager-slot' ? 'Manager' : selector === '.token-manager-slot' ? 'Token Mgr' : 'DevOps';
+        const role = selector === '.manager-slot' ? 'Manager' : selector === '.token-manager-slot' ? 'Token Assistant' : 'DevOps';
         const card = page.locator('#agent-list > .agent-card, #incident-devops > .agent-card').filter({ has: page.locator('.role', { hasText: role }) }).last();
         expect((await card.boundingBox()).height).toBe(before.height);
         expect(await card.evaluate(element => {

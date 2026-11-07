@@ -10,7 +10,7 @@ These are orientation ranges from three deterministic full journeys using seeds 
 | 4 | 965–983 | $162–$345 | Inference Tuning $6K, Prompt Refinement $1.5K, Context Pruning $2.5K, then Multi-Agent Licence $25K |
 | 5 | 1.32K–1.35K | $48–$176 | Slots and speed, then Tool Use SDK $12K |
 | 6 | 1.58K–1.67K | $8–$359 | Tools and sales, Workflow Orchestration $18K, then Manager unlock $12K and Manager purchase $20K |
-| 7 | 5.00K–5.02K | $46.18K–$85.31K | Token Manager unlock $40K |
+| 7 | 5.00K–5.02K | $46.18K–$85.31K | Token Assistant unlock $40K |
 | 8 | 30.16K–30.26K | $85.98K–$150.86K | Operations upgrades, then Ralph-loops $1M |
 | 9 | 363.72K–427.88K | $2.09K–$8.19K | Growth $300K, Referrals $500K, Enterprise Pipeline $1M, Project Playbooks $750K, Account Expansion $1.25M, acquisition $1.5M |
 | 10 | 1.00M–1.11M | $56.78K–$1.17M | Blueprint $1.5M, Second Permit $2.5M, Third Permit $12M, operations upgrades, then CEO Readiness $35M |
