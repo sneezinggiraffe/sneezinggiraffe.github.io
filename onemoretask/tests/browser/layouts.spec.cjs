@@ -36,6 +36,8 @@ async function openPile(page, layout, { automatic = false, reducedMotion = 'no-p
     if (automatic) GAME.buy('hire_assistant');
   }, automatic);
   await page.clock.runFor(200);
+  await page.waitForTimeout(350);
+  await page.clock.runFor(200);
   await expect(page.locator('#task-list > .task-card')).toHaveCount(3);
   await expect(page.locator('#you-card, #btn-do-task')).toHaveCount(0);
   if (automatic) await expect(page.locator('#section-agents')).toBeVisible();
@@ -107,8 +109,8 @@ test('H spreads notes across the desk and V stacks them beside the control panel
   await expect(page.locator('#task-list')).toHaveCSS('display', 'grid');
   const horizontalQueue = await page.locator('#work-stream').boundingBox();
   const horizontalPanel = await page.locator('#control-panel').boundingBox();
-  expect(horizontalPanel.x).toBeCloseTo(horizontalQueue.x, 1);
-  expect(horizontalPanel.y).toBeGreaterThanOrEqual(horizontalQueue.y + horizontalQueue.height);
+  expect(horizontalPanel.x).toBeGreaterThan(horizontalQueue.x + horizontalQueue.width);
+  expect(horizontalPanel.y).toBeCloseTo(horizontalQueue.y, 1);
   await page.screenshot({ path: 'test-results/horizontal-view.png', fullPage: true });
   await page.getByRole('button', { name: 'Vertical view', exact: true }).click();
   await expect(page.locator('#task-list')).toHaveCSS('display', 'flex');
@@ -126,7 +128,7 @@ test('H spreads notes across the desk and V stacks them beside the control panel
 
 for (const width of [1440, 844, 390, 320]) {
   for (const layout of [3, 4]) {
-    test(`growing the queue clips at the viewport and only Event Log scrolls in view ${layout} at ${width}px`, async ({ page }) => {
+    test(`growing the queue clips at the desk while controls remain scrollable in view ${layout} at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
       const now = Date.now();
@@ -135,7 +137,7 @@ for (const width of [1440, 844, 390, 320]) {
       await page.addInitScript(value => localStorage.setItem('ai_empire_layout', String(value)), layout);
   await page.goto(gameFileUrl);
       await page.evaluate(() => GAME.cheat('0_'));
-      const sideBySide = layout === 4 && width > 768;
+      const sideBySide = width > 768;
       let originalPanelTops;
       for (const count of [3, 12, 30]) {
         await page.evaluate(fillQueue, count);
@@ -177,12 +179,13 @@ for (const width of [1440, 844, 390, 320]) {
             return ['auto', 'scroll'].includes(style.overflowY) && element.scrollHeight > element.clientHeight + 1;
           }).map(element => element.id),
         }));
-        expect(scrolling.frames).toEqual([['visible', 'visible'], ['visible', 'visible'], ['visible', 'visible']]);
+        expect(scrolling.frames).toEqual([['clip', 'clip'], ['clip', 'clip'], ['hidden', 'auto']]);
         expect(scrolling.rootScrollbar).toBe('none');
         expect(scrolling.rootWebkitScrollbar).toBe('none');
         expect(scrolling.bodyOverflow).toBe('clip');
         expect(scrolling.horizontalOverflow).toBe(false);
-        expect(scrolling.scrollAreas).toEqual(['log-panel']);
+        expect(scrolling.scrollAreas).toContain('log-panel');
+        expect(scrolling.scrollAreas.every(id => ['control-panel', 'log-panel'].includes(id))).toBe(true);
         await page.mouse.move(width - 2, 850);
         await page.mouse.wheel(0, 800);
         await page.keyboard.press('PageDown');
@@ -268,7 +271,7 @@ for (const layout of [3, 4]) {
       expect(after.tasks).toBe(before.tasks + 1);
       expect(after.cash).toBeCloseTo(before.cash + (automatic ? 8.5 : 10));
       expect(after.clicks).toBe(before.clicks + (automatic ? 0 : 1));
-      await expect(ghost).toHaveCSS('animation-delay', '0.25s');
+      await expect(ghost).toHaveCSS('animation-delay', '0.1s');
       await expect(ghost).toHaveCSS('animation-duration', '0.4s');
       await page.screenshot({ path: `test-results/pile-${layout}-${automatic ? 'assistant' : 'manual'}-completed.png`, fullPage: true });
       await page.clock.runFor(1200);

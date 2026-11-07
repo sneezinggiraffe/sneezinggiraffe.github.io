@@ -81,7 +81,7 @@ test('a completed pile note is crossed off without retaining a live task or repe
     h.api.completeTask(done, 'manual');
     assert.equal(g.cash, cash + pay);
     assert.equal(document.querySelectorAll('[data-task-completion]').length, 1);
-    h.advance(699);
+    h.advance(549);
     assert.equal(document.querySelectorAll('[data-task-completion]').length, 1);
     h.advance(1);
     assert.equal(document.querySelectorAll('[data-task-completion]').length, 0);

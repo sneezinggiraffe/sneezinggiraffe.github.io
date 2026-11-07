@@ -87,7 +87,7 @@ body[data-layout="4"] #game-container :is(#task-list,#intro-section,#prelude-sec
 body[data-layout] #task-completions>.task-completed{
   position:absolute!important;z-index:80;margin:0!important;min-height:0!important;max-width:none!important;padding:12px;
   background:var(--bg2);border:2px solid var(--green);border-radius:1px;clip-path:none;pointer-events:none;color:var(--text);text-align:left;opacity:1;
-  box-shadow:2px 4px 10px #00000032;animation:paper-clear .4s ease-in .25s forwards;
+  box-shadow:2px 4px 10px #00000032;animation:paper-clear .4s ease-in .1s forwards;
 }
 body[data-layout] #task-completions>.task-completed .task-name{text-decoration:line-through;text-decoration-color:var(--green);text-decoration-thickness:2px}
 body[data-layout] #task-completions>.task-completed .task-assignee{color:var(--green);font-weight:700}
@@ -149,3 +149,13 @@ body[data-layout="3"] #game-container.cp-visible #control-panel{grid-column:1/-1
 
 body[data-layout] #game-container #intro-section{grid-auto-rows:auto}
 body[data-layout] #game-container #intro-section>#intro-overlay{height:auto;min-height:158px}
+
+/* Keep the task stream on the desk and every control reachable within its own pane. */
+body[data-layout] #game-container{flex:1;min-height:0;grid-template-rows:minmax(0,1fr);overflow:clip}
+body[data-layout] #game-container #work-stream{height:100%;min-height:0;overflow:clip;grid-column:1;grid-row:1}
+body[data-layout] #game-container.cp-visible #control-panel{height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;grid-column:2;grid-row:1;padding:0 6px 12px}
+body[data-layout="3"] #game-container :is(#task-list,#intro-section,#prelude-section){grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:768px){
+  body[data-layout] #game-container.cp-visible{grid-template-rows:minmax(260px,1fr) minmax(0,1fr)}
+  body[data-layout] #game-container.cp-visible #control-panel{grid-column:1;grid-row:2}
+}

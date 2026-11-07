@@ -15,7 +15,7 @@ for (const width of [1440, 844, 390, 320]) {
       await expect(page.locator('#milestone-popup')).toBeHidden();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const topBar = await page.locator('#top-bar').boundingBox();
-      const taskHeading = await page.locator('#task-queue-section > .section-hdr').boundingBox();
+      const taskHeading = await page.locator('#tasks-heading').boundingBox();
       expect(topBar.y + topBar.height).toBeLessThanOrEqual(taskHeading.y);
       await expect(page.locator('#phase-label')).toHaveCSS('border-radius', '2px');
       const section = page.locator('.cp-section:visible > .card').first();

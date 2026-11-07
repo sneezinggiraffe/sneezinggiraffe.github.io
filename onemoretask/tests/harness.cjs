@@ -7,11 +7,13 @@ const filename = path.resolve(__dirname, '../game.js');
 const source = fs.readFileSync(filename, 'utf8');
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 const names = [...source.matchAll(/^  function (\w+)\(/gm)].map((match) => match[1]);
-const exposed = source.replace('  // Start\n  init();', `  window.testAPI = { ${names.join(',')}, UPGRADES, AGENT_ROLES, MILESTONES, reset: () => { G = defaultState(); saveBlocked = false; popupQueue = []; }, queue: () => popupQueue };\n  // Start\n  init();`);
+const exposed = source.replace('  // Start\n  init();', `  if (!window.testDeskGeometry) visibleTaskIds = () => new Set(G.tasks.map(task => task.id));\n  window.testAPI = { ${names.join(',')}, UPGRADES, AGENT_ROLES, MILESTONES, reset: () => { G = defaultState(); saveBlocked = false; popupQueue = []; }, queue: () => popupQueue };\n  // Start\n  init();`);
 
 function harness(saved, options = {}) {
   const dom = new JSDOM(html, { url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
+  // Logic simulations have no layout engine. Geometry regressions opt into the real visibility rule.
+  window.testDeskGeometry = options.deskGeometry === true;
   let now = 1000000;
   let seed = options.seed || 17;
   const timers = [];

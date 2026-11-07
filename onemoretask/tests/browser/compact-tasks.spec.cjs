@@ -32,7 +32,7 @@ for (const width of [1440, 844, 390, 320]) {
         return { width: parseFloat(style.width), height: parseFloat(style.height), bottom: element.querySelector('.task-bottom').getBoundingClientRect().bottom, cardBottom: element.getBoundingClientRect().bottom };
       });
       expect(size.width).toBeLessThanOrEqual(width);
-      expect(size.width).toBeGreaterThan(width <= 768 && layout === 3 ? 110 : 220);
+      expect(size.width).toBeGreaterThan(layout === 3 ? 110 : 220);
       expect(size.height).toBe(layout === 3 ? (width <= 768 ? 158 : 148) : 152);
       expect(size.bottom).toBeLessThanOrEqual(size.cardBottom);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

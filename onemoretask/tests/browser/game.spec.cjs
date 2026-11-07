@@ -1339,7 +1339,7 @@ for (const width of [1440, 390]) {
     const available = page.locator('#task-list > .task-card:enabled');
     for (let count = 1; count <= 3; count++) {
       await expect(available.first()).toBeEnabled();
-      await available.first().click(); await page.clock.runFor(200);
+      await available.first().locator('.task-name').click(); await page.clock.runFor(200);
       await expect(available).toHaveCount(0);
       await expect(page.locator('#task-list [data-assignment="active"]')).toHaveCount(1);
       await page.clock.runFor(6500);

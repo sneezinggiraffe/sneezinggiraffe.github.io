@@ -710,13 +710,14 @@
   // ---------- CLICKING / TASK WORK ----------
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
-    if (!task || task.status !== "available" || manualRepairs().length > 0 || availableManualSlots() === 0) return;
+    if (!task || !availableTasks().includes(task) || manualRepairs().length > 0 || availableManualSlots() === 0) return;
 
     startManualTasks([task], evt);
   }
 
   function startManualTasks(tasks, evt) {
     for (const task of tasks) {
+      if (!visibleTaskIds().has(task.id)) continue;
       task.status = "active";
       G.activeTaskId = task.id;
       if (task.id === "setup_inbox") {
@@ -781,7 +782,7 @@
       }
       let task = G.tasks.find((item) => item.id === G.assistant.taskIds[0]);
       if (!task) {
-        task = G.tasks.find((item) => item.status === "available");
+        task = pickNextAiTask();
         if (!task) return;
         task.status = "assistant";
         G.assistant.taskIds = [task.id];
@@ -826,7 +827,7 @@
     if (!G.gameStarted || G.retired || manualRepairs().length > 0 || availableManualSlots() === 0) return;
     if (!G.uiRevealed.taskQueue) { doEarlyTask(evt); return; }
     const slots = availableManualSlots();
-    const available = G.tasks.filter((task) => task.status === "available");
+    const available = availableTasks();
     if (taskId) {
       const selected = available.findIndex((task) => task.id === taskId);
       if (selected < 0) return;
@@ -873,14 +874,28 @@
     return task;
   }
 
+  function visibleTaskIds() {
+    // Cluster delivery represents work in aggregate once the company outgrows individual notes.
+    if (!G.uiRevealed.taskQueue || G.phase >= 11 || (G.phase === 10 && G.clusters.length >= 2)) return new Set(G.tasks.map((task) => task.id));
+    renderTaskQueue();
+    const desk = $("#work-stream").getBoundingClientRect();
+    const bottom = Math.min(window.innerHeight, desk.bottom);
+    const top = Math.max(0, desk.top);
+    const left = Math.max(0, desk.left);
+    const right = Math.min(window.innerWidth, desk.right);
+    return new Set([...$("#task-list").children].filter((card) => {
+      const rect = card.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.top >= top && rect.bottom <= bottom && rect.left >= left && rect.right <= right;
+    }).map((card) => card.dataset.taskId));
+  }
+
+  function availableTasks() {
+    const visible = visibleTaskIds();
+    return G.tasks.filter((task) => task.status === "available" && visible.has(task.id));
+  }
+
   function pickNextAiTask() {
-    var available = G.tasks.filter(function (t) { return t.status === "available"; });
-    if (available.length === 0) return null;
-    available.sort(function (a, b) {
-      if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
-      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-    });
-    return available[0];
+    return availableTasks()[0] || null;
   }
 
   function createAiWorkerIncident(task) {
@@ -958,7 +973,7 @@
     const amount = Math.min(G.tokens, Math.max(0, workerTokenCapacity(agent) - agent.tokenTank));
     G.tokens -= amount;
     agent.tokenTank += amount;
-    const task = findMatchingTask(agent) || pickNextAiTask();
+    const task = findMatchingTask(agent, true);
     if (task && agent.status === "idle" && agent.tokenTank > 0) assignAgentToTask(task.id, agent.id);
     agent.tokenStarved = agent.tokenTank <= 0;
   }
@@ -1099,9 +1114,8 @@
     log("INCIDENT: Hallucinated Output Published!", "bad");
   }
 
-  function findMatchingTask(agent) {
-    var avail = G.tasks.filter(function (t) { return t.status === "available"; });
-    return avail.find(function (t) { return agent.specialty.includes(t.typeId); }) || null;
+  function findMatchingTask(agent, allowAny = false) {
+    return availableTasks().find((task) => allowAny || agent.specialty.includes(task.typeId)) || null;
   }
 
   function workerAvailable(agent) {
@@ -1155,7 +1169,7 @@
   function assignAgentToTask(taskId, agentId) {
     const task = G.tasks.find((t) => t.id === taskId);
     const agent = G.agents.find((a) => a.id === agentId);
-    if (!task || task.status !== "available" || !agent || agent.status !== "idle" || !workerAvailable(agent)) return;
+    if (!task || !availableTasks().includes(task) || !agent || agent.status !== "idle" || !workerAvailable(agent)) return;
     if (UTILITY_ROLES.indexOf(agent.roleId) === -1 && G.phase >= 2 && (agent.tokenTank || 0) <= 0) return;
     task.status = "agent";
     task.assignedAgent = agentId;
@@ -1348,11 +1362,7 @@
         var ba = G.agents[bi];
         if (UTILITY_ROLES.indexOf(ba.roleId) >= 0) continue;
         if (ba.status !== "idle") continue;
-        var bt = findMatchingTask(ba);
-        if (!bt) {
-          var avail = G.tasks.filter(function (t) { return t.status === "available"; });
-          bt = avail[0] || null;
-        }
+        var bt = findMatchingTask(ba, true);
         if (!bt || !clusterControl(ba, "managerAssigned")) continue;
         if (ba.tokenTank <= workerTokenCapacity(ba) * 0.1) {
           const amount = Math.min(G.managerTokenTank, workerTokenCapacity(ba) - ba.tokenTank);
@@ -1410,11 +1420,7 @@
 
       if (!workerAvailable(agent)) continue;
       if (agent.status === "idle" && agent.autoAssign && !managerControls(agent) && (agent.tokenTank || 0) > 0) {
-        var nextTask = findMatchingTask(agent);
-        if (!nextTask) {
-          var availIdle = G.tasks.filter(function (t) { return t.status === "available"; });
-          nextTask = availIdle[0] || null;
-        }
+        var nextTask = findMatchingTask(agent, true);
         if (nextTask) assignAgentToTask(nextTask.id, agent.id);
       }
 
@@ -1527,11 +1533,7 @@
       if (agent.roleId === "manager" || agent.roleId === "token_mgr" || agent.roleId === "devops") continue;
       if (agent.status !== "idle" || !managerControls(agent)) continue;
       if ((agent.tokenTank || 0) <= 0) continue;
-      var task = findMatchingTask(agent);
-      if (!task && G.smartRouting) {
-        var avail = G.tasks.filter(function (t) { return t.status === "available"; });
-        task = avail[0] || null;
-      }
+      var task = findMatchingTask(agent, G.smartRouting);
       if (!task) continue;
       assignAgentToTask(task.id, agent.id);
       assignmentBudget--;
@@ -2377,7 +2379,7 @@
           agent.tokenTank += amount;
         }
         if (agent.status !== "idle" || agent.tokenTank <= 0) continue;
-        const task = findMatchingTask(agent) || pickNextAiTask();
+        const task = findMatchingTask(agent, true);
         if (task) assignAgentToTask(task.id, agent.id);
       }
     }
@@ -3199,7 +3201,7 @@
     if (work) work.textContent = "Work: " + task.workRequired + "/" + task.workRequired;
     while (layer.children.length >= 6) layer.firstElementChild.remove();
     layer.appendChild(note);
-    setTimeout(() => note.remove(), 700);
+    setTimeout(() => note.remove(), 550);
   }
 
   function selectLayout(layoutId) {

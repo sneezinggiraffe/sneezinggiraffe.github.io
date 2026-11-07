@@ -125,27 +125,29 @@ test('Multitasking opens a second manual slot and the assistant cannot be dismis
 });
 
 for (const width of [1440, 390]) {
-  test(`Assistant has no controls and Multitasking assigns a pair in one click at ${width}px`, async ({ page }) => {
+  test(`Assistant has no controls and Multitasking fills visible work slots in one click at ${width}px`, async ({ page }) => {
     await openTeam(page, width);
     await page.evaluate(() => {
       for (const task of GAME.state.tasks) task.workRequired = 100;
       GAME.state.totalTasksDone = 35; GAME.buy('assistant_settling'); GAME.buy('assistant_routine'); GAME.buy('ai_hint'); GAME.buy('multitasking');
     });
     await page.clock.runFor(200);
+    const expectedSlots = width <= 768 ? 1 : 2;
     const available = page.locator('#task-list > .task-card:enabled');
     await expect(page.locator('[data-assistant] button')).toHaveCount(0);
     expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(0);
     const before = await page.evaluate(() => GAME.state.totalClicks);
     await available.first().locator('.task-name').click(); await page.clock.runFor(200);
     expect(await page.evaluate(() => GAME.state.totalClicks)).toBe(before + 1);
-    await expect(page.locator('[data-assignment="active"]')).toHaveCount(2);
-    await expect(available).toHaveCount(0);
+    await expect(page.locator('[data-assignment="active"]')).toHaveCount(expectedSlots);
+    if (expectedSlots === 2) await expect(available).toHaveCount(0);
+    else expect(await available.count()).toBeGreaterThan(0);
     await expect(page.locator('.click-reward')).toHaveCount(0);
     await page.clock.runFor(15000);
-    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(2);
+    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(expectedSlots);
     await page.reload();
 
-    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(2);
+    expect(await page.evaluate(() => GAME.state.manualTasksCompleted)).toBe(expectedSlots);
     await page.screenshot({ path: `test-results/matched-team-${width}.png`, fullPage: true, animations: 'disabled' });
   });
 }
