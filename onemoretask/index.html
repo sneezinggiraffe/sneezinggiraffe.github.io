@@ -210,12 +210,11 @@ button:disabled{opacity:.55;cursor:not-allowed}
 #settings-msg:empty{display:none}
 
 /* Intro / tutorial overlay */
-#intro-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:2000;display:flex;align-items:flex-start;justify-content:center;padding:clamp(20px,6dvh,54px) 0;overflow-y:auto}
+#intro-overlay{margin:24px 8px}
 #intro-overlay.hidden{display:none}
-#intro-overlay .intro-box{background:var(--bg2);border:1px solid var(--bg4);border-radius:5px;padding:24px;max-width:500px;width:90%;text-align:center}
-#btn-start-game{margin:8px auto 0}
-#intro-overlay h2{color:var(--text);font-family:Georgia,'Times New Roman',serif;font-weight:400;margin-bottom:16px;font-size:2.2rem;letter-spacing:-.03em}
-#intro-overlay p{color:var(--text2);margin-bottom:16px;line-height:1.5;font-size:.9rem}
+#intro-overlay h2{font:inherit;font-weight:700;letter-spacing:0;margin:0;background:none;padding:0;color:var(--text)}
+#intro-overlay p{color:var(--text2);margin-bottom:10px;line-height:1.4;font-size:.84rem}
+#intro-hint{color:var(--text3)}
 
 /* Rotate prompt */
 
@@ -261,7 +260,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .ending-box p{margin:24px 0}
 .worker-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .worker-controls span{flex:1;min-width:100px}
-.popup-overlay,.intro-box{max-height:100dvh;overflow-y:auto}
+.popup-overlay{max-height:100dvh;overflow-y:auto}
 .popup-msg{white-space:pre-line}
 @media(max-width:768px){
   #top-bar{position:sticky;top:0}
@@ -299,17 +298,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .cluster-card .cluster-construction-progress{margin-top:6px}
 .agent-action-col > .btn-primary{padding:6px 12px;font-size:.85rem}
 #prelude-section{text-align:left;padding:24px 8px}
-#prelude-controls{display:flex;justify-content:flex-start}
-#prelude-details{display:block;margin-top:7px}
-#prelude-details[hidden],#prelude-hint[hidden]{display:none}
-#prelude-task{display:block;margin-bottom:8px;font-size:.9rem}
-#prelude-status{display:block;margin-top:7px;font-size:.78rem}
-.opening-task-card{position:relative;display:block;width:240px;max-width:100%;min-height:112px;padding:16px;text-align:left;background:var(--bg2);color:var(--text);border:1px solid var(--bg4);border-radius:1px;box-shadow:2px 3px 0 var(--bg4),3px 6px 9px #00000024;transform:rotate(-1.2deg);font-size:1rem}
+#prelude-controls{display:flex;justify-content:flex-start;margin:8px 0}
+#prelude-details{display:block}
+#prelude-hint{margin:0 0 8px;color:var(--text2);font-size:.8rem;line-height:1.3}
+#prelude-hint[hidden],#prelude-progress[hidden],#prelude-status[hidden]{display:none}
+#prelude-pay{margin-bottom:6px;font-size:.82rem;color:var(--text2)}
+#prelude-status{margin-top:7px;font-size:.78rem}
+.opening-task-card{position:relative;display:block;width:220px;max-width:100%;min-height:112px;height:auto;padding:12px;text-align:left;background:var(--bg2);color:var(--text);border:1px solid var(--bg4);border-radius:1px;box-shadow:1px 2px 0 var(--bg4),3px 6px 9px #00000024;transform:rotate(-1.2deg);font-size:.9rem}
 .opening-task-card::before{content:'';position:absolute;top:-1px;left:38%;width:44px;height:8px;background:color-mix(in srgb,var(--text3) 25%,transparent);transform:rotate(-3deg);pointer-events:none}
-.opening-task-card:disabled{opacity:1;cursor:default}
-.opening-task-card:hover:not(:disabled){background:var(--bg3);border-color:var(--accent)}
-.opening-task-card .opening-task-title{display:block;font-weight:700}
-.opening-task-card .opening-task-hint{display:block;margin-top:10px;color:var(--text2);font-size:.82rem;line-height:1.3;font-weight:600}
+.opening-task-card .task-header{margin-bottom:10px}
+.opening-task-card .task-name{font-size:.9rem;font-weight:700}
+.opening-task-card .btn{align-self:flex-start}
 .task-assignee{display:inline-block;color:var(--text2);font-size:.8rem;font-weight:600;padding:4px 0}
 .task-assignee[data-assignment="active"]{color:var(--text)}
 .task-assignee[data-assignment="assistant"],.task-assignee[data-assignment="assistant_queued"]{color:var(--text2)}
@@ -385,9 +384,28 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   <!-- Left Pane: Work Stream -->
   <div id="work-stream">
 
+    <!-- Intro Overlay -->
+    <article id="intro-overlay" aria-labelledby="intro-title" class="card task-card opening-task-card hidden">
+      <div class="task-header"><h2 class="task-name" id="intro-title">One More Task</h2></div>
+      <div class="task-description">
+        <p id="intro-story">You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
+        <p id="intro-hint">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</p>
+        <button class="btn btn-primary btn-sm" id="btn-start-game">Find Work</button>
+      </div>
+    </article>
+
     <!-- Early game: centered Do Task button (stages 0-2) -->
     <div id="prelude-section" hidden>
-      <div id="prelude-controls"></div>
+      <article id="prelude-card" class="card task-card opening-task-card">
+        <div class="task-header"><h2 class="task-name" id="prelude-task"></h2></div>
+        <div id="prelude-details" class="task-description">
+          <p id="prelude-hint">Click Do Task to complete this gig.</p>
+          <p id="prelude-pay" class="task-meta"></p>
+          <div id="prelude-controls"></div>
+          <div class="task-bar" id="prelude-progress" role="progressbar" aria-label="Current gig" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" hidden><div class="task-bar-fill" id="prelude-bar"></div></div>
+          <p id="prelude-status" class="text-sm" hidden></p>
+        </div>
+      </article>
     </div>
 
     <!-- Task queue (stage 2+) -->
@@ -420,7 +438,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
         <div class="section-hdr" id="team-header" style="margin-bottom:8px" hidden>
           <h3 id="team-heading" style="margin-bottom:0"></h3>
         </div>
-        <div class="card agent-card" id="you-card"><div class="agent-icon" aria-hidden="true">U</div><div class="agent-info"><div class="name">You</div><div id="you-status" class="text-sm">Ready to work</div><small id="you-delivered">0 tasks delivered</small></div><div id="you-controls" class="agent-action-col"><button class="btn btn-primary btn-sm" id="btn-do-task" aria-label="Do work"><span class="opening-task-title" id="work-button-label">Do work</span><span class="opening-task-hint" id="prelude-hint" hidden>Click to start your next gig</span><span id="prelude-details" hidden><span id="prelude-task"></span><span class="task-bar" id="prelude-progress" role="progressbar" aria-label="Current gig" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><span class="task-bar-fill" id="prelude-bar"></span></span><span id="prelude-status" class="text-sm"></span></span></button></div></div>
+        <div class="card agent-card" id="you-card"><div class="agent-icon" aria-hidden="true">U</div><div class="agent-info"><div class="name">You</div><div id="you-status" class="text-sm">Ready to work</div><small id="you-delivered">0 tasks delivered</small></div><div id="you-controls" class="agent-action-col"><button class="btn btn-primary btn-sm" id="btn-do-task" aria-label="Do work"><span id="work-button-label">Do work</span></button></div></div>
         <div id="agent-hire-section"></div>
         <div id="agent-list"></div>
       </div>
@@ -505,16 +523,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       <button class="btn btn-green settings-action" id="btn-settings-confirm-yes">Yes</button>
       <button class="btn btn-outline settings-action" id="btn-settings-confirm-cancel">Cancel</button>
     </div>
-  </div>
-</div>
-
-<!-- Intro Overlay -->
-<div id="intro-overlay" role="dialog" aria-modal="true" aria-label="intro overlay" class="hidden">
-  <div class="intro-box">
-    <h2>One More Task</h2>
-    <p id="intro-story">You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</p>
-    <p id="intro-hint" style="font-size:.8rem;color:var(--text3)">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</p>
-    <button class="opening-task-card" id="btn-start-game" aria-label="Find Work"><span class="opening-task-title">Find Work</span><span class="opening-task-hint">Click to find your first gig</span></button>
   </div>
 </div>
 

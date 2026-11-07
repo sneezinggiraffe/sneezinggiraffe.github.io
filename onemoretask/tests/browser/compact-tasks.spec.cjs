@@ -100,22 +100,29 @@ test('task cards support keyboard work and Multitasking uses the same two slots 
 });
 
 for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
-  test(`the opening teaches card clicks near the top at ${width}x${height}`, async ({ page }) => {
+  test(`the opening has regular buttons inside task cards near the top at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.clock.install();
     await page.goto('/');
-    const intro = await page.locator('#intro-overlay .intro-box').boundingBox();
+    const intro = await page.locator('#intro-overlay').boundingBox();
     expect(intro.y).toBeLessThan(height * 0.2);
     const start = page.getByRole('button', { name: 'Find Work', exact: true });
-    await expect(start).toHaveClass(/opening-task-card/);
-    await expect(start).toContainText('Click to find your first gig');
+    await expect(start).toHaveClass(/btn-primary/);
+    await expect(page.locator('#intro-overlay .opening-task-card, .intro-box')).toHaveCount(0);
+    expect(await start.evaluate(button => button.closest('.opening-task-card').id)).toBe('intro-overlay');
+    await expect(page.locator('#intro-overlay .task-name')).toHaveText('One More Task');
+    await expect(page.locator('#top-bar')).toBeHidden();
     await expect(start).toBeInViewport();
     await start.click();
     const work = page.getByRole('button', { name: 'Do Task', exact: true });
-    await expect(work).toHaveClass(/opening-task-card/);
-    await expect(page.locator('#prelude-hint')).toHaveText('Click to start your next gig');
-    const box = await work.boundingBox();
+    await expect(work).toHaveClass(/btn-primary/);
+    expect(await work.evaluate(button => button.closest('.opening-task-card').id)).toBe('prelude-card');
+    await expect(page.locator('#prelude-hint')).toHaveText('Click Do Task to complete this gig.');
+    await expect(page.locator('#prelude-task')).not.toBeEmpty();
+    await expect(page.locator('#prelude-pay')).toContainText('Pay: $');
+    await expect(page.locator('#top-bar')).toBeHidden();
+    const box = await page.locator('#prelude-card').boundingBox();
     expect(box.y).toBeLessThan(height * 0.35);
     expect(box.height).toBeGreaterThanOrEqual(100);
     await work.click();

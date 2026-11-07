@@ -93,6 +93,13 @@ test('revealing and refreshing the header preserves the selected view', () => {
   const h = harness(undefined, { before: window => window.history.replaceState(null, '', '#layout=4') });
   try {
     h.api.startGame();
+    assert.equal(h.window.document.querySelector('#top-bar').classList.contains('visible'), false);
+    for (let index = 0; index < 2; index++) {
+      h.window.document.querySelector('#btn-do-task').click();
+      h.api.tickManualWork(10);
+      h.api.pruneTasks(h.window.Date.now());
+      h.api.renderAll();
+    }
     h.api.renderTopBar();
     assert.equal(h.window.document.querySelector('#top-bar').classList.contains('visible'), true);
     assert.equal(h.window.document.body.dataset.layout, '4');

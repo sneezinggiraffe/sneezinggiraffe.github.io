@@ -113,19 +113,23 @@ test('card angles vary across the full range and remain stable without using gam
   }
 });
 
-test('the opening uses a clickable card with a clear instruction before moving work into You', () => {
+test('the opening puts regular work buttons inside task cards before moving work into You', () => {
   const h = harness();
   try {
     const document = h.window.document;
     const start = document.querySelector('#btn-start-game');
-    assert.equal(start.classList.contains('opening-task-card'), true);
-    assert.match(start.textContent, /Click to find your first gig/);
+    assert.equal(start.closest('.opening-task-card').id, 'intro-overlay');
+    assert.equal(start.classList.contains('opening-task-card'), false);
+    assert.equal(start.textContent, 'Find Work');
+    assert.equal(document.querySelector('.intro-box'), null);
     start.click();
     const work = document.querySelector('#btn-do-task');
     for (let index = 0; index < 3; index++) {
-      assert.equal(work.classList.contains('opening-task-card'), true);
+      assert.equal(work.closest('.opening-task-card').id, 'prelude-card');
+      assert.equal(work.classList.contains('opening-task-card'), false);
+      assert.equal(document.querySelector('#prelude-task').textContent, h.window.GAME.state.tasks.find(task => task.status === 'available').name);
       assert.equal(document.querySelector('#prelude-hint').hidden, false);
-      assert.match(document.querySelector('#prelude-hint').textContent, /Click to start/);
+      assert.match(document.querySelector('#prelude-hint').textContent, /Click Do Task/);
       work.click();
       assert.equal(work.disabled, true);
       assert.equal(document.querySelector('#prelude-details').hidden, false);

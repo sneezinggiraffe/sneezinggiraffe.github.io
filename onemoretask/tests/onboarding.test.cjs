@@ -2,13 +2,88 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
+test('one opening card contains the story and button, then the next gig is ready before clicking Do Task', () => {
+  const h = harness();
+  let restored;
+  try {
+    const document = h.window.document;
+    const intro = document.querySelector('#intro-overlay');
+    assert.equal(intro.tagName, 'ARTICLE');
+    assert.equal(intro.classList.contains('task-card'), true);
+    assert.equal(intro.querySelector('.opening-task-card, .intro-box'), null);
+    assert.equal(intro.querySelector('.task-name').textContent, 'One More Task');
+    assert.equal(intro.querySelector('.task-description #btn-start-game').textContent, 'Find Work');
+    assert.equal(document.querySelector('#game-container').inert, false);
+    assert.equal(document.querySelector('#top-bar').classList.contains('visible'), false);
+    document.querySelector('#btn-start-game').click();
+    const state = h.window.GAME.state;
+    assert.equal(state.tasks.length, 1);
+    assert.equal(state.tasks[0].status, 'available');
+    assert.equal(document.querySelector('#prelude-task').textContent, state.tasks[0].name);
+    assert.match(document.querySelector('#prelude-pay').textContent, /^Pay: \$/);
+    assert.equal(document.querySelector('#prelude-card .task-description #btn-do-task').disabled, false);
+    const id = state.tasks[0].id;
+    h.api.prepareOpeningTask();
+    assert.equal(state.tasks.length, 1);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.equal(restored.window.GAME.state.tasks[0].id, id);
+    assert.equal(restored.window.document.querySelector('#prelude-task').textContent, state.tasks[0].name);
+    document.querySelector('#btn-do-task').click();
+    h.api.prepareOpeningTask();
+    assert.equal(state.tasks.length, 1);
+    h.api.tickManualWork(10);
+    h.api.pruneTasks(h.window.Date.now());
+    h.api.renderAll();
+    assert.equal(state.totalTasksDone, 1);
+    assert.equal(state.tasks.length, 1);
+    assert.notEqual(state.tasks[0].id, id);
+    assert.equal(state.tasks[0].status, 'available');
+    assert.equal(document.querySelector('#prelude-task').textContent, state.tasks[0].name);
+  } finally {
+    if (restored) restored.close();
+    h.close();
+  }
+});
+
+test('the top resource bar appears only after completing two gigs and remains visible after reload', () => {
+  const h = harness();
+  let restored;
+  try {
+    const document = h.window.document;
+    const bar = document.querySelector('#top-bar');
+    document.querySelector('#btn-start-game').click();
+    for (let completed = 0; completed < 2; completed++) {
+      assert.equal(bar.classList.contains('visible'), false);
+      document.querySelector('#btn-do-task').click();
+      h.api.tickManualWork(0.1);
+      h.api.renderAll();
+      assert.equal(bar.classList.contains('visible'), false);
+      h.api.tickManualWork(10);
+      h.api.pruneTasks(h.window.Date.now());
+      h.api.renderAll();
+      assert.equal(bar.classList.contains('visible'), completed === 1);
+    }
+    assert.equal(h.window.GAME.state.totalTasksDone, 2);
+    assert.equal(h.window.GAME.state.uiRevealed.topBar, true);
+    assert.equal(h.window.GAME.state.uiRevealed.taskQueue, false);
+    h.api.save();
+    restored = harness(h.window.localStorage.getItem('ai_empire_save'));
+    assert.equal(restored.window.document.querySelector('#top-bar').classList.contains('visible'), true);
+    assert.equal(restored.window.GAME.state.tasks.filter(task => task.status === 'available').length, 1);
+  } finally {
+    if (restored) restored.close();
+    h.close();
+  }
+});
+
 test('You starts three gigs before inbox setup opens normal arrivals', () => {
   const h = harness();
   try {
     const g = h.window.GAME.state;
     h.window.document.querySelector('#btn-start-game').click();
     assert.equal(h.window.document.querySelector('#prelude-section').hidden, false);
-    assert.equal(h.window.document.querySelector('#prelude-details').hidden, true);
+    assert.equal(h.window.document.querySelector('#prelude-details').hidden, false);
     assert.equal(h.window.document.querySelector('#btn-do-task').getAttribute('aria-label'), 'Do Task');
     assert.equal(h.window.document.querySelector('#btn-do-task').parentElement.id, 'prelude-controls');
     assert.equal(h.window.document.querySelector('#section-agents').style.display, 'none');

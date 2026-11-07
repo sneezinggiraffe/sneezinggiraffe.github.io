@@ -1757,7 +1757,7 @@ scenario('sale conditions gate the upgrade and restarting preserves bonuses with
   g.retired=true;g.retirementValue=100000;g.prestigeCount=1;g.prestigeBonusClick=1;g.prestigeBonusTokens=50;h.api.renderAll();h.window.document.querySelector('#btn-ending-restart').click();
   const next=h.window.GAME.state;assert.equal(next.retired,false);assert.equal(next.prestigeCount,2);assert.equal(next.clickPower,3);assert.equal(next.tokens,125);assert.equal(next.gameStarted,false);assert.equal(next.uiRevealed.taskQueue,false);
   assert.equal(h.api.validSave({...next,retirementFinal:true}),false);assert.match(h.window.document.querySelector('#intro-story').textContent,/bored/);
-  h.window.document.querySelector('#btn-start-game').click();assert.equal(next.gameStarted,true);assert.equal(next.tasks.length,0);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);
+  h.window.document.querySelector('#btn-start-game').click();assert.equal(next.gameStarted,true);assert.equal(next.tasks.length,1);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);
 });
 scenario('the older Basic model is visibly slow and can be sold for a faster replacement', (h) => {
   const g=h.fresh(3);g.cash=1e6;g.totalTasksDone=1000;g.tokens=200;h.prepareUpgrade('second_ai');h.api.purchaseUpgrade('second_ai');h.api.purchaseUpgrade('inference_tuning');h.api.purchaseUpgrade('prompt_refinement');h.api.purchaseUpgrade('context_pruning');h.api.purchaseUpgrade('multi_bot');

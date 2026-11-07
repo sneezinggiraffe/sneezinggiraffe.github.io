@@ -13,7 +13,7 @@ test('task presentation uses a monochrome document marker and a plain opening ti
     assert.equal(h.window.document.querySelector('#prelude-task').textContent, task.name);
     g.uiRevealed.taskQueue = true;
     h.api.renderWorkStream();
-    const heading = h.window.document.querySelector('.task-name');
+    const heading = h.window.document.querySelector('#task-list .task-name');
     assert.equal(heading.querySelector('.task-icon').textContent, '▤');
     assert.equal(heading.querySelector('.task-icon').getAttribute('aria-hidden'), 'true');
     assert.doesNotMatch(heading.textContent, /\p{Extended_Pictographic}/u);

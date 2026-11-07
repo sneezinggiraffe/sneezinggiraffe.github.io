@@ -6,7 +6,7 @@ for (const width of [1440, 844, 390, 320]) {
     await page.clock.install();
     await page.goto('/');
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(217, 221, 218)');
-    await expect(page.locator('#intro-overlay .intro-box')).toHaveCSS('border-radius', '0px');
+    await expect(page.locator('#intro-overlay')).toHaveCSS('border-radius', '1px');
     await page.getByRole('button', { name: 'Find Work', exact: true }).click();
     for (const stage of ['0_', 6, 9, 11, 13, 16]) {
       await page.evaluate(value => GAME.cheat(value), stage);

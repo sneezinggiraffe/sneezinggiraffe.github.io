@@ -345,7 +345,7 @@
   // ---------- MILESTONES ----------
   const MILESTONES = [
     // Task-count based
-    { id: "first_task", reqTasks: 3, reveals: ["topBar", "cash"] },
+    { id: "first_task", reqTasks: 2, reveals: ["topBar", "cash"] },
     { id: "backlog_start", reqTasks: 3, reveals: ["taskQueue"], inboxTask: true },
     // Retain the milestone ID so existing saves remain valid.
     { id: "stress_unlock", reqTasks: 12 },
@@ -683,16 +683,17 @@
   }
 
   // ---------- EARLY GAME: DO TASK BUTTON ----------
+  function prepareOpeningTask() {
+    if (!G.gameStarted || G.phase !== 1 || G.uiRevealed.taskQueue || G.tasks.some((task) => task.status === "available" || task.status === "active")) return;
+    G.tasks.push(generateEarlyTask());
+  }
+
   function doEarlyTask(evt) {
     // In early game (< 3 tasks done), the big button creates + works on tasks
     if (G.uiRevealed.taskQueue) return;
-    let task = G.tasks.find((t) => t.status === "active");
-    if (!task) {
-      task = generateEarlyTask();
-      G.tasks.push(task);
-      G.activeTaskId = task.id;
-    }
-    clickTask(task.id, evt);
+    prepareOpeningTask();
+    const task = G.tasks.find((item) => item.status === "available");
+    if (task) clickTask(task.id, evt);
   }
 
   function generateInboxTask() {
@@ -846,9 +847,7 @@
     const label = G.uiRevealed.taskQueue ? "Do work" : "Do Task";
     $("#work-button-label").textContent = label;
     button.setAttribute("aria-label", label);
-    button.classList.toggle("opening-task-card", !G.uiRevealed.taskQueue);
     $("#prelude-hint").hidden = G.uiRevealed.taskQueue || working.length > 0;
-    $("#prelude-details").hidden = G.uiRevealed.taskQueue || working.length === 0;
     const parent = G.uiRevealed.taskQueue ? $("#you-controls") : $("#prelude-controls");
     if (button.parentElement !== parent) parent.appendChild(button);
     button.disabled = manualRepairs().length > 0 || availableManualSlots() === 0 || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
@@ -1214,6 +1213,7 @@
 
     // Check milestones immediately on task completion
     checkMilestones();
+    if (method === "manual") prepareOpeningTask();
 
     // Remove from task list after a short delay
 
@@ -3226,7 +3226,7 @@
 
   function renderTopBar() {
     var topBar = $("#top-bar");
-    if (G.uiRevealed.topBar || G.gameStarted) {
+    if (G.uiRevealed.topBar) {
       topBar.classList.add("visible");
     } else {
       topBar.classList.remove("visible");
@@ -3276,9 +3276,12 @@
     $("#prelude-section").hidden = !prelude;
     renderYouCard();
     if (prelude) {
-      const task = G.tasks.find((item) => item.status === "active");
-      $("#prelude-details").hidden = !task;
-      $("#prelude-task").textContent = task ? task.name : "";
+      const task = G.tasks.find((item) => item.status === "active" || item.status === "available");
+      const working = task && task.status === "active";
+      $("#prelude-task").textContent = task ? task.name : "Your next gig";
+      $("#prelude-pay").textContent = task ? "Pay: " + fmtCash(getTaskCashPayout(task, "manual", null)) : "";
+      $("#prelude-progress").hidden = !working;
+      $("#prelude-status").hidden = !working;
       const progress = task ? Math.floor(task.workDone / task.workRequired * 100) : 0;
       $("#prelude-bar").style.width = progress + "%";
       $("#prelude-progress").setAttribute("aria-valuenow", progress);
@@ -3820,7 +3823,7 @@
   let previousFocus = null;
 
   function syncDialogFocus() {
-    const dialog = document.querySelector("#ending-overlay:not([hidden])") || document.querySelector("#intro-overlay:not(.hidden)") || document.querySelector("#settings-popup.show, #milestone-popup.show");
+    const dialog = document.querySelector("#ending-overlay:not([hidden])") || document.querySelector("#settings-popup.show, #milestone-popup.show");
     $("#game-container").inert = !!dialog || G.retired;
     $("#top-bar").inert = !!dialog || G.retired;
     if (dialog !== activeDialog) {
@@ -3888,6 +3891,7 @@
     G.gameStarted = true;
     G.lastTick = Date.now();
     G.startTime = Date.now();
+    prepareOpeningTask();
     renderIntro();
     syncDialogFocus();
     log(G.prestigeCount > 0 ? "Back for one more task." : "You start your freelance grind from the backseat of your car.", "info");

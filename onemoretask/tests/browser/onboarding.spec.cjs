@@ -20,13 +20,18 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
       await expect(page.locator('#prelude-section')).toBeVisible();
       await expect(page.locator('#task-queue-section')).toBeHidden();
       await expect(page.locator('#section-agents')).toBeHidden();
-      await expect(page.locator('#prelude-details')).toBeHidden();
+      await expect(page.locator('#prelude-details')).toBeVisible();
+      await expect(page.locator('#prelude-task')).not.toBeEmpty();
+      if (index < 2) await expect(page.locator('#top-bar')).toBeHidden();
+      else await expect(page.locator('#top-bar')).toBeVisible();
       await work.click();
       await expect(page.locator('.click-reward')).toHaveCount(0);
       await page.clock.runFor(300);
       expect(Number(await page.locator('#prelude-progress').getAttribute('aria-valuenow'))).toBeGreaterThan(0);
       if (index === 0) await page.screenshot({ path: `test-results/prelude-${width}-${height}.png`, fullPage: true, animations: 'disabled' });
       await page.clock.runFor(700);
+      if (index === 0) await expect(page.locator('#top-bar')).toBeHidden();
+      else await expect(page.locator('#top-bar')).toBeVisible();
     }
     await expect(page.locator('#prelude-section')).toBeHidden();
     await expect(page.locator('#team-heading')).toHaveText('');

@@ -170,6 +170,12 @@ test('both views keep opening and settings controls accessible on compact screen
       expect(title.y).toBeGreaterThanOrEqual(-0.5);
       expect(title.y + title.height).toBeLessThanOrEqual(height + 0.5);
       await page.getByRole('button', { name: 'Find Work', exact: true }).click();
+      await expect(page.locator('#top-bar')).toBeHidden();
+      for (let index = 0; index < 2; index++) {
+        await page.getByRole('button', { name: 'Do Task', exact: true }).click();
+        await page.clock.runFor(1500);
+      }
+      await expect(page.locator('#top-bar')).toBeVisible();
       await page.locator('#btn-settings').click();
       await expect(page.locator('#settings-popup')).toBeVisible();
       const popup = await page.locator('#settings-popup .popup').boundingBox();
