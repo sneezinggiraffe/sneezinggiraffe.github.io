@@ -102,7 +102,7 @@ test('task cards support keyboard work and Multitasking uses the same two slots 
 });
 
 for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
-  test(`the opening has regular buttons inside task cards near the top at ${width}x${height}`, async ({ page }) => {
+  test(`the whole opening cards are clickable near the top at ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.clock.install();
@@ -110,7 +110,8 @@ for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
     const intro = await page.locator('#intro-overlay').boundingBox();
     expect(intro.y).toBeLessThan(height * 0.2);
     const start = page.getByRole('button', { name: 'Find Work', exact: true });
-    await expect(start).toHaveClass(/btn-primary/);
+    await expect(start).toHaveClass(/paper-card/);
+    await expect(page.locator('#intro-action')).toHaveClass(/btn-primary/);
     await expect(page.locator('#intro-overlay .opening-task-card, .intro-box')).toHaveCount(0);
     expect(await start.evaluate(button => button.closest('.opening-task-card').id)).toBe('intro-overlay');
     await expect(page.locator('#intro-overlay .task-name')).toHaveText('One More Task');
@@ -118,9 +119,10 @@ for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
     await expect(start).toBeInViewport();
     await start.click();
     const work = page.getByRole('button', { name: 'Do Task', exact: true });
-    await expect(work).toHaveClass(/btn-primary/);
+    await expect(work).toHaveClass(/paper-card/);
+    await expect(page.locator('#prelude-action')).toBeVisible();
     expect(await work.evaluate(button => button.closest('.opening-task-card').id)).toBe('prelude-card');
-    await expect(page.locator('#prelude-hint')).toHaveText('Click Do Task to complete this gig.');
+    await expect(page.locator('#prelude-hint')).toHaveText('Take a hot pizza to a customer nearby.');
     await expect(page.locator('#prelude-task')).not.toBeEmpty();
     await expect(page.locator('#prelude-pay')).toContainText('Pay: $');
     await expect(page.locator('#top-bar')).toBeHidden();
@@ -130,6 +132,7 @@ for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
     await work.click();
     await expect(work).toBeDisabled();
     await expect(page.locator('#prelude-details')).toBeVisible();
-    await expect(page.locator('#prelude-hint')).toBeHidden();
+    await expect(page.locator('#prelude-hint')).toBeVisible();
+    await expect(page.locator('#prelude-action')).toBeHidden();
   });
 }

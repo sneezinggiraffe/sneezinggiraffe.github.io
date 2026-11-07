@@ -166,7 +166,7 @@ test('both views keep opening and settings controls accessible on compact screen
       url.searchParams.set('width', width);
       url.hash = 'layout=' + layout;
       await page.goto(url.href);
-      const title = await page.locator('#intro-overlay h2').boundingBox();
+      const title = await page.locator('#intro-title').boundingBox();
       expect(title.y).toBeGreaterThanOrEqual(-0.5);
       expect(title.y + title.height).toBeLessThanOrEqual(height + 0.5);
       await page.getByRole('button', { name: 'Find Work', exact: true }).click();

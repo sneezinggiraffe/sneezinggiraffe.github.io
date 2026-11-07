@@ -23,7 +23,6 @@ body{
 
 body[data-theme] :is(#game-container,#intro-overlay,#settings-popup) .btn{border-radius:var(--button-radius)}
 body[data-theme] :is(#game-container,#intro-overlay,#settings-popup) .popup{border-radius:var(--radius)}
-body[data-theme] #prelude-controls #btn-do-task{border-radius:var(--button-radius)}
 body[data-theme] .management-agent{background:var(--management-bg);border-color:var(--management-border)}
 body[data-theme] .agent-card.res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
 body[data-theme] #res-tokens-wrap.res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
@@ -154,7 +153,6 @@ body[data-theme="3"] #game-container .task-icon{border:0;border-radius:0;backgro
 body[data-theme="3"] #game-container .agent-icon{border:2px solid #202821;border-radius:0;color:#202821;background:#c5dccb;transform:rotate(-2deg);font-weight:800}
 body[data-theme="3"] #game-container .cp-section>.card{border:0;border-top:4px solid #202821;padding-top:13px}
 body[data-theme="3"] #game-container .task-bar,body[data-theme="3"] #game-container .task-bar-fill{height:5px;border-radius:0}
-body[data-theme="3"] #settings-popup .popup{border:2px solid #202821;border-radius:0;box-shadow:7px 7px 0 #9da79b}
 
 /* 6. Midnight Diner: a horizontal order rail over a two-column restaurant till. */
 
@@ -240,4 +238,11 @@ body[data-theme] #game-container .agent-buy-options .btn:active:not(:disabled),
 body[data-theme] #game-container button.hire-slot:active:not(:disabled){translate:0 1px;box-shadow:none}
 @media(max-width:768px){
   body[data-theme] #game-container .agent-action-col > .btn-refill{min-height:40px}
+}
+
+body[data-theme] :is(#game-container,#settings-popup) .paper-card{
+  position:relative;padding:12px;text-align:left;background:var(--bg2);color:var(--text);
+  border:1px solid var(--bg4);border-radius:1px;clip-path:none;
+  box-shadow:1px 2px 0 color-mix(in srgb,var(--bg4) 70%,transparent),3px 6px 9px #00000024;
+  transform:rotate(-1.2deg);font-family:var(--theme-font);font-size:.9rem;font-weight:600;
 }

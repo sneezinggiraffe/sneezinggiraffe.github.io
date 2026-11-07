@@ -2,6 +2,35 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
+for (const completedIndexes of [[0], [2], [0, 1]]) {
+  test(`completing notes ${completedIndexes.join(',')} leaves all surviving cards attached in place`, () => {
+    const h = harness();
+    try {
+      const state = h.fresh();
+      state.uiRevealed.taskQueue = true;
+      state.totalTasksDone = 35;
+      const tasks = Array.from({ length: 6 }, () => h.task());
+      h.api.renderTaskQueue();
+      const list = h.window.document.querySelector('#task-list');
+      const originals = new Map([...list.children].map(card => [card.dataset.taskId, card]));
+      const moved = [];
+      const insertBefore = list.insertBefore.bind(list);
+      list.insertBefore = (node, reference) => {
+        if (node.parentElement === list) moved.push(node.dataset.taskId);
+        return insertBefore(node, reference);
+      };
+      for (const index of completedIndexes) h.api.completeTask(tasks[index], 'manual');
+      h.api.pruneTasks(h.window.Date.now());
+      h.api.renderTaskQueue();
+      assert.deepEqual(moved, []);
+      assert.equal(list.children.length, 6 - completedIndexes.length);
+      for (const card of list.children) assert.equal(card, originals.get(card.dataset.taskId));
+      h.api.renderTaskQueue();
+      assert.deepEqual(moved, []);
+    } finally { h.close(); }
+  });
+}
+
 function desk(h, layout = '3') {
   const g = h.fresh();
   g.uiRevealed.taskQueue = true;

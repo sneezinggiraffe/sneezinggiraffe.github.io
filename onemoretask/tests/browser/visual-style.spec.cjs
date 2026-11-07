@@ -39,7 +39,7 @@ for (const width of [1440, 844, 390, 320]) {
       expect((await page.locator('#btn-settings').boundingBox()).height).toBeGreaterThanOrEqual(40);
     }
     await page.locator('#btn-settings').click();
-    await expect(page.locator('#settings-popup .popup')).toHaveCSS('border-radius', '0px');
+    await expect(page.locator('#settings-popup .popup')).toHaveCSS('border-radius', '1px');
     await expect(page.locator('#settings-msg')).not.toHaveText('Manage settings.');
     await expect(page.locator('#btn-settings-reset')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await page.getByRole('button', { name: 'Close', exact: true }).click();

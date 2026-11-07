@@ -69,6 +69,11 @@
   const STALL_LOG_COOLDOWN_MS = 3000;
   const TASK_EXPIRY_MS = 30000;
   const EARLY_TASK_WORK_MULT = 0.5;
+  const OPENING_GIGS = [
+    { name: "Deliver a pizza", description: "Take a hot pizza to a customer nearby." },
+    { name: "Wash a car", description: "Wash a neighbour's car and clean the windows." },
+    { name: "Help write an email", description: "Help someone turn their rough notes into a clear email." },
+  ];
   const AI_TUTORIAL_SECONDS = 20;
   const SOUNDTRACKS = [
     { minTasks: 12, path: "soundtrack-loop.mp3" },
@@ -631,7 +636,7 @@
     return {
       id: uid(),
       typeId: type.id,
-      name: type.name,
+      name: OPENING_GIGS[G.manualTasksCompleted % OPENING_GIGS.length].name,
       icon: type.icon,
       client: pickClient(),
       batchSize: G.batchSize,
@@ -838,18 +843,18 @@
     renderWorkStream();
   }
 
+  function handleWorkClick(event) {
+    if (!G.gameStarted || G.retired) return;
+    doWork(event);
+    renderWorkStream();
+  }
+
   function renderYouCard() {
     const working = G.tasks.filter((task) => task.status === "active");
     $("#you-status").textContent = working.length ? "Working on " + working.length + (working.length === 1 ? " task" : " tasks") : "Ready to work";
     if (manualRepairs().length) $("#you-status").textContent = "Busy fixing an incident";
     $("#you-delivered").textContent = deliveredTasksLabel(G.manualTasksCompleted);
     const button = $("#btn-do-task");
-    const label = G.uiRevealed.taskQueue ? "Do work" : "Do Task";
-    $("#work-button-label").textContent = label;
-    button.setAttribute("aria-label", label);
-    $("#prelude-hint").hidden = G.uiRevealed.taskQueue || working.length > 0;
-    const parent = G.uiRevealed.taskQueue ? $("#you-controls") : $("#prelude-controls");
-    if (button.parentElement !== parent) parent.appendChild(button);
     button.disabled = manualRepairs().length > 0 || availableManualSlots() === 0 || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
     button.style.cursor = button.disabled ? "default" : "pointer";
   }
@@ -3113,6 +3118,15 @@
   function patchChildren(target, source) {
     const desired = [...source.childNodes];
     const taskCards = target.id === "task-list" ? new Map([...target.children].map((child) => [child.dataset.taskId, child])) : null;
+    if (taskCards) {
+      const desiredTaskIds = new Set(desired.filter((child) => child.nodeType === 1).map((child) => child.getAttribute("data-task-id")));
+      for (const [taskId, card] of taskCards) {
+        if (!desiredTaskIds.has(taskId)) {
+          card.remove();
+          taskCards.delete(taskId);
+        }
+      }
+    }
     for (let index = 0; index < desired.length; index++) {
       const next = desired[index];
       let current = target.childNodes[index];
@@ -3278,6 +3292,9 @@
     if (prelude) {
       const task = G.tasks.find((item) => item.status === "active" || item.status === "available");
       const working = task && task.status === "active";
+      $("#prelude-card").disabled = !!working || manualRepairs().length > 0 || availableManualSlots() === 0;
+      $("#prelude-action").hidden = !!working || G.manualTasksCompleted > 0;
+      $("#prelude-hint").textContent = OPENING_GIGS[G.manualTasksCompleted % OPENING_GIGS.length].description;
       $("#prelude-task").textContent = task ? task.name : "Your next gig";
       $("#prelude-pay").textContent = task ? "Pay: " + fmtCash(getTaskCashPayout(task, "manual", null)) : "";
       $("#prelude-progress").hidden = !working;
@@ -3958,15 +3975,12 @@
     });
 
     // Do Task button (early game)
-    $("#btn-do-task").addEventListener("click", function (evt) {
-      if (!G.gameStarted || G.retired) return;
-      doWork(evt);
-      renderWorkStream();
-    });
+    $("#btn-do-task").addEventListener("click", handleWorkClick);
+    $("#prelude-card").addEventListener("click", handleWorkClick);
     $("#task-list").addEventListener("click", handleTaskClick);
 
     // Intro
-    $("#btn-start-game").addEventListener("click", startGame);
+    $("#intro-overlay").addEventListener("click", startGame);
     renderIntro();
     // Offline progress
     if (loaded && G.gameStarted && !G.retired) applyOfflineProgress();

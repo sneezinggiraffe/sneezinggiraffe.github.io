@@ -95,7 +95,7 @@ test('revealing and refreshing the header preserves the selected view', () => {
     h.api.startGame();
     assert.equal(h.window.document.querySelector('#top-bar').classList.contains('visible'), false);
     for (let index = 0; index < 2; index++) {
-      h.window.document.querySelector('#btn-do-task').click();
+      h.window.document.querySelector('#prelude-card').click();
       h.api.tickManualWork(10);
       h.api.pruneTasks(h.window.Date.now());
       h.api.renderAll();

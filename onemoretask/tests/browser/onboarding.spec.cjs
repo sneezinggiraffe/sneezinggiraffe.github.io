@@ -10,7 +10,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     await page.clock.pauseAt(new Date(start + 1000));
     await page.goto('/');
     await expect(page.locator('#intro-overlay')).toBeVisible();
-    await expect(page.locator('#intro-overlay h2')).toBeInViewport();
+    await expect(page.locator('#intro-title')).toBeInViewport();
     const findWork = page.getByRole('button', {name: 'Find Work', exact: true});
     await findWork.click();
 

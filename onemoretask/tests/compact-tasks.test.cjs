@@ -76,9 +76,11 @@ test('task cards respect manual repair, stopped-game and retirement guards', () 
     state.incidents = [];
     state.gameStarted = false;
     h.api.doWork(undefined, tasks[0].id);
+    h.api.handleWorkClick();
     state.gameStarted = true;
     state.retired = true;
     h.api.doWork(undefined, tasks[0].id);
+    h.api.handleWorkClick();
     assert.equal(tasks[0].status, 'available');
     assert.equal(state.totalClicks, 0);
   } finally { h.close(); }
@@ -113,38 +115,30 @@ test('card angles vary across the full range and remain stable without using gam
   }
 });
 
-test('the opening puts regular work buttons inside task cards before moving work into You', () => {
+test('the opening card action is decorative, disappears during work and never returns on later cards', () => {
   const h = harness();
   try {
     const document = h.window.document;
-    const start = document.querySelector('#btn-start-game');
-    assert.equal(start.closest('.opening-task-card').id, 'intro-overlay');
-    assert.equal(start.classList.contains('opening-task-card'), false);
-    assert.equal(start.textContent, 'Find Work');
+    const start = document.querySelector('#intro-overlay');
+    assert.equal(start.classList.contains('opening-task-card'), true);
+    assert.equal(start.textContent.includes('Find Work'), true);
     assert.equal(document.querySelector('.intro-box'), null);
-    start.click();
-    const work = document.querySelector('#btn-do-task');
+    start.querySelector('#intro-story').click();
+    const card = document.querySelector('#prelude-card');
     for (let index = 0; index < 3; index++) {
-      assert.equal(work.closest('.opening-task-card').id, 'prelude-card');
-      assert.equal(work.classList.contains('opening-task-card'), false);
+      assert.equal(document.querySelector('#prelude-action').hidden, index > 0);
       assert.equal(document.querySelector('#prelude-task').textContent, h.window.GAME.state.tasks.find(task => task.status === 'available').name);
+      card.click();
+      assert.equal(card.disabled, true);
+      assert.equal(document.querySelector('#prelude-action').hidden, true);
       assert.equal(document.querySelector('#prelude-hint').hidden, false);
-      assert.match(document.querySelector('#prelude-hint').textContent, /Click Do Task/);
-      work.click();
-      assert.equal(work.disabled, true);
-      assert.equal(document.querySelector('#prelude-details').hidden, false);
-      assert.equal(document.querySelector('#prelude-hint').hidden, true);
       h.api.tickManualWork(10);
       h.api.pruneTasks(h.window.Date.now());
       h.api.renderAll();
     }
-    assert.equal(work.classList.contains('opening-task-card'), false);
-    assert.equal(work.parentElement.id, 'you-controls');
     document.querySelector('[data-task-id="setup_inbox"]').click();
-    assert.equal(work.disabled, true);
-    assert.equal(h.window.GAME.state.tasks.find(task => task.id === 'setup_inbox').status, 'active');
+    assert.equal(document.querySelector('#btn-do-task').disabled, true);
     assert.equal(document.querySelector('#task-count'), null);
-    assert.equal(document.querySelector('#task-queue-section h3').textContent, 'Tasks Complete: 3');
   } finally { h.close(); }
 });
 

@@ -943,7 +943,7 @@ scenario('music toggles only between full layered On and silent Off and saves th
 });
 
 scenario('onboarding, manual work, keyboard action and rendering', (h) => {
-  h.window.document.querySelector('#btn-start-game').click();
+  h.window.document.querySelector('#intro-overlay').click();
   h.window.document.querySelector('#btn-do-task').click();
   h.api.tickManualWork(10);
   assert.equal(h.window.GAME.state.totalTasksDone, 1);
@@ -1757,7 +1757,7 @@ scenario('sale conditions gate the upgrade and restarting preserves bonuses with
   g.retired=true;g.retirementValue=100000;g.prestigeCount=1;g.prestigeBonusClick=1;g.prestigeBonusTokens=50;h.api.renderAll();h.window.document.querySelector('#btn-ending-restart').click();
   const next=h.window.GAME.state;assert.equal(next.retired,false);assert.equal(next.prestigeCount,2);assert.equal(next.clickPower,3);assert.equal(next.tokens,125);assert.equal(next.gameStarted,false);assert.equal(next.uiRevealed.taskQueue,false);
   assert.equal(h.api.validSave({...next,retirementFinal:true}),false);assert.match(h.window.document.querySelector('#intro-story').textContent,/bored/);
-  h.window.document.querySelector('#btn-start-game').click();assert.equal(next.gameStarted,true);assert.equal(next.tasks.length,1);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);
+  h.window.document.querySelector('#intro-overlay').click();assert.equal(next.gameStarted,true);assert.equal(next.tasks.length,1);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);
 });
 scenario('the older Basic model is visibly slow and can be sold for a faster replacement', (h) => {
   const g=h.fresh(3);g.cash=1e6;g.totalTasksDone=1000;g.tokens=200;h.prepareUpgrade('second_ai');h.api.purchaseUpgrade('second_ai');h.api.purchaseUpgrade('inference_tuning');h.api.purchaseUpgrade('prompt_refinement');h.api.purchaseUpgrade('context_pruning');h.api.purchaseUpgrade('multi_bot');
@@ -1886,7 +1886,7 @@ scenario('prestige stops music and restores the introduction and first manual ta
   const g=h.fresh(16);g.totalTasksDone=2000;h.api.unlockMusicPlayback();assert.ok(h.audioPlayers.some(player=>!player.paused));
   g.retired=true;h.window.GAME.prestige();const next=h.window.GAME.state;assert.ok(h.audioPlayers.every(player=>player.paused));assert.equal(next.gameStarted,false);assert.equal(next.tasks.length,0);assert.equal(next.milestonesReached.length,0);
   h.api.renderWorkStream();assert.equal(h.window.document.querySelector('#task-queue-section').style.display,'none');assert.match(h.window.document.querySelector('#intro-story').textContent,/bored/);
-  h.window.document.querySelector('#btn-start-game').click();assert.equal(next.gameStarted,true);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);assert.equal(next.uiRevealed.taskQueue,false);
+  h.window.document.querySelector('#intro-overlay').click();assert.equal(next.gameStarted,true);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);assert.equal(next.uiRevealed.taskQueue,false);
 });
 scenario('ordinary upgrades appear in affordable and aspirational groups while transitions stay gated', (h) => {
   const g=h.fresh();g.purchasedUpgrades.push('tools_of_trade');g.totalTasksDone=15;g.cash=40;g.uiRevealed.upgrades=true;h.api.renderUpgradeSection();
