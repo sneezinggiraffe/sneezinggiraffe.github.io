@@ -174,7 +174,7 @@ test('hiring supplies a useful queue of individual tasks without changing later 
     assert.equal(h.api.getSpawnInterval(), interval / 3); assert.equal(h.api.getMaxTasks(), 8);
     for (let index = 0; index < 12; index++) h.api.spawnTask();
     assert.equal(g.tasks.length, 8); assert.ok(g.tasks.every(task => task.batchSize === 1));
-    g.totalTasksDone = 100; assert.equal(h.api.getMaxTasks(), 12);
+    g.totalTasksDone = 100; assert.equal(h.api.getMaxTasks(), 30);
     g.phase = 2; const aiInterval = h.api.getSpawnInterval();
     g.purchasedUpgrades = []; assert.equal(h.api.getSpawnInterval(), aiInterval);
   } finally { h.close(); }

@@ -951,7 +951,7 @@ scenario('onboarding, manual work, keyboard action and rendering', (h) => {
   for (let i = 0; i < 20; i++) { const task = h.task(); h.api.clickTask(task.id); h.api.tickManualWork(10); h.advance(1000); }
   h.dismiss(); h.task(); h.api.renderAll();
   assert.equal(h.window.GAME.state.uiRevealed.upgrades, true);
-  assert.equal(h.window.document.querySelector('#task-list button'), null);
+  assert.ok(h.window.document.querySelector('#task-list > button.task-card'));
 });
 
 scenario('free AI requires prior purchases and shows its task requirement inside the button', (h) => {
@@ -2019,7 +2019,7 @@ scenario('buying the CEO preserves manually reopened tasks through later phase c
   h.api.purchaseUpgrade('ai_ceo');
   h.api.renderWorkStream();
   assert.equal(h.window.document.querySelector('#task-list').hidden, false);
-  assert.equal(h.window.document.querySelector('#task-count').textContent, '');
+  assert.equal(h.window.document.querySelector('#task-count'), null);
   assert.equal(h.window.document.querySelector('#delivery-summary button').textContent, 'Hide tasks ∧');
   assert.equal(h.window.document.querySelector('#task-list').hidden, false);
   g.phase = 12;
@@ -2298,7 +2298,7 @@ for (const phase of [2, 3]) {
     g.aiPowerMult = phase === 2 ? 1 : 1.3;
     g.aiFailMult = 0;
     g.incidentsExplained = true;
-    assert.equal(h.api.getMaxTasks(), 12);
+    assert.equal(h.api.getMaxTasks(), 30);
     const interval = h.api.getSpawnInterval();
     h.advance(interval - 1);
     h.api.tickTaskSpawn();

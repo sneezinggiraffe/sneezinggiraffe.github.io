@@ -35,7 +35,7 @@ for (const width of [1440, 390]) {
     const cash = await page.evaluate(() => GAME.state.cash);
     const clicks = await page.evaluate(() => GAME.state.totalClicks);
     await page.clock.runFor(1000);
-    await expect(page.locator('#task-list button')).toHaveCount(0);
+    await expect(page.locator('#task-list .task-actions button')).toHaveCount(0);
     await expect(page.locator('[data-assignment="assistant"]')).toHaveCount(1);
     await expect(assistant).toContainText('Working on');
     await expect(assistant.getByRole('progressbar')).toHaveCount(0);

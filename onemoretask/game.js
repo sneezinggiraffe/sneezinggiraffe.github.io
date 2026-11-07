@@ -49,7 +49,7 @@
   const TICK_MS = 100; // game tick
   const SAVE_INTERVAL = 10000;
   const TASK_SPAWN_BASE = 800; // ms between new tasks (late game formula)
-  const MAX_TASKS = 12;
+  const MAX_TASKS = 30;
   const AGENT_WORK_MULT = 25; // base multiplier for agent work speed
   const MAX_LOG = 200;
   const AGENT_BASE_HIRE_COST = 250;
@@ -816,12 +816,25 @@
     save();
   }
 
-  function doWork(evt) {
+  function doWork(evt, taskId) {
     if (!G.gameStarted || G.retired || manualRepairs().length > 0 || availableManualSlots() === 0) return;
     if (!G.uiRevealed.taskQueue) { doEarlyTask(evt); return; }
     const slots = availableManualSlots();
-    const tasks = G.tasks.filter((task) => task.status === "available").slice(0, slots);
+    const available = G.tasks.filter((task) => task.status === "available");
+    if (taskId) {
+      const selected = available.findIndex((task) => task.id === taskId);
+      if (selected < 0) return;
+      available.unshift(available.splice(selected, 1)[0]);
+    }
+    const tasks = available.slice(0, slots);
     if (tasks.length) startManualTasks(tasks, evt);
+  }
+
+  function handleTaskClick(event) {
+    const card = event.target.closest("[data-task-id]");
+    if (!card) return;
+    doWork(event, card.dataset.taskId);
+    renderWorkStream();
   }
 
   function renderYouCard() {
@@ -830,7 +843,12 @@
     if (manualRepairs().length) $("#you-status").textContent = "Busy fixing an incident";
     $("#you-delivered").textContent = deliveredTasksLabel(G.manualTasksCompleted);
     const button = $("#btn-do-task");
-    button.textContent = G.uiRevealed.taskQueue ? "Do work" : "Do Task";
+    const label = G.uiRevealed.taskQueue ? "Do work" : "Do Task";
+    $("#work-button-label").textContent = label;
+    button.setAttribute("aria-label", label);
+    button.classList.toggle("opening-task-card", !G.uiRevealed.taskQueue);
+    $("#prelude-hint").hidden = G.uiRevealed.taskQueue || working.length > 0;
+    $("#prelude-details").hidden = G.uiRevealed.taskQueue || working.length === 0;
     const parent = G.uiRevealed.taskQueue ? $("#you-controls") : $("#prelude-controls");
     if (button.parentElement !== parent) parent.appendChild(button);
     button.disabled = manualRepairs().length > 0 || availableManualSlots() === 0 || (G.uiRevealed.taskQueue && !G.tasks.some((task) => task.status === "available"));
@@ -3275,7 +3293,6 @@
       renderDeliverySummary();
       if (!$("#task-list").hidden) renderTaskQueue();
       else updateHTML($("#task-list"), "");
-      $("#task-count").textContent = "";
       $("#no-tasks").style.display = "none";
       return;
     }
@@ -3299,12 +3316,17 @@
     return agentName.slice(0, 10) + "...";
   }
 
+  function taskCardAngle(id) {
+    let hash = 2166136261;
+    for (const character of id) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+    hash = Math.imul(hash ^ (hash >>> 16), 2246822507) >>> 0;
+    return (-2 + hash / 4294967295 * 4.4).toFixed(3);
+  }
+
   function renderTaskQueue() {
     var list = $("#task-list");
     var noTasks = $("#no-tasks");
     var tasks = G.tasks.filter((task) => task.status !== "done");
-
-    $("#task-count").textContent = tasks.length + " tasks";
 
     if (tasks.length === 0) {
       updateHTML(list, "");
@@ -3328,33 +3350,34 @@
       if (G.taskExpiryEnabled && t.status === "available") {
         var timeLeft = Math.max(0, TASK_EXPIRY_MS / 1000 - (Date.now() - t.createdAt) / 1000);
         if (timeLeft < 15) {
-          expiryHtml = "<div class='task-expiry'>" + Math.ceil(timeLeft) + "s</div>";
+          expiryHtml = "<span class='task-expiry'>" + Math.ceil(timeLeft) + "s</span>";
         }
       }
 
       // Client name gated behind taskDetails upgrade (Sticky Note System)
       var clientHtml = "";
       if (G.taskDetails && t.client) {
-        clientHtml = "<div class='task-client'>From: " + t.client + "</div>";
+        clientHtml = "<span class='task-client'>From: " + t.client + "</span>";
       }
 
       // Pay is always visible; other details gated behind task count
-      var metaHtml = "<div class='task-meta'>" +
+      var metaHtml = "<span class='task-meta'>" +
         (t.batchSize > 1 ? "<span>Batch: " + fmtTokens(t.batchSize) + " tasks</span>" : "") + "<span>Pay: <strong style='color:var(--cash)'>" + fmtCash(displayedPay) + "</strong></span>";
       if (G.totalTasksDone >= 20) {
         metaHtml +=
           "<span data-task-work>Work: " + Math.ceil(t.workDone) + "/" + t.workRequired + "</span>";
       }
-      metaHtml += "</div>";
+      metaHtml += "</span>";
 
       var taskCardClass = "card task-card" + (expiryHtml ? " has-expiry" : "");
-      html += "<div class='" + taskCardClass + "' data-task-id='" + t.id + "' data-task-state='" + t.status + "'>" +
+      const disabled = t.status !== "available" || manualRepairs().length > 0 || availableManualSlots() === 0;
+      html += "<button type='button' class='" + taskCardClass + "' data-task-id='" + t.id + "' data-task-state='" + t.status + "' style='--paper-angle:" + taskCardAngle(t.id) + "deg'" + (disabled ? " disabled" : "") + ">" +
         expiryHtml +
-        "<div class='task-header'><div class='task-name'><span class='task-icon' aria-hidden='true'>▤</span> " + t.name + "</div>" + clientHtml + "</div>" +
+        "<span class='task-header'><span class='task-name'><span class='task-icon' aria-hidden='true'>▤</span> " + t.name + "</span>" + clientHtml + "</span>" +
         metaHtml +
-        "<div class='task-bottom'><div class='task-actions'>" + actions + "</div>" +
-        "<div class='task-bar'><div class='task-bar-fill' style='width:" + pct + "%'></div></div></div>" +
-        "</div>";
+        "<span class='task-bottom'><span class='task-actions'>" + actions + "</span>" +
+        "<span class='task-bar'><span class='task-bar-fill' style='width:" + pct + "%'></span></span></span>" +
+        "</button>";
     }
     updateHTML(list, html);
   }
@@ -3934,7 +3957,9 @@
     $("#btn-do-task").addEventListener("click", function (evt) {
       if (!G.gameStarted || G.retired) return;
       doWork(evt);
+      renderWorkStream();
     });
+    $("#task-list").addEventListener("click", handleTaskClick);
 
     // Intro
     $("#btn-start-game").addEventListener("click", startGame);

@@ -976,7 +976,7 @@ for (const width of [1440, 320]) {
       expect((await queued.boundingBox()).x).toBeCloseTo(queuedX, 1);
       expect((await running.boundingBox()).x).toBeCloseTo(runningX, 1);
     }
-    await expect(page.locator('#task-count')).toHaveText('');
+    await expect(page.locator('#task-count')).toHaveCount(0);
     await expect(page.locator('#cluster-list')).not.toContainText('Client retainers');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: `test-results/delivery-stable-${width}.png`, fullPage: true, animations: 'disabled' });

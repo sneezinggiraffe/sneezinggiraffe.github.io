@@ -9,7 +9,7 @@ test('You starts three gigs before inbox setup opens normal arrivals', () => {
     h.window.document.querySelector('#btn-start-game').click();
     assert.equal(h.window.document.querySelector('#prelude-section').hidden, false);
     assert.equal(h.window.document.querySelector('#prelude-details').hidden, true);
-    assert.equal(h.window.document.querySelector('#btn-do-task').textContent, 'Do Task');
+    assert.equal(h.window.document.querySelector('#btn-do-task').getAttribute('aria-label'), 'Do Task');
     assert.equal(h.window.document.querySelector('#btn-do-task').parentElement.id, 'prelude-controls');
     assert.equal(h.window.document.querySelector('#section-agents').style.display, 'none');
     assert.equal(h.window.document.querySelector('#task-queue-section').style.display, 'none');
@@ -25,14 +25,14 @@ test('You starts three gigs before inbox setup opens normal arrivals', () => {
     assert.equal(g.totalTasksDone, 3);
     assert.equal(g.manualTasksCompleted, 3);
     assert.equal(h.window.document.querySelector('#you-delivered').textContent, '3 tasks delivered');
-    assert.equal(h.window.document.querySelector('#btn-do-task').textContent, 'Do work');
+    assert.equal(h.window.document.querySelector('#btn-do-task').getAttribute('aria-label'), 'Do work');
     assert.equal(h.window.document.querySelector('#prelude-section').hidden, true);
     assert.equal(h.window.document.querySelector('#btn-do-task').parentElement.id, 'you-controls');
     assert.equal(h.window.document.querySelector('#team-heading').textContent, '');
     assert.equal(g.tasks.length, 1);
     assert.equal(g.tasks[0].id, 'setup_inbox');
     assert.equal(h.api.getSpawnInterval(), Infinity);
-    assert.equal(h.window.document.querySelector('#task-list button'), null);
+    assert.equal(h.window.document.querySelector('#task-list > .task-card').tagName, 'BUTTON');
     assert.equal(h.window.document.querySelector('.task-assignee').textContent, 'Unassigned');
     h.window.document.querySelector('#btn-do-task').click(); h.api.renderAll();
     assert.equal(g.tasks.length, 3);

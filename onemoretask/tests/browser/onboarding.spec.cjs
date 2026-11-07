@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], [844, 390]]) {
-  test(`central opening leads to a working inbox task and a lone introductory upgrade at ${width}x${height}px`, async ({ page }) => {
+  test(`card opening leads to a working inbox task and a lone introductory upgrade at ${width}x${height}px`, async ({ page }) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize({width, height});
@@ -30,7 +30,7 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     }
     await expect(page.locator('#prelude-section')).toBeHidden();
     await expect(page.locator('#team-heading')).toHaveText('');
-    await expect(page.locator('#you-controls #btn-do-task')).toHaveText('Do work');
+    await expect(page.locator('#you-controls #btn-do-task')).toHaveAccessibleName('Do work');
     await expect(page.locator('#you-status')).toHaveText('Ready to work');
     await expect(page.locator('#you-delivered')).toHaveText('3 tasks delivered');
     await expect(page.locator('#task-list .task-card')).toHaveCount(1);

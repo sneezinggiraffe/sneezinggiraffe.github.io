@@ -166,7 +166,7 @@ for (const layout of [3, 4]) {
       expect(await ghost.evaluate(element => getComputedStyle(element).animationName)).not.toBe('none');
       await expect(page.locator('#task-list > .task-card')).toHaveCount(2);
       await expect(page.locator('[data-task-id="pile-job-0"]')).toHaveCount(0);
-      await expect(page.locator('#task-count')).toHaveText('2 tasks');
+      await expect(page.locator('#task-count')).toHaveCount(0);
       expect(await waiting.evaluate(element => element === document.querySelector('[data-task-id="pile-job-1"]'))).toBe(true);
       const after = await page.evaluate(() => ({ cash: GAME.state.cash, tasks: GAME.state.totalTasksDone, clicks: GAME.state.totalClicks }));
       expect(after.tasks).toBe(before.tasks + 1);

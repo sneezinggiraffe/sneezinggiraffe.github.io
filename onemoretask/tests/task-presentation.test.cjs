@@ -46,7 +46,7 @@ test('a completed pile note is crossed off without retaining a live task or repe
     assert.equal(ghost.style.getPropertyValue('--completed-transform'), 'rotate(3deg)');
     assert.equal(list.firstElementChild, remainingCard);
     assert.equal(list.firstElementChild.dataset.taskId, waiting.id);
-    assert.equal(document.querySelector('#task-count').textContent, '1 tasks');
+    assert.equal(document.querySelector('#task-count'), null);
     assert.equal(g.cash, cash + pay);
     assert.equal(g.totalTasksDone, 36);
     h.api.completeTask(done, 'manual');
