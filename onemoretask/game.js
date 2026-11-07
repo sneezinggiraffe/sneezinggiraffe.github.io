@@ -200,7 +200,7 @@
     // Phase 1 -> 2
     { id: "dual_monitors", name: "Dual Monitors", desc: "+25% pay for all tasks.", cost: 80, currency: "cash", phase: 1, effect: { payMult: 1.25 }, oneTime: true, reqTasks: 50 },
     { id: "noise_cancelling", name: "Noise-Cancelling Headphones", desc: "Clearer focus and instructions. All tasks require 10% less work.", cost: 99, currency: "cash", phase: 1, effect: { workReduction: 0.1 }, oneTime: true, reqTasks: 50 },
-    { id: "reality_check", name: "Reality Check", desc: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Bills are now draining your cash.", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 85 },
+    { id: "reality_check", name: "Reality Check", desc: "Your phone bill is due. Your car needs gas. Living costs money, even in a parking lot. Click to start paying expenses.", cost: 0, currency: "cash", phase: 1, introductory: true, oneTime: true, reqTasks: 85 },
     { id: "free_ai", requires: "reality_check", name: "Discover Free-Tier AI", desc: "Your first AI works through tasks automatically.", cost: 0, currency: "tasks", phase: 1, unlockPhase: 2, oneTime: true, revealTasks: 105, reqTasks: 150 },
 
     // Phase 2 -> 3
@@ -355,7 +355,7 @@
     // Retain the milestone ID so existing saves remain valid.
     { id: "stress_unlock", reqTasks: 12 },
     { id: "upgrades_unlock", reqTasks: 7, reveals: ["upgrades"], setFlags: { taskExpiryEnabled: true } },
-    { id: "expenses_unlock", reqTasks: 85, reveals: ["expenseCard", "expenses"], setFlags: { expensesRevealed: true } },
+    { id: "expenses_unlock", reqTasks: 85, reveals: ["expenseCard"] },
     { id: "income_display", reqTasks: 96, reveals: ["income"] },
     { id: "ai_hint", reqTasks: 35 },
     // Phase-based
@@ -1755,8 +1755,8 @@
   }
 
   // ---------- EXPENSES ----------
-  function getExpenseRate() {
-    if (!G.expensesRevealed) return 0;
+  function getExpenseRate(preview = false) {
+    if (!preview && (!G.expensesRevealed || !G.purchasedUpgrades.includes("reality_check"))) return 0;
 
     let rate = 0;
     for (const tier of EXPENSE_TIERS) {
@@ -1870,6 +1870,7 @@
 
   function upgradeVisible(upgrade) {
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
+    if (upgrade.id === "reality_check") return G.totalTasksDone >= upgrade.reqTasks;
     if (upgrade.infoUntilPhase !== undefined) return G.phase <= upgrade.infoUntilPhase && (!upgrade.reqIncidents || G.totalIncidents >= upgrade.reqIncidents);
     if (G.phase === 1 && upgrade.id !== "tools_of_trade" && !G.purchasedUpgrades.includes("tools_of_trade")) return false;
     if (G.phase === 1 && upgrade.reqTasks >= 35 && upgrade.id !== "ai_hint" && !G.purchasedUpgrades.includes("ai_hint")) return false;
@@ -1950,6 +1951,10 @@
 
   function completeUpgradePurchase(upg) {
     const upgradeId = upg.id;
+    if (upgradeId === "reality_check") {
+      G.expensesRevealed = true;
+      G.uiRevealed.expenses = true;
+    }
     if (upgradeId === "tools_of_trade") G.uiRevealed.log = true;
     if (upgradeId === "free_ai") G.aiWorkerTokenTank = 10;
     if (upgradeId === "hire_assistant") G.uiRevealed.agents = true;
@@ -3462,7 +3467,7 @@
       html += "<div class='card upgrade-card" + (u.saleDuration || u.id === "fusion" ? " sale-card" : "") + "'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
-        "<div class='desc'>" + u.desc + "</div>" +
+        "<div class='desc'>" + u.desc + (u.id === "reality_check" ? " Bills cost $" + fmtTokens(getExpenseRate(true)) + "/s." : "") + "</div>" +
         renderSaleStatus(u) +
         "</div>" +
         "<div class='upgrade-purchase'>" +

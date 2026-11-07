@@ -209,10 +209,10 @@ test('better way is a free upgrade at 35 tasks that gates later upgrades and per
     g.cash = 1000;
     for (const id of ['side_hustle', 'focus_timer', 'free_ai']) h.api.purchaseUpgrade(id);
     assert.equal(g.cash, 1000);
-    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint', 'reality_check']);
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
-    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint']);
+    assert.deepEqual(Array.from(restored.api.UPGRADES.filter(restored.api.upgradeVisible), upgrade => upgrade.id), ['ai_hint', 'reality_check']);
     restored.close();
     restored = undefined;
     g.totalTasksDone = 35;
@@ -235,7 +235,7 @@ test('better way is a free upgrade at 35 tasks that gates later upgrades and per
   }
 });
 
-test('Reality Check replaces its modal at 85 tasks and gates free AI without changing expenses', () => {
+test('Reality Check replaces its modal at 85 tasks and starts expenses on acknowledgement and gates free AI', () => {
   const h = harness();
   let restored;
   try {
@@ -250,15 +250,15 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
     g.totalTasksDone = 85;
     h.api.checkMilestones();
     h.api.renderAll();
-    assert.equal(g.expensesRevealed, true);
+    assert.equal(g.expensesRevealed, false);
     assert.equal(g.uiRevealed.expenseCard, true);
-    assert.equal(g.uiRevealed.expenses, true);
+    assert.equal(g.uiRevealed.expenses, false);
     assert.equal(h.api.queue().length, 0);
     assert.deepEqual(Array.from(h.api.UPGRADES.filter(h.api.upgradeVisible), item => item.id), ['reality_check']);
     const card = h.window.document.querySelector('#upgrade-list .upgrade-card');
     assert.equal(h.window.document.querySelector('#res-expense-wrap').style.display, 'none');
     assert.match(card.textContent, /Reality Check/);
-    assert.match(card.textContent, /Bills are now draining your cash/);
+    assert.match(card.textContent, /Bills cost \$1\/s/);
     assert.equal(card.querySelector('button').textContent, '');
     assert.equal(card.querySelector('button').disabled, false);
     g.totalTasksDone = 105;
@@ -276,6 +276,8 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
     h.api.renderTopBar();
     assert.equal(h.window.document.querySelector('#res-expense-wrap').style.display, '');
     assert.equal(h.window.document.querySelector('#expense-tier-label').textContent, 'Living in car');
+    before.expensesRevealed = true;
+    before.uiRevealed.expenses = true;
     before.purchasedUpgrades.push('reality_check');
     before.log = JSON.parse(JSON.stringify(g.log));
     assert.deepEqual(JSON.parse(JSON.stringify(g)), before);
@@ -312,7 +314,7 @@ test('Reality Check replaces its modal at 85 tasks and gates free AI without cha
 });
 
 
-test('Reality Check requires every earlier purchase, including Multitasking, monitors and headphones', () => {
+test('Reality Check appears independently of every earlier purchase', () => {
   const h = harness();
   try {
     const g = h.fresh();
@@ -322,9 +324,9 @@ test('Reality Check requires every earlier purchase, including Multitasking, mon
     const purchased = [...g.purchasedUpgrades];
     for (const missing of purchased) {
       g.purchasedUpgrades = purchased.filter(id => id !== missing);
-      assert.equal(h.api.upgradeVisible(reality), false, missing);
+      assert.equal(h.api.upgradeVisible(reality), true, missing);
       h.api.purchaseUpgrade('reality_check');
-      assert.equal(g.purchasedUpgrades.includes('reality_check'), false, missing);
+      assert.equal(g.purchasedUpgrades.includes('reality_check'), true, missing);
       g.totalTasksDone = 105;
       assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(item => item.id === 'free_ai')), false, missing);
       g.totalTasksDone = 85;
@@ -351,3 +353,26 @@ for (const id of ['hire_assistant', 'gas_station_coffee', 'sticky_note_system'])
     } finally { h.close(); }
   });
 }
+
+test('expenses wait for Reality Check with no earlier purchases and start at the displayed rate', (t) => {
+  const h = harness();
+  t.after(() => h.close());
+  const g = h.fresh();
+  g.totalTasksDone = 85;
+  g.cash = 100;
+  h.api.checkMilestones();
+  h.api.renderAll();
+  assert.match(h.window.document.querySelector('#upgrade-list').textContent, /Bills cost \$1\/s/);
+  h.api.tickExpenses(10);
+  assert.equal(g.cash, 100);
+  g.expensesRevealed = true;
+  h.api.tickExpenses(10);
+  assert.equal(g.cash, 100);
+  h.api.purchaseUpgrade('reality_check');
+  h.api.renderAll();
+  assert.equal(h.window.document.querySelector('#res-expense-wrap').style.display, '');
+  assert.equal(h.window.document.querySelector('#expense-rate').textContent, '-$1/s');
+  h.api.tickExpenses(10);
+  assert.equal(g.cash, 90);
+  assert.equal(h.api.upgradeVisible(h.api.UPGRADES.find(u => u.id === 'reality_check')), false);
+});

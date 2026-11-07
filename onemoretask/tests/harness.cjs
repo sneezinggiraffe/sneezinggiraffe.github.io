@@ -59,6 +59,10 @@ function harness(saved, options = {}) {
     for(const item of api.UPGRADES) {
       if(item.oneTime && (item.phase<upgrade.phase || (item.phase===upgrade.phase && api.UPGRADES.indexOf(item)<api.UPGRADES.indexOf(upgrade))) && !state.purchasedUpgrades.includes(item.id))state.purchasedUpgrades.push(item.id);
     }
+    if (state.purchasedUpgrades.includes('reality_check')) {
+      state.expensesRevealed = true;
+      state.uiRevealed.expenses = true;
+    }
   }
   function fullCluster() {
     const state=window.GAME.state;const cluster=api.addClusterWithNextName();cluster.managerAssigned=true;cluster.tokenManagerAssigned=true;
