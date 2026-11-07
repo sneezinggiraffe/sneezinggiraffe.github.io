@@ -36,6 +36,14 @@ for (const width of [1440, 390, 320]) {
         const role = selector === '.manager-slot' ? 'Manager' : selector === '.token-manager-slot' ? 'Token Mgr' : 'DevOps';
         const card = page.locator('#agent-list > .agent-card, #incident-devops > .agent-card').filter({ has: page.locator('.role', { hasText: role }) }).last();
         expect((await card.boundingBox()).height).toBe(before.height);
+        expect(await card.evaluate(element => {
+          const bounds = element.getBoundingClientRect();
+          const center = bounds.top + bounds.height / 2;
+          return [...element.children].every(child => {
+            const childBounds = child.getBoundingClientRect();
+            return Math.abs(childBounds.top + childBounds.height / 2 - center) < 1;
+          });
+        })).toBe(true);
       }
       const vacancy = page.locator('.agent-vacancy').first();
       const slot = await vacancy.getAttribute('data-agent-slot');

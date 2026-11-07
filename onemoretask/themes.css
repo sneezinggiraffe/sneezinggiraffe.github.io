@@ -255,7 +255,8 @@ body[data-theme] #settings-popup .paper-card{transform:rotate(0deg)}
 body[data-theme] #game-container #agent-list > :is(.agent-card:has(.btn-outline),.agent-vacancy,.manager-slot,.token-manager-slot){
   height:96px;min-height:96px;box-sizing:border-box;
 }
-body[data-theme] #game-container #agent-list > .agent-card:has(.btn-outline){align-items:center;flex-wrap:nowrap}
+body[data-theme] #game-container #agent-list > .agent-card:has(.btn-outline),
+body[data-theme] #game-container #incident-devops > .agent-card{align-items:center;flex-wrap:nowrap}
 body[data-theme] #game-container :is(.agent-vacancy,button.manager-slot,button.token-manager-slot,button.devops-slot){
   display:flex;flex-direction:column;align-items:stretch;justify-content:center;
   gap:8px;padding:8px;border:1px solid var(--bg4);border-left-width:4px;
