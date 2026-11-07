@@ -23,15 +23,16 @@ async function openInbox(page, width, layout, count = 8) {
 
 for (const width of [1440, 844, 390, 320]) {
   for (const layout of [3, 4]) {
-    test(`compact cards fit and clicking starts the chosen task in view ${layout} at ${width}px`, async ({ page }) => {
+    test(`original-sized cards fit and clicking starts the chosen task in view ${layout} at ${width}px`, async ({ page }) => {
       await openInbox(page, width, layout);
       const card = page.locator('[data-task-id="compact-2"]');
       const size = await card.evaluate(element => {
         const style = getComputedStyle(element);
         return { width: parseFloat(style.width), height: parseFloat(style.height), bottom: element.querySelector('.task-bottom').getBoundingClientRect().bottom, cardBottom: element.getBoundingClientRect().bottom };
       });
-      expect(size.width).toBeLessThanOrEqual(220);
-      expect(size.height).toBe(width <= 768 && layout === 3 ? 104 : 100);
+      expect(size.width).toBeLessThanOrEqual(width);
+      expect(size.width).toBeGreaterThan(width <= 768 && layout === 3 ? 110 : 220);
+      expect(size.height).toBe(layout === 3 ? (width <= 768 ? 158 : 148) : 152);
       expect(size.bottom).toBeLessThanOrEqual(size.cardBottom);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await expect(page.locator('#task-count')).toHaveCount(0);
@@ -71,7 +72,8 @@ test('vertical notes have varied stable angles, no tray outline and continue bel
   expect(tray.borders).toEqual(['0px', '0px', '0px', '0px']);
   expect(tray.shadow).toBe('none');
   expect(tray.background).toBe('none');
-  expect(tray.paneWidth).toBeLessThanOrEqual(260);
+  expect(tray.paneWidth).toBeGreaterThan(350);
+  expect(tray.paneWidth).toBeLessThan(500);
   expect(tray.partial).toBeGreaterThanOrEqual(1);
   expect(tray.lastBottom).toBeGreaterThan(tray.height + 100);
   const headingStyles = await page.locator('#task-queue-section h3, #section-upgrades h3').evaluateAll(headings => headings.map(heading => {
