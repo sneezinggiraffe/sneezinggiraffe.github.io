@@ -13,7 +13,7 @@ for (const width of [1440, 320]) {
     await expect(page.locator('#intro-action')).toHaveAttribute('aria-hidden', 'true');
     const material = await intro.evaluate(element => {
       const style = getComputedStyle(element);
-      return [style.backgroundColor, style.border, style.borderRadius, style.boxShadow, style.padding, style.transform, style.fontFamily, style.fontSize];
+      return [style.backgroundColor, style.border, style.borderRadius, style.boxShadow, style.padding, style.fontFamily, style.fontSize];
     });
     await intro.click({ position: { x: 5, y: 5 } });
     const names = ['Deliver a pizza', 'Wash a car', 'Help write an email'];
@@ -43,7 +43,7 @@ for (const width of [1440, 320]) {
     await expect(popup).toHaveClass(/paper-card/);
     const settingsMaterial = await popup.evaluate(element => {
       const style = getComputedStyle(element);
-      return [style.backgroundColor, style.border, style.borderRadius, style.boxShadow, style.padding, style.transform, style.fontFamily, style.fontSize];
+      return [style.backgroundColor, style.border, style.borderRadius, style.boxShadow, style.padding, style.fontFamily, style.fontSize];
     });
     expect(settingsMaterial).toEqual(material);
     await page.screenshot({ path: `test-results/settings-paper-${width}.png` });
@@ -59,7 +59,8 @@ for (const layout of [3, 4]) {
     const now = Date.now();
     await page.clock.install({ time: new Date(now) });
     await page.clock.pauseAt(new Date(now + 1000));
-    await page.goto('/#layout=' + layout);
+    await page.addInitScript(value => localStorage.setItem('ai_empire_layout', String(value)), layout);
+  await page.goto('/');
     await page.evaluate(() => {
       GAME.cheat('0_2');
       GAME.state.totalTasksDone = 35;

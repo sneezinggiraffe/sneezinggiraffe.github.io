@@ -81,7 +81,7 @@ test('a completed pile note is crossed off without retaining a live task or repe
     h.api.completeTask(done, 'manual');
     assert.equal(g.cash, cash + pay);
     assert.equal(document.querySelectorAll('[data-task-completion]').length, 1);
-    h.advance(1099);
+    h.advance(699);
     assert.equal(document.querySelectorAll('[data-task-completion]').length, 1);
     h.advance(1);
     assert.equal(document.querySelectorAll('[data-task-completion]').length, 0);
@@ -122,7 +122,7 @@ test('automatic completions are bounded and remain absent from saves', () => {
     const saved = JSON.parse(h.window.localStorage.getItem('ai_empire_save'));
     assert.equal(saved.tasks.length, 0);
     assert.equal(JSON.stringify(saved).includes('taskCompletion'), false);
-    h.advance(1100);
+    h.advance(700);
     assert.equal(h.window.document.querySelectorAll('[data-task-completion]').length, 0);
   } finally { h.close(); }
 });

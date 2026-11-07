@@ -25,8 +25,8 @@ button{cursor:pointer;font-family:inherit;border:1px solid transparent;border-ra
 button:disabled{opacity:.55;cursor:not-allowed}
 
 /* Top resource bar */
-#top-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--bg4);padding:6px 16px;display:none;align-items:center;gap:16px;flex-wrap:wrap;font-size:.82rem}
-#top-bar.visible{display:flex}
+#top-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--bg4);padding:6px 16px;display:flex;visibility:hidden;align-items:center;gap:16px;flex-wrap:wrap;font-size:.82rem}
+#top-bar.visible{visibility:visible}
 .res{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .res .label{color:var(--text3);font-size:.78rem}
 .res .val{font-family:var(--number-font);font-weight:600;font-variant-numeric:tabular-nums}
@@ -173,7 +173,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 
 /* Control panel sections */
 .cp-section{margin-bottom:16px;animation:fadeSlideIn .3s ease}
-.cp-section>.card{background:transparent;border:0;border-top:1px solid var(--bg4);border-radius:0;padding:12px 10px 0;box-shadow:none}
+.cp-section>.card{background:transparent;border:0;border-radius:0;padding:12px 10px 0;box-shadow:none}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* Section headers */
@@ -343,7 +343,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 <link rel="stylesheet" href="themes.css">
 <link rel="stylesheet" href="layouts.css">
 </head>
-<body data-theme="3" data-layout="3">
+<body data-theme="3" data-layout="4">
 <div id="save-notice" role="alert" hidden>
   <span id="save-status"></span>
   <button id="btn-save-retry" class="btn btn-outline">Retry save</button>
@@ -375,8 +375,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   <span id="income-rate" title="Estimated automated income, before expenses" style="display:none">+$0/s</span>
   <div class="header-actions">
     <div id="layout-switcher" role="group" aria-label="Game views">
-      <button type="button" class="layout-choice" data-layout-choice="4" aria-label="Vertical view" aria-pressed="false" title="Vertical view">V</button>
-      <button type="button" class="layout-choice" data-layout-choice="3" aria-label="Horizontal view" aria-pressed="true" title="Horizontal view">H</button>
+      <button type="button" class="layout-choice" data-layout-choice="4" aria-label="Vertical view" aria-pressed="true" title="Vertical view">V</button>
+      <button type="button" class="layout-choice" data-layout-choice="3" aria-label="Horizontal view" aria-pressed="false" title="Horizontal view">H</button>
     </div>
     <button class="btn btn-outline btn-sm" id="btn-settings">Settings</button>
   </div>
@@ -387,16 +387,21 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
   <!-- Left Pane: Work Stream -->
   <div id="work-stream">
+    <div class="section-hdr" id="tasks-heading" style="visibility:hidden">
+      <h3>Tasks Complete: <span id="tasks-complete-count">0</span></h3>
+    </div>
 
     <!-- Intro Overlay -->
-    <button type="button" id="intro-overlay" aria-label="Find Work" aria-describedby="intro-story intro-hint" class="card task-card paper-card opening-task-card hidden">
-      <span class="task-header"><span class="task-name" id="intro-title">One More Task</span></span>
-      <span class="task-description">
-        <span id="intro-story">You are broke. Living out of your car. Your phone buzzes -- another gig app notification.</span>
-        <span id="intro-hint">You dream of early retirement. Maybe organising your life and smarter systems could set you free...</span>
-        <span class="btn btn-primary btn-sm intro-action" id="intro-action" aria-hidden="true">Find Work</span>
-      </span>
-    </button>
+    <div id="intro-section">
+      <button type="button" id="intro-overlay" aria-label="Find Work" aria-describedby="intro-story intro-hint" class="card task-card paper-card opening-task-card hidden">
+        <span class="task-header"><span class="task-name" id="intro-title">One More Task</span></span>
+        <span class="task-description">
+          <span id="intro-story">You are broke. Your phone buzzes with a new gig.</span>
+          <span id="intro-hint">Work smarter. Retire early.</span>
+          <span class="btn btn-primary btn-sm intro-action" id="intro-action" aria-hidden="true">Find Work</span>
+        </span>
+      </button>
+    </div>
 
     <!-- Early game: centered Do Task button (stages 0-2) -->
     <div id="prelude-section" hidden>
@@ -414,9 +419,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
     <!-- Task queue (stage 2+) -->
     <div id="task-queue-section">
-      <div class="section-hdr">
-        <h3>Tasks Complete: <span id="tasks-complete-count">0</span></h3>
-      </div>
       <div id="delivery-summary" hidden></div>
       <div id="task-list"></div>
       <div id="task-completions" aria-hidden="true" inert></div>
@@ -464,7 +466,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
         <p id="operations-health" class="operations-health" hidden></p>
         <div class="section-hdr" style="margin-bottom:8px">
           <h3 style="margin-bottom:0" id="incidents-header">Incidents</h3>
-          <span class="sub" id="incident-count"></span>
         </div>
         <div id="incident-devops"></div>
         <div id="incident-list"></div>

@@ -40,11 +40,11 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#res-stress-wrap')).toHaveCount(0);
     const card = page.locator('.incident-card');
     await expect(card.getByRole('button', { name: 'Pay to Fix ($40)', exact: true })).toBeEnabled();
-    await card.getByRole('button', { name: 'FIx Manually', exact: true }).click();
+    await card.getByRole('button', { name: 'Fix Manually', exact: true }).click();
     await page.clock.runFor(1000);
     await expect(card).toContainText('Fixing manually (50%)');
     await expect(card.locator('.task-bar-fill')).toHaveAttribute('style', /width:50%/);
-    await expect(card.getByRole('button', { name: 'FIx Manually', exact: true })).toBeDisabled();
+    await expect(card.getByRole('button', { name: 'Fix Manually', exact: true })).toBeDisabled();
     await expect(page.locator('#task-list > .task-card')).toBeDisabled();
     await page.screenshot({ path: `test-results/manual-repair-${width}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -58,7 +58,7 @@ for (const width of [1440, 390]) {
 
 test('manual repair resumes after reload and payment immediately releases its slot', async ({ page }) => {
   await openIncident(page, 1440);
-  await page.getByRole('button', { name: 'FIx Manually', exact: true }).click();
+  await page.getByRole('button', { name: 'Fix Manually', exact: true }).click();
   await page.clock.runFor(1000);
   await page.evaluate(() => localStorage.setItem('ai_empire_save', JSON.stringify(GAME.state)));
   await page.reload();

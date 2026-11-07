@@ -93,6 +93,7 @@ for (const width of [1440, 844, 390, 320]) {
 }
 
 test('buy-agent roles and DevOps remain clear interactive controls in both views', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1600 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await page.goto('/');
@@ -157,7 +158,7 @@ test('opening the HTML directly keeps the final theme and both views across relo
 
 test('both views keep opening and settings controls accessible on compact screens', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.addInitScript(() => localStorage.removeItem('ai_empire_save'));
+  await page.addInitScript(() => { localStorage.removeItem('ai_empire_save'); localStorage.setItem('ai_empire_layout', new URL(location.href).searchParams.get('view')); });
   for (const [width, height] of [[320, 568], [844, 390]]) {
     await page.setViewportSize({ width, height });
     for (const layout of [3, 4]) {

@@ -99,3 +99,38 @@ for (const [width, height] of [[1440, 900], [390, 900], [320, 900], [320, 568], 
     expect(errors).toEqual([]);
   });
 }
+
+for (const width of [1440, 844, 390, 320]) {
+  for (const layout of ['3', '4']) {
+    test(`opening cards keep the task position and size in view ${layout} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.addInitScript(value => localStorage.setItem('ai_empire_layout', value), layout);
+      await page.clock.install();
+      await page.goto('/');
+      const bounds = locator => locator.evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return { x: rect.x, y: rect.y, width: parseFloat(style.width), height: parseFloat(style.height) };
+      });
+      const intro = await bounds(page.locator('#intro-overlay'));
+      const action = await page.locator('#intro-action').boundingBox();
+      expect(action.y + action.height).toBeLessThanOrEqual(intro.y + intro.height);
+      await page.locator('#intro-overlay').click();
+      for (let index = 0; index < 3; index++) {
+        expect(await bounds(page.locator('#prelude-card'))).toEqual(intro);
+        await page.locator('#prelude-card').click();
+        await page.clock.runFor(1000);
+      }
+      const task = page.locator('#task-list > .task-card').first();
+      // Remove the decorative paper rotation to compare the underlying layout boxes.
+      await task.evaluate(element => element.style.transform = 'none');
+      expect(await bounds(task)).toEqual(intro);
+      await expect(page.locator('#task-queue-section')).toHaveCSS('border-top-width', '0px');
+      await page.evaluate(() => GAME.cheat('0_'));
+      const headings = await page.locator('#tasks-heading h3, #section-upgrades h3').evaluateAll(elements => elements.map(element => { element.style.transform = 'none'; return element.getBoundingClientRect().top; }));
+      if (layout === '4' && width > 768) expect(headings[0]).toBeCloseTo(headings[1], 1);
+      await expect(page.locator('#section-upgrades > .card')).toHaveCSS('border-top-width', '0px');
+    });
+  }
+}

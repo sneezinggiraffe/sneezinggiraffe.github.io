@@ -6,7 +6,8 @@ async function openInbox(page, width, layout, count = 8) {
   const now = Date.now();
   await page.clock.install({ time: new Date(now) });
   await page.clock.pauseAt(new Date(now + 1000));
-  await page.goto('/#layout=' + layout);
+  await page.addInitScript(value => localStorage.setItem('ai_empire_layout', String(value)), layout);
+  await page.goto('/');
   await page.evaluate(count => {
     GAME.cheat('0_2');
     GAME.state.totalTasksDone = 35;
@@ -76,7 +77,7 @@ test('vertical notes have varied stable angles, no tray outline and continue bel
   expect(tray.paneWidth).toBeLessThan(500);
   expect(tray.partial).toBeGreaterThanOrEqual(1);
   expect(tray.lastBottom).toBeGreaterThan(tray.height + 100);
-  const headingStyles = await page.locator('#task-queue-section h3, #section-upgrades h3').evaluateAll(headings => headings.map(heading => {
+  const headingStyles = await page.locator('#tasks-heading h3, #section-upgrades h3').evaluateAll(headings => headings.map(heading => {
     const style = getComputedStyle(heading);
     return [style.fontFamily, style.fontSize, style.fontWeight, style.backgroundColor, style.border, style.boxShadow];
   }));
@@ -108,7 +109,7 @@ for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
     await page.clock.install();
     await page.goto('/');
     const intro = await page.locator('#intro-overlay').boundingBox();
-    expect(intro.y).toBeLessThan(height * 0.2);
+    expect(intro.y + intro.height).toBeLessThan(height);
     const start = page.getByRole('button', { name: 'Find Work', exact: true });
     await expect(start).toHaveClass(/paper-card/);
     await expect(page.locator('#intro-action')).toHaveClass(/btn-primary/);
@@ -127,7 +128,7 @@ for (const [width, height] of [[1440, 900], [320, 568], [844, 390]]) {
     await expect(page.locator('#prelude-pay')).toContainText('Pay: $');
     await expect(page.locator('#top-bar')).toBeHidden();
     const box = await page.locator('#prelude-card').boundingBox();
-    expect(box.y).toBeLessThan(height * 0.35);
+    expect(box.y).toBe(intro.y);
     expect(box.height).toBeGreaterThanOrEqual(100);
     await work.click();
     await expect(work).toBeDisabled();

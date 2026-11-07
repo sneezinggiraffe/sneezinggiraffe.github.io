@@ -20,7 +20,8 @@ async function openPile(page, layout, { automatic = false, reducedMotion = 'no-p
   const now = Date.now();
   await page.clock.install({ time: new Date(now) });
   await page.clock.pauseAt(new Date(now + 1000));
-  await page.goto(gameFileUrl + '#layout=' + layout);
+  await page.addInitScript(value => localStorage.setItem('ai_empire_layout', String(value)), layout);
+  await page.goto(gameFileUrl);
   await page.evaluate(automatic => {
     GAME.cheat('0_2');
     GAME.state.totalTasksDone = 35;
@@ -106,9 +107,8 @@ test('H spreads notes across the desk and V stacks them beside the control panel
   await expect(page.locator('#task-list')).toHaveCSS('display', 'grid');
   const horizontalQueue = await page.locator('#work-stream').boundingBox();
   const horizontalPanel = await page.locator('#control-panel').boundingBox();
-  expect(horizontalPanel.x - horizontalQueue.x - horizontalQueue.width).toBeLessThanOrEqual(22);
-  expect(horizontalPanel.x).toBeGreaterThan(horizontalQueue.x + horizontalQueue.width);
-  expect(horizontalPanel.y).toBeCloseTo(horizontalQueue.y, 1);
+  expect(horizontalPanel.x).toBeCloseTo(horizontalQueue.x, 1);
+  expect(horizontalPanel.y).toBeGreaterThanOrEqual(horizontalQueue.y + horizontalQueue.height);
   await page.screenshot({ path: 'test-results/horizontal-view.png', fullPage: true });
   await page.getByRole('button', { name: 'Vertical view', exact: true }).click();
   await expect(page.locator('#task-list')).toHaveCSS('display', 'flex');
@@ -132,9 +132,10 @@ for (const width of [1440, 844, 390, 320]) {
       const now = Date.now();
       await page.clock.install({ time: new Date(now) });
       await page.clock.pauseAt(new Date(now + 1000));
-      await page.goto(gameFileUrl + '#layout=' + layout);
+      await page.addInitScript(value => localStorage.setItem('ai_empire_layout', String(value)), layout);
+  await page.goto(gameFileUrl);
       await page.evaluate(() => GAME.cheat('0_'));
-      const sideBySide = width > 1100 || (layout === 4 && width > 768);
+      const sideBySide = layout === 4 && width > 768;
       let originalPanelTops;
       for (const count of [3, 12, 30]) {
         await page.evaluate(fillQueue, count);
@@ -267,6 +268,8 @@ for (const layout of [3, 4]) {
       expect(after.tasks).toBe(before.tasks + 1);
       expect(after.cash).toBeCloseTo(before.cash + (automatic ? 8.5 : 10));
       expect(after.clicks).toBe(before.clicks + (automatic ? 0 : 1));
+      await expect(ghost).toHaveCSS('animation-delay', '0.25s');
+      await expect(ghost).toHaveCSS('animation-duration', '0.4s');
       await page.screenshot({ path: `test-results/pile-${layout}-${automatic ? 'assistant' : 'manual'}-completed.png`, fullPage: true });
       await page.clock.runFor(1200);
       await expect(ghost).toHaveCount(0);

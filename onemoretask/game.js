@@ -3199,7 +3199,7 @@
     if (work) work.textContent = "Work: " + task.workRequired + "/" + task.workRequired;
     while (layer.children.length >= 6) layer.firstElementChild.remove();
     layer.appendChild(note);
-    setTimeout(() => note.remove(), 1100);
+    setTimeout(() => note.remove(), 700);
   }
 
   function selectLayout(layoutId) {
@@ -3215,16 +3215,23 @@
   function handleLayoutSelection(event) {
     const layoutId = event.currentTarget.dataset.layoutChoice;
     selectLayout(layoutId);
-    const parameters = new URLSearchParams(window.location.hash.slice(1));
-    parameters.set("layout", layoutId);
-    const url = new URL(window.location.href);
-    url.hash = parameters.toString();
-    window.history.replaceState(null, "", url.href);
+    try {
+      localStorage.setItem("ai_empire_layout", layoutId);
+    } catch (error) {
+      if (!(error instanceof DOMException) || !["SecurityError", "QuotaExceededError"].includes(error.name)) throw error;
+      storageMessage("Layout could not be saved. Allow browser storage or free space and select the layout again.");
+    }
   }
 
   function initLayoutSwitcher() {
-    const requested = new URLSearchParams(window.location.hash.slice(1)).get("layout") || "3";
-    if (!selectLayout(requested)) selectLayout("3");
+    let requested = "4";
+    try {
+      requested = localStorage.getItem("ai_empire_layout") || "4";
+    } catch (error) {
+      if (!(error instanceof DOMException) || error.name !== "SecurityError") throw error;
+      storageMessage("Browser storage is blocked. Layout changes cannot be saved.");
+    }
+    if (!selectLayout(requested)) selectLayout("4");
     for (const button of document.querySelectorAll("[data-layout-choice]")) button.addEventListener("click", handleLayoutSelection);
   }
 
@@ -3278,6 +3285,7 @@
     const prelude = G.gameStarted && !G.uiRevealed.taskQueue;
     if (!G.gameStarted || prelude) clearTaskCompletions();
     $("#prelude-section").hidden = !prelude;
+    $("#tasks-heading").style.visibility = G.gameStarted && G.uiRevealed.taskQueue ? "visible" : "hidden";
     if (prelude) {
       const task = G.tasks.find((item) => item.status === "active" || item.status === "available");
       const working = task && task.status === "active";
@@ -3722,7 +3730,6 @@
     health.textContent = active.length === 0 ? "Operations healthy · DevOps included in every cluster" : active.length + (active.length === 1 ? " incident · " : " incidents · ") + (idleDevops > 0 ? "Cluster DevOps responding" : "Waiting for an online cluster");
     health.classList.toggle("attention", active.length > 0);
     $("#incidents-header").parentElement.hidden = G.phase >= 10 && active.length === 0;
-    $("#incident-count").textContent = active.length + " active";
 
     var header = $("#incidents-header");
     if (active.length > 0) {
@@ -3746,7 +3753,7 @@
 	      var age = Math.floor((Date.now() - inc.createdAt) / 1000);
 	      var cashPart = inc.cashCost > 0 ? "<span style='font-size:.78rem;color:var(--red)'>-" + fmtCash(inc.cashCost) + "</span>" : "";
 	      html += "<div class='card incident-card " + (inc.sev === "warning" ? "warning" : "") + "'>" +
-	        "<div class='sev " + inc.sev + "'>" + inc.sev + "</div>" +
+	        (inc.sev === "warning" ? "<div class='sev warning'>warning</div>" : "") +
 	        "<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px'>" +
 	        "<div style='font-weight:600;min-width:0'>" + inc.name + "</div>" +
 	        "<div style='display:flex;align-items:center;gap:8px;white-space:nowrap'>" +
@@ -3759,7 +3766,7 @@
 	        ((inc.fixProgress || 0) > 0 || inc.manualRepair ? "<div class='task-bar mb'><div class='task-bar-fill' style='width:" + Math.min(100, inc.fixProgress).toFixed(0) + "%;background:var(--green)'></div></div>" : "") +
 	        (!inc.manualRepair && availableManualSlots() === 0 ? "<div class='text-sm mb'>Manual slot busy</div>" : "") +
 	        "<div style='display:flex;gap:6px'>" +
-	        "<button class='btn btn-primary btn-sm'" + (inc.manualRepair || availableManualSlots() === 0 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">FIx Manually</button>" +
+	        "<button class='btn btn-primary btn-sm'" + (inc.manualRepair || availableManualSlots() === 0 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','manual')\">Fix Manually</button>" +
 	        "<button class='btn btn-yellow btn-sm'" + (G.cash < (inc.cashCost || 20) * 2 ? " disabled" : "") + " onclick=\"GAME.resolveInc('" + inc.id + "','cash')\">Pay to Fix (" + fmtCash((inc.cashCost || 20) * 2) + ")</button>" +
 	        "</div>" +
 	        "</div>";
@@ -3889,8 +3896,8 @@
   // ---------- CLICK REWARD ANIMATION ----------
   function renderIntro() {
     $("#intro-overlay").classList.toggle("hidden", G.gameStarted);
-    $("#intro-story").textContent = G.prestigeCount > 0 ? "Golf was nice. So was sleeping in. But there is a new model out, and you are getting bored. Maybe just one more task..." : "You are broke. Living out of your car. Your phone buzzes -- another gig app notification.";
-    $("#intro-hint").textContent = G.prestigeCount > 0 ? "You know how this starts. This time will be different. Probably." : "You dream of early retirement. Maybe organising your life and smarter systems could set you free...";
+    $("#intro-story").textContent = G.prestigeCount > 0 ? "Retirement was nice. Now you are bored. One more task?" : "You are broke. Your phone buzzes with a new gig.";
+    $("#intro-hint").textContent = G.prestigeCount > 0 ? "Start again. Build smarter." : "Work smarter. Retire early.";
   }
 
   function startGame() {

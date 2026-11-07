@@ -151,7 +151,7 @@ body[data-theme="3"] #game-container :is(.task-client,.task-meta,.upgrade-info .
 body[data-theme="3"] #game-container .task-client{font-style:normal}
 body[data-theme="3"] #game-container .task-icon{border:0;border-radius:0;background:#202821;color:#ffffff;font-weight:800}
 body[data-theme="3"] #game-container .agent-icon{border:2px solid #202821;border-radius:0;color:#202821;background:#c5dccb;transform:rotate(-2deg);font-weight:800}
-body[data-theme="3"] #game-container .cp-section>.card{border:0;border-top:4px solid #202821;padding-top:13px}
+body[data-theme="3"] #game-container .cp-section>.card{border:0;padding-top:13px}
 body[data-theme="3"] #game-container .task-bar,body[data-theme="3"] #game-container .task-bar-fill{height:5px;border-radius:0}
 
 /* 6. Midnight Diner: a horizontal order rail over a two-column restaurant till. */
@@ -245,4 +245,8 @@ body[data-theme] :is(#game-container,#settings-popup) .paper-card{
   border:1px solid var(--bg4);border-radius:1px;clip-path:none;
   box-shadow:1px 2px 0 color-mix(in srgb,var(--bg4) 70%,transparent),3px 6px 9px #00000024;
   transform:rotate(-1.2deg);font-family:var(--theme-font);font-size:.9rem;font-weight:600;
+}
+
+@media(max-width:360px){
+  #top-bar{min-height:100px}
 }
