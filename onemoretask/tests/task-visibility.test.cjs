@@ -51,7 +51,7 @@ test('AI and agents take displayed order, with specialist eligibility when requi
   } finally { h.close(); }
 });
 
-test('hidden tasks cannot start through manual work, assistant, or direct agent assignment', () => {
+test('full manual capacity blocks selection and automatic workers leave hidden tasks queued', () => {
   const h = harness(undefined, { deskGeometry: true });
   try {
     const { state, jobs, cards } = desk(h);
@@ -100,6 +100,43 @@ test('Multitasking rechecks space after the first task expands in the stack', ()
     h.api.doWork();
     assert.equal(jobs[0].status, 'active');
     assert.equal(jobs[1].status, 'available');
+    assert.equal(state.totalClicks, 1);
+  } finally { h.close(); }
+});
+
+test('explicit selection starts any queued task regardless of desk visibility', () => {
+  for (const action of ['clickTask', 'doWork']) {
+    const h = harness(undefined, { deskGeometry: true });
+    try {
+      const { state, jobs } = desk(h);
+      if (action === 'clickTask') h.api.clickTask(jobs[4].id);
+      else h.api.doWork(undefined, jobs[4].id);
+      assert.equal(jobs[4].status, 'active');
+      assert.equal(state.activeTaskId, jobs[4].id);
+      assert.ok(jobs.slice(0, 4).every(job => job.status === 'available'));
+      h.api.tickManualWork(0.1);
+      assert.ok(jobs[4].workDone > 0);
+    } finally { h.close(); }
+  }
+});
+
+test('selected tasks retain capacity and ownership checks and multitasking fills a visible slot', () => {
+  const h = harness(undefined, { deskGeometry: true });
+  try {
+    const { state, jobs } = desk(h);
+    state.purchasedUpgrades.push('multitasking');
+    h.api.doWork(undefined, 'missing');
+    jobs[3].status = 'assistant';
+    h.api.doWork(undefined, jobs[3].id);
+    h.api.clickTask(jobs[3].id);
+    assert.equal(state.totalClicks, 0);
+    h.api.doWork(undefined, jobs[4].id);
+    assert.equal(jobs[4].status, 'active');
+    assert.equal(jobs[0].status, 'active');
+    h.api.doWork(undefined, jobs[2].id);
+    h.api.clickTask(jobs[2].id);
+    assert.equal(jobs[2].status, 'available');
+    assert.equal(jobs[3].status, 'assistant');
     assert.equal(state.totalClicks, 1);
   } finally { h.close(); }
 });

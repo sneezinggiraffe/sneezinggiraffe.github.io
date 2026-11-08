@@ -710,14 +710,14 @@
   // ---------- CLICKING / TASK WORK ----------
   function clickTask(taskId, evt) {
     const task = G.tasks.find((t) => t.id === taskId);
-    if (!task || !availableTasks().includes(task) || manualRepairs().length > 0 || availableManualSlots() === 0) return;
+    if (!task || task.status !== "available" || manualRepairs().length > 0 || availableManualSlots() === 0) return;
 
-    startManualTasks([task], evt);
+    startManualTasks([task], evt, taskId);
   }
 
-  function startManualTasks(tasks, evt) {
+  function startManualTasks(tasks, evt, selectedTaskId) {
     for (const task of tasks) {
-      if (!visibleTaskIds().has(task.id)) continue;
+      if (task.id !== selectedTaskId && !visibleTaskIds().has(task.id)) continue;
       task.status = "active";
       G.activeTaskId = task.id;
       if (task.id === "setup_inbox") {
@@ -829,12 +829,14 @@
     const slots = availableManualSlots();
     const available = availableTasks();
     if (taskId) {
-      const selected = available.findIndex((task) => task.id === taskId);
-      if (selected < 0) return;
-      available.unshift(available.splice(selected, 1)[0]);
+      const selected = G.tasks.find((task) => task.id === taskId && task.status === "available");
+      if (!selected) return;
+      const index = available.indexOf(selected);
+      if (index >= 0) available.splice(index, 1);
+      available.unshift(selected);
     }
     const tasks = available.slice(0, slots);
-    if (tasks.length) startManualTasks(tasks, evt);
+    if (tasks.length) startManualTasks(tasks, evt, taskId);
   }
 
   function handleTaskClick(event) {

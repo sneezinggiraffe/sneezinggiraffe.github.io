@@ -1,5 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
+test.use({ hasTouch: true });
+
 for (const width of [1440, 320]) {
   test(`opening cards respond to the full surface and show actions only on cards one and two at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -131,4 +133,43 @@ for (const layout of ['3', '4']) {
       await page.keyboard.press('Enter');
     }
   });
+}
+
+for (const layout of [3, 4]) {
+  for (const width of [390, 1440]) {
+    test(`partially visible tasks respond to selection in view ${layout} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 700 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.clock.install();
+      await page.goto('/');
+      await page.evaluate(() => {
+        GAME.cheat('0_2');
+        GAME.state.tasks = Array.from({ length: 30 }, (_, index) => ({
+          id: `select-${index}`, typeId: 'email', name: `Task ${index}`, icon: '▤', client: '',
+          batchSize: 1, workRequired: 10000, workDone: 0, pay: 5, tokenCost: 0,
+          failChance: 0, assignedAgent: null, status: 'available', createdAt: Date.now(),
+        }));
+        GAME.state.lastTaskSpawn = Date.now() + 1e9;
+      });
+      await page.locator(`[data-layout-choice="${layout}"]`).click();
+      await page.clock.runFor(200);
+      const target = await page.evaluate(() => {
+        const desk = document.querySelector('#work-stream').getBoundingClientRect();
+        const bottom = Math.min(innerHeight, desk.bottom);
+        const cards = [...document.querySelectorAll('#task-list > .task-card')];
+        const card = cards.find(node => {
+          const rect = node.getBoundingClientRect();
+          return rect.top > desk.top && rect.top < bottom - 15 && rect.bottom > bottom;
+        });
+        if (!card) throw new Error('Expected a partially visible task');
+        const rect = card.getBoundingClientRect();
+        return { id: card.dataset.taskId, x: rect.left + rect.width / 2, y: rect.top + 10 };
+      });
+      if (width === 390) await page.touchscreen.tap(target.x, target.y);
+      else await page.mouse.click(target.x, target.y);
+      expect(await page.evaluate(id => GAME.state.tasks.find(task => task.id === id).status, target.id)).toBe('active');
+      await page.clock.runFor(200);
+      expect(await page.evaluate(id => GAME.state.tasks.find(task => task.id === id).workDone, target.id)).toBeGreaterThan(0);
+    });
+  }
 }
