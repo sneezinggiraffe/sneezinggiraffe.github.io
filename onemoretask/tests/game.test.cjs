@@ -560,7 +560,7 @@ test('planning waits for staffing before autonomy and stays visible from Phase 1
 test('funding excludes an exit reserve and expansion resumes beyond Cluster 331 without a cap', () => {
   const h = harness();
   try {
-    const g = h.fresh(16);
+    const g = h.fresh(17);
     g.ceoMode = 'scale';
     g.uiRevealed.clusters = true;
     h.fullCluster();
@@ -768,7 +768,7 @@ test('the quiet Phase 6 synth waits for interaction, fades in and survives the d
       assert.equal(synth.paused, false);
       advanceFades(1000);
     }
-    g.phase = 16;
+    g.phase = 17;
     h.api.sellCompany();
     assert.ok(h.audioPlayers.some(player => player.src === 'soundtrack-loop.mp3' && !player.paused));
     assert.ok(h.audioPlayers.filter(player => player.src !== 'soundtrack-loop.mp3').every(player => player.paused));
@@ -1313,7 +1313,7 @@ scenario('DevOps resolves incidents at one rate, oldest first, without final app
   h.api.resolveIncident('older','invalid');
 });
 scenario('selling freezes the company before either ending choice and persists', (h) => {
-  const g=h.fresh(16);h.prepareUpgrade('fusion');g.cash=1e10;g.totalTasksDone=2000;g.services=[{id:'service',name:'Service',incomeRate:1000,active:true}];
+  const g=h.fresh(17);h.prepareUpgrade('fusion');g.cash=1e10;g.totalTasksDone=2000;g.services=[{id:'service',name:'Service',incomeRate:1000,active:true}];
   for(let i=0;i<100;i++)h.fullCluster().tank=4000;
   assert.equal(h.api.canSellCompany(),true);
   assert.equal(h.api.canTrueRetire(),false);h.api.purchaseUpgrade('fusion');assert.equal(g.retired,true);assert.equal(g.retirementFinal,false);assert.equal(h.api.canPrestige(),true);
@@ -1337,7 +1337,7 @@ scenario('offline earnings only use contracts; reloading cannot collect twice', 
 });
 scenario('save validation rejects malformed, incompatible, unsafe, and dangling state', (h) => {
   const g=h.fresh();assert.equal(h.api.validSave(g),true);
-  for(const value of [null,{},[],{...g,saveVersion:0},{...g,phase:17},{...g,cash:-1},{...g,cash:Infinity},{...g,musicMode:'invalid'}]) assert.equal(h.api.validSave(value),false);
+  for(const value of [null,{},[],{...g,saveVersion:0},{...g,phase:18},{...g,cash:-1},{...g,cash:Infinity},{...g,musicMode:'invalid'}]) assert.equal(h.api.validSave(value),false);
   const a=h.worker();const t=h.task();assert.equal(h.api.validSave(g),true);a.currentTask='missing';assert.equal(h.api.validSave(g),false);a.currentTask=null;
   t.name='<img>';assert.equal(h.api.validSave(g),false);
   for(const raw of ['null','{','{"phase":1}']) {const x=harness(raw);assert.equal(x.api.save(),false);assert.equal(x.window.localStorage.getItem('ai_empire_save'),raw);assert.equal(x.window.document.querySelector('#save-notice').hidden,false);x.close();}
@@ -1349,12 +1349,12 @@ scenario('expected storage failures are visible; unexpected errors propagate', (
   prototype.setItem=original;assert.equal(h.api.save(),true);assert.equal(h.window.document.querySelector('#save-notice').hidden,true);
 });
 scenario('prestige retains earned bonuses and music preference', (h) => {
-  const g=h.fresh(16);g.musicMode='off';g.retired=true;h.window.document.querySelector('#btn-ending-restart').click();const next=h.window.GAME.state;
+  const g=h.fresh(17);g.musicMode='off';g.retired=true;h.window.document.querySelector('#btn-ending-restart').click();const next=h.window.GAME.state;
   assert.equal(next.phase,1);assert.equal(next.prestigeCount,1);assert.equal(next.clickPower,2);assert.equal(next.tokens,50);assert.equal(next.musicMode,'off');assert.equal(h.api.validSave(next),true);
 });
 scenario('all phases render without errors and expose controls', (h) => {
   const g=h.fresh();g.cash=1e9;g.tokens=10000;g.totalTasksDone=2000;
-  for(let phase=1;phase<=16;phase++){
+  for(let phase=1;phase<=17;phase++){
     g.phase=phase;h.api.checkMilestones();h.dismiss();
     if(phase===10)h.api.addClusterWithNextName();
     for(const upgrade of h.api.UPGRADES.filter(u=>u.phase===phase&&u.oneTime))h.api.purchaseUpgrade(upgrade.id);
@@ -1415,7 +1415,7 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
   for (const seed of [17, 42, 123]) {
     const result = play(seed, 500, seed === 42);
     assert.equal(result.stalled, undefined);
-    assert.equal(result.phases.length, 16);
+    assert.equal(result.phases.length, 17);
     const freeAi = result.phases.find(phase => phase.phase === 2);
     assert.ok(freeAi.clicks > 5 && freeAi.clicks <= (seed === 42 ? 60 : 110));
     assert.equal(result.offers.find(offer => offer.id === 'free_ai').cost, 0);
@@ -1447,7 +1447,22 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
     const investorTalks = result.offers.find(offer => offer.id === 'retire_unlock');
     const expansionTime = investorTalks.seconds - globalExpansion.seconds;
     // Early assistant timing changes the seeded journey; allow five seconds around the three-minute target.
-    assert.ok(expansionTime >= 90 && expansionTime <= 185, 'Phase 15 leaves time to develop the neocloud network before investor talks appear: ' + expansionTime + 's');
+    // AGI research, computer use and the founder handover extend expansion to roughly six minutes.
+    assert.ok(expansionTime >= 300 && expansionTime <= 420, 'Phases 15 and 16 leave time for expansion and AGI before investor talks appear: ' + expansionTime + 's');
+    const agiEntry = result.phases.find(phase => phase.phase === 16);
+    const saleEntry = result.phases.find(phase => phase.phase === 17);
+    const research = result.purchases.find(purchase => purchase.id === 'agi_research');
+    assert.equal(research.phase, 15);
+    assert.ok(agiEntry.seconds - research.seconds >= 29.9, 'Research completes before Phase 16 begins');
+    for (const id of ['agi_computer_use', 'agi_authority', 'agi_contracts', 'agi_independence']) {
+      const purchase = result.purchases.find(item => item.id === id);
+      assert.equal(purchase.phase, 16, id + ' belongs to the AGI phase');
+      assert.ok(purchase.seconds >= agiEntry.seconds);
+    }
+    assert.equal(sale[0].phase, 16);
+    assert.ok(saleEntry.seconds - sale[0].seconds >= 7.9, 'Investor talks complete before Phase 17 begins');
+    for (const purchase of sale.slice(1)) assert.equal(purchase.phase, 17);
+    t.diagnostic('Late phases: ' + JSON.stringify({ seed, phase15Seconds: agiEntry.seconds - globalExpansion.seconds, phase16Seconds: saleEntry.seconds - agiEntry.seconds, beforeTalksSeconds: expansionTime, agiEntry, saleEntry, retirementNodes: result.nodes, retirementTasks: result.tasks }));
     assert.ok(investorTalks.nodes >= 500);
     for (const id of ['neocloud_pipeline', 'standardised_construction', 'neocloud_batch', 'bulk_hardware', 'factory_direct', 'neocloud_supply_chain', 'parallel_neoclouds']) {
       const offer = result.offers.find(item => item.id === id);
@@ -1455,7 +1470,7 @@ test('three deterministic full journeys reach a saved ending without cheats', (t
       assert.ok(offer.cash < offer.cost, id + ' must remain a savings goal');
       assert.ok(purchase.seconds - offer.seconds >= 8, id + ' leaves time to save');
     }
-    assert.ok(result.tasks > result.phases.find(phase => phase.phase === 16).tasks, 'The company keeps delivering throughout sale preparation');
+    assert.ok(result.tasks > result.phases.find(phase => phase.phase === 17).tasks, 'The company keeps delivering throughout sale preparation');
     assert.ok(result.offers.find(o => o.id === 'ceo_parallel_clusters').seconds > result.offers.find(o => o.id === 'ceo_deploy_speed').seconds, 'Scaling upgrades reveal across the expansion phase');
     assert.ok(result.offers.find(o => o.id === 'ceo_quad_batch').cash < result.offers.find(o => o.id === 'ceo_quad_batch').cost, 'Four-agent provisioning is a savings goal');
     for (const id of ['pro_model', 'second_ai', 'multi_bot']) {
@@ -1658,9 +1673,9 @@ scenario('node production consumes real tokens and stops when empty', (h) => {
   h.api.tickNetwork(2);assert.equal(g.cash,100120);assert.equal(c.tank,0);assert.equal(g.totalTasksDone,4);
   h.api.tickNetwork(2);assert.equal(g.cash,100120);h.api.tickTokenManager();assert.equal(g.tokens,49750);assert.match(g.log[0].msg,/Purchased/);
   h.advance(2000);h.api.tickTokenManager();assert.equal(c.tank,500);const before=g.cash;h.api.tickNetwork(1);assert.equal(g.cash,before+50);
-  g.phase=15;c.workforce=c.workerSlotsMax;g.cash=1e10;g.totalTasksDone=10000;h.prepareUpgrade('retire_unlock');h.api.purchaseUpgrade('retire_unlock');assert.equal(g.phase,15);
+  g.phase=16;c.workforce=c.workerSlotsMax;g.cash=1e10;g.totalTasksDone=10000;h.prepareUpgrade('retire_unlock');h.api.purchaseUpgrade('retire_unlock');assert.equal(g.phase,16);
   while(g.clusters.length<500){const item=h.api.addClusterWithNextName();item.managerAssigned=true;item.tokenManagerAssigned=true;item.workforce=item.workerSlotsMax;}
-  h.api.purchaseUpgrade('retire_unlock');h.api.tickSalePreparation(8);assert.equal(g.phase,16);assert.equal(h.api.validSave(g),true);
+  h.api.purchaseUpgrade('retire_unlock');h.api.tickSalePreparation(8);assert.equal(g.phase,17);assert.equal(h.api.validSave(g),true);
 });
 scenario('cluster construction and node upgrades enforce stage, capacity and funds', (h) => {
   const g=h.fresh(10);g.cash=0;h.api.openCluster();assert.equal(g.clusters.length,0);
@@ -1855,7 +1870,7 @@ scenario('second subscription is mandatory and both workers retain tokens and jo
   assert.equal(h.api.validSave(g),true);h.api.fireAgent(original.id);h.api.hireAgent('writer');assert.equal(g.agents.length,2);
 });
 scenario('sale conditions gate the upgrade and restarting preserves bonuses without sales replay', (h) => {
-  const g=h.fresh(16);g.cash=1e9;g.totalTasksDone=2000;g.uiRevealed.upgrades=true;h.prepareUpgrade('fusion');for(let i=0;i<100;i++)h.fullCluster();g.techDebt=20;
+  const g=h.fresh(17);g.cash=1e9;g.totalTasksDone=2000;g.uiRevealed.upgrades=true;h.prepareUpgrade('fusion');for(let i=0;i<100;i++)h.fullCluster();g.techDebt=20;
   h.api.purchaseUpgrade('fusion');assert.equal(g.retired,false);h.api.renderUpgradeSection();assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'fusion\')"]').disabled,true);
   h.window.GAME.trueRetire();assert.equal(g.retirementFinal,false);h.window.GAME.prestige();assert.equal(h.window.GAME.state,g);
   g.retired=true;g.retirementValue=100000;g.prestigeCount=1;g.prestigeBonusClick=1;g.prestigeBonusTokens=50;h.api.renderAll();h.window.document.querySelector('#btn-ending-restart').click();
@@ -1987,7 +2002,7 @@ scenario('CEO training speeds construction and DevOps retires technical debt aut
   h.api.tickConstruction(20);first.managerAssigned=true;first.tokenManagerAssigned=true;g.techDebt=10;h.api.tickDebt(10);assert.equal(g.techDebt,0);assert.equal(h.api.UPGRADES.some(u=>u.id==='pay_debt'),false);
 });
 scenario('prestige stops music and restores the introduction and first manual task', (h) => {
-  const g=h.fresh(16);g.totalTasksDone=2000;h.api.unlockMusicPlayback();assert.ok(h.audioPlayers.some(player=>!player.paused));
+  const g=h.fresh(17);g.totalTasksDone=2000;h.api.unlockMusicPlayback();assert.ok(h.audioPlayers.some(player=>!player.paused));
   g.retired=true;h.window.GAME.prestige();const next=h.window.GAME.state;assert.ok(h.audioPlayers.every(player=>player.paused));assert.equal(next.gameStarted,false);assert.equal(next.tasks.length,0);assert.equal(next.milestonesReached.length,0);
   h.api.renderWorkStream();assert.equal(h.window.document.querySelector('#task-queue-section').style.display,'none');assert.match(h.window.document.querySelector('#intro-story').textContent,/bored/);
   h.window.document.querySelector('#intro-overlay').click();assert.equal(next.gameStarted,true);h.api.doEarlyTask();h.api.tickManualWork(1);assert.equal(next.totalTasksDone,1);assert.equal(next.uiRevealed.taskQueue,false);
@@ -2270,7 +2285,7 @@ scenario('phase cheats preserve their requested savings goals and prepare valid 
   h.window.chPh0_();
   assert.equal(h.window.GAME.state.totalTasksDone, 35);
   for(const stage of ['0_',1]){h.window['chPh'+stage]();assert.equal(h.window.GAME.state.phase,1);assert.equal(h.api.validSave(h.window.GAME.state),true);}
-  for(let stage=2;stage<=16;stage++){
+  for(let stage=2;stage<=17;stage++){
     h.window['chPh'+stage]();const g=h.window.GAME.state;const upgrade=h.api.UPGRADES.find(item=>item.unlockPhase===stage);assert.equal(g.phase,stage-1,'chPh'+stage);assert.equal(h.api.validSave(g),true);
     const checkpoint = checkpoints[stage];
     if (checkpoint) {
@@ -2284,8 +2299,8 @@ scenario('phase cheats preserve their requested savings goals and prepare valid 
         assert.equal(h.api.completedClusterCount(), checkpoint.clusters);
       }
     } else assert.ok(g.cash >= upgrade.cost);
-    if(stage>=14){assert.equal(g.clusters.length,Math.max(upgrade.reqNodes-1,...h.api.UPGRADES.filter(item=>g.purchasedUpgrades.includes(item.id)).map(item=>item.reqNodes||0)));h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}else{assert.equal(g.totalTasksDone,checkpoint?.tasks ?? upgrade.reqTasks-3);if(g.totalTasksDone<upgrade.reqTasks)h.window.GAME.addTasks(3);}
-    h.api.purchaseUpgrade(upgrade.id);h.api.tickSalePreparation(upgrade.saleDuration || 0);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
+    if(stage>=14){assert.equal(g.clusters.length,Math.max(upgrade.reqNodes-1,...h.api.UPGRADES.filter(item=>g.purchasedUpgrades.includes(item.id)).map(item=>item.reqNodes||0)));if(h.api.completedClusterCount()<upgrade.reqNodes){h.api.openCluster();h.api.tickConstruction(12.1);g.lastCeoAction=0;h.api.tickAiCeo();}}else{assert.equal(g.totalTasksDone,checkpoint?.tasks ?? upgrade.reqTasks-3);if(g.totalTasksDone<upgrade.reqTasks)h.window.GAME.addTasks(3);}
+    h.api.purchaseUpgrade(upgrade.id);h.api.tickAgi(upgrade.agiDuration || 0);h.api.tickSalePreparation(upgrade.saleDuration || 0);assert.equal(g.phase,stage,'transition '+stage);assert.equal(h.api.validSave(g),true);
   }
   h.window.GAME.state.retired=true;h.window.chPh7();assert.equal(h.window.GAME.state.phase,6);assert.equal(h.window.GAME.state.totalTasksDone,4997);assert.equal(new Set(h.window.GAME.state.agents.map(agent=>agent.roleId)).size,5);assert.equal(h.window.GAME.state.retired,false);
 });
@@ -3029,6 +3044,16 @@ scenario('upgrade buttons contain the full cash or token price without a separat
   h.prepareUpgrade('test_tokens');
   h.api.renderUpgradeSection();
   assert.equal(button('test_tokens').textContent, '5 tok');
+  g.tokens = 4;
+  h.api.purchaseUpgrade('test_tokens');
+  assert.equal(g.tokens, 4);
+  assert.equal(g.purchasedUpgrades.includes('test_tokens'), false);
+  assert.equal(g.log[0].msg, 'Not enough tokens!');
+  g.tokens = 5;
+  h.api.purchaseUpgrade('test_tokens');
+  assert.equal(g.tokens, 0);
+  assert.equal(g.cash, 1000);
+  assert.equal(g.purchasedUpgrades.includes('test_tokens'), true);
   h.api.UPGRADES.at(-1).oneTime = false;
   h.api.renderUpgradeSection();
   assert.equal(button('test_tokens').textContent, '5 tok');
@@ -3086,7 +3111,7 @@ scenario('late expansion accelerates gradually and respects the fourfold speed l
   assert.equal(g.clusters.length, 64);
   assert.ok(g.clusters.at(-1).buildDuration >= 1 && g.clusters.at(-1).buildDuration <= 1.1);
   while (h.api.completedClusterCount() < 100) h.fullCluster();
-  g.phase = 16;
+  g.phase = 17;
   assert.equal(h.api.expansionSpeed(), 4);
   assert.equal(h.api.clusterBuildDuration(), 0.5);
   g.purchasedUpgrades = [];
@@ -3102,7 +3127,7 @@ scenario('network task throughput grows in stages while cash and token costs sta
   g.ceoMode = 'scale';
   g.batchSize = 2000;
   const cluster = h.fullCluster();
-  for (const [phase, tasks] of [[13, 16000], [14, 24000], [15, 56000], [16, 56000]]) {
+  for (const [phase, tasks] of [[13, 16000], [14, 24000], [15, 56000], [16, 56000], [17, 56000]]) {
     g.phase = phase;
     g.cash = 0;
     g.totalTasksDone = 0;
@@ -3117,7 +3142,7 @@ scenario('network task throughput grows in stages while cash and token costs sta
 });
 
 scenario('the CEO keeps expanding while the player can choose the Golden Parachute', (h) => {
-  const g = h.fresh(16);
+  const g = h.fresh(17);
   g.ceoMode = 'scale';
   g.cash = 5e9;
   h.fullCluster();
@@ -3152,7 +3177,7 @@ scenario('chRetire prepares an immediate Golden Parachute and retirement restore
   h.api.unlockMusicPlayback();
   h.window.chRetire();
   const g = h.window.GAME.state;
-  assert.equal(g.phase, 16);
+  assert.equal(g.phase, 17);
   assert.equal(g.retired, false);
   assert.equal(g.totalTasksDone, 1e9);
   assert.equal(h.api.completedClusterCount(), 500);

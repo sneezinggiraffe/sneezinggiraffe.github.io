@@ -353,6 +353,7 @@ function fixture(phase) {
   const h=harness();const g=h.fresh(phase);g.cash=1e11;g.tokens=50000;g.totalTasksDone=2000000;g.managerTokenTank=4000;g.managerUnlock=true;g.aiWorkerShutdown=phase>=5;g.payMult=10;
   h.api.purchaseUpgrade('tools_of_trade');
   g.purchasedUpgrades=h.api.UPGRADES.filter(u=>u.oneTime&&u.phase<=phase&&(!u.unlockPhase||u.unlockPhase<=phase)&&u.id!=='fusion').map(u=>u.id);
+  if(phase>=17)g.agi.route='buyout';
   g.ceoMode=phase>=12?'scale':phase>=11?'manage':'off';
   if(phase>=10)for(let n=0;n<(phase>=13?100:phase>=11?3:1);n++){const c=h.fullCluster();c.tank=4000;}
   if(phase<10){h.worker('manager');h.worker('token_mgr');h.worker('devops');}
@@ -672,7 +673,7 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:844
   });
 }
 test('sale opens a separate retirement screen, then permanent retirement survives reload',async({page})=>{
-  const raw=fixture(16);await page.addInitScript(value=>{if(!sessionStorage.getItem('ending_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('ending_seeded','1')}},raw);
+  const raw=fixture(17);await page.addInitScript(value=>{if(!sessionStorage.getItem('ending_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('ending_seeded','1')}},raw);
   page.on('dialog',dialog=>dialog.accept());await page.goto('/');await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();
   await expect(page.getByRole('heading',{name:'You retired early!'})).toBeVisible();await expect(page.locator('#game-container')).toBeHidden();await expect(page.locator('#top-bar')).toBeHidden();
   await expect(page.locator('#btn-ending-restart')).toBeFocused();const balance=await page.evaluate(()=>GAME.state.cash);await page.waitForTimeout(300);expect(await page.evaluate(()=>GAME.state.cash)).toBe(balance);
@@ -682,7 +683,7 @@ test('sale opens a separate retirement screen, then permanent retirement survive
   await page.evaluate(()=>localStorage.setItem('unrelated-app','keep'));await page.getByRole('button',{name:'Start a new story'}).click();await expect(page.getByRole('button',{name:'Find Work'})).toBeVisible();expect(await page.evaluate(()=>localStorage.getItem('unrelated-app'))).toBe('keep');
 });
 test('another model restarts from the retirement screen with earned bonuses',async({page})=>{
-  await page.setViewportSize({width:390,height:844});const raw=fixture(16);await page.addInitScript(value=>{if(!sessionStorage.getItem('seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('seeded','1')}},raw);await page.goto('/');
+  await page.setViewportSize({width:390,height:844});const raw=fixture(17);await page.addInitScript(value=>{if(!sessionStorage.getItem('seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('seeded','1')}},raw);await page.goto('/');
 
   await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();await expect(page.locator('#ending-story')).toContainText('golf course');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/retire-early-mobile.png'});

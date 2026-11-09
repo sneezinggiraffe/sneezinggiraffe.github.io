@@ -63,6 +63,7 @@ function harness(saved, options = {}) {
       state.expensesRevealed = true;
       state.uiRevealed.expenses = true;
     }
+    if (state.purchasedUpgrades.includes("agi_independence")) state.agi.route = "buyout";
   }
   function fullCluster() {
     const state=window.GAME.state;const cluster=api.addClusterWithNextName();cluster.managerAssigned=true;cluster.tokenManagerAssigned=true;

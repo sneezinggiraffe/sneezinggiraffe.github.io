@@ -15,7 +15,7 @@ for (const width of [1440, 844, 390, 320]) {
     await expect(page.locator('body')).toHaveAttribute('data-theme', '3');
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(217, 221, 218)');
     await expect(page.locator('#theme-switcher, #theme-name, [data-theme-choice], #layout-name, .switcher-label')).toHaveCount(0);
-    for (const phase of ['0_2', 16]) {
+    for (const phase of ['0_2', 16, 17]) {
       await page.evaluate(value => GAME.cheat(value), phase);
       await page.clock.runFor(200);
       const group = page.getByRole('group', { name: 'Game views', exact: true });

@@ -55,10 +55,11 @@ for (const width of [1440, 844, 390, 320]) {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(gameFileUrl);
-    for (const phase of [1, 6, 11, 16]) {
+    for (const phase of [1, 6, 11, 16, 17]) {
       await page.evaluate(value => GAME.cheat(value === 1 ? '0_' : value), phase);
       await page.evaluate(fillQueue);
       await page.clock.runFor(200);
+      await page.mouse.move(2, 2);
       const state = await page.evaluate(() => JSON.stringify(GAME.state));
       for (const layout of [3, 4]) {
         await page.locator(`[data-layout-choice="${layout}"]`).click();

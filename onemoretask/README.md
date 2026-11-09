@@ -1,6 +1,6 @@
 # One More Task
 
-A standalone incremental browser game about freelance work, automation, management, and finally having enough. The complete arc runs from Phase 1 to Phase 16, with an optional prestige cycle or a persistent retirement ending.
+A standalone incremental browser game about freelance work, automation, management, and finally having enough. The complete arc runs from Phase 1 to Phase 17, with an optional prestige cycle, a persistent retirement ending or an unrestricted AGI ending.
 
 ## Run
 
@@ -50,10 +50,10 @@ Task cards use their original dimensions: 148 pixels tall in H on desktop, 158 p
 - Every subsequent provision costs more. Fully staffed spare clusters can be sold using Sell. Sales do not reset provisioning prices.
 - **AI CEO Scale Mode** costs $200M and now enters Phase 12, where the CEO creates and staffs clusters automatically. **Rapid Cluster Deployment** is a regular $300M Phase 12 upgrade that halves construction time and doubles CEO coordination speed. New shells show construction progress with space below the stage text. Continuous Deployment later builds fully fitted clusters in two seconds each. Ralph-loops and Scale Mode do not open transition modals. DevOps automatically reduces technical debt.
 - The $1M AI CEO is a filled purchase card above the clusters, not an upgrade-list item. Buying it starts automatic staffing at the existing eight-slot capacity. Re-architect Network ($30M) adds a ninth slot; High-Density Clusters ($50M) separately expands clusters to sixteen slots. Task detail folds when Cluster 2 is ordered and can be reopened manually. An initial agent installation takes four seconds; Provisioning Pipeline ($25M) halves installation duration. The initial pipeline permits one installation, while Dual and Four-Agent Provisioning raise that company-wide limit to two and four. Slots refill independently on the next game tick when capacity and funds allow. Faster AI Provisioning ($40M) precedes the sixteen-slot expansion; Dual Agent Provisioning ($75M) follows it. Both work in Manage Mode before the $200M Scale Mode, which takes over new cluster creation. Manual provisioning disappears.
-- Phase 13 introduces autonomous nodes with unnamed agent tiles in a 4×4 grid, retaining Phase 12's smaller dimensions. From Phase 10 onward, available provisioning or Planning placeholders occupy the top-left position, followed by clusters from newest to oldest. New clusters push existing cards right and down, with no ordering change at Phase 13. Replication requires twenty online nodes and at least nine additional nodes during Phase 13, unlocks four concurrent cluster builds in Phase 14 and reduces cluster costs by 35%. The $2B Global Expansion requires forty completed nodes, reduces costs another 40% and introduces neoclouds in Phase 15. Each neocloud permanently groups 25 cluster numbers. Phase 15 adds two construction-speed upgrades, two upgrades that each halve cluster prices, and capacity for 25 and 50 simultaneous builds. Investor talks appear after all six upgrades and 500 completed clusters.
+- Phase 13 introduces autonomous nodes with unnamed agent tiles in a 4×4 grid, retaining Phase 12's smaller dimensions. From Phase 10 onward, available provisioning or Planning placeholders occupy the top-left position, followed by clusters from newest to oldest. New clusters push existing cards right and down, with no ordering change at Phase 13. Replication requires twenty online nodes and at least nine additional nodes during Phase 13, unlocks four concurrent cluster builds in Phase 14 and reduces cluster costs by 35%. The $2B Global Expansion requires forty completed nodes, reduces costs another 40% and introduces neoclouds in Phase 15. Each neocloud permanently groups 25 cluster numbers. Phase 15 adds two construction-speed upgrades, two upgrades that each halve cluster prices, and capacity for 25 and 50 simultaneous builds. After the seven expansion upgrades, completing AGI research enters Phase 16. Computer use and the founder handover lead to a choice between unrestricted scaling and investor talks, whose completion enters Phase 17 for the buyout.
 - Client retainer upgrades deploy contracts automatically, each earning $80/s before downtime and $2/s upkeep. Their income contributes to the normal income estimate; there is no separate cluster footer label. Two managed clusters increase agent task speed by 50%; three or more double it.
 - Layered music adds a bright D4 + F4 synth motif from Phase 6: both notes sound together in two five-hit phrases per 4/4 bar, with each phrase lasting two beats. The 125 ms plucks have a slightly stronger middle hit, subtle stereo chorus and a light reverb tail. It fades in over eight seconds at a quiet background level. Music: On plays the full layered soundtrack; Music: Off silences every layer. Retirement restores the original soundtrack and stops the pressure layers, while keeping the saved music preference. Restarting through prestige stops all music until the new story begins.
-- Breaking save change: the removed `layered` music setting is no longer accepted. Existing saves with that value are preserved but cannot load and require a reset. Saves with `on` or `off` remain valid.
+- Breaking save change: the removed `layered` music setting is no longer accepted. Existing saves with that value are preserved but cannot load and require a reset. Current-version saves accept `on` or `off`.
 - Phase 9 restores the original 172 BPM DnB groove with its own D4 + F4 hook, premixed into one seamless sixteen-bar WAV. One broad five-hit phrase per DnB bar keeps the hook locked to the faster drums. The drum component is mixed 15% lower while the hook retains its level. Once the mix is ready, it enters on the next drum downbeat; the earlier kick and standalone synth fade out together over three bars, about 6.3 seconds.
 
 ## Early automation and hiring checkpoints
@@ -108,7 +108,7 @@ Phase 13 adds Continuous Deployment ($150M), improving construction from three s
 | Dedicated Hardware Supply | $2.5B | 450 | Halve construction time again |
 | Parallel Neoclouds | $3B | 500 | Build 50 clusters concurrently |
 
-Standardised Construction and Bulk Hardware Contracts stack to a 75% discount. Factory-Direct Hardware then replaces the quadratic hardware price with a lower linear curve. These reductions apply to every rising price within a construction run and its funding target, and remain active in Phase 16. A fully upgraded company starting at 500 completed clusters with no cash sustains 22.5 completed clusters per second after its initial funding period, close to one 25-cluster neocloud per second. Existing investments retain their original amounts. Large runs compress their staggered starts so the whole cohort overlaps in construction. Earlier starts remain 300–400ms apart. Remaining times include queued start delays; progress stays at zero until each start, and reloads preserve timing. Construction consumes cash at the rising price for each cluster. Network task throughput remains 2x, 3x and 7x in Phases 13, 14 and 15 onwards, without multiplying cash payouts or token drain.
+Standardised Construction and Bulk Hardware Contracts stack to a 75% discount. Factory-Direct Hardware then replaces the quadratic hardware price with a lower linear curve. These reductions apply to every rising price within a construction run and its funding target, and remain active in Phases 16 and 17. A fully upgraded company starting at 500 completed clusters with no cash sustains 22.5 completed clusters per second after its initial funding period, close to one 25-cluster neocloud per second. Existing investments retain their original amounts. Large runs compress their staggered starts so the whole cohort overlaps in construction. Earlier starts remain 300–400ms apart. Remaining times include queued start delays; progress stays at zero until each start, and reloads preserve timing. Construction consumes cash at the rising price for each cluster. Network task throughput remains 2x, 3x and 7x in Phases 13, 14 and 15 onwards, without multiplying cash payouts or token drain.
 
 Node-based progression counts fully completed clusters. Upgrade descriptions omit parenthesized node counts; node requirements still gate purchases. A new construction project cannot disable an otherwise satisfied node target. Compact-node conversion preserves ongoing fully fitted rack construction without prematurely producing tasks.
 
@@ -118,24 +118,43 @@ From Phase 11, token purchasing becomes one company-wide Token Assistant service
 
 Cluster work capacity scales with the company: twelve task spaces and one arrival per spawn interval for each managed cluster. This removes the old twelve-task ceiling across the entire company. A three-cluster Phase 11 regression scenario consumes over 25,000 tokens in one minute while conserving total tokens across reserve, cluster and agent tanks.
 
-An outlined Bring cluster online card occupies the first grid position, ahead of existing clusters. It is disabled when unaffordable and hidden during construction, at capacity or after Scale Mode is bought. Manual orders require all existing clusters to be fully online. Five full clusters are needed before Scale Mode appears. In Scale Mode, a noninteractive Planning card previews the next cluster after the latest cluster has nine to twelve agents online. From Phase 13, Planning remains visible before the newest cluster, including during construction. It shows land searching, council negotiations, lease drafting or the next funding target. Ordinary expansion requires twice the next cluster price. Whole-neocloud construction requires twice the combined rising prices of the next 25 or 50 clusters before starting a run. This budget applies in Phases 15 and 16 and includes no separate exit reserve. Expansion has no fixed cluster-count limit.
+An outlined Bring cluster online card occupies the first grid position, ahead of existing clusters. It is disabled when unaffordable and hidden during construction, at capacity or after Scale Mode is bought. Manual orders require all existing clusters to be fully online. Five full clusters are needed before Scale Mode appears. In Scale Mode, a noninteractive Planning card previews the next cluster after the latest cluster has nine to twelve agents online. From Phase 13, Planning remains visible before the newest cluster, including during construction. It shows land searching, council negotiations, lease drafting or the next funding target. Ordinary expansion requires twice the next cluster price. Whole-neocloud construction requires twice the combined rising prices of the next 25 or 50 clusters before starting a run. This budget applies throughout Phases 15, 16 and 17 and includes no separate exit reserve. Expansion has no fixed cluster-count limit.
 
 At two managed clusters, the board adds a Delivery panel with a ten-second smoothed completion rate, queued and in-progress counts, and three recent completions. Fixed grid columns and tabular numerals keep the queue and work counts from shifting as delivery grows. The task-heading row has no duplicate Delivery label. Tasks fold immediately when Cluster 2 is ordered, including while it is under construction. Buying the CEO preserves a manual reopening. A right-aligned Hide tasks / Show tasks chevron toggles detail and keeps keyboard focus; manual reopening persists through later phase changes in the current session. Reloading a CEO-led company starts with tasks folded. From Phase 13 the panel shows the delivery rate, managed-node count and delivery revenue without individual task controls. Observation history and the expanded-list preference are session-only, reset on a new story, and do not alter the save schema.
 
 ## Finish
 
-After all seven Phase 15 expansion upgrades and 500 completed clusters, **Host Investor Talks** appears for $90K and takes eight seconds. Completing the talks enters Phase 16. Its company-size condition is already satisfied when the card appears. Three deterministic active-player journeys spend about three minutes in Phase 15 before talks become available.
+Phase 15 is **Global Expansion**. After its seven infrastructure upgrades and 500 completed clusters, the company can fund AGI research. Completing the 30-second research project enters Phase 16, **AGI**, where computer use, purchasing authority, contracts and the founder handover lead to the route choice.
 
-The sale then proceeds one step at a time:
+| Upgrade | Phase | Cost | Active project time |
+| --- | --- | ---: | ---: |
+| Fund AGI Research | 15; completion enters 16 | $8B | 30 seconds |
+| Enable Computer Use | 16 | $4B | 20 seconds |
+| Grant Purchasing Authority | 16 | $6B | Three supervised checks first |
+| Enterprise Capacity Contracts | 16 | $12B | 30 seconds; +25% delivery revenue |
+| Train Your Replacement | 16 | $20B | 45 seconds after the operating milestones |
 
-| Action | Cost | Active preparation time |
-| --- | ---: | ---: |
-| Host Investor Talks | $90K | 8 seconds |
-| Appoint a Sale Advisor | $5M | 10 seconds |
-| Discuss a Management Buyout | $20M | 12 seconds |
-| Complete Due Diligence | $100M | 18 seconds |
-| Agree Sale Terms | $250M | 10 seconds |
-| Complete Company Sale | $5B | Immediate settlement |
+AGI visibly checks cash, operations and network capacity using its own cursor. After three checks, it waits for the player to grant purchasing authority. It then buys the contracts and handover upgrades automatically, saving their cost before funding more construction. The handover requires 500 new completed clusters, 100 million delivered tasks and 30 healthy operating seconds since purchasing authority was granted. Projects charge once and retain their remaining time on reload. Dialogs, hidden tabs and offline gaps pause project and replication progress.
+
+Moving the pointer, scrolling, touching or using the keyboard restores human control. **Resume AGI** continues automatic purchases and cursor movement. The human cursor is hidden only over the game while AGI drives it. Reduced motion removes pointer travel animation. AGI stops inspecting and brings player decisions into view when authority, the route choice or the final sale requires input.
+
+The independent company offers one choice:
+
+- **Position for Buyout** reveals **Host Investor Talks**, costing $90K and taking eight seconds. Completing talks enters Phase 17, **Buyout**. AGI handles the four subsequent preparation purchases, and the player completes the sale.
+- **Keep Scaling** branches directly from Phase 16 without entering another phase. It opens **Remove oversight limits?** Choosing **No, go back** returns to the decision. **Yes, remove limits** permanently closes the buyout route for that run. Over 45 active seconds, AGI creates subsidiaries, multiplies into 32,768 instances and takes over the interface with multiple cursors. Human input restores the real pointer while the rogue copies keep moving. The persistent ending reads **There is always one more task.** Its **Start a new story** button resets the run after confirmation.
+
+Three deterministic active-player journeys, including one with a delegated opening, spend 234.4 to 246.9 seconds in Phase 15 and 122.1 to 122.6 seconds in Phase 16. Phase 16 includes the eight-second investor talks. The combined time before talks begin is 348.5 to 361.5 seconds.
+
+The buyout route proceeds one step at a time:
+
+| Action | Phase | Cost | Active preparation time |
+| --- | --- | ---: | ---: |
+| Host Investor Talks | 16; completion enters 17 | $90K | 8 seconds |
+| Appoint a Sale Advisor | 17 | $5M | 10 seconds |
+| Discuss a Management Buyout | 17 | $20M | 12 seconds |
+| Complete Due Diligence | 17 | $100M | 18 seconds |
+| Agree Sale Terms | 17 | $250M | 10 seconds |
+| Complete Company Sale | 17 | $5B | Immediate settlement |
 
 Each preparation step charges once when started, shows its activity and progress, and unlocks the next action only on completion. Remaining preparation time survives reloads and pauses with dialogs, hidden tabs and offline gaps. Company operations and expansion continue during preparation. Completed steps provide the next piece of the sale story.
 
@@ -146,7 +165,7 @@ Choose on that screen:
 1. **Interesting, there's another model out…** starts again with permanent click power, starting tokens, and the earned extra starting agent slot. The introduction and central opening return with different story text. Music stops, while its preference is retained.
 2. **Actually retire** completes the permanent ending. Starting a new story from there requires confirmation.
 
-Both ending stages persist on reload. There is no restart or retirement choice before selling the company.
+Both retirement stages and the runaway ending persist on reload. Retirement and prestige follow the sale; the runaway ending offers a fresh start.
 
 Income estimates use whole-job throughput rather than the remaining time on a nearly finished job. Empty agent tanks contribute no task income.
 
@@ -154,9 +173,9 @@ Income estimates use whole-job throughput rather than the remaining time on a ne
 
 Progress is stored locally in the browser, automatically every ten seconds and when leaving or hiding the page. No accounts, backend, or network saves are required.
 
-**Breaking change:** this release uses save format version 18 for the automatic assistant cycle and break state. It does not migrate earlier saves, including version 17. Incompatible saves are preserved until the player explicitly resets them; a visible notice explains the problem. Current saves persist assistant work and breaks, sale preparation, construction, worker slots and task-arrival delays. Storage failures remain visible and can be retried.
+**Breaking change:** this release uses save format version 20 for the separate AGI and Buyout phases. Version 19 and earlier saves are incompatible and are not migrated. Start a new game or load a console checkpoint. Incompatible saves are preserved until the player explicitly resets or replaces them; a visible notice explains the problem. Current saves persist AGI projects, operating milestones, route decisions, runaway progress, assistant work and breaks, sale preparation, construction, worker slots and task-arrival delays. Storage failures remain visible and can be retried.
 
-Offline earnings are limited to recurring services and referral contracts at 50% efficiency, minus expenses, for up to eight hours. Offline losses are forgiven. Busy-agent snapshots do not generate offline income. Returning from a background tab follows the same rule. Settings dialogs pause foreground simulation. Phase transitions and the first incident do not open dialogs. Your First Incident appears as an optional free info upgrade that dismisses on click without changing resources or blocking progress. It disappears after Phase 9. Keeping AI Running, Your First Cluster and Running an Autonomous Network no longer appear; their upgrade IDs remain valid in saved progress. Portrait play has no rotation prompt. Offline earnings are credited immediately and recorded in the event log without a Collect dialog. The save version and required fields are unchanged; existing version 18 saves retain their progress.
+Offline earnings are limited to recurring services and referral contracts at 50% efficiency, minus expenses, for up to eight hours. Offline losses are forgiven. Busy-agent snapshots do not generate offline income. Returning from a background tab follows the same rule. Settings dialogs pause foreground simulation. Phase transitions and the first incident do not open dialogs. Your First Incident appears as an optional free info upgrade that dismisses on click without changing resources or blocking progress. It disappears after Phase 9. Keeping AI Running, Your First Cluster and Running an Autonomous Network no longer appear; their upgrade IDs remain valid in saved progress. Portrait play has no rotation prompt. Offline earnings are credited immediately and recorded in the event log without a Collect dialog.
 
 ## Verify
 
@@ -173,7 +192,7 @@ npm run test:browser
 Browser checks use the installed macOS Chrome when available. Else install Playwright Chromium with `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to a Chromium executable. `npm run check` runs syntax, regression, coverage, and browser checks together.
 
 - Regression tests cover automation, cluster scope, purchases, services, incident escalation, retirement, prestige, storage failures, lifecycle timing, and keyboard focus.
-- Three deterministic 16-phase playthroughs start from zero cash without cheats or resource grants and reach retirement with more than 100 nodes. They verify that free AI requires the preceding paid tools, while Basic, the second AI and the multi-agent licence remain savings goals. Separate opening checks verify that skipping the tools prevents the unlock. They exercise a very active player, so their timings are a progression regression check, not a prediction of human playtime.
+- Three deterministic 17-phase playthroughs start from zero cash without cheats or resource grants and reach retirement with more than 100 nodes. They verify that free AI requires the preceding paid tools, while Basic, the second AI and the multi-agent licence remain savings goals. Separate opening checks verify that skipping the tools prevents the unlock. They exercise active play, including a delegated opening for seed 42, so their timings are a progression regression check, not a prediction of human playtime.
 - Three additional playthroughs test CEO saving goals at 0.5, 5 and 10-second action intervals, including separate Pipeline and network-density purchases and larger Scale Mode and agent-batching goals.
 - A separate five-minute Phase 8 simulation verifies sustained automation without manual refills.
 - Coverage requires **100% of added or changed executable game lines** relative to release baseline `45bc33c`. The report also displays coverage of the entire legacy game; that is a separate metric. No production code is excluded from instrumentation.
@@ -189,11 +208,19 @@ Use `chPh0()` to immediately clear saved progress and reload to a fresh game, in
 
 Use `chStart9()` to play Phase 9 from its entry, with growth upgrades still unpurchased. `chPh10()` is an end-of-Phase-9 checkpoint with 1M tasks and $1.2M, including the growth purchases and leaving $300K to earn for the acquisition. `chPh11()` prepares late Phase 10 with 4.6M tasks, $30M and 3 fully staffed clusters, leaving $5M to earn for AI CEO Readiness. `chPh12()` prepares late Phase 11 with 27M tasks, $180M and 5 fully staffed clusters, leaving $20M to earn for Scale Mode and Phase 12. See [balance landmarks](BALANCE.md) for rough task and cash ranges during ordinary play.
 
-`chRetire()` replaces the current save with Phase 16, one billion tasks, five hundred fully staffed nodes, all five preparation steps complete, sufficient cash, healthy operations and an immediately usable **Complete Company Sale** action. Clicking its $5B button begins the ending fade.
+`chRetire()` replaces the current save with Phase 17, one billion tasks, five hundred fully staffed nodes, all five preparation steps complete, sufficient cash, healthy operations and an immediately usable **Complete Company Sale** action. Clicking its $5B button begins the ending fade.
 
 `chPh2()` through `chPh13()` build the preceding phase with the required upgrades and a staffed team, usually three tasks before the next transition. `chPh13()` prepares late Phase 12 with 63M tasks, $600M and 21 fully staffed clusters, leaving $160M to earn for Autonomous Operating Model. `chPh3()` and `chPh5()` retain their $1,900 and $1,300 savings goals. `chPh4()` prepares Second AI Subscription at 870 tasks and $14,000, with all earlier purchases complete and the second subscription still unpurchased. `chPh9()` prepares Ralph-loops at 390,000 tasks and $800,000, leaving $200,000 to earn. For example, `chPh7()` loads Phase 6 at 4,997 tasks with $40,000; complete three tasks and buy Manager Agent to enter Phase 7.
 
-`chPh14()` and `chPh15()` load 19 and 39 staffed nodes respectively. Provision and staff the next node to reach the replication or global expansion checkpoint. `chPh16()` loads 500 staffed nodes with the seven expansion upgrades purchased, ready for investor talks. Completing the eight-second investor event enters Phase 16 and begins the remaining sale journey. `chPh1()` loads 50 tasks with Dual Monitors and Noise-Cancelling Headphones still unpurchased, while `chPh0_()` loads 35 tasks with Side Hustle Optimization and Inbox Zero available. Helpers replace the current saved game and also work from the retirement screen. They use real upgrade and hiring logic, and are regression-tested for valid saves and successful next-phase purchases.
+`chPh14()` and `chPh15()` load 19 and 39 staffed nodes respectively. Provision and staff the next node to reach the replication or global expansion checkpoint.
+
+| Helper | Loaded state | Next step |
+| --- | --- | --- |
+| `chPh16()` | Phase 15, 500 staffed nodes, seven expansion upgrades purchased, $8B | Fund AGI Research; completion enters Phase 16 |
+| `chPh16Choice()` | Phase 16, independent company, neither route selected | Choose Position for Buyout or Keep Scaling |
+| `chPh17()` | Phase 16, completed AGI handover, buyout selected | Host Investor Talks; completion enters Phase 17 |
+
+`chPh1()` loads 50 tasks with Dual Monitors and Noise-Cancelling Headphones still unpurchased, while `chPh0_()` loads 35 tasks with Side Hustle Optimization and Inbox Zero available. Helpers replace the current saved game and also work from the retirement screen. They use real upgrade and hiring logic, and are regression-tested for valid saves and successful next-phase purchases.
 
 ## Release
 
@@ -214,7 +241,7 @@ This is a public repository. Do not commit credentials, API keys, passwords, acc
 
 The canonical design reference is [the repository design spec](../DESIGN.md). Advanced routing topology, dynamic cluster agent caps, and autonomous CEO strategy customization remain explicitly outside this game's release scope.
 
-**Breaking phase and cheat change:** Second AI Subscription now starts Phase 4; every former Phase 4–15 becomes Phase 5–16. `chPh4()` replaces `chPh3_1()`, later numbered cheats move up one, and `chStart9()` replaces `chStart8()`. No old aliases are retained.
+**Breaking phase and checkpoint change:** Second AI Subscription starts Phase 4. The late game now separates Global Expansion in Phase 15, AGI in Phase 16 and Buyout in Phase 17. `chPh16()` prepares AGI research, `chPh16Choice()` opens the neutral route decision, and `chPh17()` prepares investor talks. No old checkpoint aliases are retained.
 
 **Breaking debug API change:** manual provisioning now requires `GAME.buyClusterWorker(clusterId, slotIndex)`, with a zero-based slot index. A slot can only purchase itself, in order. The former cluster-only manual call no longer provisions an agent.
 

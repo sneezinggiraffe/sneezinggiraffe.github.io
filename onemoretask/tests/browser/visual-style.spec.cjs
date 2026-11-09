@@ -8,7 +8,7 @@ for (const width of [1440, 844, 390, 320]) {
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(217, 221, 218)');
     await expect(page.locator('#intro-overlay')).toHaveCSS('border-radius', '1px');
     await page.getByRole('button', { name: 'Find Work', exact: true }).click();
-    for (const stage of ['0_', 6, 9, 11, 13, 16]) {
+    for (const stage of ['0_', 6, 9, 11, 13, 16, 17]) {
       await page.evaluate(value => GAME.cheat(value), stage);
       await page.clock.runFor(200);
       await expect(page.locator('#rotate-overlay, #offline-popup')).toHaveCount(0);
@@ -18,9 +18,14 @@ for (const width of [1440, 844, 390, 320]) {
       const taskHeading = await page.locator('#tasks-heading').boundingBox();
       expect(topBar.y + topBar.height).toBeLessThanOrEqual(taskHeading.y);
       await expect(page.locator('#phase-label')).toHaveCSS('border-radius', '2px');
-      const section = page.locator('.cp-section:visible > .card').first();
+      const section = page.locator('.cp-section:visible:not(#section-agi) > .card').first();
       await expect(section).toHaveCSS('box-shadow', 'none');
       await expect(section).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+      const agiPanel = page.locator('#section-agi > .card');
+      if (await agiPanel.isVisible()) {
+        await expect(agiPanel).toHaveCSS('box-shadow', 'none');
+        await expect(agiPanel).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+      }
       const markerText = await page.locator('.agent-icon:visible, .task-icon:visible').allTextContents();
       if (stage === '0_') expect(markerText.length).toBeGreaterThan(0);
       expect(markerText.join('')).not.toMatch(/\p{Extended_Pictographic}/u);
@@ -110,7 +115,7 @@ for (const width of [844, 320]) {
     await page.clock.install({ time: new Date(now) });
     await page.clock.pauseAt(new Date(now + 1000));
     await page.goto('/');
-    await page.evaluate(() => GAME.cheat(16));
+    await page.evaluate(() => GAME.cheat(17));
     await page.clock.runFor(200);
     const number = await page.locator('.delivery-rate').evaluate(element => {
       element.firstChild.textContent = '304,532,335';

@@ -89,15 +89,16 @@ test('first incident reveals guidance without blocking repair or pausing time', 
 test('every formerly modal phase transition preserves its effects without a popup', (t) => {
   const h = harness();
   t.after(() => h.close());
-  for (const [id, phase] of [['pro_model', 2], ['acquire_micro_agency', 9], ['ceo_readiness', 10], ['autonomous_nodes', 12], ['replication', 13], ['global_network', 14], ['retire_unlock', 15]]) {
+  for (const [id, phase] of [['pro_model', 2], ['acquire_micro_agency', 9], ['ceo_readiness', 10], ['autonomous_nodes', 12], ['replication', 13], ['global_network', 14], ['agi_research', 15], ['retire_unlock', 16]]) {
     const g = h.fresh(phase);
     g.cash = 1e12;
     g.totalTasksDone = 1e9;
     h.prepareUpgrade(id);
     g.purchasedUpgrades = g.purchasedUpgrades.filter(value => !infoIds.includes(value));
-    const count = phase === 10 ? 3 : phase === 13 ? 20 : phase === 14 ? 40 : phase === 15 ? 500 : 0;
+    const count = phase === 10 ? 3 : phase === 13 ? 20 : phase === 14 ? 40 : phase >= 15 ? 500 : 0;
     for (let i = 0; i < count; i++) h.fullCluster();
     h.api.purchaseUpgrade(id);
+    if (id === 'agi_research') h.api.tickAgi(30);
     if (id === 'retire_unlock') h.api.tickSalePreparation(8);
     assert.equal(g.phase, phase + 1, id);
     assert.equal(h.api.queue().length, 0, id);
@@ -135,21 +136,20 @@ test('offline earnings are credited once and logged without a dialog on load and
   assert.ok(loaded.totalPlaytime > elapsed);
 });
 
-test('pre-change saves from all sixteen phases load and retain their progress without migration', (t) => {
+test('version 18 saves from all sixteen phases are preserved for explicit reset', (t) => {
   for (const original of previousSaves) {
-    const h = harness(JSON.stringify(original));
+    const raw = JSON.stringify(original);
+    const h = harness(raw);
     t.after(() => h.close());
     const loaded = h.window.GAME.state;
     assert.equal(h.api.validSave(loaded), true);
-    assert.equal(h.window.document.querySelector('#save-notice').hidden, true);
-    assert.equal(loaded.saveVersion, original.saveVersion);
-    assert.equal(loaded.phase, original.phase);
-    assert.equal(loaded.cash, original.cash);
-    assert.equal(loaded.tokens, original.tokens);
-    assert.equal(loaded.totalTasksDone, original.totalTasksDone);
-    assert.deepEqual(Array.from(loaded.purchasedUpgrades), original.purchasedUpgrades);
-    assert.deepEqual(Object.keys(loaded).sort(), Object.keys(original).sort());
-    assert.equal(h.api.save(), true);
+    assert.equal(h.api.validSave(original), false);
+    assert.equal(h.window.document.querySelector('#save-notice').hidden, false);
+    assert.equal(loaded.saveVersion, 20);
+    assert.equal(loaded.phase, 1);
+    assert.equal(loaded.gameStarted, false);
+    assert.equal(h.api.save(), false);
+    assert.equal(h.window.localStorage.getItem('ai_empire_save'), raw);
   }
 });
 
@@ -163,7 +163,7 @@ test('removed info cards never appear or purchase, and saves that recorded them 
     // An unfinished cluster must never disable the information card.
     // The cluster information card is now removed, including during construction.
     if (id === 'cluster_info') h.api.addClusterWithNextName();
-    for (let phase = 1; phase <= 16; phase++) {
+    for (let phase = 1; phase <= 17; phase++) {
       g.phase = phase;
       assert.equal(h.api.upgradeVisible(upgrade), false);
       h.api.purchaseUpgrade(id);

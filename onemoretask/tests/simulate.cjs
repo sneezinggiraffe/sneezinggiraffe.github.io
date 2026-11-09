@@ -8,6 +8,7 @@ function play(seed=17,actionEveryMs=500,delegateOpening=false) {
   for(let step=0;step<108000;step++) {
     h.advance(100);h.dismiss();
     if(step%actionSteps===0){
+      if(h.api.agiRouteReady())h.api.positionForBuyout();
       if(!g.uiRevealed.taskQueue)h.api.doEarlyTask();
       else if (!(delegateOpening && g.phase === 1 && h.api.assistantAvailable())) h.api.doWork();
       if(g.phase>=2 && g.aiWorkerTokenTank<1)h.api.topUpAiWorker();
@@ -21,7 +22,7 @@ function play(seed=17,actionEveryMs=500,delegateOpening=false) {
         const cash = g.cash;
         const cost = h.api.getUpgradeCost(u);
         h.api.purchaseUpgrade(u.id);
-        if (!purchasesLogged.has(u.id) && (g.purchasedUpgrades.includes(u.id) || g.salePreparation.upgradeId === u.id)) {
+        if (!purchasesLogged.has(u.id) && (g.purchasedUpgrades.includes(u.id) || g.salePreparation.upgradeId === u.id || g.agi.projectId === u.id)) {
           purchasesLogged.add(u.id);
           purchases.push({id:u.id,phase,tasks:g.totalTasksDone,cash:Math.round(cash),cost,seconds:step/10,nodes:h.api.completedClusterCount()});
         }

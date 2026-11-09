@@ -96,8 +96,9 @@
   const DRUM_CROSSFADE_MS = DRUM_BAR_SECONDS * 2000;
   const DNB_CROSSFADE_MS = DRUM_BAR_SECONDS * 3000;
   const DRUM_FADE_STEP_MS = 50;
-  const FINAL_PHASE = 16;
-  const SAVE_VERSION = 18;
+  const FINAL_PHASE = 17;
+  const PHASE_NAMES = { 15: "Global Expansion", 16: "AGI", 17: "Buyout" };
+  const SAVE_VERSION = 20;
   const NEOCLOUD_SIZE = 25;
   const SALE_FADE_OUT_MS = 1000;
   const SALE_BLACK_PAUSE_MS = 400;
@@ -314,15 +315,20 @@
     { id: "factory_direct", name: "Factory-Direct Hardware", desc: "Buy directly from manufacturers. Lower hardware costs and keep future price increases linear.", cost: 2000000000, currency: "cash", phase: 15, requires: "bulk_hardware", reqNodes: 400, oneTime: true },
     { id: "neocloud_supply_chain", name: "Dedicated Hardware Supply", desc: "Halve cluster construction time again.", cost: 2500000000, currency: "cash", phase: 15, requires: "factory_direct", reqNodes: 450, oneTime: true },
     { id: "parallel_neoclouds", name: "Parallel Neoclouds", desc: "Build 50 clusters at once across two neoclouds.", cost: 3000000000, currency: "cash", phase: 15, requires: "neocloud_supply_chain", reqNodes: 500, oneTime: true },
-    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 15, requires: "parallel_neoclouds", reqNodes: 500, unlockPhase: 16, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
+    { id: "agi_research", name: "Fund AGI Research", desc: "Train a system to run the company, including your part.", cost: 8000000000, currency: "cash", phase: 15, requires: "parallel_neoclouds", reqNodes: 500, unlockPhase: 16, agiDuration: 30, oneTime: true },
+    { id: "agi_computer_use", name: "Enable Computer Use", desc: "Teach AGI to inspect the company and use its controls.", cost: 4000000000, currency: "cash", phase: 16, requires: "agi_research", agiDuration: 20, oneTime: true },
+    { id: "agi_authority", name: "Grant Purchasing Authority", desc: "AGI buys upgrades and plans savings. Complete three supervised checks first.", cost: 6000000000, currency: "cash", phase: 16, requires: "agi_computer_use", oneTime: true },
+    { id: "agi_contracts", name: "Enterprise Capacity Contracts", desc: "AGI secures dedicated customers. Increase delivery revenue by 25%.", cost: 12000000000, currency: "cash", phase: 16, requires: "agi_authority", agiDuration: 30, effect: { payMult: 1.25 }, oneTime: true },
+    { id: "agi_independence", name: "Train Your Replacement", desc: "Complete the founder handover after expansion, delivery and healthy operations milestones.", cost: 20000000000, currency: "cash", phase: 16, requires: "agi_contracts", agiDuration: 45, oneTime: true },
+    { id: "retire_unlock", name: "Host Investor Talks", desc: "Invite a group of investors to discuss the company over an exceptionally expensive lunch.", cost: 90000, currency: "cash", phase: 16, requires: "agi_independence", reqNodes: 500, unlockPhase: 17, saleDuration: 8, saleActivity: "Hosting investors and answering questions", saleOutcome: "The investors are interested. Time to bring in someone who has sold a company before.", effect: {}, oneTime: true, reqTasks: 1520 },
 
     // Phase 12 (retirement)
-    // Retirement now follows the four new network stages, in Phase 16.
-    { id: "sale_advisor", name: "Appoint a Sale Advisor", desc: "Commission a valuation and prepare the company for potential buyers.", cost: 5000000, currency: "cash", phase: 16, requires: "retire_unlock", saleDuration: 10, saleActivity: "Preparing the valuation and buyer briefing", saleOutcome: "The advisor has prepared a valuation. Your AI management team would like a word.", oneTime: true },
-    { id: "sale_buyout", name: "Discuss a Management Buyout", desc: "Your AI management team has put together a proposal. Apparently it can run things without you.", cost: 20000000, currency: "cash", phase: 16, requires: "sale_advisor", saleDuration: 12, saleActivity: "Reviewing the management team's proposal", saleOutcome: "Management has made an offer. The buyers want a closer look at the business.", oneTime: true },
-    { id: "sale_diligence", name: "Complete Due Diligence", desc: "Open the books and review the company's operations, finances and outstanding issues.", cost: 100000000, currency: "cash", phase: 16, requires: "sale_buyout", saleDuration: 18, saleActivity: "Reviewing finances, contracts and operations", saleOutcome: "Due diligence is complete. The lawyers are ready to agree the final terms.", oneTime: true },
-    { id: "sale_terms", name: "Agree Sale Terms", desc: "Settle the final offer, sign the agreements and prepare your handover.", cost: 250000000, currency: "cash", phase: 16, requires: "sale_diligence", saleDuration: 10, saleActivity: "Negotiating the final offer and agreements", saleOutcome: "The agreements are signed. One last decision, then your time belongs to you.", oneTime: true },
-    { id: "fusion", name: "Complete Company Sale", desc: "Take your golden parachute. Hand over the company and begin your next chapter.", cost: 5000000000, currency: "cash", phase: 16, requires: "sale_terms", reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
+    // Retirement now follows the four new network stages and AGI, in Phase 17.
+    { id: "sale_advisor", name: "Appoint a Sale Advisor", desc: "Commission a valuation and prepare the company for potential buyers.", cost: 5000000, currency: "cash", phase: 17, requires: "retire_unlock", saleDuration: 10, saleActivity: "Preparing the valuation and buyer briefing", saleOutcome: "The advisor has prepared a valuation. Your AI management team would like a word.", oneTime: true },
+    { id: "sale_buyout", name: "Discuss a Management Buyout", desc: "Your AI management team has put together a proposal. Apparently it can run things without you.", cost: 20000000, currency: "cash", phase: 17, requires: "sale_advisor", saleDuration: 12, saleActivity: "Reviewing the management team's proposal", saleOutcome: "Management has made an offer. The buyers want a closer look at the business.", oneTime: true },
+    { id: "sale_diligence", name: "Complete Due Diligence", desc: "Open the books and review the company's operations, finances and outstanding issues.", cost: 100000000, currency: "cash", phase: 17, requires: "sale_buyout", saleDuration: 18, saleActivity: "Reviewing finances, contracts and operations", saleOutcome: "Due diligence is complete. The lawyers are ready to agree the final terms.", oneTime: true },
+    { id: "sale_terms", name: "Agree Sale Terms", desc: "Settle the final offer, sign the agreements and prepare your handover.", cost: 250000000, currency: "cash", phase: 17, requires: "sale_diligence", saleDuration: 10, saleActivity: "Negotiating the final offer and agreements", saleOutcome: "The agreements are signed. One last decision, then your time belongs to you.", oneTime: true },
+    { id: "fusion", name: "Complete Company Sale", desc: "Take your golden parachute. Hand over the company and begin your next chapter.", cost: 5000000000, currency: "cash", phase: 17, requires: "sale_terms", reqNodes: 100, effect: {}, oneTime: true, reqTasks: 1560 },
 
     // Repeatable
     { id: "token_pack_2", name: "Token Pack (500)", desc: "Get 500 tokens.", cost: 300, currency: "cash", phase: 3, effect: { giveTokens: 500 }, oneTime: false },
@@ -344,7 +350,8 @@
     { phase: 13, name: "Autonomous network", rate: 180 },
     { phase: 14, name: "Replication platform", rate: 250 },
     { phase: 15, name: "Global network", rate: 400 },
-    { phase: 16, name: "Exit prep and legal", rate: 500 },
+    { phase: 16, name: "AGI operations", rate: 400 },
+    { phase: 17, name: "Exit prep and legal", rate: 500 },
   ];
 
   // ---------- MILESTONES ----------
@@ -378,6 +385,7 @@
       retiredAt: 0,
       retirementValue: 0,
       salePreparation: { upgradeId: "", remaining: 0 },
+      agi: { projectId: "", remaining: 0, checks: 0, purchases: 0, baselineNodes: 0, baselineTasks: 0, healthySeconds: 0, route: "", runawaySeconds: 0, replicas: 1, ended: false, paused: false },
       lastCeoAction: 0,
       cash: 0,
       tokens: 0,
@@ -506,6 +514,7 @@
     if (state.retirementFinal && !state.retired) return false;
     if (!Number.isInteger(state.phase) || state.phase < 1 || state.phase > FINAL_PHASE) return false;
     if (!["off", "manage", "scale"].includes(state.ceoMode) || !["off", "on"].includes(state.musicMode)) return false;
+    if (!validAgiSave(state)) return false;
     const saleStep = UPGRADES.find((upgrade) => upgrade.id === state.salePreparation.upgradeId && upgrade.saleDuration);
     if (state.salePreparation.upgradeId ? !saleStep || state.retired || saleStep.phase !== state.phase || state.salePreparation.remaining <= 0 || state.salePreparation.remaining > saleStep.saleDuration || state.purchasedUpgrades.includes(saleStep.id) || (saleStep.requires && !state.purchasedUpgrades.includes(saleStep.requires)) : state.salePreparation.remaining !== 0) return false;
     const taskShape = { batchSize: 1, id: "", typeId: "", name: "", icon: "", client: "", workRequired: 1, workDone: 0, pay: 0, tokenCost: 0, failChance: 0, assignedAgent: null, status: "", createdAt: 0 };
@@ -1843,6 +1852,225 @@
     return rate;
   }
 
+  // ---------- AGI HANDOVER ----------
+  function validAgiSave(state) {
+    const a = state.agi;
+    const project = UPGRADES.find((upgrade) => upgrade.id === a.projectId && upgrade.agiDuration);
+    if (!["", "buyout", "scaling"].includes(a.route) || !Number.isInteger(a.checks) || !Number.isInteger(a.purchases) || !Number.isInteger(a.replicas) || a.replicas < 1) return false;
+    if (a.projectId ? !project || state.phase !== project.phase || state.retired || a.route !== "" || a.remaining <= 0 || a.remaining > project.agiDuration || state.purchasedUpgrades.includes(project.id) || !state.purchasedUpgrades.includes(project.requires) : a.remaining !== 0) return false;
+    if (a.route && !state.purchasedUpgrades.includes("agi_independence")) return false;
+    if (a.route === "scaling" && (state.phase !== 16 || state.salePreparation.upgradeId || state.purchasedUpgrades.includes("retire_unlock"))) return false;
+    if (a.ended && (a.route !== "scaling" || !state.retired || a.runawaySeconds !== 45)) return false;
+    if (a.runawaySeconds > 45 || (a.route !== "scaling" && (a.runawaySeconds !== 0 || a.replicas !== 1 || a.ended))) return false;
+    if (a.route === "scaling" && (state.retired !== a.ended || (a.runawaySeconds === 45 && !a.ended))) return false;
+    return true;
+  }
+
+  function agiMilestones() {
+    return [
+      [Math.min(500, Math.max(0, completedClusterCount() - G.agi.baselineNodes)), 500, "New clusters"],
+      [Math.min(100000000, Math.max(0, G.totalTasksDone - G.agi.baselineTasks)), 100000000, "Tasks delivered"],
+      [Math.min(30, G.agi.healthySeconds), 30, "Healthy operating seconds"],
+    ];
+  }
+
+  function agiUpgradeReady(upgrade) {
+    if (upgrade.id === "agi_authority") return G.agi.checks >= 3;
+    if (upgrade.id === "agi_independence") return agiMilestones().every(([value, target]) => value >= target);
+    return true;
+  }
+
+  function agiCanDrive() {
+    return G.gameStarted && !G.retired && G.purchasedUpgrades.includes("agi_computer_use") && !G.agi.paused && !document.hidden && !document.querySelector(".popup-overlay.show");
+  }
+
+  function agiNextUpgrade() {
+    if (!G.purchasedUpgrades.includes("agi_authority") || G.agi.projectId || G.salePreparation.upgradeId || G.agi.route === "scaling") return null;
+    return UPGRADES.find((upgrade) => (upgrade.id.startsWith("agi_") || (G.agi.route === "buyout" && upgrade.phase === FINAL_PHASE && upgrade.saleDuration)) && upgradeVisible(upgrade)) || null;
+  }
+
+  let agiMotion = null;
+
+  function agiMotionState() {
+    if (!agiMotion || agiMotion.owner !== G) agiMotion = { owner: G, elapsed: 0, target: "", status: "Checking company cash", scrolled: false, clicking: false };
+    return agiMotion;
+  }
+
+  function tickAgi(dtSec) {
+    if (G.retired || document.hidden || document.querySelector(".popup-overlay.show")) return;
+    if (G.agi.route === "scaling") { tickAgiRunaway(dtSec); return; }
+    if (G.purchasedUpgrades.includes("agi_authority") && !G.purchasedUpgrades.includes("agi_independence") && G.techDebt < 10 && G.incidents.every((incident) => incident.resolved) && getIncomeRate() > getExpenseRate() * 2) G.agi.healthySeconds = Math.min(30, G.agi.healthySeconds + dtSec);
+    if (G.agi.projectId) {
+      G.agi.remaining = Math.max(0, G.agi.remaining - dtSec);
+      if (G.agi.remaining === 0) {
+        const project = UPGRADES.find((upgrade) => upgrade.id === G.agi.projectId);
+        G.agi.projectId = "";
+        completeUpgradePurchase(project);
+        save();
+      }
+    }
+    if (!agiCanDrive()) return;
+    const motion = agiMotionState();
+    if (!motion.target) {
+      const upgrade = agiNextUpgrade();
+      const waitingForAuthority = !G.purchasedUpgrades.includes("agi_authority") && G.agi.checks >= 3;
+      const waitingForDecision = agiRouteReady() || (G.agi.route === "buyout" && (!G.purchasedUpgrades.includes("retire_unlock") || G.purchasedUpgrades.includes("sale_terms")));
+      const affordable = upgrade && agiUpgradeReady(upgrade) && G.cash >= getUpgradeCost(upgrade);
+      motion.target = waitingForAuthority ? "approval" : waitingForDecision ? "decision" : affordable ? upgrade.id : ["cash", "operations", "network"][G.agi.checks % 3];
+      motion.status = waitingForAuthority ? "Grant purchasing authority to continue" : waitingForDecision ? "The company is ready. Choose its next chapter." : affordable ? "Purchasing " + upgrade.name : upgrade && !agiUpgradeReady(upgrade) ? "Proving independent operations" : upgrade ? "Saving for " + upgrade.name : G.purchasedUpgrades.includes("agi_independence") ? "No founder input required" : "Checking " + ({ cash: "company cash", operations: "operations", network: "network capacity" })[motion.target];
+      motion.scrolled = false;
+    }
+    if (["approval", "decision"].includes(motion.target)) {
+      if ((motion.target === "approval" && G.purchasedUpgrades.includes("agi_authority")) || (motion.target === "decision" && G.purchasedUpgrades.includes("retire_unlock") && !G.purchasedUpgrades.includes("sale_terms"))) motion.target = "";
+      return;
+    }
+    motion.elapsed += dtSec;
+    motion.clicking = motion.elapsed >= 2 && motion.elapsed < 2.5;
+    if (motion.elapsed < 4) return;
+    if (["cash", "operations", "network"].includes(motion.target)) G.agi.checks++;
+    else {
+      const before = G.purchasedUpgrades.length;
+      purchaseUpgrade(motion.target);
+      if (G.purchasedUpgrades.length > before || G.agi.projectId === motion.target || G.salePreparation.upgradeId === motion.target) G.agi.purchases++;
+    }
+    motion.target = "";
+    motion.elapsed = 0;
+    motion.clicking = false;
+  }
+
+  function pauseAgiForHuman(event) {
+    if (!G.purchasedUpgrades.includes("agi_computer_use") || G.retired || (event.type === "keydown" && ["Shift", "Control", "Alt", "Meta"].includes(event.key))) return;
+    G.agi.paused = true;
+    agiMotion = null;
+    document.body.classList.remove("agi-driving");
+    $("#agi-cursors").hidden = G.agi.route !== "scaling";
+    $("#btn-agi-resume").hidden = false;
+  }
+
+  function resumeAgi() {
+    if (!G.purchasedUpgrades.includes("agi_computer_use") || G.retired) return;
+    G.agi.paused = false;
+    agiMotion = null;
+    save();
+    renderAll();
+  }
+
+  function agiRouteReady() {
+    return G.gameStarted && !G.retired && G.phase === 16 && G.agi.route === "" && G.purchasedUpgrades.includes("agi_independence");
+  }
+
+  function positionForBuyout() {
+    if (!agiRouteReady()) return;
+    G.agi.route = "buyout";
+    agiMotion = null;
+    G.agi.paused = false;
+    log("The company runs without you. Preparing for a buyout.", "good");
+    save();
+    renderAll();
+  }
+
+  function requestKeepScaling() {
+    if (!agiRouteReady()) return;
+    $("#agi-warning").classList.add("show");
+    renderAll();
+  }
+
+  function cancelKeepScaling() {
+    $("#agi-warning").classList.remove("show");
+    G.lastTick = Date.now();
+    renderAll();
+  }
+
+  function confirmKeepScaling() {
+    if (!agiRouteReady() || !$("#agi-warning").classList.contains("show")) return;
+    G.agi.route = "scaling";
+    G.agi.paused = false;
+    agiMotion = null;
+    log("Oversight limits removed. Objective: keep scaling.", "warn");
+    cancelKeepScaling();
+    save();
+  }
+
+  function tickAgiRunaway(dtSec) {
+    G.agi.runawaySeconds = Math.min(45, G.agi.runawaySeconds + dtSec);
+    G.agi.replicas = Math.floor(Math.pow(2, G.agi.runawaySeconds / 3));
+    G.totalTasksDone += Math.floor(G.agi.replicas * 10000 * dtSec);
+    if (G.agi.runawaySeconds < 45) {
+      if (Date.now() - G.lastSave > SAVE_INTERVAL) save();
+      return;
+    }
+    G.agi.ended = true;
+    G.retired = true;
+    G.retiredAt = Date.now();
+    log("There is always one more task.", "bad");
+    save();
+    renderAll();
+  }
+
+  function agiPointerTarget() {
+    const target = agiMotionState().target;
+    const selectors = { cash: "#res-cash", operations: "#section-incidents", network: "#cluster-heading", approval: "[onclick=\"GAME.buy('agi_authority')\"]", decision: G.purchasedUpgrades.includes("sale_terms") ? "[onclick=\"GAME.buy('fusion')\"]" : G.agi.route === "buyout" ? "[onclick=\"GAME.buy('retire_unlock')\"]" : "#agi-route-choices" };
+    return selectors[target] ? $(selectors[target]) : $("[onclick=\"GAME.buy('" + target + "')\"]");
+  }
+
+  function renderAgiPointer() {
+    const driving = agiCanDrive();
+    document.body.classList.toggle("agi-driving", driving);
+    const showing = driving || (G.agi.route === "scaling" && !G.retired && !document.hidden && !document.querySelector(".popup-overlay.show"));
+    $("#agi-cursors").hidden = !showing;
+    if (!showing) return;
+    const motion = agiMotionState();
+    const runaway = G.agi.route === "scaling";
+    const target = runaway ? $("#agi-runaway-panel") : agiPointerTarget();
+    if (!target) return;
+    let rect = target.getBoundingClientRect();
+    if (!motion.scrolled && !runaway) {
+      const panel = target.closest("#control-panel");
+      const bounds = panel ? panel.getBoundingClientRect() : { top: 60, bottom: window.innerHeight };
+      const anchor = (target.closest(".upgrade-card") || target).getBoundingClientRect();
+      const header = Math.max(100, $("#top-bar").getBoundingClientRect().bottom + 12);
+      if (anchor.top < Math.max(header, bounds.top) || anchor.bottom > Math.min(window.innerHeight, bounds.bottom)) {
+        if (panel && panel.scrollHeight > panel.clientHeight) panel.scrollTop += anchor.top - bounds.top - Math.min(header, Math.max(12, panel.clientHeight - anchor.height - 12));
+        else document.documentElement.scrollTop += anchor.top - header;
+        rect = target.getBoundingClientRect();
+      }
+      motion.scrolled = true;
+    }
+    const stage = Math.min(3, 1 + Math.floor(G.agi.runawaySeconds / 12));
+    $$(".agi-cursor").forEach((cursor, index) => {
+      cursor.hidden = index > (runaway ? stage : 0);
+      const x = runaway ? window.innerWidth * (0.2 + index * 0.18) + Math.sin(G.agi.runawaySeconds + index) * 45 : rect.left + rect.width / 2;
+      const y = runaway ? 150 + index * 100 + Math.cos(G.agi.runawaySeconds * 1.5 + index) * 65 : rect.top + rect.height / 2;
+      cursor.style.left = clamp(x, 8, window.innerWidth - 75) + "px";
+      cursor.style.top = clamp(y, 8, window.innerHeight - 45) + "px";
+      cursor.classList.toggle("clicking", runaway ? Math.floor(G.agi.runawaySeconds * 2) % 2 === 0 : motion.clicking);
+    });
+  }
+
+  function renderAgi() {
+    const visible = G.purchasedUpgrades.includes("agi_research") || G.agi.projectId !== "";
+    $("#section-agi").hidden = !visible || G.retired;
+    const runaway = G.agi.route === "scaling" && !G.retired;
+    document.body.classList.toggle("agi-runaway", runaway);
+    document.body.dataset.agiStage = String(Math.min(3, 1 + Math.floor(G.agi.runawaySeconds / 12)));
+    $("#agi-runaway-panel").hidden = !runaway;
+    $("#btn-agi-resume").hidden = !G.agi.paused || !G.purchasedUpgrades.includes("agi_computer_use");
+    $("#agi-route-choices").hidden = !agiRouteReady();
+    const project = UPGRADES.find((upgrade) => upgrade.id === G.agi.projectId);
+    $("#agi-status").textContent = project ? project.name + ": " + Math.ceil(G.agi.remaining) + "s remaining" : G.agi.paused ? "You have control" : G.purchasedUpgrades.includes("agi_independence") ? "No founder input required" : G.purchasedUpgrades.includes("agi_computer_use") ? agiMotionState().status : "Research complete. Enable computer use.";
+    let progress = "";
+    if (project) progress = "<progress aria-label='AGI project' max='" + project.agiDuration + "' value='" + (project.agiDuration - G.agi.remaining) + "'></progress>";
+    if (G.purchasedUpgrades.includes("agi_computer_use") && !G.purchasedUpgrades.includes("agi_authority")) progress += "<p>Supervised checks: " + Math.min(3, G.agi.checks) + " / 3</p>";
+    if (G.purchasedUpgrades.includes("agi_authority") && !G.purchasedUpgrades.includes("agi_independence")) progress += "<ul>" + agiMilestones().map(([value, target, label]) => "<li>" + label + ": " + fmtTokens(value) + " / " + fmtTokens(target) + "</li>").join("") + "</ul>";
+    updateHTML($("#agi-progress"), progress);
+    if (runaway) {
+      const stage = Math.min(3, Math.floor(G.agi.runawaySeconds / 12));
+      $("#agi-runaway-status").textContent = ["Subsidiaries are assigning tasks to each other.", "Internal demand has exceeded forecasts.", "Additional management instances deployed.", "All available space allocated to tasks."][stage];
+      $("#agi-replication-count").textContent = fmtTokens(G.agi.replicas) + " AGI instances";
+    }
+    renderAgiPointer();
+  }
+
   // ---------- UPGRADE PURCHASE ----------
   function clusterOnline(cluster) {
     return cluster.buildRemaining === 0 && cluster.managerAssigned && (G.phase >= 13 ? cluster.workforce === cluster.workerSlotsMax : cluster.workerAgentIds.length === cluster.workerSlotsMax && cluster.workerAgentIds.every((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning"));
@@ -1865,6 +2093,9 @@
   }
 
   function upgradeVisible(upgrade) {
+    if (G.agi.route === "scaling") return false;
+    if (upgrade.id === "retire_unlock" && G.agi.route !== "buyout") return false;
+    if (upgrade.agiDuration && G.agi.projectId && G.agi.projectId !== upgrade.id) return false;
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
     if (upgrade.id === "reality_check") return G.totalTasksDone >= upgrade.reqTasks;
     if (upgrade.infoUntilPhase !== undefined) return G.phase <= upgrade.infoUntilPhase && (!upgrade.reqIncidents || G.totalIncidents >= upgrade.reqIncidents);
@@ -1903,6 +2134,7 @@
     const upg = UPGRADES.find((u) => u.id === upgradeId);
     if (!upg || G.retired || !upgradeVisible(upg)) return;
     if (upg.saleDuration && G.salePreparation.upgradeId) return;
+    if ((upg.agiDuration && G.agi.projectId) || !agiUpgradeReady(upg)) return;
     if (upg.id.startsWith("token_pack_")) { buyTokenPacks(upg, 1); return; }
     if (upgradeId === "fusion" && !canSellCompany()) return;
     if (!upgradeStaffingReady(upg)) return;
@@ -1926,6 +2158,13 @@
       G.tokens -= upg.cost;
     }
 
+    if (upg.agiDuration) {
+      G.agi.projectId = upg.id;
+      G.agi.remaining = upg.agiDuration;
+      log("Started: " + upg.name, "info");
+      save();
+      return;
+    }
     if (upg.saleDuration) {
       G.salePreparation = { upgradeId: upg.id, remaining: upg.saleDuration };
       log(upg.saleActivity + ".", "info");
@@ -1955,6 +2194,14 @@
     if (upgradeId === "free_ai") G.aiWorkerTokenTank = 10;
     if (upgradeId === "hire_assistant") G.uiRevealed.agents = true;
     if (upg.oneTime) G.purchasedUpgrades.push(upgradeId);
+    if (["agi_authority", "agi_independence", "sale_terms"].includes(upgradeId)) agiMotion = null;
+    if (upgradeId === "agi_computer_use") G.agi.paused = false;
+    if (upgradeId === "agi_authority") {
+      G.agi.baselineNodes = completedClusterCount();
+      G.agi.baselineTasks = G.totalTasksDone;
+      G.agi.healthySeconds = 0;
+      G.agi.paused = false;
+    }
     if (upgradeId === "ceo_recruitment" || upgradeId === "ceo_deploy_speed") {
       const speed = upgradeId === "ceo_recruitment" ? 2 : 1.5;
       for (const agent of G.agents) {
@@ -2110,7 +2357,7 @@
   }
 
   function canSellCompany() {
-    return !G.retired && G.phase >= FINAL_PHASE && G.techDebt < 10 &&
+    return !G.retired && G.agi.route === "buyout" && G.phase >= FINAL_PHASE && G.techDebt < 10 &&
       G.purchasedUpgrades.includes("sale_terms") && G.incidents.every((incident) => incident.resolved) && getIncomeRate() > getExpenseRate() * 2 && managedNodeCount() >= 100;
   }
 
@@ -2127,12 +2374,12 @@
   }
 
   function canPrestige() {
-    return G.retired && !G.retirementFinal;
+    return G.retired && !G.retirementFinal && !G.agi.ended;
   }
 
 
   function canTrueRetire() {
-    return G.retired && !G.retirementFinal;
+    return G.retired && !G.retirementFinal && !G.agi.ended;
   }
 
   function finishRetirement() {
@@ -2458,7 +2705,9 @@
 
   function tickClusterProvisioning() {
     if (G.ceoMode !== "scale" || G.clusters.length === 0) return;
-    if (G.cash < expansionFundingTarget()) return;
+    const planned = agiNextUpgrade();
+    const reserve = planned && agiUpgradeReady(planned) ? getUpgradeCost(planned) : 0;
+    if (G.cash < expansionFundingTarget() + reserve) return;
     const concurrent = clusterBuildConcurrency();
     const pending = G.clusters.filter((cluster) => !clusterOnline(cluster)).length;
     for (let index = pending; index < concurrent; index++) {
@@ -2886,7 +3135,7 @@
   }
 
   function saleTransitionElapsed() {
-    if (!G.retired || G.retirementFinal || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    if (!G.retired || G.retirementFinal || G.agi.ended || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
     const elapsed = Math.max(0, Date.now() - G.retiredAt);
     return elapsed < SALE_FADE_OUT_MS + SALE_BLACK_PAUSE_MS + SALE_FADE_IN_MS ? elapsed : null;
   }
@@ -3063,6 +3312,7 @@
     const dtSec = dtMs / 1000;
     G.lastTick = now;
     G.totalPlaytime += dtMs;
+    if (G.agi.route === "scaling") { tickAgi(dtSec); return; }
 
     const consumedBefore = G.tokensConsumed;
     const completedBefore = G.totalTasksDone;
@@ -3089,6 +3339,7 @@
     tickDebt(dtSec);
     tickAiCeo();
     tickSalePreparation(dtSec);
+    tickAgi(dtSec);
 
     pruneTasks(now);
 
@@ -3249,7 +3500,7 @@
         $("#res-tasks").textContent = fmt(G.totalTasksDone);
         $("#token-burn").textContent = "-" + fmtTokens(G.averageTokenBurn) + " tok/s";
 	    $("#res-debt").textContent = fmt(G.techDebt);
-	    $("#phase-label").textContent = "Phase " + G.phase;
+	    $("#phase-label").textContent = "Phase " + G.phase + (PHASE_NAMES[G.phase] ? ": " + PHASE_NAMES[G.phase] : "");
 
     // Progressive reveal of resource counters
     $("#res-cash-wrap").style.display = G.uiRevealed.cash ? "" : "none";
@@ -3462,8 +3713,8 @@
       var cost = getUpgradeCost(u);
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
       var requiredNodes = nodeRequirement(u);
-      var preparing = G.salePreparation.upgradeId === u.id;
-      var requirementsMet = upgradeStaffingReady(u) && (!u.requires || G.purchasedUpgrades.includes(u.requires)) && (!u.reqTasks || G.totalTasksDone >= u.reqTasks) && (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
+      var preparing = G.salePreparation.upgradeId === u.id || G.agi.projectId === u.id;
+      var requirementsMet = agiUpgradeReady(u) && upgradeStaffingReady(u) && (!u.requires || G.purchasedUpgrades.includes(u.requires)) && (!u.reqTasks || G.totalTasksDone >= u.reqTasks) && (u.id !== "autonomous_nodes" || !hasUnfinishedAgentInstallations()) && (u.id !== "fusion" || canSellCompany()) && completedClusterCount() >= requiredNodes && (!u.requiresRole || G.agents.some((agent) => agent.roleId === u.requiresRole));
       html += "<div class='card upgrade-card" + (u.saleDuration || u.id === "fusion" ? " sale-card" : "") + "'>" +
         "<div class='upgrade-info'>" +
         "<div class='name'>" + u.name + (u.unlockPhase ? " <span class='badge badge-purple'>-> Phase " + u.unlockPhase + "</span>" : "") + "</div>" +
@@ -3796,7 +4047,15 @@
     $("#ending-story").textContent = G.retirementFinal ? "You leave the laptop closed. The next model can wait. Your time belongs to you." : "A Tuesday morning on the golf course. A proper night's sleep. That health check you kept putting off. For once, your time belongs to you.";
     $("#ending-summary").textContent = "You completed " + fmt(G.totalTasksDone) + " tasks and walked away with " + fmtCash(G.retirementValue) + ".";
     $("#ending-choices").hidden = !G.retired || G.retirementFinal;
-    $("#btn-ending-reset").hidden = !G.retirementFinal;
+    $("#btn-ending-reset").hidden = !(G.retirementFinal || G.agi.ended);
+    $("#ending-scene").textContent = G.agi.ended ? "∞" : "⛳";
+    if (G.agi.ended) {
+      $("#ending-title").textContent = "There is always one more task.";
+      $("#ending-story").textContent = "The AGI created its own customers, its own tasks and " + fmtTokens(G.agi.replicas) + " copies of itself. The company outgrew the screen. It no longer needs you.";
+      $("#ending-summary").textContent = fmt(G.totalTasksDone) + " tasks completed. No one left to invoice.";
+      $("#ending-choices").hidden = true;
+      $("#btn-ending-reset").hidden = false;
+    }
     if (G.retired) syncMusicPlayback();
   }
 
@@ -3834,13 +4093,13 @@
   let previousFocus = null;
 
   function syncDialogFocus() {
-    const dialog = document.querySelector("#ending-overlay:not([hidden])") || document.querySelector("#settings-popup.show, #milestone-popup.show");
+    const dialog = document.querySelector("#ending-overlay:not([hidden])") || document.querySelector("#settings-popup.show, #milestone-popup.show, #agi-warning.show");
     $("#game-container").inert = !!dialog || G.retired;
     $("#top-bar").inert = !!dialog || G.retired;
     if (dialog !== activeDialog) {
       if (dialog) {
         if (!activeDialog) previousFocus = document.activeElement;
-        const target = dialog.id === "ending-overlay" ? $(G.retirementFinal ? "#btn-ending-reset" : "#btn-ending-restart") : dialog.querySelector("button");
+        const target = dialog.id === "ending-overlay" ? $(G.retirementFinal || G.agi.ended ? "#btn-ending-reset" : "#btn-ending-restart") : dialog.querySelector("button");
         target.focus({ preventScroll: true });
       } else if (previousFocus && previousFocus.isConnected) {
         previousFocus.focus({ preventScroll: true });
@@ -3854,7 +4113,9 @@
     if (event.key === "Escape" && activeDialog.id === "settings-popup") {
       closeSettingsPopup();
       syncDialogFocus();
+      return;
     }
+    if (event.key === "Escape" && activeDialog.id === "agi-warning") cancelKeepScaling();
     if (event.key !== "Tab") return;
     const buttons = [...activeDialog.querySelectorAll("button:not(:disabled)")].filter((button) => button.getClientRects().length > 0);
     const index = buttons.indexOf(document.activeElement);
@@ -3869,6 +4130,8 @@
     const focusedAction = document.activeElement.getAttribute("onclick");
     renderEnding();
     if (G.retired) {
+      document.body.classList.remove("agi-driving", "agi-runaway");
+      $("#agi-cursors").hidden = true;
       syncDialogFocus();
       return;
     }
@@ -3884,6 +4147,7 @@
     renderStatsSection();
     renderPrestigeSection();
     renderLogSection();
+    renderAgi();
     if (focusedAction) {
       const replacement = [...document.querySelectorAll("button[onclick]")].find((button) => button.getAttribute("onclick") === focusedAction && !button.disabled);
       if (replacement) replacement.focus({ preventScroll: true });
@@ -3934,6 +4198,12 @@
     });
 
     document.addEventListener("keydown", handleDialogKey);
+    for (const event of ["pointermove", "pointerdown", "wheel", "keydown"]) document.addEventListener(event, pauseAgiForHuman, { passive: true });
+    $("#btn-agi-resume").addEventListener("click", resumeAgi);
+    $("#btn-agi-buyout").addEventListener("click", positionForBuyout);
+    $("#btn-agi-scaling").addEventListener("click", requestKeepScaling);
+    $("#btn-agi-cancel").addEventListener("click", cancelKeepScaling);
+    $("#btn-agi-confirm").addEventListener("click", confirmKeepScaling);
     var loaded = load();
     setupMusic();
 
@@ -4016,10 +4286,14 @@
   function loadCheatStage(stage) {
     const early = { "0_1": 0, "0_2": 7, "0_": 35, "0_4": 100, "1": 50 };
     const startPhase9 = stage === "start9";
+    const agiChoice = stage === "16_choice";
     const number = startPhase9 ? 9 : Number(stage);
-    const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === number);
+    const agiStart = number === 16;
+    const target = stage === "retire" ? UPGRADES.find((upgrade) => upgrade.id === "fusion") : UPGRADES.find((upgrade) => upgrade.unlockPhase === (agiChoice ? 17 : number));
     if (!Object.hasOwn(early, stage) && !target) return;
     clearTaskCompletions();
+    saveBlocked = false;
+    storageMessage("");
     const phase = target ? target.phase : 1;
     const checkpoint = { "4": { tasks: 870, cash: 14000 }, "9": { tasks: 390000, cash: 800000 }, "10": { tasks: 1000000, cash: 1200000 }, "11": { tasks: 4600000, cash: 30000000, clusters: 3 }, "12": { tasks: 27000000, cash: 180000000, clusters: 5 }, "13": { tasks: 63000000, cash: 600000000, clusters: 21 } }[stage];
     const musicMode = G.musicMode;
@@ -4030,14 +4304,18 @@
     G.totalIncidents = 3;
     G.incidentsExplained = true;
     G.cash = 1e15;
-    const preceding = UPGRADES.filter((upgrade) => upgrade !== target && upgrade.oneTime && (!Object.hasOwn(early, stage) || (upgrade.reqTasks < early[stage] || (upgrade.introductory && upgrade.reqTasks === early[stage]))) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
+    const preceding = UPGRADES.filter((upgrade) => (!agiStart || UPGRADES.indexOf(upgrade) < UPGRADES.indexOf(target)) && upgrade !== target && upgrade.oneTime && (!Object.hasOwn(early, stage) || (upgrade.reqTasks < early[stage] || (upgrade.introductory && upgrade.reqTasks === early[stage]))) && upgrade.phase <= phase && (!upgrade.unlockPhase || upgrade.unlockPhase <= phase));
     const requiredClusters = Math.max(checkpoint?.clusters || 0, phase >= 11 ? 5 : 3, ...preceding.map((upgrade) => upgrade.reqNodes || 0));
     let changed = true;
     while (changed) {
       const before = G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
       fillCheatCompany(requiredClusters);
       for (const upgrade of preceding) {
+        if (upgrade.id === "agi_authority") G.agi.checks = 3;
+        if (upgrade.id === "agi_independence") { G.agi.baselineNodes = Math.max(0, completedClusterCount() - 500); G.agi.baselineTasks = 0; G.agi.healthySeconds = 30; }
+        if (upgrade.id === "retire_unlock") G.agi.route = "buyout";
         purchaseUpgrade(upgrade.id);
+        if (G.agi.projectId) tickAgi(G.agi.remaining);
         if (G.salePreparation.upgradeId) tickSalePreparation(G.salePreparation.remaining);
       }
       changed = before !== G.purchasedUpgrades.length + G.agents.length + G.clusters.length;
@@ -4046,10 +4324,12 @@
     fillCheatCompany(requiredClusters);
     tickConstruction(12.1);
     if (target && target.reqNodes) fillCheatCompany(Math.max(3, target.reqNodes - (stage === "retire" ? 0 : 1)));
+    if (!agiStart && G.purchasedUpgrades.includes("agi_independence")) G.agi.route = agiChoice ? "" : "buyout";
     G.totalTasksDone = checkpoint ? checkpoint.tasks : stage === "retire" ? 1000000000 : target ? (phase >= 13 ? (phase === 13 ? 3000000 : phase === 14 ? 8000000 : 20000000) : target.reqTasks - 3) : early[stage];
     G.totalClicks = G.totalTasksDone * 8;
     G.cash = checkpoint ? checkpoint.cash : target ? Math.ceil(getUpgradeCost(target) * 1.25) + (number === 7 ? 25000 : 1000) : number === 1 ? 90 : G.totalTasksDone * 4;
     if (target && target.reqNodes) G.cash = Math.max(G.cash, provisionCost() * 2 + getUpgradeCost(target));
+    if (agiStart) G.cash = 8000000000;
     if (number === 3) G.cash = 1900;
     if (number === 5) G.cash = 1300;
     G.tokens = phase >= 10 ? Math.max(100000, G.clusters.length * 12000) : phase >= 7 ? 50000 : phase >= 3 ? 10000 : 0;
@@ -4082,6 +4362,7 @@
     }
     popupQueue = [];
     dismissPopup();
+    $("#agi-warning").classList.remove("show");
     $("#intro-overlay").classList.add("hidden");
     log("Debug checkpoint: Phase " + G.phase + (startPhase9 ? ", at phase entry" : target ? ", before " + target.name : "") + ".", "info");
     syncMusicPlayback();
@@ -4127,6 +4408,11 @@
     hire: hireAgent,
     fire: fireAgent,
     buy: purchaseUpgrade,
+    resumeAgi: resumeAgi,
+    positionForBuyout: positionForBuyout,
+    requestKeepScaling: requestKeepScaling,
+    cancelKeepScaling: cancelKeepScaling,
+    confirmKeepScaling: confirmKeepScaling,
     resolveInc: resolveIncident,
     toggleAgentAuto: toggleAgentAuto,
     prestige: function () { prestige(); renderAll(); },
@@ -4154,9 +4440,10 @@
   // Console shortcuts
   window.chPh0 = function () { GAME.resetSave(); };
   var cheatShortcuts = [
-    "0_", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    "0_", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
   ];
   window.chStart9 = function () { GAME.cheat("start9"); };
+  window.chPh16Choice = function () { GAME.cheat("16_choice"); };
   window.chRetire = function () { GAME.cheat("retire"); };
   for (var shortcutIndex = 0; shortcutIndex < cheatShortcuts.length; shortcutIndex++) {
     var shortcut = cheatShortcuts[shortcutIndex];

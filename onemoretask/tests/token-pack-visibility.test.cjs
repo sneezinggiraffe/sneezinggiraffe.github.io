@@ -25,7 +25,7 @@ test('manual token packs disappear on entering Phase 11 and stay hidden thereaft
     assert.ok(g.tokenPacksBought > bought);
     assert.ok(g.cash < 1000000);
 
-    for (const phase of [12, 13, 14, 15, 16]) {
+    for (const phase of [12, 13, 14, 15, 16, 17]) {
       g.phase = phase;
       h.api.renderUpgradeSection();
       assert.equal(packs().length, 0);

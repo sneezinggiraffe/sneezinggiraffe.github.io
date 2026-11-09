@@ -173,12 +173,12 @@ test('Phase 15 upgrades require completed clusters and cash, then unlock speed, 
   }
 });
 
-test('construction discounts halve every rising price and funding target, survive reload and remain active in Phase 16', () => {
+test('construction discounts halve every rising price and funding target, survive reload and remain active in Phase 17', () => {
   const h = expansionCompany(15, 300);
   let restored;
   try {
     const g = h.window.GAME.state;
-    h.prepareUpgrade('retire_unlock');
+    h.prepareUpgrade('agi_research');
     g.purchasedUpgrades = g.purchasedUpgrades.filter(id => !['standardised_construction', 'bulk_hardware'].includes(id));
     const originalPrices = Array.from({length: 50}, (_, index) => h.api.provisionCost(g.clustersProvisioned + index));
     const investments = g.clusters.map(cluster => cluster.invested);
@@ -203,7 +203,7 @@ test('construction discounts halve every rising price and funding target, surviv
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
     assert.equal(restored.api.provisionCost(), h.api.provisionCost());
     assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
-    restored.window.GAME.state.phase = 16;
+    restored.window.GAME.state.phase = 17;
     assert.equal(restored.api.provisionCost(), h.api.provisionCost());
     assert.equal(restored.api.expansionFundingTarget(), h.api.expansionFundingTarget());
   } finally {
@@ -233,7 +233,7 @@ test('Factory-Direct Hardware lowers costs, makes price increases linear and per
     h.api.save();
     restored = harness(h.window.localStorage.getItem('ai_empire_save'));
     assert.equal(restored.api.provisionCost(), prices[0]);
-    restored.window.GAME.state.phase = 16;
+    restored.window.GAME.state.phase = 17;
     assert.equal(restored.api.provisionCost(), prices[0]);
     assert.equal(restored.api.validSave(restored.window.GAME.state), true);
   } finally {
@@ -276,7 +276,7 @@ for (const concurrency of [25, 50]) {
     let restored;
     try {
       const g = h.window.GAME.state;
-      h.prepareUpgrade(concurrency === 25 ? 'neocloud_supply_chain' : 'retire_unlock');
+      h.prepareUpgrade(concurrency === 25 ? 'neocloud_supply_chain' : 'agi_research');
       const initial = g.cash;
       const nextPrice = h.api.provisionCost();
       h.api.tickAiCeo();
@@ -313,7 +313,7 @@ test('whole-neocloud expansion saves for its full budget and resumes when cash r
   const h = expansionCompany(15, 125);
   try {
     const g = h.window.GAME.state;
-    h.prepareUpgrade('retire_unlock');
+    h.prepareUpgrade('agi_research');
     g.cash = h.api.provisionCost() * 2;
     h.api.tickAiCeo();
     assert.equal(g.clusters.length, 125);

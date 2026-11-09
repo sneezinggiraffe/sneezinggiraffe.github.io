@@ -10,7 +10,7 @@ function expansionFixture(phase, count) {
   g.totalTasksDone = 1e9;
   g.aiWorkerShutdown = true;
   g.incidentsExplained = true;
-  h.prepareUpgrade(phase >= 15 ? 'retire_unlock' : 'replication');
+  h.prepareUpgrade(phase >= 16 ? 'retire_unlock' : phase === 15 ? 'agi_research' : 'replication');
   for (let index = 0; index < count; index++) h.fullCluster().tank = 4000;
   h.api.openCluster();
   h.api.openCluster();
@@ -164,7 +164,7 @@ for (const width of [1440, 390]) {
     await page.clock.install({time: new Date(started)});
     await page.clock.pauseAt(new Date(started + 1000));
     await page.goto('/');
-    await page.evaluate(() => { chPh16(); GAME.addCash(1e11); });
+    await page.evaluate(() => { chPh17(); GAME.addCash(1e11); });
 
     await page.clock.runFor(1000);
     const talks = page.locator('[onclick="GAME.buy(\'retire_unlock\')"]');
@@ -181,7 +181,7 @@ for (const width of [1440, 390]) {
     await page.clock.runFor((remaining + 0.3) * 1000);
     await expect(page.locator('#milestone-popup')).toBeHidden();
     await expect(page.locator('#milestone-popup')).toBeHidden();
-    expect(await page.evaluate(() => GAME.state.phase)).toBe(16);
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(17);
     for (const [id, duration] of [['sale_advisor', 10], ['sale_buyout', 12], ['sale_diligence', 18], ['sale_terms', 10]]) {
       const button = page.locator('[onclick="GAME.buy(\'' + id + '\')"]');
       await expect(button).toBeEnabled();

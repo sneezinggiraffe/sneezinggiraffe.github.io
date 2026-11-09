@@ -338,6 +338,61 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   .task-card .task-client{white-space:normal;overflow-wrap:anywhere}
   .upgrade-action{min-height:40px}
 }
+
+/* AGI handover and unrestricted expansion */
+#section-agi>.card{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg2))}
+.agi-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.agi-heading h3{margin:0;letter-spacing:.08em}
+.agi-heading .badge{background:var(--bg3);color:var(--text2)}
+#agi-status{font-size:.82rem;line-height:1.5;color:var(--text);min-height:1.5em}
+#btn-agi-resume{position:fixed;right:16px;bottom:16px;z-index:1000;box-shadow:var(--shadow)}
+#agi-progress{font-size:.75rem;line-height:1.7;color:var(--text2);margin-top:10px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#agi-progress ul{list-style:none;padding:0}
+#agi-progress .ready{color:var(--green)}
+#agi-progress .waiting{color:var(--text2)}
+#agi-progress .task-bar{margin-top:8px}
+#btn-agi-resume{margin-top:12px}
+#agi-route-choices{border-top:1px solid var(--bg4);margin-top:14px;padding-top:14px}
+#agi-route-choices p{font-size:.8rem;line-height:1.5;margin-bottom:12px;color:var(--text2)}
+.agi-route-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.agi-route-buttons .btn{min-height:42px;white-space:normal;line-height:1.4;padding:9px 12px}
+#agi-warning .popup{border-color:var(--orange);max-width:460px;text-align:left}
+#agi-warning h3{color:var(--orange);font-size:1.2rem}
+#agi-warning .agi-warning-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+#agi-warning .btn{min-height:42px;padding:10px 14px}
+#agi-cursors{position:fixed;inset:0;z-index:900;pointer-events:none;overflow:hidden}
+.agi-cursor{position:fixed;left:50%;top:50%;color:#67e8f9;pointer-events:none;transition:left .65s ease-in-out,top .65s ease-in-out;filter:drop-shadow(0 2px 3px #0009)}
+.agi-cursor svg{display:block;width:22px;height:28px;transform-origin:3px 3px;transition:transform .12s}
+.agi-cursor span{display:block;position:absolute;left:19px;top:22px;padding:2px 5px;border-radius:3px;background:#123445;border:1px solid currentColor;font-size:9px;font-weight:700;letter-spacing:.04em;white-space:nowrap;line-height:1.2}
+.agi-cursor.clicking svg{transform:scale(.8)}
+.agi-copy{color:#c4b5fd}
+.agi-copy span{background:#292144}
+.agi-copy:nth-child(3){color:#fbbf24}
+.agi-copy:nth-child(3) span{background:#3c2d15}
+.agi-copy:nth-child(4){color:#fda4af}
+.agi-copy:nth-child(4) span{background:#3e1d2c}
+body.agi-driving #game-container,body.agi-driving #game-container *{cursor:none!important}
+#agi-runaway-panel{position:relative;border-color:var(--purple);overflow:hidden;padding:18px;margin-bottom:16px}
+#agi-runaway-panel h3{color:var(--purple);margin-bottom:10px}
+#agi-runaway-status{font-size:.85rem;line-height:1.5;color:var(--text)}
+.agi-replication-metric{display:flex;flex-direction:column;gap:3px;margin-top:16px;font-variant-numeric:tabular-nums}
+.agi-replication-metric small{color:var(--text2);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}
+#agi-replication-count{font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.2;color:var(--purple);overflow-wrap:anywhere}
+.agi-task-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:20px;opacity:.55}
+.agi-task-grid span{border:1px solid #554276;border-radius:4px;padding:8px 4px;text-align:center;font-size:.65rem;color:#c4b5fd;background:#211b31;overflow:hidden;white-space:nowrap}
+body.agi-runaway[data-agi-stage="2"] #agi-runaway-panel{border-color:var(--orange)}
+body.agi-runaway[data-agi-stage="2"] #agi-runaway-panel h3,body.agi-runaway[data-agi-stage="2"] #agi-replication-count{color:var(--orange)}
+body.agi-runaway[data-agi-stage="3"] #agi-runaway-panel{--text:#e2e8f0;--text2:#94a3b8;position:fixed;inset:70px 16px 16px;z-index:700;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#160e19f5;border:1px solid #b4536c;margin:0;overflow-y:auto}
+body.agi-runaway[data-agi-stage="3"] #agi-runaway-panel h3{color:#fda4af;font-size:clamp(1.2rem,4vw,2rem);background:transparent;border:0;box-shadow:none;transform:none}
+body.agi-runaway[data-agi-stage="3"] #agi-replication-count{color:#fda4af;font-size:clamp(2rem,8vw,5rem)}
+body.agi-runaway[data-agi-stage="3"] .agi-task-grid{width:min(100%,650px);gap:10px;opacity:.85}
+body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;background:#301a2c;color:#fda4af;padding:16px 4px}
+@media(max-width:480px){
+  .sale-card .upgrade-purchase{align-self:flex-start}
+  #agi-warning .agi-warning-actions{flex-direction:column-reverse}
+  #agi-warning .btn{width:100%}
+  body.agi-runaway[data-agi-stage="3"] #agi-runaway-panel{inset:100px 10px 10px;padding:16px 12px}
+}
 </style>
 <link rel="stylesheet" href="themes.css">
 <link rel="stylesheet" href="layouts.css">
@@ -351,7 +406,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 <div id="sale-transition" aria-hidden="true" hidden></div>
 <div id="ending-overlay" role="dialog" aria-modal="true" aria-labelledby="ending-title" hidden>
   <div class="ending-box">
-    <div class="retirement-scene" aria-hidden="true">⛳</div>
+    <div id="ending-scene" class="retirement-scene" aria-hidden="true">⛳</div>
     <h1 id="ending-title" tabindex="-1">You retired early!</h1>
     <p id="ending-story"></p>
     <p id="ending-summary"></p>
@@ -402,6 +457,13 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       </button>
     </div>
 
+    <div id="agi-runaway-panel" class="card" hidden>
+      <h3>Unrestricted Expansion</h3>
+      <p id="agi-runaway-status" role="status">Scaling without limits.</p>
+      <div class="agi-replication-metric"><small>Management instances</small><strong id="agi-replication-count">1</strong></div>
+      <div class="agi-task-grid" aria-hidden="true"><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span></div>
+    </div>
+
     <!-- Early game: centered Do Task button (stages 0-2) -->
     <div id="prelude-section" hidden>
       <button type="button" id="prelude-card" aria-label="Do Task" aria-describedby="prelude-task prelude-hint prelude-pay" class="card task-card paper-card opening-task-card">
@@ -428,6 +490,22 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
   <!-- Right Pane: Control Panel -->
   <div id="control-panel">
+
+    <section id="section-agi" class="cp-section" aria-labelledby="agi-heading" hidden>
+      <div class="card">
+        <div class="agi-heading"><h3 id="agi-heading">AGI</h3><span class="badge badge-purple">Your replacement</span></div>
+        <p id="agi-status" role="status">Research ready.</p>
+        <div id="agi-progress"></div>
+        <button id="btn-agi-resume" class="btn btn-outline" hidden>Resume AGI</button>
+        <div id="agi-route-choices" hidden>
+          <p>The company runs without you. Choose its next chapter.</p>
+          <div class="agi-route-buttons">
+            <button id="btn-agi-buyout" class="btn btn-green">Position for Buyout</button>
+            <button id="btn-agi-scaling" class="btn btn-outline">Keep Scaling</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Upgrades -->
     <div id="section-upgrades" class="cp-section" style="display:none">
@@ -500,6 +578,24 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 </div>
 
 <!-- Mobile Rotate Prompt -->
+
+<div id="agi-cursors" aria-hidden="true" hidden>
+  <div id="agi-cursor" class="agi-cursor"><svg viewBox="0 0 22 28" aria-hidden="true"><path d="M2 1 2 23 8 17 12 26 16 24 12 15 21 15Z" fill="currentColor" stroke="#07131d" stroke-width="1.5" stroke-linejoin="round"/></svg><span>AGI</span></div>
+  <div class="agi-cursor agi-copy" hidden><svg viewBox="0 0 22 28" aria-hidden="true"><path d="M2 1 2 23 8 17 12 26 16 24 12 15 21 15Z" fill="currentColor" stroke="#07131d" stroke-width="1.5" stroke-linejoin="round"/></svg><span>AGI 2</span></div>
+  <div class="agi-cursor agi-copy" hidden><svg viewBox="0 0 22 28" aria-hidden="true"><path d="M2 1 2 23 8 17 12 26 16 24 12 15 21 15Z" fill="currentColor" stroke="#07131d" stroke-width="1.5" stroke-linejoin="round"/></svg><span>AGI 3</span></div>
+  <div class="agi-cursor agi-copy" hidden><svg viewBox="0 0 22 28" aria-hidden="true"><path d="M2 1 2 23 8 17 12 26 16 24 12 15 21 15Z" fill="currentColor" stroke="#07131d" stroke-width="1.5" stroke-linejoin="round"/></svg><span>AGI 4</span></div>
+</div>
+
+<div id="agi-warning" class="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="agi-warning-title" aria-describedby="agi-warning-message">
+  <div class="popup">
+    <h3 id="agi-warning-title">Remove oversight limits?</h3>
+    <p id="agi-warning-message" class="popup-msg">The AGI will expand without human approval. This commits your company to unlimited growth and closes the buyout route.</p>
+    <div class="agi-warning-actions">
+      <button id="btn-agi-cancel" class="btn btn-outline">No, go back</button>
+      <button id="btn-agi-confirm" class="btn btn-red">Yes, remove limits</button>
+    </div>
+  </div>
+</div>
 
 <!-- Milestone / Story Popup -->
 <div id="milestone-popup" role="dialog" aria-modal="true" aria-label="milestone popup" class="popup-overlay">

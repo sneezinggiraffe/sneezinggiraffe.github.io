@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { harness } = require('./harness.cjs');
 
-function company(phase = 15, count = 500, options = {}) {
+function company(phase = 16, count = 500, options = {}) {
   const h = harness(undefined, options);
   const g = h.fresh(phase);
   g.ceoMode = 'scale';
@@ -11,7 +11,7 @@ function company(phase = 15, count = 500, options = {}) {
   g.totalTasksDone = 1e9;
   g.aiWorkerShutdown = true;
   g.purchasedUpgrades.push('ceo_full_fit', 'ceo_continuous', 'ceo_parallel_clusters');
-  if (phase >= 15) h.prepareUpgrade('retire_unlock');
+  if (phase >= 15) h.prepareUpgrade(phase >= 16 ? 'retire_unlock' : 'agi_research');
   for (let index = 0; index < count; index++) h.fullCluster().tank = 4000;
   h.api.checkMilestones();
   h.dismiss();
@@ -161,8 +161,8 @@ test('neocloud boundaries retain both simultaneous builds and count only real ou
   }
 });
 
-test('investor talks wait for 500 completed clusters, charge $90k once and unlock Phase 16 on completion', () => {
-  const h = company(15, 499);
+test('investor talks wait for 500 completed clusters, charge $90k once and unlock Phase 17 on completion', () => {
+  const h = company(16, 499);
   try {
     const g = h.window.GAME.state;
     g.cash = 90000;
@@ -180,7 +180,7 @@ test('investor talks wait for 500 completed clusters, charge $90k once and unloc
     assert.equal(saleButton(h, 'retire_unlock').textContent, '$90.0K');
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(g.cash, 0);
-    assert.equal(g.phase, 15);
+    assert.equal(g.phase, 16);
     assert.equal(g.salePreparation.remaining, 8);
     h.api.purchaseUpgrade('retire_unlock');
     h.api.purchaseUpgrade('sale_advisor');
@@ -195,7 +195,7 @@ test('investor talks wait for 500 completed clusters, charge $90k once and unloc
     h.api.tickSalePreparation(4);
     h.dismiss();
     h.api.renderUpgradeSection();
-    assert.equal(g.phase, 16);
+    assert.equal(g.phase, 17);
     assert.equal(g.purchasedUpgrades.filter(id => id === 'retire_unlock').length, 1);
     assert.equal(g.salePreparation.upgradeId, '');
     assert.match(saleButton(h, 'sale_advisor').closest('.card').textContent, /The investors are interested/);
@@ -278,11 +278,11 @@ test('sale timers pause with dialogs and offline gaps and resume with the game t
   }
 });
 
-test('save format 18 rejects invalid sale timers and preserves older saves for explicit reset', () => {
+test('save format 20 rejects invalid sale timers and preserves older saves for explicit reset', () => {
   const h = company();
   try {
     const g = h.window.GAME.state;
-    assert.equal(g.saveVersion, 18);
+    assert.equal(g.saveVersion, 20);
     assert.equal(h.api.validSave(g), true);
     for (const preparation of [
       { upgradeId: 'missing', remaining: 1 },
@@ -295,11 +295,11 @@ test('save format 18 rejects invalid sale timers and preserves older saves for e
     h.api.purchaseUpgrade('retire_unlock');
     assert.equal(h.api.validSave(g), true);
     assert.equal(h.api.validSave({...g, retired: true}), false);
-    assert.equal(h.api.validSave({...g, phase: 16}), false);
+    assert.equal(h.api.validSave({...g, phase: 17}), false);
     assert.equal(h.api.validSave({...g, purchasedUpgrades: [...g.purchasedUpgrades, 'retire_unlock']}), false);
     h.api.tickSalePreparation(8);
     assert.equal(h.api.validSave({...g, salePreparation: {upgradeId: 'sale_terms', remaining: 1}}), false);
-    const raw = JSON.stringify({...g, saveVersion: 17});
+    const raw = JSON.stringify({...g, saveVersion: 19});
     const restored = harness(raw);
     try {
       assert.equal(restored.window.GAME.state.phase, 1);
@@ -316,7 +316,7 @@ test('save format 18 rejects invalid sale timers and preserves older saves for e
 });
 
 test('sale readiness shows the actual financial and operating blockers', () => {
-  const h = company(16);
+  const h = company(17);
   try {
     const g = h.window.GAME.state;
     h.prepareUpgrade('fusion');
@@ -340,12 +340,12 @@ test('sale readiness shows the actual financial and operating blockers', () => {
 });
 
 test('a completed sale freezes the company, fades to black and reveals retirement with its music', () => {
-  const h = company(16, 100, { reducedMotion: false });
+  const h = company(17, 100, { reducedMotion: false });
   try {
     const g = h.window.GAME.state;
     g.phase = 6;
     h.api.unlockMusicPlayback();
-    g.phase = 16;
+    g.phase = 17;
     h.prepareUpgrade('fusion');
     h.api.renderAll();
     const companyHtml = h.window.document.querySelector('#game-container').innerHTML;

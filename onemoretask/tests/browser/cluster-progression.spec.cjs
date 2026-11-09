@@ -120,7 +120,7 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 
-  test(`Phase 15 builds two neoclouds together and requires all upgrades before investor talks at ${width}px`, async ({ page }) => {
+  test(`Phase 15 builds two neoclouds together and opens AGI research before investor talks at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh(15);
     g.ceoMode = 'scale';
@@ -171,15 +171,15 @@ for (const width of [1440, 390]) {
     expect(await page.evaluate(() => GAME.state.clusters.slice(500).map(cluster => cluster.buildRemaining))).toEqual(remaining);
     await page.clock.runFor(300);
     await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
-    await expect(talks).toBeDisabled();
+    await expect(talks).toHaveCount(0);
+    await expect(page.locator('[onclick="GAME.buy(\'agi_research\')"]')).toBeDisabled();
     expect(await page.evaluate(() => GAME.state.phase)).toBe(15);
     await page.evaluate(() => GAME.addCash(1e10));
     await page.clock.runFor(500);
     expect(await page.evaluate(() => GAME.state.clusters.filter(cluster => cluster.buildRemaining === 0 && cluster.managerAssigned).length)).toBeGreaterThanOrEqual(500);
-    await expect(talks).toBeEnabled();
-    await talks.click();
-    await page.clock.runFor(8100);
-    expect(await page.evaluate(() => GAME.state.phase)).toBe(16);
+    await expect(talks).toHaveCount(0);
+    await expect(page.locator('[onclick="GAME.buy(\'agi_research\')"]')).toHaveText('$8.00B');
+    expect(await page.evaluate(() => GAME.state.phase)).toBe(15);
     await expect(page.locator('#milestone-popup')).toBeHidden();
   });
 }

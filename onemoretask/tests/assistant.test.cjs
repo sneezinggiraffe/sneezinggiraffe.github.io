@@ -328,7 +328,7 @@ test('Pro starts Phase 4 without changing workload, tanks or starter tokens; the
     const g = h.window.GAME.state;
     assert.equal(g.phase, 3);
     const transitions = h.api.UPGRADES.filter(upgrade => upgrade.unlockPhase);
-    assert.deepEqual(Array.from(transitions, upgrade => upgrade.unlockPhase), Array.from({ length: 15 }, (_, index) => index + 2));
+    assert.deepEqual(Array.from(transitions, upgrade => upgrade.unlockPhase), Array.from({ length: 16 }, (_, index) => index + 2));
     assert.equal(h.window.chPh3_1, undefined);
     assert.equal(h.window.chStart8, undefined);
     assert.equal(typeof h.window.chStart9, 'function');
