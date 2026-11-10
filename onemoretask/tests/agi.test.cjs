@@ -46,6 +46,43 @@ function readyCompany(t, options) {
   return h;
 }
 
+test('AGI returns to the top and shows its click before buying if the player scrolls away', t => {
+  const h = company(t, 'agi_contracts');
+  const g = h.window.GAME.state;
+  const document = h.window.document;
+  const panel = document.querySelector('#control-panel');
+  const cash = g.cash;
+  h.api.tickAgi(0.1);
+  h.api.renderAll();
+  panel.scrollTop = 900;
+  h.api.tickAgi(2);
+  h.api.renderAll();
+  assert.equal(panel.scrollTop, 0);
+  assert.equal(h.api.agiMotionState().elapsed, 2);
+  assert.equal(h.api.agiMotionState().clicking, false);
+  h.api.tickAgi(1.25);
+  h.api.renderAll();
+  assert.equal(document.querySelectorAll('.agi-click-target').length, 1);
+  assert.equal(document.querySelector('#agi-cursor span').textContent, 'AGI · Click');
+  assert.equal(document.querySelector('#agi-cursor').classList.contains('clicking'), true);
+  assert.equal(g.agi.projectId, '');
+  panel.scrollTop = 900;
+  h.api.tickAgi(0.75);
+  h.api.renderAll();
+  assert.equal(panel.scrollTop, 0);
+  assert.equal(g.cash, cash, 'Scrolling during the click postpones the purchase');
+  assert.equal(document.querySelector('.agi-click-target'), null);
+  assert.equal(document.querySelector('#agi-cursor span').textContent, 'AGI');
+  h.api.tickAgi(1.25);
+  h.api.renderAll();
+  assert.ok(document.querySelector('.agi-click-target'));
+  h.api.tickAgi(0.75);
+  assert.equal(g.agi.projectId, 'agi_contracts');
+  assert.equal(g.cash, cash - upgrade(h, 'agi_contracts').cost);
+  assert.equal(document.querySelector('.agi-click-target'), null);
+  assert.equal(document.querySelector('#agi-cursor span').textContent, 'AGI');
+});
+
 test('buyout requires confirmation, supports cancel and Escape, and closes the scaling route', t => {
   const h = readyCompany(t);
   const g = h.window.GAME.state;

@@ -119,6 +119,12 @@
     ["Cirrus", "CIR"], ["Stratus", "STR"], ["Zenith", "ZEN"], ["Horizon", "HOR"], ["Vega", "VEG"],
     ["Orion", "ORI"], ["Lyra", "LYR"], ["Nova", "NOV"], ["Solstice", "SOL"], ["Polaris", "POL"],
     ["Aster", "AST"], ["Helios", "HEL"], ["Cobalt", "COB"], ["Eclipse", "ECL"], ["Kepler", "KEP"],
+    ["Altair", "ALT"], ["Andromeda", "AND"], ["Arcturus", "ARC"], ["Cassiopeia", "CAS"], ["Celeste", "CEL"],
+    ["Comet", "COM"], ["Corona", "COR"], ["Cosmos", "COS"], ["Cygnus", "CYG"], ["Draco", "DRA"],
+    ["Equinox", "EQU"], ["Halcyon", "HLC"], ["Halo", "HLO"], ["Ion", "ION"], ["Iris", "IRI"],
+    ["Lumen", "LUM"], ["Luna", "LUN"], ["Nebula", "NEB"], ["Oberon", "OBE"], ["Odyssey", "ODY"],
+    ["Pulsar", "PUL"], ["Quasar", "QUA"], ["Radiant", "RAD"], ["Rigel", "RIG"], ["Sirius", "SIR"],
+    ["Spectra", "SPE"], ["Tempest", "TEM"], ["Titan", "TIT"], ["Umbra", "UMB"], ["Vesper", "VES"],
   ];
   const ENDING_FADE_OUT_MS = 3000;
   const ENDING_BLACK_PAUSE_MS = 400;
@@ -1984,7 +1990,12 @@
     }
     const inspecting = Object.hasOwn(AGI_INSPECTIONS, motion.target);
     motion.elapsed += dtSec;
-    motion.clicking = !inspecting && motion.elapsed >= 2 && motion.elapsed < 2.5;
+    if (!inspecting && motion.elapsed >= 2 && $("#control-panel").scrollTop > 0) {
+      revealAgiTarget();
+      motion.elapsed = 2;
+      motion.scrolled = true;
+    }
+    motion.clicking = !inspecting && motion.elapsed >= 3.25 && motion.elapsed < 4;
     if (motion.elapsed < 4) return;
     if (inspecting) {
       motion.visits++;
@@ -2160,9 +2171,13 @@
     const runaway = active && G.agi.route === "scaling";
     if (driving && !runaway) renderAgiInspection(motion);
     const target = driving && !runaway ? agiPointerTarget() : null;
+    const purchaseCard = target?.closest(".upgrade-card");
+    $$(".agi-click-target").forEach((card) => card.classList.remove("agi-click-target"));
+    if (purchaseCard && motion.clicking) purchaseCard.classList.add("agi-click-target");
+    $("#agi-cursor span").textContent = purchaseCard && motion.clicking ? "AGI · Click" : "AGI";
     $("#agi-cursors").hidden = !runaway && !target;
     if (!runaway && !target) return;
-    if (target?.closest(".upgrade-card") && !motion.scrolled) {
+    if (purchaseCard && !motion.scrolled) {
       revealAgiTarget();
       motion.scrolled = true;
     }

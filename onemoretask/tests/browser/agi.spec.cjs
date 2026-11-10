@@ -92,6 +92,7 @@ for (const width of [1440, 390, 320]) {
   test(`research stages and task evaluations fit at ${width}px`, async ({ page }) => {
     await openAgiCheckpoint(page, width, 'chPh16');
     await upgrade(page, 'agi_research').click();
+    await expect(page.locator('#section-agi > .card')).toHaveCSS('padding-bottom', '12px');
     await expect(page.locator('.agi-research-stages [data-state="active"]')).toHaveText('Assemble training data');
     await page.clock.runFor(10100);
     await expect(page.locator('.agi-research-stages [data-state="active"]')).toHaveText('Train model');
@@ -112,6 +113,7 @@ test('buyout confirmation supports cancellation, Escape and primary action above
   await page.locator('#btn-agi-buyout').click();
   const dialog = page.locator('#agi-buyout-warning');
   await expect(dialog).toBeVisible();
+  await expect(page.locator('#agi-buyout-message')).toHaveText('Prepare the company for sale and the retirement you once dreamt of.');
   expect((await page.locator('#btn-agi-buyout-confirm').boundingBox()).y).toBeLessThan((await page.locator('#btn-agi-buyout-cancel').boundingBox()).y);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
@@ -180,7 +182,7 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await expect(page.locator('#agi-warning')).toHaveAccessibleName('Remove guard rails');
     expect((await page.locator('#btn-agi-confirm').boundingBox()).y).toBeLessThan((await page.locator('#btn-agi-cancel').boundingBox()).y);
     await expect(page.locator('#btn-agi-confirm')).toBeFocused();
-    await expect(page.locator('#agi-warning-message')).toHaveText('AGI will expand without approval. It has already planned for your absence.');
+    await expect(page.locator('#agi-warning-message')).toHaveText('Are you sure? AGI will expand without further approval.');
     expect(await page.evaluate(() => GAME.state.agi.route)).toBe('');
     await page.keyboard.press('Shift+Tab');
     await expect(page.locator('#btn-agi-cancel')).toBeFocused();
@@ -236,6 +238,45 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await expect(page.locator('#agi-runaway-panel')).toBeHidden();
     expect(await page.evaluate(() => GAME.state.agi.route)).toBe('');
     expect(await page.evaluate(() => GAME.state.phase)).toBe(1);
+  });
+}
+
+for (const [width, reducedMotion] of [[1440, 'no-preference'], [390, 'reduce']]) {
+  test(`AGI returns from the bottom before a visible purchase at ${width}px`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await openAgiCheckpoint(page, width);
+    await page.evaluate(() => {
+      GAME.state.purchasedUpgrades = GAME.state.purchasedUpgrades.filter(id => !['agi_contracts', 'agi_independence'].includes(id));
+      GAME.state.ceoMode = 'manage';
+    });
+    await page.clock.runFor(300);
+    const panel = page.locator('#control-panel');
+    const purchase = upgrade(page, 'agi_contracts');
+    await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    expect(await panel.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+    await page.clock.runFor(1700);
+    expect(await panel.evaluate(element => element.scrollTop)).toBe(0);
+    await page.clock.runFor(1500);
+    await expect(page.locator('#agi-cursor')).toHaveClass(/clicking/);
+    await expect(page.locator('#agi-cursor span')).toHaveText('AGI · Click');
+    await expect(page.locator('#agi-cursor span')).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('.agi-click-target')).toHaveCount(1);
+    await expect(purchase).toBeInViewport({ ratio: 1 });
+    const ring = await page.locator('#agi-cursor').evaluate(element => {
+      const style = getComputedStyle(element, '::before');
+      return { content: style.content, border: style.borderTopWidth, animation: style.animationDuration };
+    });
+    expect(ring.content).toBe('""');
+    expect(ring.border).toBe('3px');
+    expect(ring.animation).toBe(reducedMotion === 'reduce' ? '0s' : '0.75s');
+    await page.screenshot({ path: `test-results/agi-purchase-click-${width}.png` });
+    await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await page.clock.runFor(700);
+    expect(await panel.evaluate(element => element.scrollTop)).toBe(0);
+    expect(await page.evaluate(() => GAME.state.agi.projectId)).toBe('');
+    await page.clock.runFor(2100);
+    expect(await page.evaluate(() => GAME.state.agi.projectId)).toBe('agi_contracts');
+    await expect(page.locator('.agi-click-target')).toHaveCount(0);
   });
 }
 

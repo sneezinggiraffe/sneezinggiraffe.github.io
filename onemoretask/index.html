@@ -357,7 +357,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 }
 
 /* AGI handover and unrestricted expansion */
-#section-agi>.card{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg2))}
+#section-agi>.card{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg2));padding-bottom:12px}
 .agi-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
 .agi-heading h3{margin:0;letter-spacing:.08em}
 .agi-heading .badge{background:var(--bg3);color:var(--text2)}
@@ -388,7 +388,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .agi-cursor{position:fixed;left:50%;top:50%;color:#67e8f9;pointer-events:none;transition:left .65s ease-in-out,top .65s ease-in-out;filter:drop-shadow(0 2px 3px #0009)}
 .agi-cursor svg{display:block;width:22px;height:28px;transform-origin:3px 3px;transition:transform .12s}
 .agi-cursor span{display:block;position:absolute;left:19px;top:22px;padding:2px 5px;border-radius:3px;background:#123445;border:1px solid currentColor;font-size:9px;font-weight:700;letter-spacing:.04em;white-space:nowrap;line-height:1.2}
-.agi-cursor.clicking svg{transform:scale(.8)}
+.agi-cursor.clicking svg{transform:scale(.8);color:#fff}
+.agi-cursor.clicking::before{content:'';position:absolute;left:-16px;top:-16px;width:36px;height:36px;border:3px solid currentColor;border-radius:50%;background:color-mix(in srgb,currentColor 20%,transparent);box-shadow:0 0 12px currentColor;animation:agi-click-ring .75s ease-out both}
+.agi-cursor.clicking span{background:#07131d;color:#fff;font-size:11px}
+#agi-cursor.clicking span{left:auto;right:6px}
+.upgrade-card.agi-click-target{outline:3px solid var(--accent);outline-offset:2px;box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent)}
+@keyframes agi-click-ring{from{transform:scale(.65);opacity:1}to{transform:scale(1.3);opacity:.45}}
 .agi-copy{color:#c4b5fd}
 .agi-copy span{background:#292144}
 .agi-copy:nth-child(3){color:#fbbf24}
@@ -622,7 +627,7 @@ body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;ba
 <div id="agi-buyout-warning" class="popup-overlay paper-dialog" role="dialog" aria-modal="true" aria-labelledby="agi-buyout-title" aria-describedby="agi-buyout-message">
   <div class="popup paper-card">
     <h3 id="agi-buyout-title">Position for Buyout</h3>
-    <p id="agi-buyout-message" class="popup-msg">Prepare the company for sale and your retirement. This closes the unrestricted expansion route.</p>
+    <p id="agi-buyout-message" class="popup-msg">Prepare the company for sale and the retirement you once dreamt of.</p>
     <div class="dialog-actions">
       <button id="btn-agi-buyout-confirm" class="btn btn-green">Position for Buyout</button>
       <button id="btn-agi-buyout-cancel" class="btn btn-outline">Go back</button>
@@ -633,8 +638,7 @@ body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;ba
 <div id="agi-warning" class="popup-overlay paper-dialog" role="dialog" aria-modal="true" aria-labelledby="agi-warning-title" aria-describedby="agi-warning-message">
   <div class="popup paper-card">
     <h3 id="agi-warning-title">Remove guard rails</h3>
-    <p id="agi-warning-message" class="popup-msg">AGI will expand without approval.
-It has already planned for your absence.</p>
+    <p id="agi-warning-message" class="popup-msg">Are you sure? AGI will expand without further approval.</p>
     <div class="dialog-actions">
       <button id="btn-agi-confirm" class="btn btn-red">Remove guard rails</button>
       <button id="btn-agi-cancel" class="btn btn-outline">Go back</button>
