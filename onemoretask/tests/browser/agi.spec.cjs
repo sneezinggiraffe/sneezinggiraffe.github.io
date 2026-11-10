@@ -224,11 +224,11 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await upgrade(page, 'fusion').click();
     await page.clock.runFor(5000);
-    await expect(page.locator('#ending-title')).toHaveText('You retired early!');
+    await expect(page.locator('#ending-title')).toHaveText('Your time belongs to you.');
     await expect(page.locator('#agi-cursors')).toBeHidden();
     await expect(page.locator('#ending-choices')).toBeVisible();
     await saveAndReload(page);
-    await expect(page.locator('#ending-title')).toHaveText('You retired early!');
+    await expect(page.locator('#ending-title')).toHaveText('Your time belongs to you.');
   });
 
   test(`keep scaling confirms, replicates, ends and resets in view ${layout} at ${width}px`, async ({ page }) => {
@@ -273,10 +273,8 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await page.clock.runFor(17600);
     const fade = page.locator('#ending-transition');
     await expect(fade).toBeVisible();
-    const opacity = await fade.evaluate(element => Number(element.style.opacity));
-    expect(opacity).toBeGreaterThan(0);
-    expect(opacity).toBeLessThan(1);
-    await expect(page.locator('#agi-runaway-panel')).toBeVisible();
+    await expect(page.locator('#access-revoked')).toHaveText('Human input no longer required.');
+    await expect(page.locator('#agi-runaway-panel')).toBeHidden();
     await expect(page.locator('#ending-overlay')).toBeHidden();
     await page.clock.runFor(5400);
     await expect(page.locator('#ending-overlay')).toBeVisible();

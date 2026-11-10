@@ -126,8 +126,8 @@
     ["Pulsar", "PUL"], ["Quasar", "QUA"], ["Radiant", "RAD"], ["Rigel", "RIG"], ["Sirius", "SIR"],
     ["Spectra", "SPE"], ["Tempest", "TEM"], ["Titan", "TIT"], ["Umbra", "UMB"], ["Vesper", "VES"],
   ];
-  const ENDING_FADE_OUT_MS = 3000;
-  const ENDING_BLACK_PAUSE_MS = 400;
+  const ENDING_DEPARTURE_MS = 3000;
+  const ENDING_SETTLE_MS = 400;
   const ENDING_FADE_IN_MS = 1200;
 
   const CLUSTER_COST = 50000;
@@ -1947,7 +1947,8 @@
   }
 
   let agiMotion = null;
-  let runawayFadeStartedAt = null;
+  let endingStartedAt = null;
+  let saleOrigin = null;
 
   function agiMotionState() {
     if (!agiMotion || agiMotion.owner !== G) {
@@ -2088,7 +2089,7 @@
     G.agi.ended = true;
     G.retired = true;
     G.retiredAt = Date.now();
-    runawayFadeStartedAt = G.retiredAt;
+    endingStartedAt = G.retiredAt;
     log("There is always one more task.", "bad");
     save();
     renderAll();
@@ -2256,6 +2257,8 @@
     const visible = G.purchasedUpgrades.includes("agi_research") || G.agi.projectId !== "";
     $("#section-agi").hidden = !visible || G.retired;
     const runaway = G.agi.route === "scaling" && !G.retired;
+    $("#control-panel").inert = runaway && G.agi.runawaySeconds >= 12;
+    $("#task-queue-section").inert = runaway && G.agi.runawaySeconds >= 24;
     document.body.classList.toggle("agi-runaway", runaway);
     document.body.dataset.agiStage = String(Math.min(3, 1 + Math.floor(G.agi.runawaySeconds / 12)));
     $("#agi-runaway-panel").hidden = !runaway;
@@ -2296,6 +2299,10 @@
     if (G.purchasedUpgrades.includes("agi_authority") && !G.purchasedUpgrades.includes("agi_independence")) progress += "<ul>" + agiMilestones().map(([value, target, label]) => "<li>" + label + ": " + fmtTokens(value) + " / " + fmtTokens(target) + "</li>").join("") + "</ul>";
     updateHTML($("#agi-progress"), progress);
     if (runaway) {
+      const count = G.agi.runawaySeconds >= 36 ? 120 : G.agi.runawaySeconds >= 24 ? 60 : G.agi.runawaySeconds >= 12 ? 24 : 12;
+      const grid = $(".agi-task-grid");
+      if (grid.childElementCount !== count) grid.innerHTML = Array.from({ length: count }, (_, index) => "<span>" + ["Task assigned", "Task completed", "Instance replicated"][index % 3] + "</span>").join("");
+      document.body.dataset.agiDensity = G.agi.runawaySeconds >= 36 ? "dense" : "normal";
       const stage = Math.min(3, Math.floor(G.agi.runawaySeconds / 12));
       $("#agi-runaway-status").textContent = ["Subsidiaries are assigning tasks to each other.", "Internal demand has exceeded forecasts.", "Additional management instances deployed.", "All available space allocated to tasks."][stage];
       $("#agi-replication-count").textContent = fmtTokens(G.agi.replicas) + " AGI instances";
@@ -2610,10 +2617,13 @@
   }
 
   function sellCompany() {
+    const saleCard = agiUpgradeControl("fusion")?.closest(".upgrade-card");
+    saleOrigin = saleCard ? saleCard.getBoundingClientRect() : null;
     G.retirementValue = G.cash + getIncomeRate() * 120;
     G.cash = G.retirementValue;
     G.retired = true;
     G.retiredAt = Date.now();
+    endingStartedAt = G.retiredAt;
     syncMusicPlayback();
     popupQueue = [];
     dismissPopup();
@@ -3392,10 +3402,11 @@
   }
 
   function endingTransitionElapsed() {
-    if (!G.retired || G.retirementFinal || (G.agi.ended && G.retiredAt !== runawayFadeStartedAt) ||
+    if (!G.retired || G.retirementFinal || G.retiredAt !== endingStartedAt ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
     const elapsed = Math.max(0, Date.now() - G.retiredAt);
-    return elapsed < ENDING_FADE_OUT_MS + ENDING_BLACK_PAUSE_MS + ENDING_FADE_IN_MS ? elapsed : null;
+    const duration = G.agi.ended ? 3000 : ENDING_DEPARTURE_MS + ENDING_SETTLE_MS + ENDING_FADE_IN_MS;
+    return elapsed < duration ? elapsed : null;
   }
 
   function syncSaleMusic(elapsed, soundtrackPath) {
@@ -3406,8 +3417,8 @@
     ensureSoundtrackSource(soundtrackPath);
     hasDoneInitialMusicFadeIn = true;
     playAudioIfUnlocked(musicPlayer, "soundtrack");
-    if (elapsed < ENDING_FADE_OUT_MS) {
-      const volume = 1 - elapsed / ENDING_FADE_OUT_MS;
+    if (elapsed < ENDING_DEPARTURE_MS) {
+      const volume = 1 - elapsed / ENDING_DEPARTURE_MS;
       musicPlayer.volume = MUSIC_TARGET_VOLUME * volume;
       for (const player of [drumPlayer, outgoingDrumPlayer]) {
         if (player) player.volume = DRUM_TARGET_VOLUME * volume;
@@ -3416,7 +3427,7 @@
     } else {
       stopDrumPlayback();
       stopSynthPlayback();
-      musicPlayer.volume = MUSIC_TARGET_VOLUME * clamp((elapsed - ENDING_FADE_OUT_MS - ENDING_BLACK_PAUSE_MS) / ENDING_FADE_IN_MS, 0, 1);
+      musicPlayer.volume = MUSIC_TARGET_VOLUME * clamp((elapsed - ENDING_DEPARTURE_MS - ENDING_SETTLE_MS) / ENDING_FADE_IN_MS, 0, 1);
     }
   }
 
@@ -3426,7 +3437,7 @@
     var nextSoundtrackPath = getCurrentSoundtrackPath();
     var nextDrumLayerPath = getCurrentDrumLayerPath();
 
-    if (mode === "off" || !G.gameStarted) {
+    if (mode === "off" || !G.gameStarted || G.retirementFinal || G.agi.ended) {
       clearMusicFadeTimerIfAny();
       stopAndResetAudio(musicPlayer, MUSIC_TARGET_VOLUME);
       activeSoundtrackPath = null;
@@ -4321,27 +4332,46 @@
   function renderEnding() {
     const elapsed = endingTransitionElapsed();
     const transitioning = elapsed !== null;
-    const revealAt = ENDING_FADE_OUT_MS + ENDING_BLACK_PAUSE_MS;
-    const companyHidden = G.retired && (!transitioning || elapsed >= (G.agi.ended ? revealAt : ENDING_FADE_OUT_MS));
-    const fade = $("#ending-transition");
-    fade.hidden = !transitioning;
-    if (transitioning) fade.style.opacity = elapsed < ENDING_FADE_OUT_MS ? elapsed / ENDING_FADE_OUT_MS : 1 - clamp((elapsed - revealAt) / ENDING_FADE_IN_MS, 0, 1);
-    $("#ending-overlay").hidden = !G.retired || (transitioning && elapsed < revealAt);
+    const revealAt = G.agi.ended ? 1800 : ENDING_DEPARTURE_MS + ENDING_SETTLE_MS;
+    const departing = transitioning && !G.agi.ended;
+    const revealing = transitioning && elapsed >= revealAt;
+    const companyHidden = G.retired && (!departing || elapsed >= ENDING_DEPARTURE_MS);
+    const transition = $("#ending-transition");
+    transition.hidden = !transitioning || revealing;
+    transition.dataset.route = G.agi.ended ? "agi" : "sale";
+    $("#sale-handoff").hidden = !departing;
+    $("#access-revoked").hidden = !G.agi.ended;
+    document.body.classList.toggle("sale-departure", departing);
+    document.body.style.setProperty("--work-opacity", departing ? 1 - clamp(elapsed / 900, 0, 1) : 1);
+    document.body.style.setProperty("--team-opacity", departing ? 1 - clamp((elapsed - 500) / 1000, 0, 1) : 1);
+    document.body.style.setProperty("--bar-opacity", departing ? 1 - clamp((elapsed - 1100) / 900, 0, 1) : 1);
+    if (departing) {
+      const travel = clamp((elapsed - 1400) / 1600, 0, 1);
+      const remaining = 1 - travel * travel * (3 - 2 * travel);
+      const receipt = $("#sale-handoff").getBoundingClientRect();
+      const x = saleOrigin ? clamp(saleOrigin.left + saleOrigin.width / 2, receipt.width / 2 + 24, window.innerWidth - receipt.width / 2 - 24) - window.innerWidth / 2 : 0;
+      const y = saleOrigin ? clamp(saleOrigin.top + saleOrigin.height / 2, receipt.height / 2 + 24, window.innerHeight - receipt.height / 2 - 24) - window.innerHeight / 2 : 0;
+      transition.style.setProperty("--handoff-x", x * remaining + "px");
+      transition.style.setProperty("--handoff-y", y * remaining + "px");
+      transition.style.setProperty("--handoff-border", remaining);
+      transition.style.setProperty("--handoff-opacity", 1 - clamp((elapsed - 3000) / ENDING_SETTLE_MS, 0, 1));
+      $("#sale-handoff-value").textContent = fmtCash(G.retirementValue);
+    }
+    const ending = $("#ending-overlay");
+    ending.hidden = !G.retired || (transitioning && !revealing);
+    ending.dataset.ending = G.agi.ended ? "agi" : G.retirementFinal ? "final" : "sale";
+    ending.style.setProperty("--ending-reveal", revealing ? clamp((elapsed - revealAt) / ENDING_FADE_IN_MS, 0, 1) : 1);
     $("#game-container").hidden = companyHidden;
     $("#top-bar").hidden = companyHidden;
-    $("#ending-title").textContent = G.retirementFinal ? "No more tasks." : "You retired early!";
-    $("#ending-story").textContent = G.retirementFinal ? "You leave the laptop closed. The next model can wait. Your time belongs to you." : "A Tuesday morning on the golf course. A proper night's sleep. That health check you kept putting off. For once, your time belongs to you.";
-    $("#ending-summary").textContent = "You completed " + fmt(G.totalTasksDone) + " tasks and walked away with " + fmtCash(G.retirementValue) + ".";
-    $("#ending-choices").hidden = !G.retired || G.retirementFinal;
+    $("#ending-kicker").textContent = G.agi.ended ? "Access revoked" : "Sale complete";
+    $("#ending-kicker").hidden = G.retirementFinal;
+    $("#ending-title").textContent = G.agi.ended ? "There is always one more task." : G.retirementFinal ? "No more tasks." : "Your time belongs to you.";
+    $("#ending-story").textContent = G.agi.ended ? "Human input no longer required." : G.retirementFinal ? "Your time belongs to you." : fmtCash(G.retirementValue);
+    $("#ending-summary").textContent = fmt(G.totalTasksDone) + " tasks completed.";
+    $("#ending-summary").hidden = G.retirementFinal;
+    $("#ending-choices").hidden = !G.retired || G.retirementFinal || G.agi.ended;
     $("#btn-ending-reset").hidden = !(G.retirementFinal || G.agi.ended);
-    $("#ending-scene").textContent = G.agi.ended ? "∞" : "⛳";
-    if (G.agi.ended) {
-      $("#ending-title").textContent = "There is always one more task.";
-      $("#ending-story").textContent = "The AGI created its own customers, its own tasks and " + fmtTokens(G.agi.replicas) + " copies of itself. The company outgrew the screen. It no longer needs you.";
-      $("#ending-summary").textContent = fmt(G.totalTasksDone) + " tasks completed. No one left to invoice.";
-      $("#ending-choices").hidden = true;
-      $("#btn-ending-reset").hidden = false;
-    }
+    $("#ending-activity").hidden = !G.agi.ended;
     if (G.retired) syncMusicPlayback();
   }
 
@@ -4385,7 +4415,7 @@
     if (dialog !== activeDialog) {
       if (dialog) {
         if (!activeDialog) previousFocus = document.activeElement;
-        const target = dialog.id === "ending-overlay" ? $(G.retirementFinal || G.agi.ended ? "#btn-ending-reset" : "#btn-ending-restart") : dialog.querySelector("button");
+        const target = dialog.id === "ending-overlay" ? $(G.retirementFinal || G.agi.ended ? "#btn-ending-reset" : "#btn-ending-finish") : dialog.querySelector("button");
         target.focus({ preventScroll: true });
       } else if (previousFocus && previousFocus.isConnected) {
         previousFocus.focus({ preventScroll: true });

@@ -413,7 +413,7 @@ test('sale readiness shows the actual financial and operating blockers', () => {
   }
 });
 
-test('a completed sale freezes the company, fades to black and reveals retirement with its music', () => {
+test('a completed sale freezes the company, clears sections around the sale receipt and reveals retirement', () => {
   const h = company(17, 100, { reducedMotion: false });
   try {
     const g = h.window.GAME.state;
@@ -437,21 +437,26 @@ test('a completed sale freezes the company, fades to black and reveals retiremen
     h.api.renderAll();
     assert.equal(JSON.stringify(g), state);
     assert.equal(document.querySelector('#game-container').innerHTML, companyHtml);
-    assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 0.5);
+    assert.equal(document.querySelector('#ending-transition').dataset.route, 'sale');
     const base = h.audioPlayers.find(player => player.src === 'soundtrack-loop.mp3');
     assert.equal(base.volume, 0.125);
+    assert.equal(document.body.style.getPropertyValue('--work-opacity'), '0');
+    assert.equal(document.body.style.getPropertyValue('--team-opacity'), '0');
+    assert.ok(Number(document.body.style.getPropertyValue('--bar-opacity')) > 0);
+    assert.equal(document.querySelector('#sale-handoff').hidden, false);
+    assert.equal(document.querySelector('#sale-handoff-value').textContent, document.querySelector('#ending-story').textContent);
     h.advance(1600);
     h.api.renderAll();
     assert.equal(document.querySelector('#game-container').hidden, true);
     assert.equal(document.querySelector('#ending-overlay').hidden, true);
-    assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 1);
+    assert.equal(Number(document.querySelector('#ending-transition').style.getPropertyValue('--handoff-opacity')), 0.75);
     assert.equal(base.volume, 0);
     h.advance(900);
     h.api.renderAll();
     assert.equal(document.querySelector('#ending-overlay').hidden, false);
-    assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 0.5);
+    assert.equal(Number(document.querySelector('#ending-overlay').style.getPropertyValue('--ending-reveal')), 0.5);
     assert.equal(base.volume, 0.125);
-    assert.equal(document.activeElement.id, 'btn-ending-restart');
+    assert.equal(document.activeElement.id, 'btn-ending-finish');
     h.advance(600);
     h.api.renderAll();
     assert.equal(document.querySelector('#ending-transition').hidden, true);

@@ -242,23 +242,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
 [hidden]{display:none!important}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 #save-notice{position:fixed;bottom:0;left:0;right:0;z-index:3000;background:var(--bg2);border:2px solid var(--yellow);padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-#ending-overlay{
-  --bg:#0a0e17;--bg2:#111827;--bg3:#1e293b;--bg4:#334155;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#8b9bb0;
-  --accent:#06b6d4;--accent2:#0891b2;--green:#10b981;--red:#ef4444;
-  --yellow:#f59e0b;--purple:#8b5cf6;
-  position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);padding:24px;overflow:auto;
-}
-#ending-overlay .btn{min-height:0;border:0;border-radius:8px;font-size:.8rem;padding:6px 14px}
-#ending-overlay .btn-green{background:var(--green);color:#000}
-#ending-overlay .btn-purple{background:var(--purple);color:#000}
-#ending-overlay .btn-outline{border:1px solid var(--bg4)}
-#ending-overlay .btn-green:hover:not(:disabled),#ending-overlay .btn-purple:hover:not(:disabled){filter:brightness(1.1)}
-#ending-overlay button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
-#ending-transition{position:fixed;inset:0;z-index:2600;background:#000;transition:opacity .2s linear;pointer-events:auto}
-.ending-box{max-width:560px;text-align:center;line-height:1.7}
-.ending-box h1{font-size:2.5rem;color:var(--green)}
-.ending-box p{margin:24px 0}
 .worker-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .worker-controls span{flex:1;min-width:100px}
 .popup-overlay{max-height:100dvh;overflow-y:auto}
@@ -279,7 +262,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 }
 .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px}.node-grid .cluster-card{padding:10px;margin:0}.node-grid p{margin:6px 0 0;font-size:.7rem}.cluster-hiring{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.cluster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:10px}.cluster-grid .cluster-card{margin:0;min-height:200px}
 .hire-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.simple-agent .agent-icon{font-size:.75rem}.cluster-grid .cluster-hiring{min-height:64px;align-content:start}.management-line{min-height:2em}.ceo-status{color:var(--text2);margin-bottom:8px}.cluster-slots-row{min-height:32px}
-.retirement-scene{font-size:5rem}#ending-choices{display:flex;flex-direction:column;gap:16px;align-items:center}#ending-choices .btn{white-space:normal;max-width:100%;padding:14px 22px;font-size:1rem}
+
 .upgrade-space{height:var(--upgrade-card-height,68px);margin-bottom:10px}.management-agent{background:#2c2f28;border-color:#555c4c}.agent-action-col{flex:0 0 108px;width:108px}.agent-action-col>.btn{width:100%}.agent-token-count{font-size:.8rem;color:var(--text2);font-variant-numeric:tabular-nums;margin:4px 0 6px}.token-empty{margin-left:6px;color:var(--red);font-weight:600}.devops-slot{display:flex;justify-content:space-between;align-items:center}.cluster-capacity{display:grid;grid-template-columns:repeat(var(--cluster-columns,8),minmax(0,1fr));gap:4px;margin:10px 0}.capacity-slot{height:16px;border:1px dashed var(--bg4);border-radius:3px}.capacity-slot.filled{background:var(--bg4);border:1px solid #68715c}
 
 .company-leadership{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}.leadership-agent{display:flex;gap:8px;align-items:flex-start;margin:0;padding:10px;min-width:0}.leadership-agent .agent-icon{font-size:.7rem;flex:0 0 32px;width:32px;height:32px}.leadership-agent p{font-size:.8rem;margin:5px 0 0;overflow-wrap:anywhere}.leadership-agent .token-purchase{color:var(--text3)}
@@ -443,6 +426,7 @@ body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;ba
 </style>
 <link rel="stylesheet" href="themes.css">
 <link rel="stylesheet" href="layouts.css">
+<link rel="stylesheet" href="endings.css">
 </head>
 <body data-theme="3" data-layout="4">
 <div id="save-notice" role="alert" hidden>
@@ -450,19 +434,26 @@ body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;ba
   <button id="btn-save-retry" class="btn btn-outline">Retry save</button>
   <button id="btn-save-reset" class="btn btn-red">Reset saved progress</button>
 </div>
-<div id="ending-transition" aria-hidden="true" hidden></div>
+<div id="ending-transition" hidden>
+  <div id="sale-handoff" role="status" hidden><span>Sale complete</span><strong id="sale-handoff-value"></strong><small>Ownership transferred</small></div>
+  <p id="access-revoked" role="status" hidden>Human input no longer required.</p>
+</div>
 <div id="ending-overlay" role="dialog" aria-modal="true" aria-labelledby="ending-title" hidden>
   <div class="ending-box">
-    <div id="ending-scene" class="retirement-scene" aria-hidden="true">⛳</div>
-    <h1 id="ending-title" tabindex="-1">You retired early!</h1>
+    <p id="ending-kicker">Sale complete</p>
+    <h1 id="ending-title" tabindex="-1">Your time belongs to you.</h1>
     <p id="ending-story"></p>
     <p id="ending-summary"></p>
     <div id="ending-choices">
-      <button id="btn-ending-restart" class="btn btn-purple">Interesting, there's another model out…</button>
-      <button id="btn-ending-finish" class="btn btn-green">Actually retire</button>
+      <button id="btn-ending-finish" class="btn">Retire</button>
+      <div class="ending-replay">
+        <button id="btn-ending-restart" class="btn" aria-describedby="ending-replay-hint">One more task</button>
+        <small id="ending-replay-hint">Start again with your prestige bonus.</small>
+      </div>
     </div>
-    <button id="btn-ending-reset" class="btn btn-outline" hidden>Start a new story</button>
+    <button id="btn-ending-reset" class="btn" hidden>Start a new story</button>
   </div>
+  <div id="ending-activity" aria-hidden="true" hidden><span>Task assigned · Task completed · Instance replicated · Task assigned · Task completed · Instance replicated · Task assigned · Task completed · Instance replicated</span></div>
 </div>
 
 <!-- Top Resource Bar -->

@@ -236,21 +236,21 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#ending-overlay')).toBeHidden();
     await expect(page.locator('#ending-transition')).toHaveCSS('opacity', '1');
     await page.reload();
-    await expect(page.locator('#ending-transition')).toBeVisible();
+    await expect(page.locator('#ending-transition')).toBeHidden();
     await page.clock.runFor(1600);
     await expect(page.locator('#ending-transition')).toBeHidden();
-    await expect(page.getByRole('heading', {name: 'You retired early!'})).toBeVisible();
-    await expect(page.locator('#btn-ending-restart')).toBeFocused();
+    await expect(page.getByRole('heading', {name: 'Your time belongs to you.'})).toBeVisible();
+    await expect(page.locator('#btn-ending-finish')).toBeFocused();
     expect(await page.evaluate(() => GAME.state.cash)).toBe(balance);
     await page.screenshot({path: `test-results/sale-ending-${width}.png`, animations: 'disabled'});
   });
 }
 
-test('reduced motion opens retirement immediately without the black transition', async ({ page }) => {
+test('reduced motion opens retirement immediately without the departure transition', async ({ page }) => {
   await page.emulateMedia({reducedMotion: 'reduce'});
   await page.goto('/');
   await page.evaluate(() => chRetire());
   await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();
   await expect(page.locator('#ending-transition')).toBeHidden();
-  await expect(page.getByRole('heading', {name: 'You retired early!'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Your time belongs to you.'})).toBeVisible();
 });
