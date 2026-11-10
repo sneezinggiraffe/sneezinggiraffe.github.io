@@ -108,6 +108,63 @@ for (const width of [1440, 390, 320]) {
   });
 }
 
+for (const width of [1440, 390, 320]) {
+  test(`computer use training demonstrates controls and fits at ${width}px`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: width === 1440 ? 'no-preference' : 'reduce' });
+    await openAgiCheckpoint(page, width, 'chPh16');
+    await upgrade(page, 'agi_research').click();
+    await page.clock.runFor(30300);
+    await upgrade(page, 'agi_computer_use').click();
+    const training = page.locator('.agi-computer-training');
+    const cursor = training.locator('.agi-practice-cursor');
+    await expect(training).toHaveAttribute('data-stage', '0');
+    const initial = await cursor.getAttribute('style');
+    await page.clock.runFor(1200);
+    const moved = await cursor.getAttribute('style');
+    if (width === 1440) expect(moved).not.toBe(initial);
+    else {
+      expect(moved).toBe(initial);
+      await expect(cursor).toHaveCSS('transition-duration', '0s');
+    }
+    await page.locator('#btn-settings').click();
+    const paused = await page.evaluate(() => GAME.state.agi.remaining);
+    await page.clock.runFor(200);
+    const pausedPosition = await cursor.getAttribute('style');
+    await page.clock.runFor(1000);
+    expect(await page.evaluate(() => GAME.state.agi.remaining)).toBe(paused);
+    expect(await cursor.getAttribute('style')).toBe(pausedPosition);
+    await page.locator('#btn-settings-close').click();
+    await saveAndReload(page);
+    expect(await cursor.getAttribute('style')).toBe(pausedPosition);
+    for (const [elapsed, stage, clicking] of [[5.5, 0, true], [6.3, 1, false], [11.5, 1, true], [12.3, 2, false], [18.5, 2, true], [19.3, 3, false]]) {
+      const remaining = await page.evaluate(() => GAME.state.agi.remaining);
+      await page.clock.runFor(Math.round((elapsed - (20 - remaining)) * 1000));
+      await expect(training).toHaveAttribute('data-stage', String(stage));
+      await expect(training.locator('[data-state="complete"]')).toHaveCount(stage);
+      await expect(cursor).toHaveClass(clicking ? /clicking/ : 'agi-practice-cursor');
+      if (clicking) {
+        const point = await cursor.evaluate(element => [parseFloat(element.style.left), parseFloat(element.style.top)]);
+        expect(point).toEqual([[17, 18], [45, 18], [80, 80]][stage]);
+      }
+      if (stage === 2) {
+        const message = await training.locator('.agi-practice-message').boundingBox();
+        const send = await training.locator('.agi-practice-send').boundingBox();
+        expect(message.y + message.height).toBeLessThan(send.y);
+      }
+    }
+    await expect(training.locator('.agi-practice-caption')).toHaveText('Computer use ready.');
+    expect(await training.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    const inbox = await training.locator('.agi-practice-inbox').boundingBox();
+    const tasks = await training.locator('.agi-practice-tasks').boundingBox();
+    expect(inbox.x + inbox.width).toBeLessThan(tasks.x);
+    await training.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/computer-use-training-${width}.png`, animations: 'disabled' });
+    await page.clock.runFor(1000);
+    await expect(training).toHaveCount(0);
+    await expect(page.locator('#agi-cursor')).toBeVisible();
+  });
+}
+
 test('buyout confirmation supports cancellation, Escape and primary action above Go back', async ({ page }) => {
   await openAgiCheckpoint(page, 390);
   await page.locator('#btn-agi-buyout').click();

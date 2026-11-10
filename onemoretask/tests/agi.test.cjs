@@ -135,6 +135,71 @@ test('research shows training stages and progressively passes familiar tasks', t
   assert.equal(document.querySelector('#agi-status').textContent, 'Research complete. Enable computer use.');
 });
 
+test('computer use demonstrates three skills and clicks before completing each one', t => {
+  const h = company(t, 'agi_computer_use', { reducedMotion: false });
+  const g = h.window.GAME.state;
+  const document = h.window.document;
+  h.api.purchaseUpgrade('agi_computer_use');
+  for (const [elapsed, stage, clicking] of [[0, 0, false], [5.5, 0, true], [6, 1, false], [11.5, 1, true], [12, 2, false], [18.5, 2, true], [19, 3, false], [20, 3, false]]) {
+    g.agi.remaining = 20 - elapsed;
+    h.api.renderAll();
+    const training = document.querySelector('.agi-computer-training');
+    assert.equal(training.dataset.stage, String(stage));
+    assert.equal(training.querySelectorAll('[data-state="complete"]').length, stage);
+    assert.equal(training.querySelectorAll('[data-state="active"]').length, stage === 3 ? 0 : 1);
+    assert.equal(training.querySelector('.agi-practice-cursor').classList.contains('clicking'), clicking);
+    assert.equal(training.querySelectorAll('button, a, input').length, 0);
+    assert.equal(training.querySelector('.agi-practice-send').textContent, stage === 3 ? 'Sent ✓' : 'Send update');
+    if (clicking) {
+      const pointer = training.querySelector('.agi-practice-cursor');
+      const targets = [[17, 18], [45, 18], [80, 80]];
+      assert.deepEqual([parseFloat(pointer.style.left), parseFloat(pointer.style.top)], targets[stage]);
+    }
+  }
+  assert.equal(document.querySelector('.agi-practice-caption').textContent, 'Computer use ready.');
+  h.api.tickAgi(0.1);
+  h.api.renderAll();
+  assert.equal(document.querySelector('.agi-computer-training'), null);
+  assert.ok(g.purchasedUpgrades.includes('agi_computer_use'));
+});
+
+test('practice cursor corrects early overshoots and finishes with a direct movement', t => {
+  const h = company(t, 'agi_computer_use', { reducedMotion: false });
+  const point = elapsed => Array.from(h.api.agiPracticePointer(elapsed, 0));
+  assert.deepEqual(point(0), [8, 78]);
+  assert.deepEqual(point(1.2), [33, 38]);
+  assert.deepEqual(point(2.1), [9, 14]);
+  assert.deepEqual(point(3), [26, 26]);
+  assert.deepEqual(point(4.4), [17, 18]);
+  assert.deepEqual(point(7.4), [52, 25]);
+  assert.deepEqual(point(8.4), [39, 14]);
+  assert.deepEqual(point(10), [45, 18]);
+  assert.deepEqual(point(14), [58, 48]);
+  assert.deepEqual(point(15.35), [69, 64]);
+  assert.deepEqual(point(16.7), [80, 80]);
+  assert.deepEqual(point(20), [80, 80]);
+});
+
+test('reduced motion keeps the practice cursor on the demonstrated control', t => {
+  const h = company(t, 'agi_computer_use');
+  for (const [stage, times, target] of [[0, [0, 3, 5.5], [17, 18]], [1, [6, 9, 11.5], [45, 18]], [2, [12, 15, 18.5], [80, 80]], [3, [19, 20], [80, 80]]]) {
+    for (const elapsed of times) assert.deepEqual(Array.from(h.api.agiPracticePointer(elapsed, stage)), target);
+  }
+});
+
+test('computer use practice restores the same stage and cursor after reload', t => {
+  const h = company(t, 'agi_computer_use', { reducedMotion: false });
+  h.api.purchaseUpgrade('agi_computer_use');
+  h.api.tickAgi(8);
+  h.api.renderAll();
+  const before = h.window.document.querySelector('.agi-computer-training').outerHTML;
+  h.api.save();
+  const restored = harness(h.window.localStorage.getItem('ai_empire_save'), { reducedMotion: false });
+  t.after(() => restored.close());
+  restored.api.renderAll();
+  assert.equal(restored.window.document.querySelector('.agi-computer-training').outerHTML, before);
+});
+
 test('a newly available replacement upgrade returns to the top without locking player scrolling', t => {
   const h = company(t, 'agi_contracts');
   const g = h.window.GAME.state;

@@ -378,6 +378,26 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .agi-research-task{min-width:0;padding:8px;border:1px solid var(--bg4);background:var(--bg2);line-height:1.4}
 .agi-research-task strong,.agi-research-task span{display:block;overflow-wrap:anywhere}
 .agi-research-task[data-state="complete"]{border-color:var(--green);color:var(--green)}
+.agi-practice-heading{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border:1px solid var(--bg4);border-bottom:0;background:var(--bg3);line-height:1.3}
+.agi-practice-heading span{color:var(--text2)}
+.agi-practice-desktop{position:relative;height:200px;overflow:hidden;border:1px solid var(--bg4);background:var(--bg2);line-height:1.35}
+.agi-practice-tab,.agi-practice-send{position:absolute;display:grid;place-items:center;box-sizing:border-box;text-align:center;padding:3px;border:1px solid var(--bg4);background:var(--bg);font-weight:700}
+.agi-practice-tab{top:10%;height:16%;width:26%}
+.agi-practice-inbox{left:4%}
+.agi-practice-tasks{left:32%}
+.agi-practice-tab[data-selected="true"]{background:var(--bg3);border-bottom:2px solid var(--accent)}
+.agi-practice-message{position:absolute;top:34%;left:5%;right:5%;color:var(--text)}
+.agi-practice-message strong{display:block}
+.agi-practice-message p{margin:5px 0 0;color:var(--text2)}
+.agi-practice-send{left:65%;top:72%;width:30%;height:16%;color:var(--text2)}
+.agi-practice-desktop [data-target="true"]{border:2px solid var(--accent);color:var(--text);background:color-mix(in srgb,var(--accent) 12%,var(--bg2))}
+.agi-practice-send[data-complete="true"]{color:var(--green);border-color:var(--green)}
+.agi-practice-cursor{position:absolute;z-index:1;width:22px;height:28px;color:#67e8f9;pointer-events:none;transform:translate(-2px,-1px);transition:left .18s linear,top .18s linear;filter:drop-shadow(0 1px 2px #0008)}
+.agi-practice-cursor svg{display:block;width:100%;height:100%;transform-origin:2px 1px}
+.agi-practice-cursor.clicking svg{transform:scale(.8);color:#fff}
+.agi-practice-cursor.clicking::before{content:'';position:absolute;left:-12px;top:-12px;width:28px;height:28px;border:2px solid currentColor;border-radius:50%;background:color-mix(in srgb,currentColor 20%,transparent)}
+.agi-practice-caption{margin:8px 0 0;color:var(--text);font-weight:700}
+.agi-computer-training[data-stage="3"] .agi-practice-caption{color:var(--green)}
 .neocloud-header strong small{display:block;font-size:.65rem;font-weight:400;color:var(--text2)}
 .agi-route-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .agi-route-options .upgrade-card{min-width:0;margin-bottom:0;padding:8px}

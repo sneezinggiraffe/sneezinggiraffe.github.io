@@ -2214,6 +2214,44 @@
       }).join("") + "</div></div>";
   }
 
+  function agiPracticePointer(elapsed, stage) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return [[17, 18], [45, 18], [80, 80]][Math.min(stage, 2)];
+    const path = [
+      [0, 8, 78], [1.2, 33, 38], [2.1, 9, 14], [3, 26, 26], [4.4, 17, 18], [6, 17, 18],
+      [7.4, 52, 25], [8.4, 39, 14], [10, 45, 18], [12, 45, 18],
+      [14, 58, 48], [16.7, 80, 80], [20, 80, 80],
+    ];
+    const end = Math.max(1, path.findIndex(([time]) => time >= elapsed));
+    const [startTime, startX, startY] = path[end - 1];
+    const [endTime, endX, endY] = path[end];
+    const fraction = (elapsed - startTime) / (endTime - startTime);
+    return [startX + (endX - startX) * fraction, startY + (endY - startY) * fraction];
+  }
+
+  function renderAgiComputerUse(project) {
+    const elapsed = clamp(project.agiDuration - G.agi.remaining, 0, 20);
+    const stage = elapsed >= 19 ? 3 : elapsed >= 12 ? 2 : elapsed >= 6 ? 1 : 0;
+    const skills = ["Find a control", "Navigate a panel", "Complete a task"];
+    const captions = ["Learning to aim.", "Navigating controls.", "Completing a supervised task.", "Computer use ready."];
+    const [x, y] = agiPracticePointer(elapsed, stage);
+    const clicking = stage < 3 && elapsed >= [5.25, 11.25, 18.25][stage];
+    const complete = stage === 3;
+    const heading = ["Project update", "Project update", "Draft reply", "Update sent"][stage];
+    const message = ["Open the message to begin.", "Please send today's project update.", "Progress is on track. The next milestone is ready for review.", "The supervised task is complete."][stage];
+    return "<div class='agi-computer-training' data-stage='" + stage + "'><ol class='agi-research-stages' aria-label='Computer use skills'>" +
+      skills.map((skill, index) => "<li data-state='" + (index < stage ? "complete" : index === stage ? "active" : "pending") + "'>" +
+        (index < stage ? "<span aria-hidden='true'>✓ </span>" : "") + skill + "</li>").join("") + "</ol>" +
+      "<div class='agi-practice-heading'><strong>Practice desktop</strong><span>" + (complete ? "Ready" : "Supervised") + "</span></div>" +
+      "<div class='agi-practice-desktop' role='group' aria-label='Computer use practice'>" +
+        "<span class='agi-practice-tab agi-practice-inbox' data-selected='" + (stage === 1) + "' data-target='" + (stage === 0) + "'>Inbox</span>" +
+        "<span class='agi-practice-tab agi-practice-tasks' data-selected='" + (stage >= 2) + "' data-target='" + (stage === 1) + "'>Tasks</span>" +
+        "<div class='agi-practice-message'><strong>" + heading + "</strong><p>" + message + "</p></div>" +
+        "<span class='agi-practice-send' data-target='" + (stage === 2) + "' data-complete='" + complete + "'>" + (complete ? "Sent ✓" : "Send update") + "</span>" +
+        "<div class='agi-practice-cursor" + (clicking ? " clicking" : "") + "' aria-hidden='true' style='left:" + x.toFixed(2) + "%;top:" + y.toFixed(2) + "%'>" +
+          "<svg viewBox='0 0 22 28'><path d='M2 1 2 23 8 17 12 26 16 24 12 15 21 15Z' fill='currentColor' stroke='#07131d' stroke-width='1.5' stroke-linejoin='round'/></svg>" +
+        "</div></div><p class='agi-practice-caption'>" + captions[stage] + "</p></div>";
+  }
+
   function renderAgi() {
     const visible = G.purchasedUpgrades.includes("agi_research") || G.agi.projectId !== "";
     $("#section-agi").hidden = !visible || G.retired;
@@ -2253,6 +2291,7 @@
     let progress = "";
     if (project) progress = "<progress aria-label='AGI project' max='" + project.agiDuration + "' value='" + (project.agiDuration - G.agi.remaining) + "'></progress>";
     if (project?.id === "agi_research") progress += renderAgiResearch(project);
+    if (project?.id === "agi_computer_use") progress += renderAgiComputerUse(project);
     if (awaitingApproval) progress += "<p>Checks complete · " + Math.min(AGI_CHECKS.length, G.agi.checks) + " / " + AGI_CHECKS.length + "</p>";
     if (G.purchasedUpgrades.includes("agi_authority") && !G.purchasedUpgrades.includes("agi_independence")) progress += "<ul>" + agiMilestones().map(([value, target, label]) => "<li>" + label + ": " + fmtTokens(value) + " / " + fmtTokens(target) + "</li>").join("") + "</ul>";
     updateHTML($("#agi-progress"), progress);
