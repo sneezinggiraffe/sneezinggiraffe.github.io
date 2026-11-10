@@ -587,7 +587,7 @@ test('runaway scaling escalates cursors, persists progress and ends in a frozen 
   h.api.renderAll();
   assert.equal(ending.hidden, true);
   assert.equal(companyView.hidden, true);
-  h.advance(900);
+  h.advance(11100);
   h.api.renderAll();
   assert.equal(ending.hidden, false);
   assert.equal(fade.hidden, true);

@@ -126,8 +126,8 @@
     ["Pulsar", "PUL"], ["Quasar", "QUA"], ["Radiant", "RAD"], ["Rigel", "RIG"], ["Sirius", "SIR"],
     ["Spectra", "SPE"], ["Tempest", "TEM"], ["Titan", "TIT"], ["Umbra", "UMB"], ["Vesper", "VES"],
   ];
-  const ENDING_DEPARTURE_MS = 3000;
-  const ENDING_SETTLE_MS = 400;
+  const ENDING_DEPARTURE_MS = 9000;
+  const ENDING_SETTLE_MS = 3800;
   const ENDING_FADE_IN_MS = 1200;
 
   const CLUSTER_COST = 50000;
@@ -1949,6 +1949,7 @@
   let agiMotion = null;
   let endingStartedAt = null;
   let saleOrigin = null;
+  let retirementScene = null;
 
   function agiMotionState() {
     if (!agiMotion || agiMotion.owner !== G) {
@@ -2307,6 +2308,7 @@
       $("#agi-runaway-status").textContent = ["Subsidiaries are assigning tasks to each other.", "Internal demand has exceeded forecasts.", "Additional management instances deployed.", "All available space allocated to tasks."][stage];
       $("#agi-replication-count").textContent = fmtTokens(G.agi.replicas) + " AGI instances";
     }
+    $$("#agi-human-status li").forEach((item, index) => { item.hidden = !runaway || G.agi.runawaySeconds < 36 + index * 3; });
     renderAgiPointer(decision);
   }
 
@@ -2640,12 +2642,35 @@
     return G.retired && !G.retirementFinal && !G.agi.ended;
   }
 
+  function beginRetirement() {
+    if (!canTrueRetire() || $("#ending-overlay").hidden) return;
+    retirementScene = { owner: G, startedAt: Date.now(), closedAt: null };
+    renderAll();
+  }
+
+  function retirementCloseElapsed() {
+    if (retirementScene?.owner !== G || retirementScene.closedAt === null ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    const elapsed = Math.max(0, Date.now() - retirementScene.closedAt);
+    return elapsed < ENDING_FADE_IN_MS ? elapsed : null;
+  }
+
+  function skipEndingScene() {
+    if (endingTransitionElapsed() === null) return;
+    endingStartedAt = null;
+    renderAll();
+  }
+
   function finishRetirement() {
     if (!canTrueRetire()) return;
     G.retirementFinal = true;
+    if (retirementScene?.owner === G) {
+      retirementScene.closedAt = Date.now();
+      retirementScene.closedVolume = musicPlayer.volume;
+    }
     save();
     renderAll();
-    $("#ending-title").focus();
+    if (retirementCloseElapsed() === null) $("#ending-title").focus();
   }
 
   function prestige() {
@@ -3405,7 +3430,7 @@
     if (!G.retired || G.retirementFinal || G.retiredAt !== endingStartedAt ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
     const elapsed = Math.max(0, Date.now() - G.retiredAt);
-    const duration = G.agi.ended ? 3000 : ENDING_DEPARTURE_MS + ENDING_SETTLE_MS + ENDING_FADE_IN_MS;
+    const duration = G.agi.ended ? 13200 : ENDING_DEPARTURE_MS + ENDING_SETTLE_MS + ENDING_FADE_IN_MS;
     return elapsed < duration ? elapsed : null;
   }
 
@@ -3437,6 +3462,14 @@
     var nextSoundtrackPath = getCurrentSoundtrackPath();
     var nextDrumLayerPath = getCurrentDrumLayerPath();
 
+    const closing = retirementCloseElapsed();
+    if (mode !== "off" && closing !== null) {
+      clearMusicFadeTimerIfAny();
+      stopDrumPlayback();
+      stopSynthPlayback();
+      musicPlayer.volume = retirementScene.closedVolume * (1 - closing / ENDING_FADE_IN_MS);
+      return;
+    }
     if (mode === "off" || !G.gameStarted || G.retirementFinal || G.agi.ended) {
       clearMusicFadeTimerIfAny();
       stopAndResetAudio(musicPlayer, MUSIC_TARGET_VOLUME);
@@ -4329,24 +4362,45 @@
     $("#section-prestige").style.display = "none";
   }
 
+  function renderEndingEpilogue(elapsed) {
+    const agi = G.agi.ended;
+    $("#handover-work").hidden = agi || elapsed >= 6000;
+    $("#handover-work").dataset.step = String(Math.min(2, Math.floor(elapsed / 1800)));
+    $$("#sale-settlement li").forEach((item, index) => { item.hidden = elapsed < index * 1800; });
+    $("#sale-last-task").hidden = agi || elapsed < 9600 || elapsed >= 12800;
+    $("#access-revoked").hidden = !agi || elapsed >= 3000;
+    const lastTask = $("#agi-last-task");
+    lastTask.hidden = !agi || elapsed < 3000 || elapsed >= 6200;
+    lastTask.dataset.step = elapsed >= 5000 ? "complete" : elapsed >= 4400 ? "click" : "arrive";
+    $("#agi-last-task-status").textContent = elapsed >= 5000 ? "Task completed ✓" : "Awaiting completion";
+    const offspring = $("#agi-task-offspring");
+    offspring.hidden = !agi || elapsed < 6200 || elapsed >= 12000;
+    const count = elapsed < 7200 ? 2 : elapsed < 8200 ? 4 : elapsed < 9200 ? 8 : 32;
+    if (!offspring.hidden && offspring.childElementCount !== count) {
+      offspring.innerHTML = Array.from({ length: count }, () => "<div class='epilogue-task'><small>One more task</small><strong>Create another task.</strong><span>Task assigned</span></div>").join("");
+    }
+    offspring.dataset.count = String(count);
+  }
+
   function renderEnding() {
     const elapsed = endingTransitionElapsed();
     const transitioning = elapsed !== null;
-    const revealAt = G.agi.ended ? 1800 : ENDING_DEPARTURE_MS + ENDING_SETTLE_MS;
+    const revealAt = G.agi.ended ? 12000 : ENDING_DEPARTURE_MS + ENDING_SETTLE_MS;
     const departing = transitioning && !G.agi.ended;
     const revealing = transitioning && elapsed >= revealAt;
     const companyHidden = G.retired && (!departing || elapsed >= ENDING_DEPARTURE_MS);
     const transition = $("#ending-transition");
     transition.hidden = !transitioning || revealing;
     transition.dataset.route = G.agi.ended ? "agi" : "sale";
-    $("#sale-handoff").hidden = !departing;
-    $("#access-revoked").hidden = !G.agi.ended;
+    transition.setAttribute("aria-label", G.agi.ended ? "AGI aftermath" : "Company handover");
+    $("#sale-handoff").hidden = !departing || elapsed >= 9600;
+    if (transitioning) renderEndingEpilogue(elapsed);
     document.body.classList.toggle("sale-departure", departing);
-    document.body.style.setProperty("--work-opacity", departing ? 1 - clamp(elapsed / 900, 0, 1) : 1);
-    document.body.style.setProperty("--team-opacity", departing ? 1 - clamp((elapsed - 500) / 1000, 0, 1) : 1);
-    document.body.style.setProperty("--bar-opacity", departing ? 1 - clamp((elapsed - 1100) / 900, 0, 1) : 1);
+    document.body.style.setProperty("--work-opacity", departing ? 1 - clamp((elapsed - 4000) / 2000, 0, 1) : 1);
+    document.body.style.setProperty("--team-opacity", departing ? 1 - clamp((elapsed - 5000) / 3000, 0, 1) : 1);
+    document.body.style.setProperty("--bar-opacity", departing ? 1 - clamp((elapsed - 7000) / 2000, 0, 1) : 1);
     if (departing) {
-      const travel = clamp((elapsed - 1400) / 1600, 0, 1);
+      const travel = clamp((elapsed - 6000) / 3000, 0, 1);
       const remaining = 1 - travel * travel * (3 - 2 * travel);
       const receipt = $("#sale-handoff").getBoundingClientRect();
       const x = saleOrigin ? clamp(saleOrigin.left + saleOrigin.width / 2, receipt.width / 2 + 24, window.innerWidth - receipt.width / 2 - 24) - window.innerWidth / 2 : 0;
@@ -4354,11 +4408,18 @@
       transition.style.setProperty("--handoff-x", x * remaining + "px");
       transition.style.setProperty("--handoff-y", y * remaining + "px");
       transition.style.setProperty("--handoff-border", remaining);
-      transition.style.setProperty("--handoff-opacity", 1 - clamp((elapsed - 3000) / ENDING_SETTLE_MS, 0, 1));
+      transition.style.setProperty("--handoff-opacity", 1 - clamp((elapsed - 9000) / 600, 0, 1));
       $("#sale-handoff-value").textContent = fmtCash(G.retirementValue);
     }
     const ending = $("#ending-overlay");
-    ending.hidden = !G.retired || (transitioning && !revealing);
+    const closing = retirementCloseElapsed();
+    const notification = retirementScene?.owner === G && !G.retirementFinal;
+    const epilogue = $("#retirement-epilogue");
+    epilogue.hidden = !G.retired || (!notification && closing === null);
+    epilogue.dataset.closing = String(closing !== null);
+    epilogue.style.setProperty("--laptop-close", closing === null ? 0 : closing / ENDING_FADE_IN_MS);
+    epilogue.style.setProperty("--notification-reveal", notification && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? clamp((Date.now() - retirementScene.startedAt) / 1200, 0, 1) : 1);
+    ending.hidden = !G.retired || !epilogue.hidden || (transitioning && !revealing);
     ending.dataset.ending = G.agi.ended ? "agi" : G.retirementFinal ? "final" : "sale";
     ending.style.setProperty("--ending-reveal", revealing ? clamp((elapsed - revealAt) / ENDING_FADE_IN_MS, 0, 1) : 1);
     $("#game-container").hidden = companyHidden;
@@ -4409,13 +4470,13 @@
   let previousFocus = null;
 
   function syncDialogFocus() {
-    const dialog = document.querySelector("#ending-overlay:not([hidden])") || document.querySelector(".popup-overlay.show");
+    const dialog = document.querySelector("#retirement-epilogue:not([hidden]), #ending-transition:not([hidden]), #ending-overlay:not([hidden])") || document.querySelector(".popup-overlay.show");
     $("#game-container").inert = !!dialog || G.retired;
     $("#top-bar").inert = !!dialog || G.retired;
     if (dialog !== activeDialog) {
       if (dialog) {
         if (!activeDialog) previousFocus = document.activeElement;
-        const target = dialog.id === "ending-overlay" ? $(G.retirementFinal || G.agi.ended ? "#btn-ending-reset" : "#btn-ending-finish") : dialog.querySelector("button");
+        const target = dialog.id === "ending-overlay" ? $(G.retirementFinal && retirementScene?.owner === G ? "#ending-title" : G.retirementFinal || G.agi.ended ? "#btn-ending-reset" : "#btn-ending-finish") : dialog.querySelector("button");
         target.focus({ preventScroll: true });
       } else if (previousFocus && previousFocus.isConnected) {
         previousFocus.focus({ preventScroll: true });
@@ -4515,7 +4576,9 @@
       if (confirm("Discard saved progress and start over?")) performFullReset();
     });
     $("#btn-ending-restart").addEventListener("click", function () { GAME.prestige(); });
-    $("#btn-ending-finish").addEventListener("click", function () { GAME.trueRetire(); });
+    $("#btn-ending-finish").addEventListener("click", beginRetirement);
+    $("#btn-close-laptop").addEventListener("click", function () { GAME.trueRetire(); });
+    $("#btn-ending-skip").addEventListener("click", skipEndingScene);
     $("#btn-ending-reset").addEventListener("click", function () {
       if (confirm("Start a fresh game? Your completed run will be erased.")) performFullReset();
     });

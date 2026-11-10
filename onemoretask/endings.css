@@ -64,3 +64,66 @@ body.agi-runaway[data-agi-stage="3"] #control-panel{visibility:hidden}
   #sale-handoff,body.sale-departure :is(#work-stream,#control-panel>.cp-section,#top-bar),body.agi-runaway .agi-task-grid{transition:none}
   #ending-activity span,body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{animation:none}
 }
+/* A final familiar task gives each ending its own aftermath. */
+.epilogue-task{position:relative;padding:28px;text-align:left;background:var(--bg2);border:1px solid var(--bg4);box-shadow:3px 6px 12px #00000012;color:var(--text);border-radius:2px;line-height:1.5}
+.epilogue-task::before{content:"";position:absolute;top:-9px;left:calc(50% - 34px);width:68px;height:18px;background:color-mix(in srgb,var(--bg4) 55%,transparent);transform:rotate(-3deg)}
+.epilogue-task>small{display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin-bottom:18px}
+.epilogue-task>strong{display:block;font-weight:500;font-size:clamp(1.15rem,4vw,1.65rem);line-height:1.3;text-wrap:balance}
+.epilogue-task>span{display:block;margin-top:24px;color:var(--text2);font-size:.8rem}
+#sale-settlement{list-style:none;padding:0;margin:20px 0 0;font-size:.8rem;line-height:1.9;color:var(--text2);min-height:74px}
+#sale-settlement li::before{content:"✓ ";color:var(--green)}
+#handover-work{position:absolute;top:130px;left:32px;width:min(310px,36vw);height:220px;opacity:var(--work-opacity);transition:opacity .2s linear}
+#handover-work .epilogue-task{position:absolute;inset:0;transition:transform .6s,opacity .6s;transform:rotate(-2deg);min-height:190px}
+#handover-work .epilogue-task:nth-child(2){transform:translate(8px,12px) rotate(2deg)}
+#handover-work .epilogue-task:nth-child(3){transform:translate(14px,24px) rotate(-1deg)}
+#handover-work .epilogue-task:nth-child(1){z-index:3}
+#handover-work .epilogue-task:nth-child(2){z-index:2}
+#handover-work .epilogue-task:nth-child(3){z-index:1}
+#handover-work[data-step="1"] .epilogue-task:first-child,#handover-work[data-step="2"] .epilogue-task:nth-child(-n+2){transform:translate(70px,-35px) rotate(8deg);opacity:0}
+#handover-work .epilogue-task:nth-child(-n+2)>strong{text-decoration:line-through;text-decoration-color:var(--green)}
+#handover-work .epilogue-task:last-child{animation:handover-arrival 3.6s ease-out both}
+@keyframes handover-arrival{0%,70%{opacity:0;transform:translateY(50px) rotate(6deg)}100%{opacity:1;transform:translate(14px,24px) rotate(-1deg)}}
+#sale-last-task,#agi-last-task{width:min(420px,100%);transform:rotate(-1.5deg);animation:epilogue-arrival .7s ease-out both}
+#sale-last-task>span{color:var(--green)}
+#ending-transition[data-route="agi"]{--bg:#101416;--bg2:#e9e8d8;--bg4:#aaa996;--text2:#51594d}
+#agi-last-task,#agi-task-offspring .epilogue-task{color:#202820}
+#agi-last-task[data-step="complete"]>strong{text-decoration:line-through;text-decoration-color:#477652}
+#agi-last-task[data-step="complete"]>span{color:#477652}
+.epilogue-cursor{position:absolute;right:18px;bottom:18px;font:42px/1 sans-serif;color:#245c45;transform:translate(100px,60px);opacity:0;transition:transform .5s,opacity .3s;pointer-events:none}
+.epilogue-cursor small{display:block;font:10px/1.5 ui-monospace,monospace;border:1px solid #245c45;background:#e9e8d8;text-align:center}
+#agi-last-task[data-step="click"] .epilogue-cursor,#agi-last-task[data-step="complete"] .epilogue-cursor{transform:translate(0,0);opacity:1}
+#agi-last-task[data-step="click"] .epilogue-cursor::before{content:"";position:absolute;width:36px;height:36px;left:-10px;top:-10px;border:2px solid #477652;border-radius:50%;animation:epilogue-click .6s ease-out both}
+#agi-task-offspring{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;width:min(900px,100%);max-height:calc(100dvh - 140px);overflow:hidden;padding:14px}
+#agi-task-offspring .epilogue-task{animation:epilogue-arrival .6s ease-out both;transform:rotate(-1deg)}
+#agi-task-offspring .epilogue-task:nth-child(even){transform:rotate(1deg)}
+#agi-task-offspring[data-count="8"],#agi-task-offspring[data-count="32"]{grid-template-columns:repeat(4,minmax(0,1fr));width:calc(100vw + 120px);max-height:none;position:absolute;top:80px;gap:18px}
+#agi-task-offspring[data-count="32"] .epilogue-task{padding:20px}
+#agi-task-offspring[data-count="32"] .epilogue-task>strong{font-size:1.1rem}
+#ending-transition:has(#agi-task-offspring:not([hidden])){overflow:hidden}
+#btn-ending-skip{position:fixed;bottom:24px;right:24px;z-index:1;border:1px solid transparent;background:color-mix(in srgb,var(--bg) 92%,transparent);color:var(--text);font-size:.75rem;min-height:44px;padding:10px 16px;opacity:.8}
+#retirement-epilogue{position:fixed;inset:0;z-index:2700;display:grid;place-items:center;padding:32px 24px;background:var(--bg);perspective:900px}
+.retirement-notification{width:min(420px,100%);opacity:calc(var(--notification-reveal,1)*(1 - var(--laptop-close,0)));transform-origin:center bottom;transform:rotateX(calc(var(--laptop-close,0)*-85deg)) scale(calc(1 - var(--laptop-close,0)*.15));transition:opacity .2s linear,transform .2s linear}
+.retirement-notification h2{font-size:clamp(1.4rem,4vw,2rem);line-height:1.3;font-weight:400;margin:0 0 30px;text-wrap:balance}
+#btn-close-laptop{border:1px solid var(--text);background:var(--text);color:var(--bg);padding:12px 20px;min-height:44px;font:inherit;font-size:.9rem;border-radius:3px}
+#retirement-epilogue[data-closing="true"] .retirement-notification{pointer-events:none}
+#btn-close-laptop:focus-visible,#btn-ending-skip:focus-visible{outline:2px solid var(--text);outline-offset:4px}
+#agi-human-status{list-style:none;padding:0;margin:12px 0;min-height:0;font:11px/1.8 ui-monospace,monospace;color:#9aaba0}
+#agi-human-status:has(li:not([hidden])){min-height:60px}
+@keyframes epilogue-arrival{from{opacity:0;translate:0 22px}to{opacity:1;translate:0 0}}
+@keyframes epilogue-click{from{transform:scale(.5);opacity:1}to{transform:scale(1.5);opacity:0}}
+@media(max-width:600px){
+  #handover-work{top:124px;left:24px;width:calc(100% - 62px);height:72px}
+  #handover-work .epilogue-task{padding:10px 14px;min-height:72px}
+  #handover-work .epilogue-task>strong{font-size:1rem}
+  #handover-work .epilogue-task>span{margin-top:4px;font-size:.7rem}
+  #handover-work .epilogue-task:nth-child(2){transform:translate(4px,5px) rotate(2deg)}
+  #handover-work .epilogue-task:nth-child(3){transform:translate(8px,10px) rotate(-1deg)}
+  #agi-task-offspring{gap:14px;padding:10px}
+  #agi-task-offspring .epilogue-task{padding:18px 12px}
+  #agi-task-offspring .epilogue-task>strong{font-size:1rem}
+  #agi-task-offspring[data-count="8"],#agi-task-offspring[data-count="32"]{grid-template-columns:repeat(3,minmax(0,1fr));width:calc(100vw + 150px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .retirement-notification,#handover-work,#handover-work .epilogue-task,.epilogue-cursor{transition:none}
+  #sale-last-task,#agi-last-task,#agi-task-offspring .epilogue-task,#handover-work .epilogue-task:last-child{animation:none}
+}

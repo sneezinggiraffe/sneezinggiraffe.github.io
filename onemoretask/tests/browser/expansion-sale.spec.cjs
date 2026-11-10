@@ -231,7 +231,7 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#ending-transition')).toBeVisible();
     await expect(page.locator('#game-container')).toBeVisible();
     await expect(page.locator('#ending-overlay')).toBeHidden();
-    await page.clock.runFor(2600);
+    await page.clock.runFor(8600);
     await expect(page.locator('#game-container')).toBeHidden();
     await expect(page.locator('#ending-overlay')).toBeHidden();
     await expect(page.locator('#ending-transition')).toHaveCSS('opacity', '1');

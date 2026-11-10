@@ -223,7 +223,7 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await expect(upgrade(page, 'fusion').locator('xpath=ancestor::div[contains(@class,"upgrade-card")]').locator('.name')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await upgrade(page, 'fusion').click();
-    await page.clock.runFor(5000);
+    await page.clock.runFor(14500);
     await expect(page.locator('#ending-title')).toHaveText('Your time belongs to you.');
     await expect(page.locator('#agi-cursors')).toBeHidden();
     await expect(page.locator('#ending-choices')).toBeVisible();
@@ -276,7 +276,7 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await expect(page.locator('#access-revoked')).toHaveText('Human input no longer required.');
     await expect(page.locator('#agi-runaway-panel')).toBeHidden();
     await expect(page.locator('#ending-overlay')).toBeHidden();
-    await page.clock.runFor(5400);
+    await page.clock.runFor(14000);
     await expect(page.locator('#ending-overlay')).toBeVisible();
     await expect(fade).toBeHidden();
     await expect(page.locator('#ending-title')).toHaveText('There is always one more task.');

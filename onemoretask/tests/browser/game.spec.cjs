@@ -339,7 +339,7 @@ for (const width of [1440, 390]) {
     await expect(parachute).toHaveText('$5.00B');
     await expect(page.locator('.upgrade-cost')).toHaveCount(0);
     await parachute.click();
-    await page.clock.runFor(2800);
+    await page.clock.runFor(14500);
     await expect(page.getByRole('heading', { name: 'Your time belongs to you.' })).toBeVisible();
     await expect.poll(() => page.evaluate(() => window.testAudioPlayers.some(player => player.src.endsWith('/soundtrack-loop.mp3') && !player.paused))).toBe(true);
     expect(await page.evaluate(() => window.testAudioPlayers.filter(player => !player.src.endsWith('/soundtrack-loop.mp3')).every(player => player.paused))).toBe(true);
@@ -674,18 +674,18 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:844
 }
 test('sale opens a separate retirement screen, then permanent retirement survives reload',async({page})=>{
   const raw=fixture(17);await page.addInitScript(value=>{if(!sessionStorage.getItem('ending_seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('ending_seeded','1')}},raw);
-  page.on('dialog',dialog=>dialog.accept());await page.goto('/');await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();
+  page.on('dialog',dialog=>dialog.accept());await page.goto('/');await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();await page.locator('#btn-ending-skip').click();
   await expect(page.getByRole('heading',{name:'Your time belongs to you.'})).toBeVisible();await expect(page.locator('#game-container')).toBeHidden();await expect(page.locator('#top-bar')).toBeHidden();
   await expect(page.locator('#btn-ending-finish')).toBeFocused();const balance=await page.evaluate(()=>GAME.state.cash);await page.waitForTimeout(300);expect(await page.evaluate(()=>GAME.state.cash)).toBe(balance);
   await page.reload();await expect(page.getByRole('heading',{name:'Your time belongs to you.'})).toBeVisible();await page.screenshot({path:'test-results/retire-early.png'});
-  await page.getByRole('button',{name:'Retire',exact:true}).click();await expect(page.getByRole('heading',{name:'No more tasks.'})).toBeFocused();await expect(page.locator('#ending-choices')).toBeHidden();
+  await page.getByRole('button',{name:'Retire',exact:true}).click();await page.getByRole('button',{name:'Close the laptop',exact:true}).click();await expect(page.getByRole('heading',{name:'No more tasks.'})).toBeFocused();await expect(page.locator('#ending-choices')).toBeHidden();
   await page.reload();await expect(page.getByRole('heading',{name:'No more tasks.'})).toBeVisible();await expect(page.locator('#btn-ending-reset')).toBeFocused();await page.screenshot({path:'test-results/ending.png'});
   await page.evaluate(()=>localStorage.setItem('unrelated-app','keep'));await page.getByRole('button',{name:'Start a new story'}).click();await expect(page.getByRole('button',{name:'Find Work'})).toBeVisible();expect(await page.evaluate(()=>localStorage.getItem('unrelated-app'))).toBe('keep');
 });
 test('another model restarts from the retirement screen with earned bonuses',async({page})=>{
   await page.setViewportSize({width:390,height:844});const raw=fixture(17);await page.addInitScript(value=>{if(!sessionStorage.getItem('seeded')){localStorage.setItem('ai_empire_save',value);sessionStorage.setItem('seeded','1')}},raw);await page.goto('/');
 
-  await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();await expect(page.locator('#ending-story')).toContainText('$');
+  await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();await page.locator('#btn-ending-skip').click();await expect(page.locator('#ending-story')).toContainText('$');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/retire-early-mobile.png'});
   await page.locator('#btn-ending-restart').click();await expect(page.locator('#ending-overlay')).toBeHidden();await expect(page.locator('#intro-story')).toContainText('bored');expect(await page.evaluate(()=>GAME.state.prestigeCount)).toBe(1);expect(await page.evaluate(()=>GAME.state.clickPower)).toBe(2);
   await page.reload();expect(await page.evaluate(()=>GAME.state.retired)).toBe(false);expect(await page.evaluate(()=>GAME.state.prestigeCount)).toBe(1);

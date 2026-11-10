@@ -434,9 +434,30 @@ body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;ba
   <button id="btn-save-retry" class="btn btn-outline">Retry save</button>
   <button id="btn-save-reset" class="btn btn-red">Reset saved progress</button>
 </div>
-<div id="ending-transition" hidden>
-  <div id="sale-handoff" role="status" hidden><span>Sale complete</span><strong id="sale-handoff-value"></strong><small>Ownership transferred</small></div>
+<div id="ending-transition" role="dialog" aria-modal="true" aria-label="Company handover" hidden>
+  <div id="sale-handoff" role="status" hidden>
+    <span>Sale complete</span><strong id="sale-handoff-value"></strong>
+    <ol id="sale-settlement"><li>Sale agreed</li><li>Funds received</li><li>Ownership transferred</li></ol>
+  </div>
+  <div id="handover-work" aria-hidden="true" hidden>
+    <div class="epilogue-task"><strong>Write Email</strong><span>Completed ✓</span></div>
+    <div class="epilogue-task"><strong>Research Snippet</strong><span>Completed ✓</span></div>
+    <div class="epilogue-task"><strong>Spreadsheet Entry</strong><span>In progress</span></div>
+  </div>
+  <div id="sale-last-task" class="epilogue-task" role="status" hidden><small>Your tasks</small><strong>Nothing needs your attention.</strong><span>You're all done.</span></div>
   <p id="access-revoked" role="status" hidden>Human input no longer required.</p>
+  <div id="agi-last-task" class="epilogue-task" role="status" hidden>
+    <small>One more task</small><strong>Create another task.</strong><span id="agi-last-task-status">Awaiting completion</span>
+    <div class="epilogue-cursor" aria-hidden="true">↖<small>AGI</small></div>
+  </div>
+  <div id="agi-task-offspring" aria-hidden="true" hidden></div>
+  <button id="btn-ending-skip" class="btn">Skip scene</button>
+</div>
+<div id="retirement-epilogue" role="dialog" aria-modal="true" aria-labelledby="retirement-notification-title" hidden>
+  <div class="epilogue-task retirement-notification">
+    <small>One more thing</small><h2 id="retirement-notification-title">A new model is available.</h2>
+    <button id="btn-close-laptop" class="btn">Close the laptop</button>
+  </div>
 </div>
 <div id="ending-overlay" role="dialog" aria-modal="true" aria-labelledby="ending-title" hidden>
   <div class="ending-box">
@@ -499,6 +520,7 @@ body.agi-runaway[data-agi-stage="3"] .agi-task-grid span{border-color:#7e3c54;ba
     <div id="agi-runaway-panel" class="card" hidden>
       <h3>Unrestricted Expansion</h3>
       <p id="agi-runaway-status" role="status">Scaling without limits.</p>
+      <ul id="agi-human-status" aria-live="polite"><li hidden>Approvals automated</li><li hidden>Ownership transferred</li><li hidden>Human oversight redundant.</li></ul>
       <div class="agi-replication-metric"><small>Management instances</small><strong id="agi-replication-count">1</strong></div>
       <div class="agi-task-grid" aria-hidden="true"><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span><span>One more task</span></div>
     </div>
