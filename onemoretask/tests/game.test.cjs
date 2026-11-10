@@ -2183,7 +2183,7 @@ scenario('cluster slots identify agents and distinguish empty slots from actual 
   assert.equal(card.querySelector('.cluster-agents-label'), null);
   assert.ok(card.querySelector('.cluster-status').classList.contains('needs-agents'));
   assert.deepEqual([...card.querySelectorAll('.capacity-slot')].map(slot => slot.textContent), Array(8).fill('+'));
-  assert.equal(card.querySelector('.capacity-slot').title, 'Add Cluster 1, agent slot 1');
+  assert.equal(card.querySelector('.capacity-slot').title, 'Add ATL-0001, agent slot 1');
   h.api.buyNextClusterWorker(cluster.id);
   h.api.renderClusterSection();
   assert.equal(card.querySelector('.cluster-status').textContent, 'Installing agents');
@@ -2192,7 +2192,7 @@ scenario('cluster slots identify agents and distinguish empty slots from actual 
   h.api.renderClusterSection();
   assert.equal(card.querySelector('.cluster-status').textContent, 'Partially Operational');
   assert.equal(card.querySelector('.capacity-slot.filled').textContent, g.agents[0].name);
-  assert.equal(card.querySelector('.capacity-slot.filled').title, 'Cluster 1, agent slot 1 online');
+  assert.equal(card.querySelector('.capacity-slot.filled').title, 'ATL-0001, agent slot 1 online');
   assert.doesNotMatch(h.window.document.querySelector('#cluster-list').textContent, /Client retainers/);
 });
 

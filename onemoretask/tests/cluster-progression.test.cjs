@@ -17,6 +17,32 @@ function expansionCompany(phase, count) {
   return h;
 }
 
+test('cloud names and cluster codes stay unique across cloud boundaries and name cycles', t => {
+  const h = expansionCompany(15, 26);
+  t.after(() => h.close());
+  const g = h.window.GAME.state;
+  assert.equal(h.api.neocloudIdentity(1).name, 'Atlas');
+  assert.equal(h.api.neocloudIdentity(2).id, 'NC-002');
+  assert.equal(h.api.neocloudIdentity(21).name, 'Atlas 2');
+  assert.equal(h.api.neocloudIdentity(21).id, 'NC-021');
+  assert.equal(h.api.clusterCode(1), 'ATL-0001');
+  assert.equal(h.api.clusterCode(25), 'ATL-0025');
+  assert.equal(h.api.clusterCode(26), 'BOR-0026');
+  assert.equal(h.api.clusterCode(501), 'ATL-0501');
+  assert.equal(new Set(Array.from({ length: 2000 }, (_, index) => h.api.clusterCode(index + 1))).size, 2000);
+  h.api.renderAll();
+  const cloud = h.window.document.querySelector('[data-neocloud="2"]');
+  assert.match(cloud.querySelector('.neocloud-header').textContent, /Boreal NC-002/);
+  assert.equal(cloud.querySelector('.neocloud-slot strong').textContent, '0026');
+  assert.match(cloud.querySelector('.neocloud-slot').title, /BOR-0026/);
+  const id = g.clusters[25].id;
+  const saved = JSON.stringify(g);
+  const restored = harness(saved);
+  t.after(() => restored.close());
+  assert.equal(restored.window.GAME.state.clusters[25].id, id);
+  assert.equal(restored.api.clusterDisplayName(restored.window.GAME.state.clusters[25]), 'BOR-0026');
+});
+
 test('four-character agent IDs resolve collisions, retain leading zeroes and wrap from ffff to 0000', () => {
   const h = harness();
   try {

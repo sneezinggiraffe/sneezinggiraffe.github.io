@@ -92,6 +92,8 @@ test('debt styling follows the debt value and clears after recovery', () => {
       h.api.renderTopBar();
       assert.equal(h.window.document.querySelector('#res-debt-wrap').classList.contains('res-debt-active'), debt > 0);
       assert.equal(h.window.document.querySelector('#res-debt').textContent, String(debt));
+      assert.equal(h.window.document.querySelector('#res-debt-wrap').style.display, debt > 0 ? '' : 'none');
+      assert.equal(h.window.document.querySelector('#res-debt-wrap .label').textContent, 'Tech debt');
     }
   } finally { h.close(); }
 });

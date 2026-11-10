@@ -133,7 +133,7 @@ test('Phases 11 through 13 put planning and newest clusters first throughout con
       const building = g.clusters.at(-1);
       h.api.renderClusterSection();
       const grid = h.window.document.querySelector('#cluster-list .node-grid');
-      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 12 ? 'Cluster 4' : 'Cluster 5');
+      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 12 ? 'ATL-0004' : 'ATL-0005');
       assert.equal(grid.querySelector('[data-cluster-id]').dataset.clusterId, building.id);
       assert.equal(grid.querySelectorAll('.cluster-capacity').length, 3);
       assert.equal(grid.querySelectorAll('[aria-label="Cluster construction"]').length, 1);
@@ -145,7 +145,7 @@ test('Phases 11 through 13 put planning and newest clusters first throughout con
       assert.equal(grid.firstElementChild.classList.contains('planning-card'), true);
       h.api.openCluster();
       h.api.renderClusterSection();
-      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 12 ? 'Cluster 5' : 'Cluster 6');
+      assert.equal(grid.firstElementChild.querySelector('strong').textContent, phase === 12 ? 'ATL-0005' : 'ATL-0006');
       assert.deepEqual([...grid.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
       assert.deepEqual(g.clusters.slice(0, 3).map(cluster => cluster.id), originalOrder);
       assert.equal(h.api.validSave(g), true);
@@ -170,12 +170,12 @@ test('Phase 15 groups every cluster into permanent neoclouds of twenty-five', ()
     assert.equal(document.querySelector('#cluster-heading').textContent, 'Neoclouds');
     assert.deepEqual([...document.querySelectorAll('.neocloud')].map(group => Number(group.dataset.neocloud)), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     const cloud = document.querySelector('[data-neocloud="11"]');
-    assert.match(cloud.textContent, /Neocloud 11.*C251.*Planning/);
+    assert.match(cloud.textContent, /Orion.*NC-011.*ORI-0251.*Planning/);
     assert.equal(cloud.querySelectorAll('.neocloud-slot.empty').length, 25);
     const last = g.clusters.at(-1);
     assert.equal(document.querySelector('[data-cluster-id="' + last.id + '"]').closest('.neocloud').dataset.neocloud, '10');
     assert.equal(document.querySelectorAll('[data-neocloud="10"] [data-cluster-id]').length, 25);
-    assert.match(document.querySelector('[data-neocloud="10"] .neocloud-summary').textContent, /C226–C250 · \$6.0K\/s/);
+    assert.match(document.querySelector('[data-neocloud="10"] .neocloud-summary').textContent, /VEG-0226–VEG-0250 · \$6.0K\/s/);
     assert.equal(document.querySelectorAll('.cluster-capacity').length, 0);
     assert.equal(document.querySelectorAll('[data-cluster-id]').length, 250);
     h.api.openCluster();
@@ -183,16 +183,16 @@ test('Phase 15 groups every cluster into permanent neoclouds of twenty-five', ()
     h.api.renderClusterSection();
     const slot = cloud.querySelector('.network-grid').firstElementChild;
     assert.equal(slot.dataset.clusterId, next.id);
-    assert.equal(slot.title, 'Cluster 251 · Procuring GPUs');
+    assert.equal(slot.title, 'ORI-0251 · Procuring GPUs');
     assert.equal(cloud.querySelectorAll('.neocloud-slot').length, 25);
     h.api.tickConstruction(next.buildDuration / 2);
     h.api.renderClusterSection();
-    assert.equal(slot.title, 'Cluster 251 · Installing software');
+    assert.equal(slot.title, 'ORI-0251 · Installing software');
     assert.equal(cloud.querySelector('progress').value, 0.5);
     h.api.tickConstruction(next.buildRemaining);
     h.api.renderClusterSection();
     assert.equal(cloud.querySelector('.network-grid').firstElementChild, slot);
-    assert.equal(slot.title, 'Cluster 251 · Online');
+    assert.equal(slot.title, 'ORI-0251 · Online');
     assert.match(cloud.querySelector('.neocloud-header').textContent, /1\/25 online/);
     assert.equal(document.querySelector('[data-cluster-id="' + last.id + '"]').closest('.neocloud').dataset.neocloud, '10');
     assert.equal(document.querySelectorAll('[data-cluster-id]').length, 251);
@@ -432,7 +432,7 @@ test('a completed sale freezes the company, fades to black and reveals retiremen
     assert.equal(document.querySelector('#ending-overlay').hidden, true);
     assert.equal(document.querySelector('#ending-transition').hidden, false);
     assert.equal(document.querySelector('#game-container').innerHTML, companyHtml);
-    h.advance(500);
+    h.advance(1500);
     h.api.tick();
     h.api.renderAll();
     assert.equal(JSON.stringify(g), state);
@@ -440,7 +440,7 @@ test('a completed sale freezes the company, fades to black and reveals retiremen
     assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 0.5);
     const base = h.audioPlayers.find(player => player.src === 'soundtrack-loop.mp3');
     assert.equal(base.volume, 0.125);
-    h.advance(600);
+    h.advance(1600);
     h.api.renderAll();
     assert.equal(document.querySelector('#game-container').hidden, true);
     assert.equal(document.querySelector('#ending-overlay').hidden, true);
@@ -461,7 +461,7 @@ test('a completed sale freezes the company, fades to black and reveals retiremen
     const restored = harness(JSON.stringify(g), { reducedMotion: false });
     try {
       assert.equal(restored.window.GAME.state.retired, true);
-      restored.advance(3000);
+      restored.advance(5000);
       restored.api.renderAll();
       assert.equal(restored.window.document.querySelector('#ending-transition').hidden, true);
     } finally {

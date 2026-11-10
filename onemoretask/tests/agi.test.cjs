@@ -46,42 +46,96 @@ function readyCompany(t, options) {
   return h;
 }
 
-test('research review pauses for a decision and charges only on confirmation', t => {
+test('buyout requires confirmation, supports cancel and Escape, and closes the scaling route', t => {
+  const h = readyCompany(t);
+  const g = h.window.GAME.state;
+  const document = h.window.document;
+  const dialog = document.querySelector('#agi-buyout-warning');
+  h.api.positionForBuyout();
+  assert.equal(g.agi.route, '');
+  document.querySelector('#btn-agi-buyout').focus();
+  document.querySelector('#btn-agi-buyout').click();
+  assert.equal(dialog.classList.contains('show'), true);
+  assert.equal(document.activeElement.id, 'btn-agi-buyout-confirm');
+  assert.deepEqual([...dialog.querySelectorAll('button')].map(button => button.textContent), ['Position for Buyout', 'Go back']);
+  h.advance(1000);
+  h.api.tick();
+  assert.equal(g.agi.route, '');
+  document.dispatchEvent(new h.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.equal(dialog.classList.contains('show'), false);
+  assert.equal(document.activeElement.id, 'btn-agi-buyout');
+  h.api.requestBuyout();
+  document.querySelector('#btn-agi-buyout-cancel').click();
+  assert.equal(g.agi.route, '');
+  h.api.requestBuyout();
+  document.querySelector('#btn-agi-buyout-confirm').click();
+  assert.equal(g.agi.route, 'buyout');
+  assert.equal(dialog.classList.contains('show'), false);
+  h.api.requestBuyout();
+  assert.equal(dialog.classList.contains('show'), false);
+  assert.match(document.querySelector('#agi-status').textContent, /Input needed/);
+  assert.match(document.querySelector('#upgrade-list').textContent, /Input needed/);
+  assert.doesNotMatch(document.querySelector('#agi-route-template').innerHTML, /next chapter/i);
+});
+
+test('research shows training stages and progressively passes familiar tasks', t => {
   const h = company(t);
   const g = h.window.GAME.state;
   const document = h.window.document;
-  const dialog = document.querySelector('#agi-research-dialog');
-  const review = document.querySelector('#next-phase-upgrade button');
-  const back = document.querySelector('#btn-agi-research-back');
-  const start = document.querySelector('#btn-agi-research-start');
+  h.api.purchaseUpgrade('agi_research');
+  const labels = ['Assemble training data', 'Train model', 'Run evaluations'];
+  for (const [remaining, stage, passed] of [[30, 0, 0], [20, 1, 0], [10, 2, 0], [7, 2, 1], [4, 2, 2], [1, 2, 3]]) {
+    g.agi.remaining = remaining;
+    h.api.renderAll();
+    assert.equal(document.querySelector('.agi-research-stages [data-state="active"]').textContent, labels[stage]);
+    assert.equal(document.querySelectorAll('.agi-research-stages [data-state="complete"]').length, stage);
+    assert.equal(document.querySelectorAll('.agi-research-task[data-state="complete"]').length, passed);
+    assert.deepEqual([...document.querySelectorAll('.agi-research-task strong')].map(element => element.textContent), ['Write Email', 'Research Snippet', 'Spreadsheet Entry']);
+  }
+  h.api.tickAgi(1);
+  h.api.renderAll();
+  assert.equal(document.querySelector('.agi-research'), null);
+  assert.equal(document.querySelector('#agi-status').textContent, 'Research complete. Enable computer use.');
+});
+
+test('a newly available replacement upgrade returns to the top without locking player scrolling', t => {
+  const h = company(t, 'agi_contracts');
+  const g = h.window.GAME.state;
+  const panel = h.window.document.querySelector('#control-panel');
+  g.agi.paused = true;
+  h.api.purchaseUpgrade('agi_contracts');
+  panel.scrollTop = 900;
+  h.api.tickAgi(30);
+  h.api.renderAll();
+  assert.equal(panel.scrollTop, 0);
+  assert.match(h.window.document.querySelector('#upgrade-list').textContent, /Train Your Replacement/);
+  panel.scrollTop = 200;
+  h.api.renderAll();
+  assert.equal(panel.scrollTop, 200);
+});
+
+test('research uses a normal cost button and disappears when funded', t => {
+  const h = company(t);
+  const g = h.window.GAME.state;
+  const document = h.window.document;
+  const selector = '[onclick="GAME.buy(\'agi_research\')"]';
   const item = upgrade(h, 'agi_research');
   g.cash = item.cost - 1;
   h.api.renderAll();
-  assert.equal(review.disabled, true);
-  h.window.GAME.reviewAgiResearch();
-  start.click();
-  assert.equal(dialog.classList.contains('show'), false);
-  assert.equal(g.agi.projectId, '');
+  assert.equal(document.querySelector(selector).disabled, true);
+  assert.equal(document.querySelector(selector).textContent, '$8.00B');
+  assert.ok(document.querySelector(selector).closest('#upgrade-list .upgrade-card'));
+  assert.equal(document.querySelector('#next-phase-upgrade'), null);
   g.cash++;
   h.api.renderAll();
-  review.focus();
-  h.window.GAME.reviewAgiResearch();
-  assert.equal(dialog.classList.contains('show'), true);
-  assert.equal(document.activeElement, back);
-  assert.match(dialog.textContent, /30 seconds/);
-  document.dispatchEvent(new h.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-  assert.equal(document.activeElement, review);
-  assert.equal(g.cash, item.cost);
-  h.window.GAME.reviewAgiResearch();
-  back.click();
-  assert.equal(g.agi.projectId, '');
-  h.window.GAME.reviewAgiResearch();
-  start.click();
-  start.click();
+  document.querySelector(selector).click();
+  h.api.purchaseUpgrade(item.id);
+  h.api.purchaseUpgrade(item.id);
   assert.equal(g.agi.projectId, item.id);
   assert.equal(g.agi.remaining, item.agiDuration);
   assert.equal(g.cash, 0);
-  assert.equal(review.disabled, true);
+  assert.equal(document.querySelector(selector), null);
+  assert.match(document.querySelector('#agi-status').textContent, /Fund AGI Research/);
 });
 
 test('AGI research and computer use charge once, finish in order and persist active work', t => {
@@ -105,6 +159,8 @@ test('AGI research and computer use charge once, finish in order and persist act
     assert.equal(g.cash, before - item.cost);
     h.api.renderAll();
     assert.equal(h.window.document.querySelector('#section-agi').hidden, false);
+    assert.equal(h.api.upgradeVisible(item), false);
+    assert.equal(h.window.document.querySelector('[onclick="GAME.buy(\'' + id + '\')"]'), null);
     assert.match(h.window.document.querySelector('#agi-status').textContent, /remaining/);
     assert.ok(h.window.document.querySelector('progress[aria-label="AGI project"]'));
     h.api.tickAgi(item.agiDuration / 2);
@@ -293,6 +349,8 @@ test('AGI never commits an ending and buyout preserves the human final sale deci
   assert.equal(g.agi.route, '');
   assert.equal(g.salePreparation.upgradeId, '');
   h.window.document.querySelector('#btn-agi-buyout').click();
+  assert.equal(g.agi.route, '');
+  h.window.document.querySelector('#btn-agi-buyout-confirm').click();
   assert.equal(g.agi.route, 'buyout');
   assert.equal(h.api.agiRouteReady(), false);
   assert.equal(h.api.upgradeVisible(talks), true);
@@ -332,7 +390,7 @@ test('oversight warning supports cancel, Escape, focus and an explicit permanent
   const dialog = h.window.document.querySelector('#agi-warning');
   assert.equal(dialog.classList.contains('show'), true);
   assert.equal(h.window.document.querySelector('#game-container').inert, true);
-  assert.equal(h.window.document.activeElement.id, 'btn-agi-cancel');
+  assert.equal(h.window.document.activeElement.id, 'btn-agi-confirm');
   h.advance(1000);
   h.api.tick();
   assert.equal(g.agi.runawaySeconds, 0);
@@ -350,6 +408,7 @@ test('oversight warning supports cancel, Escape, focus and an explicit permanent
   assert.equal(dialog.classList.contains('show'), false);
   assert.equal(h.api.agiNextUpgrade(), null);
   assert.equal(h.api.upgradeVisible(upgrade(h, 'retire_unlock')), false);
+  h.api.requestBuyout();
   h.api.positionForBuyout();
   h.api.purchaseUpgrade('retire_unlock');
   assert.equal(g.agi.route, 'scaling');
@@ -415,12 +474,12 @@ test('runaway scaling escalates cursors, persists progress and ends in a frozen 
   assert.equal(h.api.canPrestige(), false);
   assert.equal(h.api.canTrueRetire(), false);
   const frozen = JSON.stringify(g);
-  h.advance(500);
+  h.advance(1500);
   h.api.tick();
   h.api.renderAll();
   assert.equal(Number(fade.style.opacity), 0.5);
   assert.equal(companyView.hidden, false);
-  h.advance(600);
+  h.advance(1600);
   h.api.renderAll();
   assert.equal(Number(fade.style.opacity), 1);
   assert.equal(ending.hidden, true);
@@ -489,9 +548,9 @@ test('AGI varies its time at visible metrics and scrolls once for a purchase', t
   const purchase = document.querySelector('[onclick="GAME.buy(\'agi_contracts\')"]');
   purchase.closest('.upgrade-card').getBoundingClientRect = () => ({ top: 1100, bottom: 1200, height: 100 });
   h.api.renderAgiPointer();
-  assert.equal(panel.scrollTop, 1024);
+  assert.equal(panel.scrollTop, 0);
   h.api.renderAgiPointer();
-  assert.equal(panel.scrollTop, 1024);
+  assert.equal(panel.scrollTop, 0);
   motion.target = 'missing';
   h.api.renderAgiPointer();
   assert.equal(h.api.agiPointerTarget(), null);
@@ -502,7 +561,7 @@ test('AGI varies its time at visible metrics and scrolls once for a purchase', t
   assert.equal(document.querySelector('#agi-cursors').hidden, true);
 });
 
-test('AGI visits operations and reads farther down the event log once per visit', t => {
+test('AGI inspections return the control panel and event log to the top', t => {
   const h = company(t, 'agi_contracts', { reducedMotion: false });
   const g = h.window.GAME.state;
   g.cash = 0;
@@ -526,20 +585,20 @@ test('AGI visits operations and reads farther down the event log once per visit'
   h.api.tickAgi(4);
   h.api.tickAgi(1);
   h.api.renderAgiPointer();
-  assert.equal(h.api.agiPointerTarget(), health);
-  assert.ok(panel.scrollTop > 0);
+  assert.equal(h.api.agiPointerTarget(), document.querySelector('#res-cash'));
+  assert.equal(panel.scrollTop, 0);
   h.api.renderAgiPointer();
-  assert.deepEqual(scrolls, [['control-panel', 'smooth']]);
+  assert.deepEqual(scrolls, []);
   for (let index = 0; index < 3; index++) h.api.tickAgi(4);
   h.api.tickAgi(1);
   h.api.renderAgiPointer();
-  assert.equal(h.api.agiPointerTarget(), events);
+  assert.equal(h.api.agiPointerTarget(), document.querySelector('#res-cash'));
   assert.equal(events.scrollTop, 0);
   h.api.tickAgi(1);
   h.api.renderAgiPointer();
-  assert.equal(events.scrollTop, 75);
+  assert.equal(events.scrollTop, 0);
   h.api.renderAgiPointer();
-  assert.deepEqual(scrolls, [['control-panel', 'smooth'], ['control-panel', 'smooth'], ['log-panel', 'smooth']]);
+  assert.deepEqual(scrolls, [['log-panel', 'smooth']]);
 });
 
 test('AGI save validation rejects impossible projects, routes and terminal states', t => {
@@ -650,6 +709,7 @@ test('a funded checkpoint reaches independence and a buyout through real product
         assert.ok(g.totalTasksDone - g.agi.baselineTasks >= 100000000);
         assert.equal(g.agi.healthySeconds, 30);
         assert.equal(h.api.validSave(g), true);
+        h.api.requestBuyout();
         h.api.positionForBuyout();
         h.api.purchaseUpgrade('retire_unlock');
       }
@@ -733,6 +793,7 @@ test('AGI yields at each founder decision and resumes for the sale projects', t 
   assert.equal(g.agi.checks, checks);
   assert.equal(g.agi.route, '');
   assert.equal(h.window.document.querySelector('#agi-cursors').hidden, true);
+  h.api.requestBuyout();
   h.api.positionForBuyout();
   h.api.tickAgi(1);
   h.api.renderAll();
@@ -761,32 +822,30 @@ test('AGI yields at each founder decision and resumes for the sale projects', t 
   assert.equal(h.api.validSave(g), true);
 });
 
-test('AGI keeps both ending choices visible inside a short mobile control panel', t => {
+test('AGI scrolls to the very top once for each player decision', t => {
   const h = company(t, 'retire_unlock');
-  const document = h.window.document;
-  Object.defineProperty(h.window, 'innerWidth', { configurable: true, value: 320 });
-  Object.defineProperty(h.window, 'innerHeight', { configurable: true, value: 568 });
-  const panel = document.querySelector('#control-panel');
-  const choices = document.querySelector('#agi-route-choices');
-  const bounds = { top: 400, bottom: 550, left: 10, width: 300, height: 150 };
-  panel.getBoundingClientRect = () => bounds;
-  Object.defineProperty(panel, 'scrollHeight', { configurable: true, value: 900 });
-  Object.defineProperty(panel, 'clientHeight', { configurable: true, value: 150 });
-  document.querySelector('#top-bar').getBoundingClientRect = () => ({ top: 0, bottom: 118, left: 0, width: 320, height: 118 });
-  choices.getBoundingClientRect = () => ({ top: 750 - panel.scrollTop, bottom: 850 - panel.scrollTop, left: 10, width: 300, height: 100 });
-  h.window.GAME.state.agi.route = '';
-  h.api.renderAll();
-  assert.equal(h.api.agiFounderDecision(), 'route');
-  for (const [index, id] of ['btn-agi-buyout', 'btn-agi-scaling'].entries()) {
-    document.querySelector('#' + id).getBoundingClientRect = () => ({ top: 795 - panel.scrollTop, bottom: 838 - panel.scrollTop, left: 10 + index * 150, width: 145, height: 43 });
+  const panel = h.window.document.querySelector('#control-panel');
+  const frames = [];
+  h.window.requestAnimationFrame = callback => frames.push(callback);
+  for (const decision of ['agi_authority', 'route', 'retire_unlock', 'fusion']) {
+    panel.scrollTop = 450;
+    h.api.renderAgiPointer(decision);
+    assert.equal(panel.scrollTop, 0, decision + ' returns to the top');
+    panel.scrollTop = 5;
+    frames.shift()();
+    assert.equal(panel.scrollTop, 0, 'The handover clears the final smooth-scroll frame');
+    panel.scrollTop = 100;
+    h.api.renderAgiPointer(decision);
+    assert.equal(panel.scrollTop, 100, 'The player can scroll after the handover');
+    assert.equal(frames.length, 0);
   }
-  assert.ok(panel.scrollTop >= 0 && panel.scrollTop <= panel.scrollHeight - panel.clientHeight);
-  for (const element of [choices, document.querySelector('#btn-agi-buyout'), document.querySelector('#btn-agi-scaling')]) {
-    const rect = element.getBoundingClientRect();
-    assert.ok(rect.top >= bounds.top, element.id + ' stays below the panel top');
-    assert.ok(rect.bottom <= bounds.bottom, element.id + ' stays above the panel bottom');
-  }
-  const settledScroll = panel.scrollTop;
-  h.api.renderAgiPointer();
-  assert.equal(panel.scrollTop, settledScroll, 'The handover stays stable after its initial scroll');
+  h.api.renderAgiPointer('route');
+  h.api.renderAgiPointer('fusion');
+  panel.scrollTop = 100;
+  frames.shift()();
+  assert.equal(panel.scrollTop, 100, 'A superseded decision cannot move the panel');
+  h.fresh();
+  h.api.agiMotionState();
+  frames.shift()();
+  assert.equal(panel.scrollTop, 100, 'A replaced motion cannot move the panel');
 });

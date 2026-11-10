@@ -122,9 +122,13 @@ An outlined Bring cluster online card occupies the first grid position, ahead of
 
 At two managed clusters, the board adds a Delivery panel with a ten-second smoothed completion rate, queued and in-progress counts, and three recent completions. Fixed grid columns and tabular numerals keep the queue and work counts from shifting as delivery grows. The task-heading row has no duplicate Delivery label. Tasks fold immediately when Cluster 2 is ordered, including while it is under construction. Buying the CEO preserves a manual reopening. A right-aligned Hide tasks / Show tasks chevron toggles detail and keeps keyboard focus; manual reopening persists through later phase changes in the current session. Reloading a CEO-led company starts with tasks folded. From Phase 13 the panel shows the delivery rate, managed-node count and delivery revenue without individual task controls. Observation history and the expanded-list preference are session-only, reset on a new story, and do not alter the save schema.
 
+Clusters display permanent parent-cloud codes such as **ATL-0001** and **BOR-0026**. Neoclouds display names such as **Atlas** and **Boreal** alongside permanent IDs such as **NC-001**. Names gain a numbered suffix when the name list repeats; cluster codes retain their global sequence. Saved cluster identity and grouping are independent of these display labels.
+
+**Tech debt** is hidden in the resource bar at zero. It increases failures and incidents, reduces service uptime, and must stay below 10 for healthy AGI operations and a sale. DevOps reduces it.
+
 ## Finish
 
-Phase 15 is **Global Expansion**. After its seven infrastructure upgrades and 500 completed clusters, **Review research** appears under **Next phase**. **Start research** funds the $8B project. Completing the 30-second project enters Phase 16, **AGI**, where computer use, purchasing authority, contracts and the founder handover lead to the route choice.
+Phase 15 is **Global Expansion**. After its seven infrastructure upgrades and 500 completed clusters, **Fund AGI Research** appears in the normal upgrade list with an $8B cost button. Clicking it funds the project and removes the upgrade card. Active AGI projects show their progress in the AGI panel. The 30-second research project shows **Assemble training data**, **Train model** and **Run evaluations**, with email, research and spreadsheet task evaluations passing in sequence. Completing it enters Phase 16, **AGI**, where computer use, purchasing authority, contracts and the founder handover lead to the route choice.
 
 | Upgrade | Phase | Cost | Active project time |
 | --- | --- | ---: | ---: |
@@ -136,12 +140,12 @@ Phase 15 is **Global Expansion**. After its seven infrastructure upgrades and 50
 
 AGI checks cash, operations and network capacity on its own. After the checks finish and the $6B is available, the approval card shows **Input needed**. The player approves once. AGI then buys the contracts and handover upgrades automatically, saving their cost before funding more construction. The handover requires 500 new completed clusters, 100 million delivered tasks and 30 healthy operating seconds since approval. Projects charge once and retain their remaining time on reload. Dialogs, hidden tabs and offline gaps pause project and replication progress.
 
-**Take control** in the resource bar restores the player’s pointer and pauses AGI purchases. **Resume AGI** hands control back. AGI varies how long it looks at each metric, scrolls to check operations, and occasionally reads farther down the Event Log. It brings player decisions into view when approval, the route choice or the final sale requires input. Reduced motion removes cursor travel animation and smooth scrolling.
+**Take control** in the resource bar restores the player’s full-opacity pointer and pauses AGI purchases. **Resume AGI** hands control back. The player’s passive pointer is smaller, has a dashed outline and remains visible at 35% opacity while AGI drives. AGI varies how long it looks at each metric. Every automatic scroll returns to the top, including inspections, newly available upgrades, purchases and player decisions. Reduced motion removes cursor travel animation and smooth scrolling.
 
-Upgrades shows **Input needed** above the two routes.
+Upgrades shows **Input needed** above the two routes and on investor talks and the final company sale. Both endings fade to black over three seconds, followed by the existing black pause and reveal.
 
-- **Position for Buyout** reveals **Host Investor Talks**, costing $90K and taking eight seconds. Completing talks enters Phase 17, **Buyout**. AGI handles the four subsequent preparation purchases, and the player completes the sale.
-- **Keep Scaling** opens **Remove guard rails** in Phase 16. **Go back** returns to the decision. Confirming permanently closes the buyout route for that run. Over 45 active seconds, AGI creates subsidiaries and multiplies into 32,768 instances. The replica cursors follow different routes across the counters and task cards. **Take control** restores the player’s pointer while replication continues. The scene fades to black before the persistent ending, **There is always one more task.** Its **Start a new story** button resets the run after confirmation.
+- **Position for Buyout** opens a confirmation. The primary action appears above **Go back** in both route dialogs. Confirming closes the unrestricted expansion route and reveals **Host Investor Talks**, costing $90K and taking eight seconds. Completing talks enters Phase 17, **Buyout**. AGI handles the four subsequent preparation purchases, and the player completes the sale.
+- **Keep Scaling** opens **Remove guard rails** in Phase 16. **Go back** returns to the decision. Confirming permanently closes the buyout route for that run. Over 45 active seconds, AGI creates subsidiaries and multiplies into 32,768 instances. The replica cursors follow different routes across the counters and task cards. **Take control** restores the player’s full-opacity pointer while replication continues. The scene fades to black before the persistent ending, **There is always one more task.** Its **Start a new story** button resets the run after confirmation.
 
 Three deterministic active-player journeys, including one with a delegated opening, spend 231.9 to 232.9 seconds in Phase 15 and 122.6 to 125.6 seconds in Phase 16. Phase 16 includes the eight-second investor talks. The combined time before talks begin is 347.5 to 349.5 seconds.
 
@@ -216,7 +220,7 @@ Use `chStart9()` to play Phase 9 from its entry, with growth upgrades still unpu
 
 | Helper | Loaded state | Next step |
 | --- | --- | --- |
-| `chPh16()` | Phase 15, 500 staffed nodes, seven expansion upgrades purchased, $8B | Review and start AGI research to enter Phase 16 on completion |
+| `chPh16()` | Phase 15, 500 staffed nodes, seven expansion upgrades purchased, $8B | Fund AGI research to enter Phase 16 on completion |
 | `chPh16Choice()` | Phase 16, independent company, neither route selected | Choose Position for Buyout or Keep Scaling |
 | `chPh17()` | Phase 16, completed AGI handover, buyout selected | Host Investor Talks; completion enters Phase 17 |
 
@@ -246,3 +250,5 @@ The canonical design reference is [the repository design spec](../DESIGN.md). Ad
 **Breaking debug API change:** manual provisioning now requires `GAME.buyClusterWorker(clusterId, slotIndex)`, with a zero-based slot index. A slot can only purchase itself, in order. The former cluster-only manual call no longer provisions an agent.
 
 Reality Check appears from 85 completed tasks independently of earlier purchases. Expenses start when Reality Check is acknowledged. Discover Free-Tier AI appears from 105 completed tasks after Reality Check and all earlier purchases. It displays a 150-task requirement and remains disabled until 150 tasks are complete.
+
+**Breaking debug API change:** `GAME.positionForBuyout()` now confirms an open buyout dialog. Call `GAME.requestBuyout()` to open it before confirming.

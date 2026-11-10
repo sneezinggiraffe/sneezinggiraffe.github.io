@@ -30,8 +30,9 @@ test('AGI research persists, pauses with settings, and introduces a visible insp
   await openAgiCheckpoint(page, 1440, 'chPh16');
   await expect(page.locator('#phase-label')).toHaveText('Phase 15: Global Expansion');
   await expect(upgrade(page, 'retire_unlock')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Review research' }).click();
-  await page.getByRole('button', { name: 'Start research · $8.00B' }).click();
+  await expect(upgrade(page, 'agi_research')).toHaveText('$8.00B');
+  await upgrade(page, 'agi_research').click();
+  await expect(upgrade(page, 'agi_research')).toHaveCount(0);
   await page.clock.runFor(10000);
   await expect(page.locator('#agi-status')).toContainText('Fund AGI Research');
   await expect(page.getByRole('progressbar', { name: 'AGI project' })).toBeVisible();
@@ -48,10 +49,12 @@ test('AGI research persists, pauses with settings, and introduces a visible insp
   await saveAndReload(page);
   expect(await page.evaluate(() => GAME.state.phase)).toBe(16);
   await upgrade(page, 'agi_computer_use').click();
+  await expect(upgrade(page, 'agi_computer_use')).toHaveCount(0);
   await page.clock.runFor(21000);
   await expect(page.locator('#agi-cursors')).toBeVisible();
   await expect(page.locator('#agi-cursor')).toBeVisible();
-  await expect(page.locator('#game-container')).toHaveCSS('cursor', 'none');
+  await expect(page.locator('#game-container')).toHaveCSS('cursor', /url\(.*width='18'.*height='23'.*stroke-dasharray='2 2'.*opacity='\.35'.*\) 2 1, auto/);
+  await expect(page.locator('#upgrade-list')).toHaveCSS('cursor', /url\(.*opacity='\.35'/);
   await expect(page.locator('#agi-status')).toContainText('AGI checking company cash');
   const cashTarget = await page.locator('#res-cash').boundingBox();
   expect(await page.locator('#agi-cursor').evaluate(cursor => Number.parseFloat(cursor.style.top))).toBeCloseTo(cashTarget.y + cashTarget.height / 2, 0);
@@ -59,9 +62,11 @@ test('AGI research persists, pauses with settings, and introduces a visible insp
   await page.clock.runFor(4500);
   const secondPosition = await page.locator('#agi-cursor').evaluate(cursor => [cursor.style.left, cursor.style.top]);
   expect(secondPosition).not.toEqual(firstPosition);
+  await page.locator('#control-panel').evaluate(element => { element.scrollTop = element.scrollHeight; });
   await page.clock.runFor(8500);
   await expect(upgrade(page, 'agi_authority')).toBeEnabled();
   await expect(upgrade(page, 'agi_authority')).toBeInViewport();
+  expect(await page.locator('#control-panel').evaluate(element => element.scrollTop)).toBe(0);
   await expect(page.locator('#agi-progress')).toContainText('Checks complete · 3 / 3');
   await expect(page.locator('#upgrade-list .input-needed')).toHaveText('Input needed');
   await expect(page.locator('#agi-cursors')).toBeHidden();
@@ -71,27 +76,50 @@ test('AGI research persists, pauses with settings, and introduces a visible insp
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('rapid clicks on Parallel Neoclouds leave research for a separate review', async ({ page }) => {
+test('research occupies the normal upgrade slot and starts on one click', async ({ page }) => {
   await openAgiCheckpoint(page, 1440, 'chPh16');
-  await page.evaluate(() => {
-    GAME.state.purchasedUpgrades = GAME.state.purchasedUpgrades.filter(id => id !== 'parallel_neoclouds');
+  const research = upgrade(page, 'agi_research');
+  await expect(page.locator('#upgrade-list .upgrade-card').filter({ has: research })).toContainText('Fund AGI Research');
+  await expect(research).toHaveText('$8.00B');
+  await expect(page.getByText('Next phase', { exact: true })).toHaveCount(0);
+  await research.click();
+  await expect(research).toHaveCount(0);
+  expect(await page.evaluate(() => GAME.state.agi.projectId)).toBe('agi_research');
+  await expect(page.getByRole('progressbar', { name: 'AGI project' })).toBeVisible();
+});
+
+for (const width of [1440, 390, 320]) {
+  test(`research stages and task evaluations fit at ${width}px`, async ({ page }) => {
+    await openAgiCheckpoint(page, width, 'chPh16');
+    await upgrade(page, 'agi_research').click();
+    await expect(page.locator('.agi-research-stages [data-state="active"]')).toHaveText('Assemble training data');
+    await page.clock.runFor(10100);
+    await expect(page.locator('.agi-research-stages [data-state="active"]')).toHaveText('Train model');
+    await page.clock.runFor(10000);
+    await expect(page.locator('.agi-research-stages [data-state="active"]')).toHaveText('Run evaluations');
+    await page.clock.runFor(9000);
+    await expect(page.locator('.agi-research-task[data-state="complete"]')).toHaveCount(3);
+    expect(await page.locator('.agi-research').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/research-evaluations-${width}.png`, animations: 'disabled' });
+    await page.clock.runFor(1000);
+    await expect(page.locator('.agi-research')).toHaveCount(0);
+    await expect(upgrade(page, 'agi_computer_use')).toBeVisible();
   });
-  await page.clock.runFor(200);
-  const parallel = upgrade(page, 'parallel_neoclouds');
-  const box = await parallel.boundingBox();
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await page.clock.runFor(200);
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 3 });
-  await expect(page.getByRole('dialog', { name: 'Fund AGI Research' })).toBeHidden();
-  expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('parallel_neoclouds'))).toBe(true);
-  expect(await page.evaluate(() => GAME.state.agi.projectId)).toBe('');
-  const review = page.getByRole('button', { name: 'Review research' });
-  await review.click();
-  const dialog = page.getByRole('dialog', { name: 'Fund AGI Research' });
-  await expect(dialog).toContainText('Train a system to run the company');
+}
+
+test('buyout confirmation supports cancellation, Escape and primary action above Go back', async ({ page }) => {
+  await openAgiCheckpoint(page, 390);
+  await page.locator('#btn-agi-buyout').click();
+  const dialog = page.locator('#agi-buyout-warning');
+  await expect(dialog).toBeVisible();
+  expect((await page.locator('#btn-agi-buyout-confirm').boundingBox()).y).toBeLessThan((await page.locator('#btn-agi-buyout-cancel').boundingBox()).y);
   await page.keyboard.press('Escape');
-  await expect(review).toBeFocused();
-  expect(await page.evaluate(() => GAME.state.agi.projectId)).toBe('');
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#btn-agi-buyout')).toBeFocused();
+  await page.locator('#btn-agi-buyout').click();
+  await page.locator('#btn-agi-buyout-cancel').click();
+  expect(await page.evaluate(() => GAME.state.agi.route)).toBe('');
+  await expect(page.getByText('Choose the next chapter', { exact: true })).toHaveCount(0);
 });
 
 for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3], [320, 3]]) {
@@ -104,11 +132,16 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await expect(page.locator('#phase-label')).toHaveText('Phase 16: AGI');
     await page.clock.runFor(8000);
     await page.screenshot({ path: `test-results/agi-choice-${layout}-${width}.png`, animations: 'disabled' });
+    expect(await page.locator('#control-panel').evaluate(element => element.scrollTop)).toBe(0);
+    await expect(page.locator('#agi-status')).toBeInViewport({ ratio: 1 });
+    await page.locator('#agi-route-choices').scrollIntoViewIfNeeded();
     await expect(page.locator('#agi-route-choices .input-needed')).toBeInViewport({ ratio: 1 });
     await expect(page.locator('#btn-agi-buyout')).toBeInViewport({ ratio: 1 });
     await expect(page.locator('#btn-agi-scaling')).toBeInViewport({ ratio: 1 });
     await expect(upgrade(page, 'retire_unlock')).toHaveCount(0);
     await page.locator('#btn-agi-buyout').click();
+    await expect(page.locator('#agi-buyout-warning')).toBeVisible();
+    await page.locator('#btn-agi-buyout-confirm').click();
     await expect(page.locator('#agi-route-choices')).toBeHidden();
     await page.clock.runFor(200);
     await upgrade(page, 'retire_unlock').click();
@@ -119,15 +152,19 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     expect(await page.evaluate(() => GAME.state.purchasedUpgrades.includes('sale_terms'))).toBe(true);
     expect(await page.evaluate(() => GAME.state.agi.purchases)).toBeGreaterThanOrEqual(4);
     await expect(upgrade(page, 'fusion')).toBeEnabled();
+    await expect(page.locator('#upgrade-list .input-needed')).toHaveText('Input needed');
     expect(await page.evaluate(() => GAME.state.retired)).toBe(false);
     await page.clock.runFor(8000);
     expect(await page.evaluate(() => GAME.state.retired)).toBe(false);
     await page.screenshot({ path: `test-results/agi-buyout-${layout}-${width}.png`, animations: 'disabled' });
+    expect(await page.locator('#control-panel').evaluate(element => element.scrollTop)).toBe(0);
+    await expect(page.locator('#agi-status')).toBeInViewport({ ratio: 1 });
+    await upgrade(page, 'fusion').scrollIntoViewIfNeeded();
     await expect(upgrade(page, 'fusion')).toBeInViewport({ ratio: 1 });
-    await expect(upgrade(page, 'fusion').locator('xpath=ancestor::div[contains(@class,"upgrade-card")]').locator('.name')).toBeInViewport();
+    await expect(upgrade(page, 'fusion').locator('xpath=ancestor::div[contains(@class,"upgrade-card")]').locator('.name')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await upgrade(page, 'fusion').click();
-    await page.clock.runFor(3000);
+    await page.clock.runFor(5000);
     await expect(page.locator('#ending-title')).toHaveText('You retired early!');
     await expect(page.locator('#agi-cursors')).toBeHidden();
     await expect(page.locator('#ending-choices')).toBeVisible();
@@ -141,13 +178,14 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     await page.locator('#btn-agi-scaling').click();
     await expect(page.locator('#agi-warning')).toBeVisible();
     await expect(page.locator('#agi-warning')).toHaveAccessibleName('Remove guard rails');
-    await expect(page.locator('#btn-agi-cancel')).toBeFocused();
+    expect((await page.locator('#btn-agi-confirm').boundingBox()).y).toBeLessThan((await page.locator('#btn-agi-cancel').boundingBox()).y);
+    await expect(page.locator('#btn-agi-confirm')).toBeFocused();
     await expect(page.locator('#agi-warning-message')).toHaveText('AGI will expand without approval. It has already planned for your absence.');
     expect(await page.evaluate(() => GAME.state.agi.route)).toBe('');
     await page.keyboard.press('Shift+Tab');
-    await expect(page.locator('#btn-agi-confirm')).toBeFocused();
-    await page.keyboard.press('Tab');
     await expect(page.locator('#btn-agi-cancel')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#btn-agi-confirm')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.locator('#agi-warning')).toBeHidden();
     await expect(page.locator('#btn-agi-scaling')).toBeFocused();
@@ -181,7 +219,7 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
     expect(opacity).toBeLessThan(1);
     await expect(page.locator('#agi-runaway-panel')).toBeVisible();
     await expect(page.locator('#ending-overlay')).toBeHidden();
-    await page.clock.runFor(3400);
+    await page.clock.runFor(5400);
     await expect(page.locator('#ending-overlay')).toBeVisible();
     await expect(fade).toBeHidden();
     await expect(page.locator('#ending-title')).toHaveText('There is always one more task.');
@@ -201,7 +239,7 @@ for (const [width, layout] of [[1440, 4], [390, 4], [320, 4], [1440, 3], [390, 3
   });
 }
 
-test('AGI scrolls to operations and reads down the event log', async ({ page }) => {
+test('AGI inspections keep the control panel and event log at the top', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openAgiCheckpoint(page);
   await page.evaluate(() => {
@@ -210,16 +248,14 @@ test('AGI scrolls to operations and reads down the event log', async ({ page }) 
     state.agi.projectId = 'agi_contracts';
     state.agi.remaining = 30;
     state.log = Array.from({ length: 24 }, (_, index) => ({ msg: 'Cluster ' + (24 - index) + ' online.', type: 'info', t: Date.now() }));
-    document.querySelector('#control-panel').scrollTop = 0;
+    document.querySelector('#control-panel').scrollTop = 1000;
   });
   const operations = page.locator('#operations-health');
   const events = page.locator('#log-panel');
   await page.clock.runFor(4600);
-  await expect(operations).toBeInViewport();
-  expect(await page.locator('#control-panel').evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  expect(await page.locator('#control-panel').evaluate(element => element.scrollTop)).toBe(0);
   await page.clock.runFor(14500);
-  await expect(events).toBeInViewport();
-  expect(await events.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  expect(await events.evaluate(element => element.scrollTop)).toBe(0);
 });
 
 test('the header control pauses AGI with a click and resumes with the keyboard', async ({ page }) => {

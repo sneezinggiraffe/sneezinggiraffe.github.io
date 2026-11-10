@@ -154,7 +154,7 @@ for (const width of [1440, 390]) {
     await page.goto('/');
 
     const talks = page.locator('[onclick="GAME.buy(\'retire_unlock\')"]');
-    const research = page.getByRole('button', { name: 'Review research' });
+    const research = page.locator('[onclick="GAME.buy(\'agi_research\')"]');
     await expect(talks).toHaveCount(0);
     await page.locator('[onclick="GAME.buy(\'parallel_neoclouds\')"]').click();
     await page.evaluate(() => GAME.addCash(1e10));
@@ -165,7 +165,7 @@ for (const width of [1440, 390]) {
     const order = await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.title.split(' · ')[0]));
     const expectedOrder = [];
     for (let first = 526; first >= 1; first -= 25) {
-      for (let offset = 0; offset < 25; offset++) expectedOrder.push('Cluster ' + (first + offset));
+      for (let offset = 0; offset < 25; offset++) expectedOrder.push(h.api.clusterCode(first + offset));
     }
     expect(order).toEqual(expectedOrder);
     await page.locator('[data-neocloud="22"]').scrollIntoViewIfNeeded();

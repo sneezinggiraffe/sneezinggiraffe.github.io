@@ -19,6 +19,20 @@
   const pick = (arr) => arr[randInt(0, arr.length - 1)];
   const uid = () => Math.random().toString(36).slice(2, 9);
 
+  function neocloudIdentity(number) {
+    const [name, prefix] = NEOCLOUD_NAMES[(number - 1) % NEOCLOUD_NAMES.length];
+    const generation = Math.floor((number - 1) / NEOCLOUD_NAMES.length);
+    return { name: name + (generation ? " " + (generation + 1) : ""), prefix, id: "NC-" + String(number).padStart(3, "0") };
+  }
+
+  function clusterCode(number) {
+    return neocloudIdentity(Math.floor((number - 1) / NEOCLOUD_SIZE) + 1).prefix + "-" + String(number).padStart(4, "0");
+  }
+
+  function clusterDisplayName(cluster) {
+    return clusterCode(Number(cluster.name.slice(8)));
+  }
+
   function createCluster(name) {
     return {
       id: uid(),
@@ -100,7 +114,13 @@
   const PHASE_NAMES = { 15: "Global Expansion", 16: "AGI", 17: "Buyout" };
   const SAVE_VERSION = 20;
   const NEOCLOUD_SIZE = 25;
-  const ENDING_FADE_OUT_MS = 1000;
+  const NEOCLOUD_NAMES = [
+    ["Atlas", "ATL"], ["Boreal", "BOR"], ["Nimbus", "NIM"], ["Meridian", "MER"], ["Aurora", "AUR"],
+    ["Cirrus", "CIR"], ["Stratus", "STR"], ["Zenith", "ZEN"], ["Horizon", "HOR"], ["Vega", "VEG"],
+    ["Orion", "ORI"], ["Lyra", "LYR"], ["Nova", "NOV"], ["Solstice", "SOL"], ["Polaris", "POL"],
+    ["Aster", "AST"], ["Helios", "HEL"], ["Cobalt", "COB"], ["Eclipse", "ECL"], ["Kepler", "KEP"],
+  ];
+  const ENDING_FADE_OUT_MS = 3000;
   const ENDING_BLACK_PAUSE_MS = 400;
   const ENDING_FADE_IN_MS = 1200;
 
@@ -279,7 +299,7 @@
 
     // Phase 10 (clusterization)
 
-    { id: "cluster_info", name: "Your First Cluster", desc: "Your team is now Cluster 1, with Manager, Token Assistant and DevOps included. Buy the Second Cluster Permit, bring another cluster online, then provision its agents.", cost: 0, currency: "cash", phase: 10, infoUntilPhase: 0, introductory: true, optional: true, oneTime: true },
+    { id: "cluster_info", name: "Your First Cluster", desc: "Your team is now ATL-0001, with Manager, Token Assistant and DevOps included. Buy the Second Cluster Permit, bring another cluster online, then provision its agents.", cost: 0, currency: "cash", phase: 10, infoUntilPhase: 0, introductory: true, optional: true, oneTime: true },
     { id: "code_agents", name: "Cluster Operations Blueprint", desc: "Standardise cluster operations. Reduce debt growth by 25% and improve output quality by 10%.", cost: 1500000, currency: "cash", phase: 10, effect: { debtReduction: 0.25, codeQualityMult: 1.1 }, oneTime: true, reqTasks: 1050000 },
     { id: "cluster_capacity_2", name: "Second Cluster Permit", desc: "Unlock Provision cluster and room for one more cluster.", cost: 2500000, currency: "cash", phase: 10, requires: "code_agents", effect: {}, oneTime: true, reqTasks: 1150000 },
     { id: "cluster_capacity_3", name: "Third Cluster Permit", desc: "Add room for a third cluster.", cost: 12000000, currency: "cash", phase: 10, requires: "cluster_capacity_2", effect: {}, oneTime: true, reqTasks: 1500000 },
@@ -334,7 +354,6 @@
     { id: "token_pack_2", name: "Token Pack (500)", desc: "Get 500 tokens.", cost: 300, currency: "cash", phase: 3, effect: { giveTokens: 500 }, oneTime: false },
   ];
 
-  const AGI_RESEARCH = UPGRADES.find((upgrade) => upgrade.id === "agi_research");
   const AGI_AUTHORITY = UPGRADES.find((upgrade) => upgrade.id === "agi_authority");
   const PLAYER_RESERVED_UPGRADES = UPGRADES.filter((upgrade) =>
     upgrade.reserveForPlayer || (upgrade.phase >= 12 && upgrade.phase <= 15 && upgrade.currency === "cash" && upgrade.oneTime && !upgrade.optional));
@@ -1870,9 +1889,9 @@
   const AGI_CHECK_LABELS = { cash: "company cash", operations: "operations", network: "network capacity", log: "the event log" };
   const AGI_DECISION_STATUS = {
     agi_authority: "Input needed. Approve AGI purchasing in Upgrades.",
-    route: "Input needed. Choose the company’s next chapter in Upgrades.",
-    retire_unlock: "Host investor talks to begin the buyout.",
-    fusion: "Complete the company sale in Upgrades.",
+    route: "Input needed. Retire or keep scaling.",
+    retire_unlock: "Input needed. Host investor talks to begin the buyout.",
+    fusion: "Input needed. Complete the company sale in Upgrades.",
   };
 
   function validAgiSave(state) {
@@ -2001,8 +2020,22 @@
     return G.gameStarted && !G.retired && G.phase === 16 && G.agi.route === "" && G.purchasedUpgrades.includes("agi_independence");
   }
 
-  function positionForBuyout() {
+  function requestBuyout() {
     if (!agiRouteReady()) return;
+    $("#agi-buyout-warning").classList.add("show");
+    renderAll();
+  }
+
+  function cancelBuyout() {
+    $("#agi-buyout-warning").classList.remove("show");
+    G.lastTick = Date.now();
+    renderAll();
+  }
+
+  function positionForBuyout() {
+    if (!agiRouteReady() || !$("#agi-buyout-warning").classList.contains("show")) return;
+    $("#agi-buyout-warning").classList.remove("show");
+    G.lastTick = Date.now();
     G.agi.route = "buyout";
     agiMotion = null;
     G.agi.paused = false;
@@ -2082,28 +2115,21 @@
     else pane.scrollTop = top;
   }
 
-  function revealAgiTarget(target, animate = false) {
-    const panel = $("#control-panel");
-    const bounds = panel.getBoundingClientRect();
-    const anchor = (target.closest(".upgrade-card") || target).getBoundingClientRect();
-    const top = Math.max($("#top-bar").getBoundingClientRect().bottom, bounds.top);
-    const bottom = Math.min(window.innerHeight, bounds.bottom);
-    const inset = clamp((bottom - top - anchor.height) / 2, 0, 16);
-    if (anchor.top < top + inset || anchor.bottom > bottom - inset) scrollAgiPane(panel, panel.scrollTop + anchor.top - top - inset, animate);
+  function revealAgiTarget() {
+    scrollAgiPane($("#control-panel"), 0, false);
   }
 
   function renderAgiInspection(motion) {
     const logPanel = motion.target === "log" ? $("#log-panel") : null;
     const detail = motion.target === "operations" ? $("#incident-list .incident-card") || $("#operations-health") : logPanel;
     if (detail && !motion.scrolled) {
-      revealAgiTarget(detail, true);
+      revealAgiTarget();
       motion.scrolled = true;
     }
     if (logPanel && !motion.logScrolled && agiLookAgain(motion)) {
       const maxScroll = logPanel.scrollHeight - logPanel.clientHeight;
       if (maxScroll > 0) {
-        const next = logPanel.scrollTop >= maxScroll - 1 ? 0 : Math.min(maxScroll, logPanel.scrollTop + logPanel.clientHeight / 2);
-        scrollAgiPane(logPanel, next, true);
+        scrollAgiPane(logPanel, 0, true);
       }
       motion.logScrolled = true;
     }
@@ -2122,9 +2148,12 @@
     const active = !G.retired && !document.hidden && !$(".popup-overlay.show");
     if (!decision) motion.decision = "";
     else if (active && motion.decision !== decision) {
-      const target = decision === "route" ? $("#agi-route-choices") : agiUpgradeControl(decision);
-      if (target) revealAgiTarget(target);
+      scrollAgiPane($("#control-panel"), 0, false);
       motion.decision = decision;
+      // Cancel any final compositor movement from the preceding smooth inspection scroll.
+      window.requestAnimationFrame(() => {
+        if (agiMotion === motion && motion.decision === decision) scrollAgiPane($("#control-panel"), 0, false);
+      });
     }
 
     document.body.classList.toggle("agi-driving", driving);
@@ -2134,7 +2163,7 @@
     $("#agi-cursors").hidden = !runaway && !target;
     if (!runaway && !target) return;
     if (target?.closest(".upgrade-card") && !motion.scrolled) {
-      revealAgiTarget(target);
+      revealAgiTarget();
       motion.scrolled = true;
     }
     const stage = Math.min(3, 1 + Math.floor(G.agi.runawaySeconds / 12));
@@ -2148,6 +2177,26 @@
       cursor.style.top = clamp(y, 8, window.innerHeight - 45) + "px";
       cursor.classList.toggle("clicking", runaway ? (Math.floor(G.agi.runawaySeconds * 3) + index) % 4 === 0 : motion.clicking);
     });
+  }
+
+  function renderAgiResearch(project) {
+    const elapsed = project.agiDuration - G.agi.remaining;
+    const stage = Math.min(2, Math.floor(elapsed / 10));
+    const labels = ["Assemble training data", "Train model", "Run evaluations"];
+    const descriptions = [
+      fmtTokens(G.totalTasksDone) + " completed tasks available for training.",
+      "Learning to complete the work your company delivers.",
+      "Testing email, research and spreadsheet work.",
+    ];
+    const passed = Math.max(0, Math.floor((elapsed - 20) / 3));
+    return "<div class='agi-research'><ol class='agi-research-stages' aria-label='Research stages'>" + labels.map((label, index) =>
+      "<li data-state='" + (index < stage ? "complete" : index === stage ? "active" : "pending") + "'>" + label + "</li>"
+    ).join("") + "</ol><p class='agi-research-detail'>" + descriptions[stage] + "</p><div class='agi-research-tasks'>" +
+      TASK_TYPES.slice(0, 3).map((task, index) => {
+        const complete = stage === 2 && index < passed;
+        const status = complete ? "Passed" : ["Training example", "Learning", "Evaluating"][stage];
+        return "<div class='agi-research-task' data-state='" + (complete ? "complete" : "active") + "'><strong>" + task.name + "</strong><span>" + status + "</span></div>";
+      }).join("") + "</div></div>";
   }
 
   function renderAgi() {
@@ -2168,7 +2217,7 @@
     const showChoices = decision === "route";
     if (showChoices && choices.hidden) {
       choices.append($("#agi-route-template").content.cloneNode(true));
-      $("#btn-agi-buyout").addEventListener("click", positionForBuyout);
+      $("#btn-agi-buyout").addEventListener("click", requestBuyout);
       $("#btn-agi-scaling").addEventListener("click", requestKeepScaling);
     } else if (!showChoices && !choices.hidden) choices.replaceChildren();
     choices.hidden = !showChoices;
@@ -2188,6 +2237,7 @@
     if (statusElement.textContent !== status) statusElement.textContent = status;
     let progress = "";
     if (project) progress = "<progress aria-label='AGI project' max='" + project.agiDuration + "' value='" + (project.agiDuration - G.agi.remaining) + "'></progress>";
+    if (project?.id === "agi_research") progress += renderAgiResearch(project);
     if (awaitingApproval) progress += "<p>Checks complete · " + Math.min(AGI_CHECKS.length, G.agi.checks) + " / " + AGI_CHECKS.length + "</p>";
     if (G.purchasedUpgrades.includes("agi_authority") && !G.purchasedUpgrades.includes("agi_independence")) progress += "<ul>" + agiMilestones().map(([value, target, label]) => "<li>" + label + ": " + fmtTokens(value) + " / " + fmtTokens(target) + "</li>").join("") + "</ul>";
     updateHTML($("#agi-progress"), progress);
@@ -2223,7 +2273,7 @@
   function upgradeVisible(upgrade) {
     if (G.agi.route === "scaling") return false;
     if (upgrade.id === "retire_unlock" && G.agi.route !== "buyout") return false;
-    if (upgrade.agiDuration && G.agi.projectId && G.agi.projectId !== upgrade.id) return false;
+    if (upgrade.agiDuration && G.agi.projectId) return false;
     if (upgrade.phase > G.phase || (upgrade.oneTime && G.purchasedUpgrades.includes(upgrade.id))) return false;
     if (upgrade.id === "reality_check") return G.totalTasksDone >= upgrade.reqTasks;
     if (upgrade.infoUntilPhase !== undefined) return G.phase <= upgrade.infoUntilPhase && (!upgrade.reqIncidents || G.totalIncidents >= upgrade.reqIncidents);
@@ -2273,27 +2323,6 @@
       upgradeVisible(upgrade) && upgradeRequirementsMet(upgrade);
   }
 
-  function reviewAgiResearch() {
-    if (!fundedCashUpgrade(AGI_RESEARCH)) return;
-    $("#agi-research-message").textContent = AGI_RESEARCH.desc + " Research takes " + AGI_RESEARCH.agiDuration + " seconds.";
-    $("#btn-agi-research-start").textContent = "Start research · " + fmtCash(getUpgradeCost(AGI_RESEARCH));
-    $("#agi-research-dialog").classList.add("show");
-    syncDialogFocus();
-  }
-
-  function closeAgiResearch() {
-    $("#agi-research-dialog").classList.remove("show");
-    G.lastTick = Date.now();
-    syncDialogFocus();
-  }
-
-  function startAgiResearch() {
-    if (!$("#agi-research-dialog").classList.contains("show")) return;
-    purchaseUpgrade(AGI_RESEARCH.id);
-    closeAgiResearch();
-    renderAll();
-  }
-
   function purchaseUpgrade(upgradeId) {
     const upg = UPGRADES.find((u) => u.id === upgradeId);
     if (!upg || G.retired || !upgradeVisible(upg)) return;
@@ -2327,6 +2356,7 @@
       G.agi.remaining = upg.agiDuration;
       log("Started: " + upg.name, "info");
       save();
+      renderAll();
       return;
     }
     if (upg.saleDuration) {
@@ -2460,7 +2490,7 @@
         if (G.agents.some(function (a) { return a.roleId === "manager"; })) alpha.managerAssigned = true;
         if (G.agents.some(function (a) { return a.roleId === "token_mgr"; })) alpha.tokenManagerAssigned = true;
         G.agents = G.agents.filter((agent) => !UTILITY_ROLES.includes(agent.roleId));
-        log("Cluster 1 formed with existing agents and a management agents online.", "info");
+        log("ATL-0001 formed with existing agents and management online.", "info");
       }
 
       if (G.phase === 13) {
@@ -2711,7 +2741,7 @@
       else for (let index = 0; index < cluster.workerSlotsMax; index++) provisionClusterAgent(cluster, cluster.buildDuration, delay);
     }
     if (G.clusters.length === 2) deliveryMetrics().showTasks = false;
-    log(cluster.name + " provisioned for " + fmtCash(cost) + ".", "info");
+    log(clusterDisplayName(cluster) + " provisioned for " + fmtCash(cost) + ".", "info");
   }
 
   function clusterSaleValue(cluster) {
@@ -2731,7 +2761,7 @@
     G.clusters = G.clusters.filter((item) => item !== cluster);
     const price = clusterSaleValue(cluster);
     G.cash += price;
-    log(cluster.name + " sold for " + fmtCash(price) + ".", "info");
+    log(clusterDisplayName(cluster) + " sold for " + fmtCash(price) + ".", "info");
   }
 
   function buyClusterWorker(clusterId, slotIndex) {
@@ -2823,7 +2853,7 @@
       if (cluster.buildRemaining === 0) {
         cluster.managerAssigned = true;
         cluster.tokenManagerAssigned = true;
-        log(cluster.name + " online.", "info");
+        log(clusterDisplayName(cluster) + " online.", "info");
       }
     }
     for (const agent of G.agents) {
@@ -3679,7 +3709,7 @@
     // Progressive reveal of resource counters
     $("#res-cash-wrap").style.display = G.uiRevealed.cash ? "" : "none";
     $("#res-tokens-wrap").style.display = G.uiRevealed.tokens ? "" : "none";
-    $("#res-debt-wrap").style.display = G.uiRevealed.debt ? "" : "none";
+    $("#res-debt-wrap").style.display = G.uiRevealed.debt && G.techDebt > 0 ? "" : "none";
     $("#res-debt-wrap").classList.toggle("res-debt-active", G.techDebt > 0);
 
     // Warning pulse
@@ -3854,24 +3884,14 @@
     if (!G.uiRevealed.upgrades) { section.style.display = "none"; return; }
     section.style.display = "";
 
+    const previousAction = $("#upgrade-list .upgrade-card .upgrade-action")?.getAttribute("onclick");
     const previousCard = $("#upgrade-list .upgrade-card");
     if (previousCard) {
       const height = previousCard.getBoundingClientRect().height;
       if (height > 0) $("#upgrade-list").style.setProperty("--upgrade-card-height", height + "px");
     }
 
-    const nextPhase = $("#next-phase-upgrade");
-    nextPhase.hidden = !upgradeVisible(AGI_RESEARCH);
-    if (nextPhase.hidden) updateHTML(nextPhase, "");
-    else {
-      const preparing = G.agi.projectId === AGI_RESEARCH.id;
-      updateHTML(nextPhase, "<p class='upgrade-group-label'>Next phase</p><div class='card upgrade-card'><div class='upgrade-info'><div class='name'>" +
-        AGI_RESEARCH.name + "</div><div class='desc'>" + fmtCash(getUpgradeCost(AGI_RESEARCH)) + " · Phase " + AGI_RESEARCH.unlockPhase +
-        "</div></div><div class='upgrade-purchase'><button class='upgrade-action' onclick='GAME.reviewAgiResearch()' " +
-        (fundedCashUpgrade(AGI_RESEARCH) ? "" : "disabled") + ">" + (preparing ? "In progress" : "Review research") + "</button></div></div>");
-    }
-
-    var available = UPGRADES.filter((upgrade) => upgrade !== AGI_RESEARCH && upgradeVisible(upgrade));
+    var available = UPGRADES.filter(upgradeVisible);
 
     if (available.length === 0) {
       updateHTML($("#upgrade-list"), "<div class='upgrade-space' aria-hidden='true'></div>");
@@ -3897,10 +3917,10 @@
       var u = visible[i];
       var cost = getUpgradeCost(u);
       var canAfford = u.currency === "cash" ? G.cash >= cost : G.tokens >= u.cost;
-      var preparing = G.salePreparation.upgradeId === u.id || G.agi.projectId === u.id;
+      var preparing = G.salePreparation.upgradeId === u.id;
       var requirementsMet = upgradeRequirementsMet(u);
       const authority = u === AGI_AUTHORITY;
-      const needsInput = authority && canAfford && requirementsMet ? " <span class='badge badge-yellow input-needed'>Input needed</span>" : "";
+      const needsInput = ((authority && canAfford && requirementsMet) || u.id === "fusion" || u.id === "retire_unlock") && !preparing ? " <span class='badge badge-yellow input-needed'>Input needed</span>" : "";
       const actionLabel = preparing ? "In progress" :
         authority ? "Approve · " + fmtCash(cost) :
         u.currency === "tasks" ? fmtTokens(u.reqTasks) + " tasks" :
@@ -3928,6 +3948,8 @@
         "</div>";
     }
     updateHTML($("#upgrade-list"), html);
+    const nextAction = $("#upgrade-list .upgrade-card .upgrade-action")?.getAttribute("onclick");
+    if (G.phase >= 15 && nextAction && nextAction !== previousAction) revealAgiTarget();
   }
 
   function renderExpenseSection() {
@@ -4044,7 +4066,7 @@
     const agent = G.agents.find((item) => item.id === cluster.workerAgentIds[index]);
     const filled = G.phase >= 13 ? index < cluster.workforce : Boolean(agent);
     const label = G.phase < 13 && agent ? agent.name : "";
-    const identity = cluster.name + ", agent slot " + (index + 1);
+    const identity = clusterDisplayName(cluster) + ", agent slot " + (index + 1);
     if (agent && agent.status === "provisioning") {
       const progress = clamp(100 * (1 - agent.provisionRemaining / agent.provisionDuration), 0, 100);
       return "<span class='capacity-slot provisioning' role='progressbar' aria-label='Provisioning agent' aria-valuemin='0' aria-valuemax='100' aria-valuenow='" + progress + "' title='Installing " + identity + "' style='--progress:" + progress + "%'>" + label + "</span>";
@@ -4065,9 +4087,9 @@
     const compact = G.phase >= 13;
     const delegated = G.phase >= 11 && G.ceoMode !== "off";
     const count = compact ? cluster.workforce : cluster.workerAgentIds.filter((id) => G.agents.find((agent) => agent.id === id).status !== "provisioning").length;
-    const title = cluster.name + ": " + count + "/" + cluster.workerSlotsMax + " agents, " + fmtTokens(cluster.tank) + " tokens";
+    const title = clusterDisplayName(cluster) + ": " + count + "/" + cluster.workerSlotsMax + " agents, " + fmtTokens(cluster.tank) + " tokens";
     let html = "<div class='cluster-card' data-cluster-id='" + cluster.id + "' title='" + title + "'>";
-    html += "<div class='cluster-hdr'><strong>" + cluster.name + "</strong>";
+    html += "<div class='cluster-hdr'><strong>" + clusterDisplayName(cluster) + "</strong>";
     if (!compact && count === cluster.workerSlotsMax && G.clusters.length > 1) html += "<button class='btn btn-outline btn-sm cluster-sell' onclick=\"GAME.sellCluster('" + cluster.id + "')\">Sell</button>";
     html += "</div>";
     if (cluster.buildRemaining > 0) {
@@ -4086,7 +4108,7 @@
   function renderPlanningCard() {
     const funding = expansionFundingTarget() + expansionReserve();
     const stage = G.cash < funding ? "Securing " + fmtCash(funding) + " funding" : ["Searching for land", "Negotiating with council", "Drafting lease"][G.clustersProvisioned % 3];
-    return "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>Cluster " + (G.clustersProvisioned + 1) +
+    return "<div class='cluster-card planning-card' aria-label='Next cluster: planning'><strong>" + clusterCode(G.clustersProvisioned + 1) +
       "</strong><span>Planning</span><small>" + stage + "</small><small>Build cost · " + fmtCash(provisionCost()) + "</small></div>";
   }
 
@@ -4107,6 +4129,7 @@
     const funding = planning ? expansionFundingTarget() + expansionReserve() : 0;
     let html = "<div class='neocloud-list'>";
     for (const [number, slots] of neocloudGroups(nextCloud)) {
+      const cloud = neocloudIdentity(number);
       let online = 0;
       let progress = 0;
       let income = 0;
@@ -4116,19 +4139,19 @@
         const ready = clusterOnline(cluster);
         const fraction = cluster.buildRemaining > 0 ? clusterConstructionProgress(cluster) : Number(ready);
         const stage = ready ? "Online" : cluster.buildRemaining > 0 ? clusterConstructionStage(fraction) : "Preparing";
-        const label = cluster.name + " · " + stage;
+        const label = clusterDisplayName(cluster) + " · " + stage;
         online += Number(ready);
         progress += fraction;
         income += clusterIncomeRate(cluster);
-        if (!ready && !currentStage) currentStage = cluster.name.replace("Cluster ", "C") + " · " + stage;
+        if (!ready && !currentStage) currentStage = clusterDisplayName(cluster) + " · " + stage;
         return "<div class='cluster-card neocloud-slot' data-cluster-id='" + cluster.id + "' data-state='" + (ready ? "online" : "building") +
-          "' role='img' aria-label='" + label + "' title='" + label + "'><strong aria-hidden='true'>" + (index + 1) + "</strong></div>";
+          "' role='img' aria-label='" + label + "' title='" + label + "'><strong aria-hidden='true'>" + String((number - 1) * NEOCLOUD_SIZE + index + 1).padStart(4, "0") + "</strong></div>";
       }).join("");
       const state = currentStage ? "Building" : number === nextCloud ? "Planning" : "Online";
       const status = currentStage || (state === "Planning" && G.cash < funding ? "Planning · " + fmtCash(funding) + " funding target" : state);
-      html += "<section class='neocloud" + (state === "Online" ? "" : " active") + "' data-neocloud='" + number + "' aria-label='Neocloud " + number +
-        "'><div class='neocloud-header'><strong>Neocloud " + number + "</strong><span>" + online + "/" + NEOCLOUD_SIZE + " online</span></div>" +
-        "<p class='neocloud-summary'>C" + ((number - 1) * NEOCLOUD_SIZE + 1) + "–C" + number * NEOCLOUD_SIZE + " · " + fmtCash(income) + "/s</p>" +
+      html += "<section class='neocloud" + (state === "Online" ? "" : " active") + "' data-neocloud='" + number + "' aria-label='" + cloud.name + " · " + cloud.id +
+        "'><div class='neocloud-header'><strong>" + cloud.name + " <small>" + cloud.id + "</small></strong><span>" + online + "/" + NEOCLOUD_SIZE + " online</span></div>" +
+        "<p class='neocloud-summary'>" + clusterCode((number - 1) * NEOCLOUD_SIZE + 1) + "–" + clusterCode(number * NEOCLOUD_SIZE) + " · " + fmtCash(income) + "/s</p>" +
         "<div class='network-grid'>" + tiles + "</div><p class='neocloud-status' title='" + status + "'>" + status + "</p>" +
         "<progress class='neocloud-progress' aria-label='Neocloud construction' max='" + NEOCLOUD_SIZE + "' value='" + progress.toFixed(2) + "'></progress></section>";
     }
@@ -4326,7 +4349,7 @@
     }
     if (event.key === "Escape") {
       if (activeDialog.id === "agi-warning") cancelKeepScaling();
-      else if (activeDialog.id === "agi-research-dialog") closeAgiResearch();
+      else if (activeDialog.id === "agi-buyout-warning") cancelBuyout();
       return;
     }
     if (event.key !== "Tab") return;
@@ -4414,8 +4437,8 @@
     });
 
     document.addEventListener("keydown", handleDialogKey);
-    $("#btn-agi-research-back").addEventListener("click", closeAgiResearch);
-    $("#btn-agi-research-start").addEventListener("click", startAgiResearch);
+    $("#btn-agi-buyout-cancel").addEventListener("click", cancelBuyout);
+    $("#btn-agi-buyout-confirm").addEventListener("click", positionForBuyout);
     $("#btn-agi-control").addEventListener("click", function () {
       if (G.agi.paused) resumeAgi();
       else takeAgiControl();
@@ -4581,7 +4604,7 @@
     popupQueue = [];
     dismissPopup();
     $("#agi-warning").classList.remove("show");
-    $("#agi-research-dialog").classList.remove("show");
+    $("#agi-buyout-warning").classList.remove("show");
     $("#intro-overlay").classList.add("hidden");
     log("Debug checkpoint: Phase " + G.phase + (startPhase9 ? ", at phase entry" : target ? ", before " + target.name : "") + ".", "info");
     syncMusicPlayback();
@@ -4627,8 +4650,8 @@
     hire: hireAgent,
     fire: fireAgent,
     buy: purchaseUpgrade,
-    reviewAgiResearch: reviewAgiResearch,
     resumeAgi: resumeAgi,
+    requestBuyout: requestBuyout,
     positionForBuyout: positionForBuyout,
     requestKeepScaling: requestKeepScaling,
     cancelKeepScaling: cancelKeepScaling,
