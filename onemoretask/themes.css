@@ -21,8 +21,8 @@ body{
 .layout-choice:hover{background:var(--bg3);border-color:var(--text2)}
 .layout-choice[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 
-body[data-theme] :is(#game-container,#intro-overlay,#settings-popup) .btn{border-radius:var(--button-radius)}
-body[data-theme] :is(#game-container,#intro-overlay,#settings-popup) .popup{border-radius:var(--radius)}
+body[data-theme] :is(#game-container,#intro-overlay,#top-bar,.paper-dialog) .btn{border-radius:var(--button-radius)}
+body[data-theme] .paper-dialog .popup{border-radius:var(--radius)}
 body[data-theme] .management-agent{background:var(--management-bg);border-color:var(--management-border)}
 body[data-theme] .agent-card.res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
 body[data-theme] #res-tokens-wrap.res-warning{background:var(--warning-bg);border-color:var(--warning-border)}
@@ -32,7 +32,6 @@ body[data-theme] .btn-red:hover:not(:disabled){background:var(--warning-bg)}
 body[data-theme] .badge-red{background:var(--warning-bg)}
 body[data-theme] .capacity-slot.filled{background:var(--bg4);border-color:var(--text3)}
 body[data-theme] .capacity-slot.provisioning{background:linear-gradient(to right,color-mix(in srgb,var(--accent) 45%,var(--bg2)) var(--progress),var(--bg2) var(--progress))}
-body[data-theme] .neocloud.active{border-color:var(--text3)}
 body[data-theme] #game-container .upgrade-card:has(.upgrade-action:enabled),body[data-theme] #game-container .upgrade-repeatable:has(.upgrade-action:enabled){
   --bg2:var(--available-bg);--bg3:var(--available-border);--bg4:var(--available-border);
   border-color:var(--available-border);border-left-width:4px;
@@ -163,7 +162,7 @@ body[data-theme="3"] #game-container .task-bar,body[data-theme="3"] #game-contai
 
 }
 
-body[data-theme="3"] :is(#game-container,#intro-overlay,#settings-popup){font-weight:600}
+body[data-theme="3"] :is(#game-container,#intro-overlay,.paper-dialog){font-weight:600}
 
 /* 9. Dispatch Wall: a whole-room operations board with lanes above the team. */
 
@@ -238,13 +237,13 @@ body[data-theme] #game-container button.hire-slot:not(.manager-slot):not(.token-
   body[data-theme] #game-container .agent-action-col > .btn-refill{min-height:40px}
 }
 
-body[data-theme] :is(#game-container,#settings-popup) .paper-card{
+body[data-theme] :is(#game-container,.paper-dialog) .paper-card{
   position:relative;padding:12px;text-align:left;background:var(--bg2);color:var(--text);
   border:1px solid var(--bg4);border-radius:1px;clip-path:none;
   box-shadow:1px 2px 0 color-mix(in srgb,var(--bg4) 70%,transparent),3px 6px 9px #00000024;
   transform:rotate(-1.2deg);font-family:var(--theme-font);font-size:.9rem;font-weight:600;
 }
-body[data-theme] #settings-popup .paper-card{transform:rotate(0deg)}
+body[data-theme] .paper-dialog .paper-card{transform:rotate(0deg)}
 
 @media(max-width:360px){
   #top-bar{min-height:100px}

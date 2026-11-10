@@ -571,13 +571,30 @@ test('funding excludes an exit reserve and expansion resumes beyond Cluster 331 
     h.api.tickAiCeo();
     assert.equal(g.clusters.length, 1);
     h.api.renderClusterSection();
-    assert.match(h.window.document.querySelector('.planning-card').textContent, /Securing \$[\d.]+M funding/);
-    assert.doesNotMatch(h.window.document.querySelector('.planning-card').textContent, /kept for your exit/);
+    assert.match(h.window.document.querySelector('.neocloud-status').textContent, /Planning · \$[\d.]+M funding target/);
+    assert.doesNotMatch(h.window.document.querySelector('.neocloud-status').textContent, /kept for your exit/);
     g.cash = target;
     h.advance(1000);
     h.api.tickAiCeo();
     assert.equal(g.clusters.length, 2);
     assert.equal(g.clusters[1].name, 'Cluster 332');
+  } finally {
+    h.close();
+  }
+});
+
+test('the replication checkpoint shows the next cluster price and pays it on order', () => {
+  const h = harness();
+  try {
+    h.window.chPh14();
+    const g = h.window.GAME.state;
+    const cash = g.cash;
+    const cost = h.api.provisionCost();
+    assert.match(h.window.document.querySelector('.planning-card').textContent, /Build cost · \$2\.23M/);
+    h.api.tickClusterProvisioning();
+    const orders = g.clusters.slice(19);
+    assert.equal(orders[0].invested, cost);
+    assert.equal(cash - g.cash, orders.reduce((spent, cluster) => spent + cluster.invested, 0));
   } finally {
     h.close();
   }
@@ -1301,7 +1318,7 @@ scenario('Scale Mode builds automatically through Phase 13 and replication excee
   h.advance(12100);h.api.tickConstruction(12.1);h.api.tickAiCeo();assert.equal(c.workforce,16);const spent=g.cash;h.api.tickAiCeo();assert.ok(g.cash<spent);assert.equal(g.clusters.length,3);
   g.phase=14;for(let i=0;i<1100;i++){h.advance(2000);h.api.tickConstruction(2);h.api.tickAiCeo();}assert.ok(g.clusters.length>200);assert.equal(h.api.validSave(g),true);
   g.phase=15;h.api.checkMilestones();h.dismiss();h.api.renderAll();assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card:not(.planning-card)').length,g.clusters.length);assert.equal(h.window.document.querySelectorAll('.network-grid div.cluster-card button').length,0);
-  assert.equal(h.window.document.querySelector('.network-grid [data-cluster-id] strong').textContent,'C'+g.clusters.length);assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
+  assert.ok(h.window.document.querySelector('.network-grid [data-cluster-id="' + g.clusters.at(-1).id + '"]'));assert.match(h.window.document.querySelector('#delivery-summary').textContent,/delivery revenue/);
 });
 scenario('DevOps resolves incidents at one rate, oldest first, without final approval', (h) => {
   const g=h.fresh(8);h.worker('devops');
@@ -3084,10 +3101,10 @@ scenario('CEO expansion previews the next cluster without making a purchase or o
   g.phase = 15;
   for (const cluster of g.clusters) cluster.workforce = cluster.workerSlotsMax;
   h.api.renderClusterSection();
-  assert.equal(h.window.document.querySelector('.planning-card strong').textContent, 'C4');
+  assert.match(h.window.document.querySelector('.neocloud-status').textContent, /Planning.*funding target/);
   g.ceoMode = 'manage';
   h.api.renderClusterSection();
-  assert.equal(h.window.document.querySelector('.planning-card'), null);
+  assert.equal(h.window.document.querySelector('.neocloud.active'), null);
 });
 
 scenario('late expansion accelerates gradually and respects the fourfold speed limit', (h) => {

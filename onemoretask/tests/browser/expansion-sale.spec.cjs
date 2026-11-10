@@ -102,10 +102,9 @@ for (const width of [1440, 390, 320]) {
     });
   }
 
-  for (const phase of [13, 15]) {
-    test(`Phase ${phase} prepends planning and new clusters at the top left and preserves their order at ${width}px`, async ({ page }) => {
-      const count = phase === 13 ? 45 : 260;
-      const raw = expansionFixture(phase, count);
+    test(`Phase 13 prepends planning and new clusters at the top left and preserves their order at ${width}px`, async ({ page }) => {
+      const count = 45;
+      const raw = expansionFixture(13, count);
       const state = JSON.parse(raw);
       const newest = state.clusters.at(-1);
       await page.setViewportSize({width, height: width === 320 ? 568 : 900});
@@ -125,7 +124,7 @@ for (const width of [1440, 390, 320]) {
         await build.scrollIntoViewIfNeeded();
         await expect(build).toBeInViewport();
       }
-      const topGrid = page.locator(phase === 13 ? '#cluster-list .node-grid' : '[data-neocloud="11"] .network-grid');
+      const topGrid = page.locator('#cluster-list .node-grid');
       await expect(topGrid.locator(':scope > .cluster-card').first()).toHaveClass(/planning-card/);
       await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);
       await expect(page.locator('[data-cluster-id]')).toHaveCount(count + 2);
@@ -133,27 +132,56 @@ for (const width of [1440, 390, 320]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const overflowing = await page.locator('#cluster-list').evaluate(element => [...element.querySelectorAll('.cluster-card,.neocloud')].filter(card => card.scrollWidth > card.clientWidth + 1).map(card => card.textContent));
       expect(overflowing).toEqual([]);
-      if (phase === 13) {
-        await expect(page.locator('.neocloud')).toHaveCount(0);
-        await expect(page.locator('.cluster-capacity')).toHaveCount(count);
-        const slots = await page.locator('.autonomous-capacity .capacity-slot').evaluateAll(elements => elements.map(element => ({width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height, label: element.textContent})));
-        expect(slots.every(slot => Math.abs(slot.height - 16) < 0.01)).toBe(true);
-        expect(slots.every(slot => slot.label === '')).toBe(true);
-        await expect(topGrid).toHaveClass(/agent-grid cluster-overview/);
-      } else {
-        await expect(page.locator('.neocloud')).toHaveCount(11);
-        await expect(page.locator('.cluster-capacity')).toHaveCount(0);
-        await expect(page.locator('[data-neocloud="10"] [data-cluster-id]')).toHaveCount(25);
-      }
+      await expect(page.locator('.neocloud')).toHaveCount(0);
+      await expect(page.locator('.cluster-capacity')).toHaveCount(count);
+      const slots = await page.locator('.autonomous-capacity .capacity-slot').evaluateAll(elements => elements.map(element => ({width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height, label: element.textContent})));
+      expect(slots.every(slot => Math.abs(slot.height - 16) < 0.01)).toBe(true);
+      expect(slots.every(slot => slot.label === '')).toBe(true);
+      await expect(topGrid).toHaveClass(/agent-grid cluster-overview/);
       const gaps = await page.locator('.cluster-construction-progress').evaluateAll(bars => bars.map(bar => bar.getBoundingClientRect().top - bar.previousElementSibling.getBoundingClientRect().bottom));
       expect(gaps.every(gap => gap >= 6 && gap <= 7)).toBe(true);
-      await page.screenshot({path: `test-results/new-phase${phase}-${width}.png`, animations: 'disabled'});
+      await page.screenshot({path: `test-results/new-phase13-${width}.png`, animations: 'disabled'});
       await page.clock.runFor(3500);
       await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
       await expect(topGrid.locator('[data-cluster-id]').first()).toHaveAttribute('data-cluster-id', newest.id);
-      if (phase === 15) await expect(page.locator('[data-cluster-id="' + newest.id + '"]').locator('xpath=ancestor::section')).toHaveAttribute('data-neocloud', '11');
     });
-  }
+}
+
+for (const [width, columns] of [[1440, 3], [1024, 2], [390, 1], [320, 1]]) {
+  test(`Neoclouds keep their size and slots through construction at ${width}px`, async ({ page }) => {
+    const raw = expansionFixture(15, 260);
+    const state = JSON.parse(raw);
+    await page.setViewportSize({width, height: width === 320 ? 568 : 900});
+    await page.clock.install({time: new Date(state.lastTick)});
+    await page.clock.pauseAt(new Date(state.lastTick + 1000));
+    await page.addInitScript(value => localStorage.setItem('ai_empire_save', value), raw);
+    await page.goto('/');
+
+    const list = page.locator('.neocloud-list');
+    const cloud = page.locator('[data-neocloud="11"]');
+    const grid = cloud.locator('.network-grid');
+    await cloud.scrollIntoViewIfNeeded();
+    await expect(list.locator('.neocloud')).toHaveCount(11);
+    await expect(page.locator('.cluster-capacity')).toHaveCount(0);
+    await expect(page.locator('[data-cluster-id]')).toHaveCount(262);
+    await expect(grid.locator('.neocloud-slot')).toHaveCount(25);
+    await expect(grid.locator('.neocloud-slot[data-state="building"]')).toHaveCount(2);
+    await expect(grid.locator('[data-cluster-id]').last()).toHaveAttribute('data-cluster-id', state.clusters.at(-1).id);
+    await expect(cloud.getByRole('progressbar', { name: 'Neocloud construction' })).toBeVisible();
+    const positions = await list.evaluate(clusterCardPositions);
+    expect(positions.filter(position => position.y === positions[0].y)).toHaveLength(columns);
+    const slots = await grid.evaluate(clusterCardPositions);
+    expect(new Set(slots.map(slot => slot.y)).size).toBe(3);
+    const before = await cloud.boundingBox();
+    await page.clock.runFor(3500);
+    await expect(grid.locator('.neocloud-slot[data-state="building"]')).toHaveCount(0);
+    await expect(cloud.locator('.neocloud-header')).toContainText('12/25 online');
+    expect(await grid.evaluate(clusterCardPositions)).toEqual(slots);
+    expect(await list.evaluate(clusterCardPositions)).toEqual(positions);
+    expect((await cloud.boundingBox()).height).toBe(before.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({path: `test-results/new-phase15-${width}.png`, animations: 'disabled'});
+  });
 }
 
 for (const width of [1440, 390]) {
@@ -200,17 +228,17 @@ for (const width of [1440, 390]) {
     await complete.click();
     const balance = await page.evaluate(() => GAME.state.cash);
     await page.clock.runFor(600);
-    await expect(page.locator('#sale-transition')).toBeVisible();
+    await expect(page.locator('#ending-transition')).toBeVisible();
     await expect(page.locator('#game-container')).toBeVisible();
     await expect(page.locator('#ending-overlay')).toBeHidden();
     await page.clock.runFor(600);
     await expect(page.locator('#game-container')).toBeHidden();
     await expect(page.locator('#ending-overlay')).toBeHidden();
-    await expect(page.locator('#sale-transition')).toHaveCSS('opacity', '1');
+    await expect(page.locator('#ending-transition')).toHaveCSS('opacity', '1');
     await page.reload();
-    await expect(page.locator('#sale-transition')).toBeVisible();
+    await expect(page.locator('#ending-transition')).toBeVisible();
     await page.clock.runFor(1600);
-    await expect(page.locator('#sale-transition')).toBeHidden();
+    await expect(page.locator('#ending-transition')).toBeHidden();
     await expect(page.getByRole('heading', {name: 'You retired early!'})).toBeVisible();
     await expect(page.locator('#btn-ending-restart')).toBeFocused();
     expect(await page.evaluate(() => GAME.state.cash)).toBe(balance);
@@ -223,6 +251,6 @@ test('reduced motion opens retirement immediately without the black transition',
   await page.goto('/');
   await page.evaluate(() => chRetire());
   await page.locator('[onclick="GAME.buy(\'fusion\')"]').click();
-  await expect(page.locator('#sale-transition')).toBeHidden();
+  await expect(page.locator('#ending-transition')).toBeHidden();
   await expect(page.getByRole('heading', {name: 'You retired early!'})).toBeVisible();
 });

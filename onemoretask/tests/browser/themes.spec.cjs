@@ -20,7 +20,7 @@ for (const width of [1440, 844, 390, 320]) {
       await page.clock.runFor(200);
       const group = page.getByRole('group', { name: 'Game views', exact: true });
       await expect(group.locator('button')).toHaveText(['V', 'H']);
-      await expect(page.locator('.header-actions > button')).toHaveText(['Settings']);
+      await expect(page.locator('.header-actions > button:visible')).toHaveText(['Settings']);
       const geometry = await page.locator('.header-actions').evaluate(actions => {
         const view = actions.querySelector('#layout-switcher');
         const settings = actions.querySelector('#btn-settings');

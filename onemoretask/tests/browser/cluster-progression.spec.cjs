@@ -86,6 +86,7 @@ for (const width of [1440, 390]) {
   test(`Factory-Direct Hardware is a separate cost upgrade before Dedicated Hardware Supply at ${width}px`, async ({ page }) => {
     const h = harness();
     const g = h.fresh(15);
+    g.ceoMode = 'scale';
     g.cash = 2e9;
     g.tokens = 1e9;
     g.totalTasksDone = 1e9;
@@ -111,6 +112,9 @@ for (const width of [1440, 390]) {
     await expect(factory.locator('xpath=ancestor::div[contains(@class,"upgrade-card")]')).toContainText('Factory-Direct Hardware');
     await expect(factory).toHaveText('$2.00B');
     await expect(supply).toHaveCount(0);
+    await page.clock.runFor(2000);
+    await expect(factory).toBeEnabled();
+    expect(await page.evaluate(() => GAME.state.clusters.length)).toBe(400);
     await factory.click();
     await page.clock.runFor(200);
     await expect(factory).toHaveCount(0);
@@ -150,14 +154,20 @@ for (const width of [1440, 390]) {
     await page.goto('/');
 
     const talks = page.locator('[onclick="GAME.buy(\'retire_unlock\')"]');
+    const research = page.getByRole('button', { name: 'Review research' });
     await expect(talks).toHaveCount(0);
     await page.locator('[onclick="GAME.buy(\'parallel_neoclouds\')"]').click();
     await page.evaluate(() => GAME.addCash(1e10));
     await page.clock.runFor(200);
-    await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(50);
-    await expect(page.locator('.neocloud:has([aria-label="Cluster construction"])')).toHaveCount(2);
-    const order = await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.querySelector('strong').textContent));
-    expect(order).toEqual(Array.from({length: 550}, (_, index) => 'C' + (550 - index)));
+    const building = page.locator('.neocloud-slot[data-state="building"]');
+    await expect(building).toHaveCount(50);
+    await expect(page.locator('.neocloud:has([data-state="building"])')).toHaveCount(2);
+    const order = await page.locator('[data-cluster-id]').evaluateAll(cards => cards.map(card => card.title.split(' · ')[0]));
+    const expectedOrder = [];
+    for (let first = 526; first >= 1; first -= 25) {
+      for (let offset = 0; offset < 25; offset++) expectedOrder.push('Cluster ' + (first + offset));
+    }
+    expect(order).toEqual(expectedOrder);
     await page.locator('[data-neocloud="22"]').scrollIntoViewIfNeeded();
     await page.screenshot({path: `test-results/parallel-neoclouds-${width}.png`, animations: 'disabled'});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -170,15 +180,15 @@ for (const width of [1440, 390]) {
 
     expect(await page.evaluate(() => GAME.state.clusters.slice(500).map(cluster => cluster.buildRemaining))).toEqual(remaining);
     await page.clock.runFor(300);
-    await expect(page.locator('[aria-label="Cluster construction"]')).toHaveCount(0);
+    await expect(building).toHaveCount(0);
     await expect(talks).toHaveCount(0);
-    await expect(page.locator('[onclick="GAME.buy(\'agi_research\')"]')).toBeDisabled();
+    await expect(research).toBeDisabled();
     expect(await page.evaluate(() => GAME.state.phase)).toBe(15);
     await page.evaluate(() => GAME.addCash(1e10));
     await page.clock.runFor(500);
     expect(await page.evaluate(() => GAME.state.clusters.filter(cluster => cluster.buildRemaining === 0 && cluster.managerAssigned).length)).toBeGreaterThanOrEqual(500);
     await expect(talks).toHaveCount(0);
-    await expect(page.locator('[onclick="GAME.buy(\'agi_research\')"]')).toHaveText('$8.00B');
+    await expect(research).toBeEnabled();
     expect(await page.evaluate(() => GAME.state.phase)).toBe(15);
     await expect(page.locator('#milestone-popup')).toBeHidden();
   });

@@ -289,8 +289,13 @@ for (const concurrency of [25, 50]) {
       assert.ok(builds.at(-1).invested > builds[0].invested);
       h.api.renderClusterSection();
       const document = h.window.document;
-      assert.deepEqual([...document.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId), [...g.clusters].reverse().map(cluster => cluster.id));
-      assert.equal(document.querySelectorAll('.neocloud:has([aria-label="Cluster construction"])').length, concurrency / 25);
+      const groups = [...document.querySelectorAll('.neocloud:has([data-state="building"])')];
+      assert.equal(groups.length, concurrency / 25);
+      for (const group of groups) {
+        const start = (Number(group.dataset.neocloud) - 1) * 25;
+        assert.deepEqual([...group.querySelectorAll('[data-cluster-id]')].map(card => card.dataset.clusterId),
+          Array.from(g.clusters.slice(start, start + 25), cluster => cluster.id));
+      }
       assert.equal(h.api.completedClusterCount(), count);
       g.cash = 0;
       assert.equal(h.api.save(), true);

@@ -12,7 +12,9 @@ test('Cut & Paste is the fixed theme with no theme controls or names', () => {
       h.api.startGame();
       h.window.GAME.cheat(6);
       assert.equal(document.body.dataset.theme, '3');
-      assert.equal(document.querySelector('.header-actions').textContent.replace(/\s+/g, ' ').trim(), 'V H Settings');
+      const actions = [...document.querySelectorAll('.header-actions > :not([hidden])')];
+      assert.equal(actions.map(action => action.textContent.trim()).join(' ').replace(/\s+/g, ' '), 'V H Settings');
+      assert.equal(document.querySelector('#btn-agi-control').hidden, true);
     } finally { h.close(); }
   }
 });

@@ -22,6 +22,70 @@ function saleButton(h, id) {
   return h.window.document.querySelector('[onclick="GAME.buy(\'' + id + '\')"]');
 }
 
+test('the CEO protects affordable late upgrades and builds with the surplus', () => {
+  const ids = ['ceo_continuous', 'replication', 'global_network', 'neocloud_pipeline', 'standardised_construction',
+    'neocloud_batch', 'bulk_hardware', 'factory_direct', 'neocloud_supply_chain', 'parallel_neoclouds',
+    'agi_research', 'agi_computer_use', 'fusion'];
+  for (const id of ids) {
+    const h = harness();
+    try {
+      const item = h.api.UPGRADES.find(upgrade => upgrade.id === id);
+      const g = h.fresh(item.phase);
+      h.prepareUpgrade(id);
+      g.ceoMode = 'scale';
+      g.totalTasksDone = 100000000;
+      const requiredNodes = h.api.nodeRequirement(item);
+      const initialNodes = requiredNodes || 20;
+      for (let index = 0; index < initialNodes; index++) h.fullCluster().tank = 4000;
+      const target = h.api.expansionFundingTarget();
+      g.cash = item.cost;
+      if (requiredNodes) {
+        g.clusters.at(-1).buildRemaining = 1;
+        assert.equal(h.api.expansionReserve(), 0, id + ' needs the last cluster online');
+        h.api.tickConstruction(1);
+      }
+      g.cash = item.cost - 1;
+      assert.equal(h.api.expansionReserve(), 0, id + ' reserves cash at first affordability');
+      g.cash = item.cost + target - 1;
+      for (let tick = 0; tick < 10; tick++) h.api.tickClusterProvisioning();
+      assert.equal(g.clusters.length, initialNodes, id);
+      g.cash++;
+      h.api.tickClusterProvisioning();
+      assert.ok(g.clusters.length > initialNodes, id + ' allows construction with enough surplus');
+      assert.ok(g.cash >= item.cost, id + ' stays affordable after the order');
+      h.api.purchaseUpgrade(id);
+      assert.ok(g.purchasedUpgrades.includes(id) || g.agi.projectId === id, id);
+      assert.equal(h.api.expansionReserve(), 0, 'Starting the purchase releases its reserve');
+    } finally {
+      h.close();
+    }
+  }
+});
+
+test('the largest affordable Phase 12 upgrade is protected from automatic staffing', () => {
+  const h = harness();
+  try {
+    const g = h.fresh(12);
+    g.ceoMode = 'scale';
+    h.prepareUpgrade('ceo_quad_batch');
+    h.fullCluster();
+    const hiring = h.api.addClusterWithNextName();
+    hiring.managerAssigned = true;
+    hiring.tokenManagerAssigned = true;
+    g.cash = 200000000;
+    assert.equal(h.api.expansionReserve(), 200000000);
+    h.api.tickAiCeo();
+    assert.equal(hiring.workerAgentIds.length, 0);
+    assert.equal(g.cash, 200000000);
+    g.cash += 2500;
+    h.api.tickAiCeo();
+    assert.equal(hiring.workerAgentIds.length, 1);
+    assert.equal(g.cash, 200000000);
+  } finally {
+    h.close();
+  }
+});
+
 test('manual provisioning placeholders and newly built clusters take the first position in Phases 9 and 10', () => {
   for (const phase of [10, 11]) {
     const h = harness();
@@ -105,22 +169,31 @@ test('Phase 15 groups every cluster into permanent neoclouds of twenty-five', ()
     const document = h.window.document;
     assert.equal(document.querySelector('#cluster-heading').textContent, 'Neoclouds');
     assert.deepEqual([...document.querySelectorAll('.neocloud')].map(group => Number(group.dataset.neocloud)), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
-    assert.match(document.querySelector('[data-neocloud="11"]').textContent, /Neocloud 11.*C251.*Planning/);
+    const cloud = document.querySelector('[data-neocloud="11"]');
+    assert.match(cloud.textContent, /Neocloud 11.*C251.*Planning/);
+    assert.equal(cloud.querySelectorAll('.neocloud-slot.empty').length, 25);
     const last = g.clusters.at(-1);
     assert.equal(document.querySelector('[data-cluster-id="' + last.id + '"]').closest('.neocloud').dataset.neocloud, '10');
     assert.equal(document.querySelectorAll('[data-neocloud="10"] [data-cluster-id]').length, 25);
-    assert.equal(document.querySelector('[data-neocloud="10"] [data-cluster-id] strong').textContent, 'C250');
-    assert.match(document.querySelector('[data-neocloud="10"] .neocloud-summary').textContent, /C226–C250 · \$6,000\/s/);
+    assert.match(document.querySelector('[data-neocloud="10"] .neocloud-summary').textContent, /C226–C250 · \$6.0K\/s/);
     assert.equal(document.querySelectorAll('.cluster-capacity').length, 0);
     assert.equal(document.querySelectorAll('[data-cluster-id]').length, 250);
     h.api.openCluster();
     const next = g.clusters.at(-1);
     h.api.renderClusterSection();
-    assert.equal(document.querySelector('[data-neocloud="11"] .network-grid').firstElementChild.querySelector('strong').textContent, 'C252');
-    assert.equal(document.querySelector('[data-neocloud="11"] [data-cluster-id]').dataset.clusterId, next.id);
+    const slot = cloud.querySelector('.network-grid').firstElementChild;
+    assert.equal(slot.dataset.clusterId, next.id);
+    assert.equal(slot.title, 'Cluster 251 · Procuring GPUs');
+    assert.equal(cloud.querySelectorAll('.neocloud-slot').length, 25);
+    h.api.tickConstruction(next.buildDuration / 2);
+    h.api.renderClusterSection();
+    assert.equal(slot.title, 'Cluster 251 · Installing software');
+    assert.equal(cloud.querySelector('progress').value, 0.5);
     h.api.tickConstruction(next.buildRemaining);
     h.api.renderClusterSection();
-    assert.equal(document.querySelector('[data-neocloud="11"] [data-cluster-id]').dataset.clusterId, next.id);
+    assert.equal(cloud.querySelector('.network-grid').firstElementChild, slot);
+    assert.equal(slot.title, 'Cluster 251 · Online');
+    assert.match(cloud.querySelector('.neocloud-header').textContent, /1\/25 online/);
     assert.equal(document.querySelector('[data-cluster-id="' + last.id + '"]').closest('.neocloud').dataset.neocloud, '10');
     assert.equal(document.querySelectorAll('[data-cluster-id]').length, 251);
     assert.equal(h.api.validSave(g), true);
@@ -145,9 +218,10 @@ test('neocloud boundaries retain both simultaneous builds and count only real ou
     h.api.renderClusterSection();
     const document = h.window.document;
     assert.equal(document.querySelectorAll('.neocloud.active').length, 2);
-    assert.match(document.querySelector('[data-neocloud="1"] .neocloud-header').textContent, /24 online · 1 building/);
-    assert.match(document.querySelector('[data-neocloud="1"] .neocloud-summary').textContent, /\$5,520\/s/);
-    assert.match(document.querySelector('[data-neocloud="2"] .neocloud-header').textContent, /0 online · 1 building/);
+    assert.match(document.querySelector('[data-neocloud="1"] .neocloud-header').textContent, /24\/25 online/);
+    assert.match(document.querySelector('[data-neocloud="1"] .neocloud-summary').textContent, /\$5.5K\/s/);
+    assert.match(document.querySelector('[data-neocloud="2"] .neocloud-header').textContent, /0\/25 online/);
+    assert.equal(document.querySelectorAll('.neocloud-slot[data-state="building"]').length, 2);
     g.ceoMode = 'manage';
     g.clusters = g.clusters.filter(cluster => cluster !== g.clusters[1]);
     h.api.renderClusterSection();
@@ -356,31 +430,31 @@ test('a completed sale freezes the company, fades to black and reveals retiremen
     assert.equal(document.querySelector('#game-container').hidden, false);
     assert.equal(document.querySelector('#game-container').inert, true);
     assert.equal(document.querySelector('#ending-overlay').hidden, true);
-    assert.equal(document.querySelector('#sale-transition').hidden, false);
+    assert.equal(document.querySelector('#ending-transition').hidden, false);
     assert.equal(document.querySelector('#game-container').innerHTML, companyHtml);
     h.advance(500);
     h.api.tick();
     h.api.renderAll();
     assert.equal(JSON.stringify(g), state);
     assert.equal(document.querySelector('#game-container').innerHTML, companyHtml);
-    assert.equal(Number(document.querySelector('#sale-transition').style.opacity), 0.5);
+    assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 0.5);
     const base = h.audioPlayers.find(player => player.src === 'soundtrack-loop.mp3');
     assert.equal(base.volume, 0.125);
     h.advance(600);
     h.api.renderAll();
     assert.equal(document.querySelector('#game-container').hidden, true);
     assert.equal(document.querySelector('#ending-overlay').hidden, true);
-    assert.equal(Number(document.querySelector('#sale-transition').style.opacity), 1);
+    assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 1);
     assert.equal(base.volume, 0);
     h.advance(900);
     h.api.renderAll();
     assert.equal(document.querySelector('#ending-overlay').hidden, false);
-    assert.equal(Number(document.querySelector('#sale-transition').style.opacity), 0.5);
+    assert.equal(Number(document.querySelector('#ending-transition').style.opacity), 0.5);
     assert.equal(base.volume, 0.125);
     assert.equal(document.activeElement.id, 'btn-ending-restart');
     h.advance(600);
     h.api.renderAll();
-    assert.equal(document.querySelector('#sale-transition').hidden, true);
+    assert.equal(document.querySelector('#ending-transition').hidden, true);
     assert.equal(base.volume, 0.25);
     assert.ok(h.audioPlayers.filter(player => player !== base).every(player => player.paused));
     assert.equal(JSON.stringify(g), state);
@@ -389,7 +463,7 @@ test('a completed sale freezes the company, fades to black and reveals retiremen
       assert.equal(restored.window.GAME.state.retired, true);
       restored.advance(3000);
       restored.api.renderAll();
-      assert.equal(restored.window.document.querySelector('#sale-transition').hidden, true);
+      assert.equal(restored.window.document.querySelector('#ending-transition').hidden, true);
     } finally {
       restored.close();
     }
